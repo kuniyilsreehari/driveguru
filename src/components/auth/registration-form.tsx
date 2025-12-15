@@ -51,7 +51,7 @@ const formSchema = z.object({
     .min(8, { message: "Password must be at least 8 characters." }),
   location: z.string().optional(),
   countryCode: z.string().optional(),
-  phoneNumber: z.string().optional(),
+  phoneNumber: z.string().min(1, { message: "Phone number is required." }),
   category: z.string({ required_error: "Please select a category." }),
   role: z.string({ required_error: "Please select your expert type." }),
   companyName: z.string().optional(),
@@ -438,3 +438,5 @@ export function RegistrationForm() {
     </Form>
   );
 }
+
+    
