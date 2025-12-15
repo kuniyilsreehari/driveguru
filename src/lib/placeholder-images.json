@@ -1,3 +1,10 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "login-background",
+      "description": "Abstract map background for login page.",
+      "imageUrl": "https://images.unsplash.com/photo-1718498576054-412e92061bbe?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxhYnN0cmFjdCUyMG1hcHxlbnwwfHx8fDE3NjU4MDQ3NTd8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "abstract map"
+    }
+  ]
 }
