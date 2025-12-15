@@ -145,17 +145,15 @@ service cloud.firestore {
 
     /**
      * @description Manages access to user profile documents. Users can create and update their
-     * own profile. Super Admins can read any profile and delete accounts.
+     * own profile. Super Admins can read any profile and delete accounts. Public search is allowed.
      * @path /users/{userId}
      * @allow (create) A new user creating their own user document upon signup.
-     * @allow (get) A user reading their own profile information.
-     * @deny (update) A user trying to modify another user's profile.
-     * @deny (list) A regular user attempting to get a list of all application users.
-     * @principle Enforces user self-service for profiles while allowing admin oversight.
+     * @allow (get, list) Any user (authenticated or not) can read profiles for search.
+     * @deny (update) A user trying to modify another user's profile unless they are an owner.
+     * @principle Enforces user self-service for profiles while allowing admin oversight and public search.
      */
     match /users/{userId} {
-      allow get: if isOwner(userId) || isSuperAdmin();
-      allow list: if isSuperAdmin();
+      allow get, list: if true;
       allow create: if isCreatingOwnUserDoc(userId);
       allow update: if isExistingOwner(userId) && userFieldsAreImmutable();
       allow delete: if (isOwner(userId) || isSuperAdmin()) && isExistingDoc();
