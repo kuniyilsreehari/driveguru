@@ -81,10 +81,18 @@ service cloud.firestore {
 
     /**
      * Validates that critical, immutable fields of a user document are not changed on update.
-     * Allows super admin to change any field. Allows user to change fields except 'verified'.
+     * Allows user to change fields except 'verified'. A Super Admin can change any field.
      */
     function userFieldsAreValidOnUpdate() {
-      return request.resource.data.id == resource.data.id;
+        // Immutable fields for all users
+        let isBaseValid = request.resource.data.id == resource.data.id;
+        
+        // Non-admin users cannot change their 'verified' status.
+        if (!isSuperAdmin()) {
+            return isBaseValid && request.resource.data.verified == resource.data.verified;
+        }
+        
+        return isBaseValid;
     }
     
     /**
@@ -156,7 +164,7 @@ service cloud.firestore {
     match /users/{userId} {
       allow get, list: if true;
       allow create: if isCreatingOwnUserDoc(userId);
-      allow update: if (isExistingOwner(userId) && userFieldsAreValidOnUpdate()) || isSuperAdmin();
+      allow update: if (isOwner(userId) && userFieldsAreValidOnUpdate()) || isSuperAdmin();
       allow delete: if (isOwner(userId) || isSuperAdmin()) && isExistingDoc();
 
       /**
