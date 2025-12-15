@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Building, Mail, Lock, LogIn, Eye, EyeOff } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -18,6 +19,8 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth, useUser } from "@/firebase";
+import { initiateEmailSignIn } from "@/firebase/non-blocking-login";
 
 const formSchema = z.object({
   companyId: z.string().optional(),
@@ -30,6 +33,10 @@ const formSchema = z.object({
 export function LoginForm() {
   const { toast } = useToast();
   const [showPassword, setShowPassword] = useState(false);
+  const auth = useAuth();
+  const { user, isUserLoading } = useUser();
+  const router = useRouter();
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -39,13 +46,14 @@ export function LoginForm() {
     },
   });
 
+  useEffect(() => {
+    if (!isUserLoading && user) {
+      router.push('/');
+    }
+  }, [user, isUserLoading, router]);
+
   function onSubmit(values: z.infer<typeof formSchema>) {
-    // This is a placeholder for actual login logic.
-    console.log(values);
-    toast({
-      title: "Login Attempted",
-      description: "This is a demo. No actual login has occurred.",
-    });
+    initiateEmailSignIn(auth, values.email, values.password);
   }
 
   return (
