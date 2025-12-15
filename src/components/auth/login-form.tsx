@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -7,6 +8,7 @@ import * as z from "zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Building, Mail, Lock, LogIn, Eye, EyeOff } from "lucide-react";
+import { signInWithEmailAndPassword } from 'firebase/auth';
 
 import { Button } from "@/components/ui/button";
 import {
@@ -20,7 +22,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth, useUser } from "@/firebase";
-import { initiateEmailSignIn } from "@/firebase/non-blocking-login";
 
 const formSchema = z.object({
   companyId: z.string().optional(),
@@ -52,8 +53,23 @@ export function LoginForm() {
     }
   }, [user, isUserLoading, router]);
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    initiateEmailSignIn(auth, values.email, values.password);
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    try {
+      await signInWithEmailAndPassword(auth, values.email, values.password);
+      // The onAuthStateChanged listener in the provider will handle the redirect.
+    } catch (error: any) {
+      console.error("Login failed:", error);
+      let errorMessage = "An unexpected error occurred. Please try again.";
+      // Check for specific Firebase auth error codes
+      if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+        errorMessage = "Invalid email or password. Please check your credentials and try again.";
+      }
+      toast({
+        variant: "destructive",
+        title: "Login Failed",
+        description: errorMessage,
+      });
+    }
   }
 
   return (
@@ -127,8 +143,10 @@ export function LoginForm() {
             </FormItem>
           )}
         />
-        <Button type="submit" className="w-full">
-          <LogIn className="mr-2 h-4 w-4" /> Sign In
+        <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
+          {form.formState.isSubmitting ? 'Signing In...' : <>
+            <LogIn className="mr-2 h-4 w-4" /> Sign In
+          </>}
         </Button>
 
         <div className="mt-4 text-center text-sm">
