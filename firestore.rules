@@ -1,0 +1,178 @@
+/**
+ * Core Philosophy: This ruleset implements a multi-tiered security model. It combines a strict
+ * user-ownership model for private data (like location tracking) with a powerful, role-based
+ * access control system for administrative functions. A special "Super Admin" role grants
+ * broad permissions to manage core application entities like users and companies.
+ *
+ * Data Structure:
+ * - /users/{userId}: Stores public user profiles.
+ * - /users/{userId}/location_data/{locationDataId}: A private subcollection containing a user's
+ *   sensitive location history. Access is strictly limited to the user who owns the data.
+ * - /companies/{companyId}: A top-level collection for company data.
+ * - /roles_super_admin/{userId}: An authorization-specific collection. The existence of a
+ *   document here grants a user Super Admin privileges across the application.
+ *
+ * Key Security Decisions:
+ * - Super Admin Role: A user is considered a Super Admin if a document with their UID exists
+ *   in the /roles_super_admin collection. This role grants read/write access to the /users
+ *   and /companies collections. This avoids costly lookups on user documents for role checks.
+ * - User Privacy: Regular users can only read their own profile and create their own location
+ *   data. They cannot list other users or access another user's private subcollections.
+ * - Location Data: This data is considered highly sensitive and is secured using a path-based
+ *   ownership model. Only the user specified in the path can access their location data. Super
+ *   Admins are explicitly denied access to maintain user privacy.
+ * - Immutable Ownership: Relational fields critical for authorization, such as a user's own ID
+ *   within their document, are enforced as immutable after creation to prevent ownership hijacking.
+ * - Default Deny: All paths not explicitly matched are denied access by default.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // --------------------------------------------------------------------------------
+    // Helper Functions
+    // --------------------------------------------------------------------------------
+
+    /**
+     * Checks if the user is authenticated.
+     */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /**
+     * Checks if the requesting user's UID matches the provided userId.
+     * This is the foundation of the user-ownership model.
+     */
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+    
+    /**
+     * Checks if a document currently exists. Used for safe updates and deletes.
+     */
+    function isExistingDoc() {
+      return resource != null;
+    }
+
+    /**
+     * Checks if the requesting user is a Super Admin by checking for the
+     * existence of their UID in the roles_super_admin collection.
+     * This is a performant way to manage global roles.
+     */
+    function isSuperAdmin() {
+      return isSignedIn() && exists(/databases/$(database)/documents/roles_super_admin/$(request.auth.uid));
+    }
+
+    /**
+     * Verifies that the user owns the existing resource. Used for update/delete.
+     */
+    function isExistingOwner(userId) {
+      return isOwner(userId) && isExistingDoc();
+    }
+    
+    /**
+     * Validates that the user ID in a new user document matches the document ID.
+     * Enforces relational integrity on creation.
+     */
+    function isCreatingOwnUserDoc(userId) {
+      return isOwner(userId) && request.resource.data.id == userId;
+    }
+
+    /**
+     * Validates that critical, immutable fields of a user document are not changed on update.
+     */
+    function userFieldsAreImmutable() {
+      return request.resource.data.id == resource.data.id;
+    }
+    
+    /**
+     * Validates that the userId in new location data matches the parent document's user ID.
+     */
+    function isCreatingOwnLocationData(userId) {
+      return request.resource.data.userId == userId;
+    }
+    
+    /**
+     * Validates that the userId in location data is immutable on update.
+     */
+    function locationDataFieldsAreImmutable() {
+      return request.resource.data.userId == resource.data.userId;
+    }
+
+    /**
+     * Checks if a user belongs to a specific company by reading their user profile.
+     */
+    function isMemberOfCompany(companyId) {
+      return isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.companyId == companyId;
+    }
+
+    // --------------------------------------------------------------------------------
+    // Collection Rules
+    // --------------------------------------------------------------------------------
+
+    /**
+     * @description Controls access to Super Admin role assignments. Only existing Super
+     * Admins can view or manage who has administrative privileges.
+     * @path /roles_super_admin/{userId}
+     * @allow (get) An existing Super Admin reading another admin's role document.
+     * @deny (create) A non-admin user attempting to grant themselves Super Admin rights.
+     * @principle Enforces role-based access for managing administrative privileges.
+     */
+    match /roles_super_admin/{userId} {
+      allow get, list: if isSuperAdmin();
+      allow create, update, delete: if isSuperAdmin();
+    }
+
+    /**
+     * @description Defines access rules for company profiles. Super Admins have full control,
+     * while regular signed-in users can only read the details of their own company.
+     * @path /companies/{companyId}
+     * @allow (get) An authenticated user reading the document for the company they belong to.
+     * @deny (list) A regular user attempting to list all companies in the system.
+     * @deny (update) A regular user trying to change their company's address.
+     * @principle Combines role-based admin access with lookup-based access for members.
+     */
+    match /companies/{companyId} {
+      allow get: if isSuperAdmin() || isMemberOfCompany(companyId);
+      allow list: if isSuperAdmin();
+      allow create: if isSuperAdmin();
+      allow update: if isSuperAdmin() && isExistingDoc();
+      allow delete: if isSuperAdmin() && isExistingDoc();
+    }
+
+    /**
+     * @description Manages access to user profile documents. Users can create and update their
+     * own profile. Super Admins can read any profile and delete accounts.
+     * @path /users/{userId}
+     * @allow (create) A new user creating their own user document upon signup.
+     * @allow (get) A user reading their own profile information.
+     * @deny (update) A user trying to modify another user's profile.
+     * @deny (list) A regular user attempting to get a list of all application users.
+     * @principle Enforces user self-service for profiles while allowing admin oversight.
+     */
+    match /users/{userId} {
+      allow get: if isOwner(userId) || isSuperAdmin();
+      allow list: if isSuperAdmin();
+      allow create: if isCreatingOwnUserDoc(userId);
+      allow update: if isExistingOwner(userId) && userFieldsAreImmutable();
+      allow delete: if (isOwner(userId) || isSuperAdmin()) && isExistingDoc();
+
+      /**
+       * @description Secures a user's private location data. Access is strictly limited to
+       * the owner of the data. Even Super Admins cannot access this sensitive information.
+       * @path /users/{userId}/location_data/{locationDataId}
+       * @allow (create) A user creating a new location data entry for themselves.
+       * @deny (get) A user attempting to read the location data of another user.
+       * @deny (list) A Super Admin trying to list a user's location history.
+       * @principle Enforces a strict, path-based ownership model for sensitive user data.
+       */
+      match /location_data/{locationDataId} {
+        allow get, list: if isOwner(userId);
+        allow create: if isOwner(userId) && isCreatingOwnLocationData(userId);
+        allow update: if isExistingOwner(userId) && locationDataFieldsAreImmutable();
+        allow delete: if isExistingOwner(userId);
+      }
+    }
+  }
+}
