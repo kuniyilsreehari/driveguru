@@ -9,7 +9,7 @@ import { useUser, useFirestore, useDoc, useMemoFirebase, useAuth, useCollection 
 import { deleteDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, CheckCircle2, UserCheck, UserX } from 'lucide-react';
+import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, CheckCircle2, UserCheck, UserX, Crown, Sparkles, User as UserIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
@@ -17,6 +17,10 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuPortal,
 } from '@/components/ui/dropdown-menu';
 import {
   AlertDialog,
@@ -31,6 +35,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
 
 // Define the User type based on your Firestore structure
 type ExpertUser = {
@@ -39,6 +44,7 @@ type ExpertUser = {
     lastName?: string;
     email?: string;
     verified?: boolean;
+    tier?: 'Standard' | 'Premier' | 'Super Premier';
     // Add other fields from your user document as needed
 };
 
@@ -102,6 +108,16 @@ export default function AdminDashboardPage() {
     setSelectedUser(null);
   }
 
+  const handleTierChange = (expert: ExpertUser, tier: ExpertUser['tier']) => {
+    if (!firestore) return;
+    const userDocRef = doc(firestore, 'users', expert.id);
+    updateDocumentNonBlocking(userDocRef, { tier });
+    toast({
+        title: "Expert Tier Updated",
+        description: `${expert.firstName} ${expert.lastName}'s tier is now ${tier}.`
+    });
+  }
+
   const handleVerificationToggle = (expert: ExpertUser) => {
     if (!firestore) return;
     const userDocRef = doc(firestore, 'users', expert.id);
@@ -118,6 +134,17 @@ export default function AdminDashboardPage() {
         return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
     }
     return 'U';
+  }
+
+  const renderTierBadge = (tier?: ExpertUser['tier']) => {
+    switch (tier) {
+        case 'Premier':
+            return <Badge variant="outline" className="border-purple-500 text-purple-500"><Crown className="mr-1 h-3 w-3" /> Premier</Badge>;
+        case 'Super Premier':
+            return <Badge variant="outline" className="border-blue-500 text-blue-500"><Sparkles className="mr-1 h-3 w-3" /> Super Premier</Badge>;
+        default:
+            return <Badge variant="secondary"><UserIcon className="mr-1 h-3 w-3" /> Standard</Badge>;
+    }
   }
 
   const isLoading = isUserLoading || isRoleLoading;
@@ -222,6 +249,7 @@ export default function AdminDashboardPage() {
                         <TableHead className="w-[80px]">Avatar</TableHead>
                         <TableHead>Full Name</TableHead>
                         <TableHead>Email</TableHead>
+                        <TableHead className="text-center">Tier</TableHead>
                         <TableHead className="text-center">Verified</TableHead>
                         <TableHead className="text-right">Actions</TableHead>
                       </TableRow>
@@ -237,6 +265,9 @@ export default function AdminDashboardPage() {
                             </TableCell>
                             <TableCell className="font-medium">{expert.firstName} {expert.lastName}</TableCell>
                             <TableCell>{expert.email}</TableCell>
+                            <TableCell className="text-center">
+                                {renderTierBadge(expert.tier)}
+                            </TableCell>
                             <TableCell className="text-center">
                                 <div className='flex items-center justify-center space-x-2'>
                                     <Switch 
@@ -256,6 +287,28 @@ export default function AdminDashboardPage() {
                                         </Button>
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent align="end">
+                                        <DropdownMenuSub>
+                                            <DropdownMenuSubTrigger>
+                                                <Sparkles className="mr-2 h-4 w-4" />
+                                                <span>Change Tier</span>
+                                            </DropdownMenuSubTrigger>
+                                            <DropdownMenuPortal>
+                                                <DropdownMenuSubContent>
+                                                    <DropdownMenuItem onClick={() => handleTierChange(expert, 'Standard')}>
+                                                        <UserIcon className="mr-2 h-4 w-4" />
+                                                        Standard
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem onClick={() => handleTierChange(expert, 'Premier')}>
+                                                        <Crown className="mr-2 h-4 w-4" />
+                                                        Premier
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem onClick={() => handleTierChange(expert, 'Super Premier')}>
+                                                        <Sparkles className="mr-2 h-4 w-4" />
+                                                        Super Premier
+                                                    </DropdownMenuItem>
+                                                </DropdownMenuSubContent>
+                                            </DropdownMenuPortal>
+                                        </DropdownMenuSub>
                                         <DropdownMenuItem onClick={() => toast({ title: "Edit clicked", description: "Edit functionality coming soon!"})}>
                                             <Edit className="mr-2 h-4 w-4" />
                                             Edit
@@ -271,7 +324,7 @@ export default function AdminDashboardPage() {
                         ))
                       ) : (
                         <TableRow>
-                          <TableCell colSpan={5} className="text-center text-muted-foreground h-24">
+                          <TableCell colSpan={6} className="text-center text-muted-foreground h-24">
                             No experts found.
                           </TableCell>
                         </TableRow>

@@ -92,6 +92,11 @@
           "type": "string",
           "description": "URL of the user's profile photo.",
           "format": "uri"
+        },
+        "tier": {
+          "type": "string",
+          "description": "The expert's activation tier.",
+          "enum": ["Standard", "Premier", "Super Premier"]
         }
       },
       "required": [

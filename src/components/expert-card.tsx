@@ -20,6 +20,7 @@ export type ExpertUser = {
     verified?: boolean;
     hourlyRate?: number;
     yearsOfExperience?: number;
+    tier?: 'Standard' | 'Premier' | 'Super Premier';
 };
 
 interface ExpertCardProps {
@@ -59,8 +60,8 @@ export function ExpertCard({ expert }: ExpertCardProps) {
                                 <div className="flex items-center gap-2 mb-1">
                                     <h3 className="text-2xl font-bold">{getDisplayName(expert)}</h3>
                                     {expert.verified && <UserCheck className="h-5 w-5 text-green-500" />}
-                                    <Badge variant="outline" className="border-purple-500 text-purple-500"><Crown className="mr-1 h-3 w-3" /> Premier</Badge>
-                                    <Badge variant="outline" className="border-blue-500 text-blue-500"><Sparkles className="mr-1 h-3 w-3" /> Super Premier</Badge>
+                                    {expert.tier === 'Premier' && <Badge variant="outline" className="border-purple-500 text-purple-500"><Crown className="mr-1 h-3 w-3" /> Premier</Badge>}
+                                    {expert.tier === 'Super Premier' && <Badge variant="outline" className="border-blue-500 text-blue-500"><Sparkles className="mr-1 h-3 w-3" /> Super Premier</Badge>}
                                 </div>
                                 <p className="text-muted-foreground font-semibold">{expert.category}</p>
                                 <div className="flex items-center gap-1 mt-1">
