@@ -27,14 +27,18 @@ function SearchResults() {
     const usersCollectionRef = useMemoFirebase(() => {
         if (!firestore) return null;
         
-        let q = query(collection(firestore, 'users'), where('verified', '==', true));
+        let q = query(collection(firestore, 'users'));
+
+        // Always filter for verified users on the public search page
+        q = query(q, where('verified', '==', true));
 
         if (category) {
             q = query(q, where('category', '==', category));
         }
 
-        // The previous location query was not optimal for Firestore.
-        // We will filter by category and let the user see the location on the card.
+        // Firestore does not support robust text search on parts of a string (like location).
+        // A more advanced solution like Algolia would be needed for that.
+        // For now, we will filter by category and let the user see the location on the card.
 
         return q;
     }, [firestore, category]);
