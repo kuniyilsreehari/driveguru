@@ -147,6 +147,7 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
                 <FormMessage />
               </FormItem>
             )}
+          />
         </div>
 
         <FormItem>
