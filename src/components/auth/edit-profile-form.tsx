@@ -1,10 +1,11 @@
 
 "use client";
 
+import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { User as UserIcon, Mail, MapPin, Phone } from "lucide-react";
+import { User as UserIcon, Mail, MapPin, Phone, LocateIcon, Loader2 } from "lucide-react";
 import { doc } from 'firebase/firestore';
 
 import { Button } from "@/components/ui/button";
@@ -46,6 +47,7 @@ interface EditProfileFormProps {
 export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps) {
   const { toast } = useToast();
   const firestore = useFirestore();
+  const [isDetecting, setIsDetecting] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -56,6 +58,73 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
       phoneNumber: userProfile.phoneNumber || "",
     },
   });
+
+  const handleDetectLocation = () => {
+    if (!navigator.geolocation) {
+        toast({
+            variant: 'destructive',
+            title: 'Geolocation is not supported by your browser.',
+        });
+        return;
+    }
+
+    setIsDetecting(true);
+
+    navigator.geolocation.getCurrentPosition(
+        async (position) => {
+            const { latitude, longitude } = position.coords;
+            
+            try {
+                const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
+                const data = await response.json();
+                
+                const address = data.address;
+                const city = address.city || address.town || address.village || address.hamlet;
+                const state = address.state;
+
+                let detectedLocation = '';
+                if (city && state) {
+                    detectedLocation = `${city}, ${state}`;
+                } else if (city) {
+                    detectedLocation = city;
+                }
+
+                if (detectedLocation) {
+                    form.setValue('location', detectedLocation, { shouldValidate: true });
+                    toast({
+                        title: 'Location Detected',
+                        description: `Your location has been set to ${detectedLocation}.`,
+                    });
+                } else {
+                    const coords = `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
+                    form.setValue('location', coords, { shouldValidate: true });
+                     toast({
+                        title: 'Coordinates Set',
+                        description: 'We could not find a city and state for your coordinates.',
+                    });
+                }
+            } catch (apiError) {
+                const coords = `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
+                form.setValue('location', coords, { shouldValidate: true });
+                toast({
+                    variant: 'destructive',
+                    title: 'Could not fetch location name.',
+                    description: 'Your location is set to coordinates.'
+                });
+            } finally {
+                setIsDetecting(false);
+            }
+        },
+        (error) => {
+            setIsDetecting(false);
+            toast({
+                variant: 'destructive',
+                title: 'Unable to retrieve your location.',
+                description: error.message,
+            });
+        }
+    );
+  };
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     const userDocRef = doc(firestore, "users", userProfile.id);
@@ -118,22 +187,6 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
         <div className="grid grid-cols-2 gap-4">
           <FormField
             control={form.control}
-            name="location"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Location</FormLabel>
-                <div className="relative">
-                  <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <FormControl>
-                    <Input placeholder="e.g. San Francisco, CA" {...field} className="pl-10" />
-                  </FormControl>
-                </div>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-           <FormField
-            control={form.control}
             name="phoneNumber"
             render={({ field }) => (
               <FormItem>
@@ -143,6 +196,31 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
                   <FormControl>
                     <Input placeholder="+1 555 123 4567" {...field} className="pl-10" />
                   </FormControl>
+                </div>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="location"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Location</FormLabel>
+                <div className="flex items-center gap-2">
+                    <div className="relative flex-grow">
+                      <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                      <FormControl>
+                        <Input placeholder="e.g. San Francisco, CA" {...field} className="pl-10" />
+                      </FormControl>
+                    </div>
+                     <Button type="button" variant="outline" size="icon" onClick={handleDetectLocation} disabled={isDetecting}>
+                        {isDetecting ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                            <LocateIcon className="h-4 w-4" />
+                        )}
+                    </Button>
                 </div>
                 <FormMessage />
               </FormItem>
