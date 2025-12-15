@@ -161,6 +161,10 @@ export default function ExpertDashboardPage() {
                         <MapPin className="h-5 w-5 text-muted-foreground" />
                         <p><span className="font-semibold">Location:</span> {userProfile.location || 'Not specified'}</p>
                     </div>
+                     <div className="flex items-center gap-3">
+                        <Briefcase className="h-5 w-5 text-muted-foreground" />
+                        <p><span className="font-semibold">Category:</span> {userProfile.category || 'Not specified'}</p>
+                    </div>
                     <div className="flex items-center gap-3">
                         <GraduationCap className="h-5 w-5 text-muted-foreground" />
                         <p><span className="font-semibold">Qualification:</span> {userProfile.qualification || 'Not specified'}</p>
