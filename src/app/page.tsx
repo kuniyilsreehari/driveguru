@@ -1,4 +1,7 @@
-import { Briefcase, Building, ChevronDown, Laptop, LocateIcon, MapPin, Search, Smartphone, Wrench } from "lucide-react"
+'use client';
+
+import { useState } from 'react';
+import { Briefcase, Building, ChevronDown, Laptop, LocateIcon, MapPin, Search, Smartphone, Wrench, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
@@ -7,6 +10,7 @@ import { Slider } from "@/components/ui/slider"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent } from "@/components/ui/card"
 import { Icons } from "@/components/icons"
+import { useToast } from '@/hooks/use-toast';
 
 const categories = [
     { name: "MEDICAL HELP", icon: <Icons.medical className="w-8 h-8" /> },
@@ -17,6 +21,42 @@ const categories = [
 ];
 
 export default function TalentSearchPage() {
+    const [location, setLocation] = useState('');
+    const [isDetecting, setIsDetecting] = useState(false);
+    const { toast } = useToast();
+
+    const handleDetectLocation = () => {
+        if (!navigator.geolocation) {
+            toast({
+                variant: 'destructive',
+                title: 'Geolocation is not supported by your browser.',
+            });
+            return;
+        }
+
+        setIsDetecting(true);
+
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                const { latitude, longitude } = position.coords;
+                setLocation(`${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
+                setIsDetecting(false);
+                toast({
+                    title: 'Location Detected',
+                    description: 'Your location has been set.',
+                });
+            },
+            (error) => {
+                setIsDetecting(false);
+                toast({
+                    variant: 'destructive',
+                    title: 'Unable to retrieve your location.',
+                    description: error.message,
+                });
+            }
+        );
+    };
+
     return (
         <div className="dark min-h-screen bg-background text-foreground p-4 sm:p-8">
             <div className="max-w-4xl mx-auto">
@@ -36,9 +76,22 @@ export default function TalentSearchPage() {
                                     <div className="flex items-center gap-2 mt-2">
                                         <div className="relative flex-grow">
                                             <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                            <Input id="location" placeholder="Enter a city to search..." className="pl-10" />
+                                            <Input 
+                                                id="location" 
+                                                placeholder="Enter a city to search..." 
+                                                className="pl-10"
+                                                value={location}
+                                                onChange={(e) => setLocation(e.target.value)}
+                                            />
                                         </div>
-                                        <Button variant="outline"><LocateIcon className="mr-2 h-4 w-4" /> Detect</Button>
+                                        <Button variant="outline" onClick={handleDetectLocation} disabled={isDetecting}>
+                                            {isDetecting ? (
+                                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                            ) : (
+                                                <LocateIcon className="mr-2 h-4 w-4" />
+                                            )}
+                                            Detect
+                                        </Button>
                                     </div>
                                 </div>
                                 <div>
