@@ -5,7 +5,7 @@ import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { User as UserIcon, Mail, MapPin, Phone, LocateIcon, Loader2, Wrench, Building, Smartphone, Laptop, Briefcase, IndianRupee, Calendar, Book, School, GraduationCap, Info } from "lucide-react";
+import { User as UserIcon, Mail, MapPin, Phone, LocateIcon, Loader2, Wrench, Building, Smartphone, Laptop, Briefcase, IndianRupee, Calendar, Book, School, GraduationCap, Info, Sparkles } from "lucide-react";
 import { doc } from 'firebase/firestore';
 
 import { Button } from "@/components/ui/button";
@@ -25,6 +25,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Icons } from "../icons";
 import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
+import { generateAboutMe } from "@/ai/flows/generate-about-me-flow";
 
 const categories = [
     { name: "MEDICAL HELP", icon: <Icons.medical className="w-8 h-8" /> },
@@ -86,6 +87,7 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
   const { toast } = useToast();
   const firestore = useFirestore();
   const [isDetecting, setIsDetecting] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
 
   const extractPhoneNumberParts = (fullNumber?: string) => {
     if (!fullNumber) return { countryCode: "+91", phoneNumber: "" };
@@ -194,6 +196,37 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
         }
     );
   };
+
+  const handleGenerateAboutMe = async () => {
+    setIsGenerating(true);
+    try {
+        const formData = form.getValues();
+        const result = await generateAboutMe({
+            firstName: formData.firstName,
+            role: formData.role,
+            skills: formData.skills || '',
+            yearsOfExperience: formData.yearsOfExperience || 0,
+            qualification: formData.qualification || '',
+        });
+        if (result.aboutMe) {
+            form.setValue('aboutMe', result.aboutMe, { shouldValidate: true });
+            toast({
+                title: "AI Generated Bio",
+                description: "Your 'About Me' has been populated. Feel free to edit it.",
+            });
+        }
+    } catch (error) {
+        console.error("Failed to generate 'About Me'", error);
+        toast({
+            variant: "destructive",
+            title: "Generation Failed",
+            description: "Could not generate the 'About Me' text. Please try again.",
+        });
+    } finally {
+        setIsGenerating(false);
+    }
+  };
+
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     const userDocRef = doc(firestore, "users", userProfile.id);
@@ -477,7 +510,23 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
           name="aboutMe"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>About Me</FormLabel>
+              <div className="flex items-center justify-between">
+                <FormLabel>About Me</FormLabel>
+                <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="sm"
+                    onClick={handleGenerateAboutMe}
+                    disabled={isGenerating}
+                >
+                    {isGenerating ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                        <Sparkles className="mr-2 h-4 w-4" />
+                    )}
+                    Generate with AI
+                </Button>
+              </div>
               <div className="relative">
                 <Info className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <FormControl>
