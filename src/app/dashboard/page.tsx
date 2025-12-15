@@ -7,7 +7,7 @@ import { signOut } from 'firebase/auth';
 import { doc } from 'firebase/firestore';
 import { useUser, useAuth, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { Button } from '@/components/ui/button';
-import { LogOut, Briefcase, Loader, Edit } from 'lucide-react';
+import { LogOut, Briefcase, Loader, Edit, UserCheck, XCircle } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Dialog,
@@ -19,6 +19,8 @@ import {
   DialogFooter
 } from '@/components/ui/dialog';
 import { EditProfileForm } from '@/components/auth/edit-profile-form';
+import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 
 type ExpertUserProfile = {
     id: string;
@@ -28,6 +30,7 @@ type ExpertUserProfile = {
     role: string;
     location?: string;
     category?: string;
+    verified?: boolean;
 };
 
 export default function ExpertDashboardPage() {
@@ -86,6 +89,17 @@ export default function ExpertDashboardPage() {
                             <CardTitle className="text-4xl font-bold">Expert Dashboard</CardTitle>
                             <CardDescription>Welcome, {userProfile.firstName} {userProfile.lastName}.</CardDescription>
                         </div>
+                        {userProfile.verified ? (
+                            <Badge variant="outline" className="border-green-500 text-green-500">
+                                <UserCheck className="mr-1 h-3 w-3" />
+                                Verified
+                            </Badge>
+                        ) : (
+                            <Badge variant="destructive">
+                                <XCircle className="mr-1 h-3 w-3" />
+                                Not Verified
+                            </Badge>
+                        )}
                     </div>
                     <div className="flex items-center gap-2">
                         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
