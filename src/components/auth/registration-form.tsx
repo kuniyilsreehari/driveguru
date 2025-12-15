@@ -54,6 +54,7 @@ const formSchema = z.object({
   phoneNumber: z.string().optional(),
   category: z.string({ required_error: "Please select a category." }),
   role: z.string({ required_error: "Please select your expert type." }),
+  companyName: z.string().optional(),
 });
 
 export function RegistrationForm() {
@@ -75,8 +76,11 @@ export function RegistrationForm() {
       location: "",
       countryCode: "+91",
       phoneNumber: "",
+      companyName: "",
     },
   });
+
+  const selectedRole = form.watch("role");
 
   const handleDetectLocation = () => {
     if (!navigator.geolocation) {
@@ -167,6 +171,7 @@ export function RegistrationForm() {
         location: values.location,
         phoneNumber: values.countryCode && values.phoneNumber ? `${values.countryCode} ${values.phoneNumber}` : "",
         category: values.category,
+        companyName: values.companyName,
       };
 
       // Use non-blocking write
@@ -224,6 +229,24 @@ export function RegistrationForm() {
             </FormItem>
           )}
         />
+        {(selectedRole === 'Company' || selectedRole === 'Authorized Pro') && (
+            <FormField
+              control={form.control}
+              name="companyName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Company Name</FormLabel>
+                  <div className="relative">
+                    <Building className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <FormControl>
+                      <Input placeholder="Your Company Inc." {...field} className="pl-10" />
+                    </FormControl>
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+        )}
         <div className="grid grid-cols-2 gap-4">
             <FormField
               control={form.control}

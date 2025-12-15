@@ -15,6 +15,10 @@
           "type": "string",
           "description": "Reference to the Company the user belongs to. (Relationship: Company 1:N User)"
         },
+        "companyName": {
+          "type": "string",
+          "description": "The name of the company the user belongs to, if applicable."
+        },
         "firstName": {
           "type": "string",
           "description": "The user's first name."

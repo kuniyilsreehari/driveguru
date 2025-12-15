@@ -47,6 +47,7 @@ const formSchema = z.object({
   phoneNumber: z.string().optional(),
   category: z.string({ required_error: "Please select a category." }),
   role: z.string({ required_error: "Please select your expert type." }),
+  companyName: z.string().optional(),
 });
 
 type ExpertUserProfile = {
@@ -58,6 +59,7 @@ type ExpertUserProfile = {
     location?: string;
     phoneNumber?: string;
     category?: string;
+    companyName?: string;
 };
 
 interface EditProfileFormProps {
@@ -98,8 +100,11 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
       phoneNumber: phoneNumber,
       category: userProfile.category || "",
       role: userProfile.role || "",
+      companyName: userProfile.companyName || "",
     },
   });
+
+  const selectedRole = form.watch("role");
 
   const handleDetectLocation = () => {
     if (!navigator.geolocation) {
@@ -178,6 +183,7 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
       phoneNumber: values.countryCode && values.phoneNumber ? `${values.countryCode} ${values.phoneNumber}` : "",
       category: values.category,
       role: values.role,
+      companyName: values.companyName,
     };
 
     updateDocumentNonBlocking(userDocRef, updatedData);
@@ -222,6 +228,24 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
             </FormItem>
           )}
         />
+        {(selectedRole === 'Company' || selectedRole === 'Authorized Pro') && (
+            <FormField
+              control={form.control}
+              name="companyName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Company Name</FormLabel>
+                  <div className="relative">
+                    <Building className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <FormControl>
+                      <Input placeholder="Your Company Inc." {...field} className="pl-10" />
+                    </FormControl>
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+        )}
         <div className="grid grid-cols-2 gap-4">
             <FormField
               control={form.control}
