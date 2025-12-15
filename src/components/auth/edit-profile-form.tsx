@@ -5,8 +5,9 @@ import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { User as UserIcon, Mail, MapPin, Phone, LocateIcon, Loader2, Wrench, Building, Smartphone, Laptop, Briefcase, IndianRupee, Calendar, Book, School, GraduationCap, Info, Sparkles, Image as ImageIcon } from "lucide-react";
+import { User as UserIcon, Mail, MapPin, Phone, LocateIcon, Loader2, Wrench, Building, Smartphone, Laptop, Briefcase, IndianRupee, Calendar, Book, School, GraduationCap, Info, Sparkles, Image as ImageIcon, Upload } from "lucide-react";
 import { doc } from 'firebase/firestore';
+import Image from 'next/image';
 
 import { Button } from "@/components/ui/button";
 import {
@@ -27,6 +28,7 @@ import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
 import { generateAboutMe } from "@/ai/flows/generate-about-me-flow";
 import { suggestSkills } from "@/ai/flows/suggest-skills-flow";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 
 const categories = [
     { name: "MEDICAL HELP", icon: <Icons.medical className="w-8 h-8" /> },
@@ -45,7 +47,7 @@ const expertTypes = [
 const formSchema = z.object({
   firstName: z.string().min(1, { message: "First name is required." }),
   lastName: z.string().min(1, { message: "Last name is required." }),
-  photoUrl: z.string().url({ message: "Please enter a valid URL." }).optional().or(z.literal('')),
+  photoUrl: z.string().optional().or(z.literal('')),
   location: z.string().optional(),
   countryCode: z.string().optional(),
   phoneNumber: z.string().optional(),
@@ -92,6 +94,7 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
   const [isDetecting, setIsDetecting] = useState(false);
   const [isGeneratingAboutMe, setIsGeneratingAboutMe] = useState(false);
   const [isSuggestingSkills, setIsSuggestingSkills] = useState(false);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const extractPhoneNumberParts = (fullNumber?: string) => {
     if (!fullNumber) return { countryCode: "+91", phoneNumber: "" };
@@ -134,6 +137,7 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
   });
 
   const selectedRole = form.watch("role");
+  const photoUrl = form.watch("photoUrl");
 
   const handleDetectLocation = () => {
     if (!navigator.geolocation) {
@@ -271,6 +275,24 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
     }
   };
 
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      if (file.size > 1024 * 1024) { // 1MB limit
+        toast({
+          variant: "destructive",
+          title: "Image too large",
+          description: "Please upload an image smaller than 1MB.",
+        });
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        form.setValue('photoUrl', reader.result as string, { shouldValidate: true });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     const userDocRef = doc(firestore, "users", userProfile.id);
@@ -290,9 +312,43 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
     onSuccess();
   }
 
+  const getInitials = (firstName?: string, lastName?: string) => {
+    if (firstName && lastName) {
+        return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
+    }
+    return 'U';
+  }
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        
+        <div className="flex items-center gap-4">
+            <Avatar className="h-20 w-20 text-3xl">
+              <AvatarImage src={photoUrl} />
+              <AvatarFallback>{getInitials(form.getValues('firstName'), form.getValues('lastName'))}</AvatarFallback>
+            </Avatar>
+            <div className="flex-grow">
+                <FormLabel>Profile Photo</FormLabel>
+                <div className="flex items-center gap-2 mt-2">
+                    <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()}>
+                        <Upload className="mr-2 h-4 w-4" />
+                        Upload Image
+                    </Button>
+                    <p className="text-xs text-muted-foreground">Max 1MB.</p>
+                    <FormControl>
+                        <Input 
+                            type="file"
+                            className="hidden"
+                            ref={fileInputRef}
+                            onChange={handleImageUpload}
+                            accept="image/png, image/jpeg, image/gif"
+                        />
+                    </FormControl>
+                </div>
+            </div>
+        </div>
+
         <FormField
           control={form.control}
           name="role"
@@ -374,23 +430,6 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
               )}
             />
         </div>
-
-        <FormField
-          control={form.control}
-          name="photoUrl"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Photo URL</FormLabel>
-              <div className="relative">
-                <ImageIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <FormControl>
-                  <Input placeholder="https://example.com/your-photo.jpg" {...field} className="pl-10" />
-                </FormControl>
-              </div>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
         
         <div className="grid grid-cols-2 gap-4">
             <FormItem>

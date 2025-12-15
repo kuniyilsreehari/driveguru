@@ -2,7 +2,7 @@
 'use client';
 
 import { Card, CardContent } from '@/components/ui/card';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -21,6 +21,7 @@ export type ExpertUser = {
     hourlyRate?: number;
     yearsOfExperience?: number;
     tier?: 'Standard' | 'Premier' | 'Super Premier';
+    photoUrl?: string;
 };
 
 interface ExpertCardProps {
@@ -51,6 +52,7 @@ export function ExpertCard({ expert }: ExpertCardProps) {
                 <div className="grid grid-cols-1 md:grid-cols-[auto_1fr] gap-6">
                     <div className="flex flex-col items-center space-y-4">
                         <Avatar className="h-24 w-24 text-4xl">
+                            <AvatarImage src={expert.photoUrl} alt={getDisplayName(expert)} />
                             <AvatarFallback>{getInitials(expert)}</AvatarFallback>
                         </Avatar>
                     </div>
