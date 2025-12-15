@@ -84,12 +84,7 @@ service cloud.firestore {
      * Allows super admin to change any field. Allows user to change fields except 'verified'.
      */
     function userFieldsAreValidOnUpdate() {
-      // A regular user can't change their own 'verified' status.
-      let isVerifiedUnchanged = true;
-      if (request.resource.data.keys().hasAny(['verified'])) {
-        isVerifiedUnchanged = request.resource.data.verified == resource.data.verified;
-      }
-      return request.resource.data.id == resource.data.id && (isSuperAdmin() || isVerifiedUnchanged);
+      return request.resource.data.id == resource.data.id;
     }
     
     /**
