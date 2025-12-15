@@ -1,12 +1,23 @@
 
 'use client';
 
+import { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { Star, IndianRupee, Briefcase, Calendar, Phone, MessageCircle, ChevronDown, UserCheck, Crown, Sparkles, MapPin } from 'lucide-react';
+import { Star, IndianRupee, Briefcase, Calendar, Phone, MessageCircle, ChevronDown, UserCheck, Crown, Sparkles, MapPin, Send, MessageSquare as MessageSquareIcon, Edit2 } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { useToast } from '@/hooks/use-toast';
+import { useFirestore, useUser } from '@/firebase';
+import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { collection } from 'firebase/firestore';
+import { cn } from '@/lib/utils';
+
 
 export type ExpertUser = {
     id: string;
@@ -29,6 +40,15 @@ interface ExpertCardProps {
 }
 
 export function ExpertCard({ expert }: ExpertCardProps) {
+    const [isReviewOpen, setIsReviewOpen] = useState(false);
+    const [rating, setRating] = useState(0);
+    const [hoverRating, setHoverRating] = useState(0);
+    const [reviewerName, setReviewerName] = useState('');
+    const [comment, setComment] = useState('');
+    const { toast } = useToast();
+    const firestore = useFirestore();
+    const { user } = useUser();
+
     const getInitials = (expert: ExpertUser) => {
         if (expert.companyName) {
             return expert.companyName.substring(0, 2).toUpperCase();
@@ -46,57 +66,149 @@ export function ExpertCard({ expert }: ExpertCardProps) {
         return expert.companyName || `${expert.firstName} ${expert.lastName}`;
     }
 
+    const handleSubmitReview = async () => {
+        if (!firestore) {
+            toast({ variant: 'destructive', title: "Error", description: "Database connection not found." });
+            return;
+        }
+
+        if (!user) {
+            toast({ variant: 'destructive', title: "Not logged in", description: "You must be logged in to leave a review." });
+            return;
+        }
+
+        if (reviewerName.trim() === '' || comment.trim() === '' || rating === 0) {
+            toast({ variant: 'destructive', title: "Missing Information", description: "Please fill out all fields to submit a review." });
+            return;
+        }
+        
+        const reviewsCollectionRef = collection(firestore, 'reviews');
+        
+        const reviewData = {
+            expertId: expert.id,
+            expertName: getDisplayName(expert),
+            reviewerName: reviewerName,
+            rating: rating,
+            comment: comment,
+            createdAt: new Date(),
+            status: 'pending'
+        };
+        
+        await addDocumentNonBlocking(reviewsCollectionRef, reviewData);
+
+        toast({ title: "Review Submitted", description: "Your review is pending approval. Thank you!" });
+        // Reset form
+        setRating(0);
+        setReviewerName('');
+        setComment('');
+        setIsReviewOpen(false);
+    }
+
     return (
-        <Card key={expert.id} className="overflow-hidden">
-            <CardContent className="p-4 md:p-6">
-                <div className="grid grid-cols-1 md:grid-cols-[auto_1fr] gap-6">
-                    <div className="flex flex-col items-center space-y-4">
-                        <Avatar className="h-24 w-24 text-4xl">
-                            <AvatarImage src={expert.photoUrl} alt={getDisplayName(expert)} />
-                            <AvatarFallback>{getInitials(expert)}</AvatarFallback>
-                        </Avatar>
-                    </div>
-                    <div className="w-full">
-                        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between">
-                            <div>
-                                <div className="flex items-center gap-2 mb-1">
-                                    <h3 className="text-2xl font-bold">{getDisplayName(expert)}</h3>
-                                    {expert.verified && <UserCheck className="h-5 w-5 text-green-500" />}
-                                    {expert.tier === 'Premier' && <Badge variant="outline" className="border-purple-500 text-purple-500"><Crown className="mr-1 h-3 w-3" /> Premier</Badge>}
-                                    {expert.tier === 'Super Premier' && <Badge variant="outline" className="border-blue-500 text-blue-500"><Sparkles className="mr-1 h-3 w-3" /> Super Premier</Badge>}
+        <Collapsible open={isReviewOpen} onOpenChange={setIsReviewOpen}>
+            <Card key={expert.id} className="overflow-hidden">
+                <CardContent className="p-4 md:p-6">
+                    <div className="grid grid-cols-1 md:grid-cols-[auto_1fr] gap-6">
+                        <div className="flex flex-col items-center space-y-4">
+                            <Avatar className="h-24 w-24 text-4xl">
+                                <AvatarImage src={expert.photoUrl} alt={getDisplayName(expert)} />
+                                <AvatarFallback>{getInitials(expert)}</AvatarFallback>
+                            </Avatar>
+                        </div>
+                        <div className="w-full">
+                            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between">
+                                <div>
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <h3 className="text-2xl font-bold">{getDisplayName(expert)}</h3>
+                                        {expert.verified && <UserCheck className="h-5 w-5 text-green-500" />}
+                                        {expert.tier === 'Premier' && <Badge variant="outline" className="border-purple-500 text-purple-500"><Crown className="mr-1 h-3 w-3" /> Premier</Badge>}
+                                        {expert.tier === 'Super Premier' && <Badge variant="outline" className="border-blue-500 text-blue-500"><Sparkles className="mr-1 h-3 w-3" /> Super Premier</Badge>}
+                                    </div>
+                                    <p className="text-muted-foreground font-semibold">{expert.category}</p>
+                                    <div className="flex items-center gap-1 mt-1">
+                                        {[...Array(5)].map((_, i) => <Star key={i} className="h-4 w-4 text-yellow-400 fill-yellow-400" />)}
+                                        <span className="text-xs text-muted-foreground ml-1">(1 review)</span>
+                                    </div>
                                 </div>
-                                <p className="text-muted-foreground font-semibold">{expert.category}</p>
+                                <Badge className="bg-orange-500 text-white mt-2 sm:mt-0">Available</Badge>
+                            </div>
+
+                            <Separator className="my-4" />
+
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm text-muted-foreground">
+                                <div className="flex items-center gap-2"><MapPin className="h-4 w-4" /> {expert.location || 'N/A'}</div>
+                                <div className="flex items-center gap-2"><IndianRupee className="h-4 w-4" /> {expert.hourlyRate ? `${expert.hourlyRate}/hr` : 'N/A'}</div>
+                                <div className="flex items-center gap-2"><Briefcase className="h-4 w-4" /> {expert.yearsOfExperience ? `${expert.yearsOfExperience} years` : 'N/A'}</div>
+                                <div className="flex items-center gap-2">
+                                    <Badge variant="secondary">{expert.role}</Badge>
+                                </div>
+                            </div>
+                            
+                            <Separator className="my-4" />
+
+                            <div className="flex flex-wrap items-center gap-2">
+                                <CollapsibleTrigger asChild>
+                                    <Button variant="outline">Profile <ChevronDown className="ml-2 h-4 w-4" /></Button>
+                                </CollapsibleTrigger>
+                                <div className="flex-grow"></div>
+                                <Button variant="secondary"><Calendar className="mr-2 h-4 w-4" /> Book</Button>
+                                <Button className="bg-orange-500 hover:bg-orange-600"><Phone className="mr-2 h-4 w-4" /> Call</Button>
+                                <Button className="bg-green-500 hover:bg-green-600"><MessageCircle className="mr-2 h-4 w-4" /> WhatsApp</Button>
+                            </div>
+                        </div>
+                    </div>
+                </CardContent>
+                <CollapsibleContent>
+                    <div className="p-6 bg-card-foreground/5 dark:bg-card-foreground/10 border-t">
+                        <div className="flex items-center gap-3 mb-4">
+                            <Edit2 className="h-6 w-6 text-primary"/>
+                            <h4 className="text-xl font-bold">Leave a Review</h4>
+                        </div>
+                        <div className="space-y-4">
+                             <div>
+                                <Label htmlFor="reviewerName">Your Name</Label>
+                                <Input 
+                                    id="reviewerName" 
+                                    placeholder="e.g. Jane Doe" 
+                                    value={reviewerName}
+                                    onChange={(e) => setReviewerName(e.target.value)}
+                                />
+                            </div>
+                             <div>
+                                <Label>Rating</Label>
                                 <div className="flex items-center gap-1 mt-1">
-                                    {[...Array(5)].map((_, i) => <Star key={i} className="h-4 w-4 text-yellow-400 fill-yellow-400" />)}
-                                    <span className="text-xs text-muted-foreground ml-1">(1 review)</span>
+                                    {[1, 2, 3, 4, 5].map(star => (
+                                        <Star
+                                            key={star}
+                                            className={cn(
+                                                "h-6 w-6 cursor-pointer",
+                                                (hoverRating >= star || rating >= star)
+                                                    ? "text-yellow-400 fill-yellow-400"
+                                                    : "text-gray-400"
+                                            )}
+                                            onMouseEnter={() => setHoverRating(star)}
+                                            onMouseLeave={() => setHoverRating(0)}
+                                            onClick={() => setRating(star)}
+                                        />
+                                    ))}
                                 </div>
                             </div>
-                            <Badge className="bg-orange-500 text-white mt-2 sm:mt-0">Available</Badge>
-                        </div>
-
-                        <Separator className="my-4" />
-
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm text-muted-foreground">
-                            <div className="flex items-center gap-2"><MapPin className="h-4 w-4" /> {expert.location || 'N/A'}</div>
-                            <div className="flex items-center gap-2"><IndianRupee className="h-4 w-4" /> {expert.hourlyRate ? `${expert.hourlyRate}/hr` : 'N/A'}</div>
-                            <div className="flex items-center gap-2"><Briefcase className="h-4 w-4" /> {expert.yearsOfExperience ? `${expert.yearsOfExperience} years` : 'N/A'}</div>
-                            <div className="flex items-center gap-2">
-                                <Badge variant="secondary">{expert.role}</Badge>
+                             <div>
+                                <Label htmlFor="comment">Comment</Label>
+                                <Textarea
+                                    id="comment"
+                                    placeholder="Share your experience..."
+                                    value={comment}
+                                    onChange={(e) => setComment(e.target.value)}
+                                />
                             </div>
-                        </div>
-                        
-                        <Separator className="my-4" />
-
-                        <div className="flex flex-wrap items-center gap-2">
-                            <Button variant="outline">Profile <ChevronDown className="ml-2 h-4 w-4" /></Button>
-                            <div className="flex-grow"></div>
-                            <Button variant="secondary"><Calendar className="mr-2 h-4 w-4" /> Book</Button>
-                            <Button className="bg-orange-500 hover:bg-orange-600"><Phone className="mr-2 h-4 w-4" /> Call</Button>
-                            <Button className="bg-green-500 hover:bg-green-600"><MessageCircle className="mr-2 h-4 w-4" /> WhatsApp</Button>
+                            <Button className="w-full" onClick={handleSubmitReview}>
+                                <Send className="mr-2 h-4 w-4" /> Submit Review
+                            </Button>
                         </div>
                     </div>
-                </div>
-            </CardContent>
-        </Card>
+                </CollapsibleContent>
+            </Card>
+        </Collapsible>
     )
 }
