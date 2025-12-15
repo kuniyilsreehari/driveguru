@@ -22,6 +22,7 @@ import { EditProfileForm } from '@/components/auth/edit-profile-form';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
+import { Progress } from '@/components/ui/progress';
 
 type ExpertUserProfile = {
     id: string;
@@ -70,6 +71,37 @@ export default function ExpertDashboardPage() {
         signOut(auth);
     }
   };
+
+  const calculateProfileCompletion = (profile: ExpertUserProfile | null): number => {
+    if (!profile) return 0;
+
+    const fields = [
+        profile.location,
+        profile.phoneNumber,
+        profile.category,
+        profile.hourlyRate,
+        profile.yearsOfExperience,
+        profile.gender,
+        profile.qualification,
+        profile.skills,
+        profile.aboutMe
+    ];
+    
+    // College name is optional but counts
+    if (profile.collegeName) fields.push(profile.collegeName);
+    
+    // Company name is conditional
+    if (profile.role === 'Company' || profile.role === 'Authorized Pro') {
+        fields.push(profile.companyName);
+    }
+
+    const filledFields = fields.filter(field => field !== null && field !== undefined && field !== '').length;
+    const totalFields = fields.length;
+    
+    return Math.round((filledFields / totalFields) * 100);
+  }
+
+  const profileCompletion = calculateProfileCompletion(userProfile);
   
   const isLoading = isUserLoading || isProfileLoading;
 
@@ -143,6 +175,15 @@ export default function ExpertDashboardPage() {
                 </div>
             </CardHeader>
             <CardContent>
+                <div className="my-6">
+                  <div className="flex justify-between items-center mb-2">
+                    <h4 className="font-semibold text-sm">Profile Completion</h4>
+                    <span className="text-sm font-bold text-primary">{profileCompletion}%</span>
+                  </div>
+                  <Progress value={profileCompletion} className="h-2" />
+                  {profileCompletion < 100 && <p className="text-xs text-muted-foreground mt-2">Complete your profile to attract more clients. Click &apos;Edit Profile&apos; to get started.</p>}
+                </div>
+
                 <Separator className="my-6" />
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
                     <div className="flex items-center gap-3">
