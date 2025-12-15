@@ -4,7 +4,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { User as UserIcon } from "lucide-react";
+import { User as UserIcon, Mail } from "lucide-react";
 import { doc } from 'firebase/firestore';
 
 import { Button } from "@/components/ui/button";
@@ -106,6 +106,21 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
               )}
             />
         </div>
+        
+        <FormItem>
+            <FormLabel>Email</FormLabel>
+            <div className="relative">
+                <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <FormControl>
+                    <Input
+                        type="email"
+                        value={userProfile.email}
+                        disabled
+                        className="pl-10"
+                    />
+                </FormControl>
+            </div>
+        </FormItem>
         
         <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
           {form.formState.isSubmitting ? 'Saving...' : 'Save Changes'}
