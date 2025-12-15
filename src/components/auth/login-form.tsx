@@ -1,10 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import Link from "next/link";
-import { Building, Mail, Lock, LogIn } from "lucide-react";
+import { Building, Mail, Lock, LogIn, Eye, EyeOff } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -28,6 +29,7 @@ const formSchema = z.object({
 
 export function LoginForm() {
   const { toast } = useToast();
+  const [showPassword, setShowPassword] = useState(false);
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -103,8 +105,15 @@ export function LoginForm() {
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <FormControl>
-                  <Input type="password" placeholder="••••••••" {...field} className="pl-10" />
+                  <Input type={showPassword ? "text" : "password"} placeholder="••••••••" {...field} className="pl-10 pr-10" />
                 </FormControl>
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+                >
+                  {showPassword ? <EyeOff /> : <Eye />}
+                </button>
               </div>
               <FormMessage />
             </FormItem>
