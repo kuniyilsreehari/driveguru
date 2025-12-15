@@ -55,12 +55,13 @@ export default function AdminDashboardPage() {
   }, [firestore, user]);
 
   const { data: superAdminData, isLoading: isRoleLoading } = useDoc(superAdminDocRef);
+  const isSuperAdmin = superAdminData !== null;
 
-  // Memoized reference to the users collection
+  // Memoized reference to the users collection, conditional on being a super admin
   const usersCollectionRef = useMemoFirebase(() => {
-    if (!firestore) return null;
+    if (!firestore || !isSuperAdmin) return null;
     return collection(firestore, 'users');
-  }, [firestore]);
+  }, [firestore, isSuperAdmin]);
 
   const { data: users, isLoading: isUsersLoading } = useCollection<ExpertUser>(usersCollectionRef);
 
@@ -72,7 +73,9 @@ export default function AdminDashboardPage() {
   }, [user, isUserLoading, router]);
 
   const handleLogout = () => {
-    signOut(auth);
+    if (auth) {
+      signOut(auth);
+    }
   };
   
   const openDeleteDialog = (user: ExpertUser) => {
@@ -81,7 +84,7 @@ export default function AdminDashboardPage() {
   };
 
   const handleDeleteUser = () => {
-    if (!selectedUser) return;
+    if (!selectedUser || !firestore) return;
     const userDocRef = doc(firestore, 'users', selectedUser.id);
     deleteDocumentNonBlocking(userDocRef);
     toast({
@@ -100,7 +103,6 @@ export default function AdminDashboardPage() {
   }
 
   const isLoading = isUserLoading || isRoleLoading;
-  const isSuperAdmin = superAdminData !== null;
 
   if (isLoading) {
     return (
