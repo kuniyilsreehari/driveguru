@@ -26,6 +26,7 @@ import { Icons } from "../icons";
 import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
 import { generateAboutMe } from "@/ai/flows/generate-about-me-flow";
+import { suggestSkills } from "@/ai/flows/suggest-skills-flow";
 
 const categories = [
     { name: "MEDICAL HELP", icon: <Icons.medical className="w-8 h-8" /> },
@@ -87,7 +88,8 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
   const { toast } = useToast();
   const firestore = useFirestore();
   const [isDetecting, setIsDetecting] = useState(false);
-  const [isGenerating, setIsGenerating] = useState(false);
+  const [isGeneratingAboutMe, setIsGeneratingAboutMe] = useState(false);
+  const [isSuggestingSkills, setIsSuggestingSkills] = useState(false);
 
   const extractPhoneNumberParts = (fullNumber?: string) => {
     if (!fullNumber) return { countryCode: "+91", phoneNumber: "" };
@@ -198,7 +200,7 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
   };
 
   const handleGenerateAboutMe = async () => {
-    setIsGenerating(true);
+    setIsGeneratingAboutMe(true);
     try {
         const formData = form.getValues();
         const result = await generateAboutMe({
@@ -223,7 +225,46 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
             description: "Could not generate the 'About Me' text. Please try again.",
         });
     } finally {
-        setIsGenerating(false);
+        setIsGeneratingAboutMe(false);
+    }
+  };
+
+  const handleSuggestSkills = async () => {
+    setIsSuggestingSkills(true);
+    try {
+        const formData = form.getValues();
+        const result = await suggestSkills({
+            role: formData.role,
+            qualification: formData.qualification || '',
+            existingSkills: formData.skills || '',
+        });
+        if (result.suggestedSkills) {
+            const currentSkills = formData.skills ? formData.skills.split(',').map(s => s.trim()).filter(s => s) : [];
+            const newSkills = result.suggestedSkills.split(',').map(s => s.trim()).filter(s => s && !currentSkills.includes(s));
+            
+            if(newSkills.length > 0) {
+              const updatedSkills = [...currentSkills, ...newSkills].join(', ');
+              form.setValue('skills', updatedSkills, { shouldValidate: true });
+              toast({
+                  title: "AI Skill Suggestions",
+                  description: "New skills have been added to your profile.",
+              });
+            } else {
+               toast({
+                  title: "AI Skill Suggestions",
+                  description: "No new skills were suggested, or suggestions already exist.",
+              });
+            }
+        }
+    } catch (error) {
+        console.error("Failed to suggest skills", error);
+        toast({
+            variant: "destructive",
+            title: "Suggestion Failed",
+            description: "Could not suggest new skills. Please try again.",
+        });
+    } finally {
+        setIsSuggestingSkills(false);
     }
   };
 
@@ -493,7 +534,23 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
           name="skills"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Skills</FormLabel>
+              <div className="flex items-center justify-between">
+                <FormLabel>Skills</FormLabel>
+                <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="sm"
+                    onClick={handleSuggestSkills}
+                    disabled={isSuggestingSkills}
+                >
+                    {isSuggestingSkills ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                        <Sparkles className="mr-2 h-4 w-4" />
+                    )}
+                    Suggest with AI
+                </Button>
+              </div>
               <div className="relative">
                 <Book className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <FormControl>
@@ -517,9 +574,9 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
                     variant="outline" 
                     size="sm"
                     onClick={handleGenerateAboutMe}
-                    disabled={isGenerating}
+                    disabled={isGeneratingAboutMe}
                 >
-                    {isGenerating ? (
+                    {isGeneratingAboutMe ? (
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     ) : (
                         <Sparkles className="mr-2 h-4 w-4" />
