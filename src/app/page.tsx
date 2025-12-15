@@ -14,7 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 
 const categories = [
     { name: "MEDICAL HELP", icon: <Icons.medical className="w-8 h-8" /> },
-    { name: "ELECTRICAL SERVICE", icon: <Wrench className="w-8 h-8" /> },
+    { name: "ELECTRICAL SERVICE", icon: <Wrench className="w-88 h-8" /> },
     { name: "SECURITY GUARDS", icon: <Building className="w-8 h-8" /> },
     { name: "MOBILE PHONE SERVICE", icon: <Smartphone className="w-8 h-8" /> },
     { name: "LAPTOP SERVICE", icon: <Laptop className="w-8 h-8" /> },
@@ -37,14 +37,41 @@ export default function TalentSearchPage() {
         setIsDetecting(true);
 
         navigator.geolocation.getCurrentPosition(
-            (position) => {
+            async (position) => {
                 const { latitude, longitude } = position.coords;
-                setLocation(`${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
-                setIsDetecting(false);
-                toast({
-                    title: 'Location Detected',
-                    description: 'Your location has been set.',
-                });
+                
+                try {
+                    const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
+                    const data = await response.json();
+                    
+                    const address = data.address;
+                    const city = address.city || address.town || address.village || address.hamlet;
+                    const state = address.state;
+
+                    if (city && state) {
+                        const detectedLocation = `${city}, ${state}`;
+                        setLocation(detectedLocation);
+                        toast({
+                            title: 'Location Detected',
+                            description: `Your location has been set to ${detectedLocation}.`,
+                        });
+                    } else {
+                        setLocation(`${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
+                         toast({
+                            title: 'Coordinates Set',
+                            description: 'We could not find a city and state for your coordinates.',
+                        });
+                    }
+                } catch (apiError) {
+                    setLocation(`${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
+                    toast({
+                        variant: 'destructive',
+                        title: 'Could not fetch location name.',
+                        description: 'Your location is set to coordinates.'
+                    });
+                } finally {
+                    setIsDetecting(false);
+                }
             },
             (error) => {
                 setIsDetecting(false);
