@@ -2,6 +2,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Briefcase, Building, ChevronDown, Laptop, LocateIcon, MapPin, Search, Smartphone, Wrench, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -27,6 +28,7 @@ export default function TalentSearchPage() {
     const [isDetecting, setIsDetecting] = useState(false);
     const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
     const { toast } = useToast();
+    const router = useRouter();
 
     const handleDetectLocation = () => {
         if (!navigator.geolocation) {
@@ -92,6 +94,17 @@ export default function TalentSearchPage() {
                 });
             }
         );
+    };
+
+    const handleSearch = () => {
+        const queryParams = new URLSearchParams();
+        if (location) {
+            queryParams.set('location', location);
+        }
+        if (selectedCategory) {
+            queryParams.set('category', selectedCategory);
+        }
+        router.push(`/search?${queryParams.toString()}`);
     };
 
     return (
@@ -184,7 +197,7 @@ export default function TalentSearchPage() {
                                 </div>
                             </div>
 
-                            <Button size="lg" className="w-full mt-8 text-lg">
+                            <Button size="lg" className="w-full mt-8 text-lg" onClick={handleSearch}>
                                 <Search className="mr-2 h-5 w-5" />
                                 Search Experts
                             </Button>
