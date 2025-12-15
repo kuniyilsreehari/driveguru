@@ -11,11 +11,12 @@
  * - /companies/{companyId}: A top-level collection for company data.
  * - /roles_super_admin/{userId}: An authorization-specific collection. The existence of a
  *   document here grants a user Super Admin privileges across the application.
+ * - /reviews/{reviewId}: A collection for expert reviews, moderated by Super Admins.
  *
  * Key Security Decisions:
  * - Super Admin Role: A user is considered a Super Admin if a document with their UID exists
- *   in the /roles_super_admin collection. This role grants read/write access to the /users
- *   and /companies collections. This avoids costly lookups on user documents for role checks.
+ *   in the /roles_super_admin collection. This role grants read/write access to the /users,
+ *   /companies, and /reviews collections. This avoids costly lookups on user documents for role checks.
  * - User Privacy: Regular users can only read their own profile and create their own location
  *   data. They cannot list other users or access another user's private subcollections.
  * - Location Data: This data is considered highly sensitive and is secured using a path-based
@@ -133,6 +134,21 @@ service cloud.firestore {
       allow get: if isOwner(userId);
       allow list: if isSuperAdmin();
       allow create, update, delete: if isSuperAdmin();
+    }
+    
+    /**
+     * @description Controls access to reviews. Any signed-in user can create a review. 
+     * Public can read approved reviews. Super Admins can read, list, and modify all reviews.
+     * @path /reviews/{reviewId}
+     * @allow (create) Any authenticated user can submit a review.
+     * @allow (get, list) Anyone can read approved reviews. SuperAdmins can list all.
+     * @allow (update, delete) Only Super Admins can modify or delete reviews.
+     */
+    match /reviews/{reviewId} {
+      allow get: if resource.data.status == 'approved' || isSuperAdmin();
+      allow list: if isSuperAdmin(); // Or add a rule to allow listing by expertId for approved reviews
+      allow create: if isSignedIn();
+      allow update, delete: if isSuperAdmin();
     }
 
     /**
