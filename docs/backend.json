@@ -39,6 +39,10 @@
         "phoneNumber": {
           "type": "string",
           "description": "The user's mobile number, including country code."
+        },
+        "category": {
+          "type": "string",
+          "description": "The service category the expert belongs to."
         }
       },
       "required": [

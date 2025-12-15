@@ -7,7 +7,7 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { User, Mail, Lock, LogIn, Eye, EyeOff, Briefcase, MapPin, Phone, LocateIcon, Loader2 } from "lucide-react";
+import { User, Mail, Lock, LogIn, Eye, EyeOff, Briefcase, MapPin, Phone, LocateIcon, Loader2, Wrench, Building, Smartphone, Laptop } from "lucide-react";
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc } from 'firebase/firestore';
 
@@ -25,6 +25,16 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth, useUser, useFirestore } from "@/firebase";
 import { setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Icons } from "@/components/icons";
+import { cn } from "@/lib/utils";
+
+const categories = [
+    { name: "MEDICAL HELP", icon: <Icons.medical className="w-8 h-8" /> },
+    { name: "ELECTRICAL SERVICE", icon: <Wrench className="w-8 h-8" /> },
+    { name: "SECURITY GUARDS", icon: <Building className="w-8 h-8" /> },
+    { name: "MOBILE PHONE SERVICE", icon: <Smartphone className="w-8 h-8" /> },
+    { name: "LAPTOP SERVICE", icon: <Laptop className="w-8 h-8" /> },
+];
 
 const formSchema = z.object({
   firstName: z.string().min(1, { message: "First name is required." }),
@@ -36,6 +46,7 @@ const formSchema = z.object({
   location: z.string().optional(),
   countryCode: z.string().optional(),
   phoneNumber: z.string().optional(),
+  category: z.string({ required_error: "Please select a category." }),
 });
 
 export function RegistrationForm() {
@@ -148,6 +159,7 @@ export function RegistrationForm() {
         role: "User", // Default role for new sign-ups
         location: values.location,
         phoneNumber: values.countryCode && values.phoneNumber ? `${values.countryCode} ${values.phoneNumber}` : "",
+        category: values.category,
       };
 
       // Use non-blocking write
@@ -293,6 +305,38 @@ export function RegistrationForm() {
             )}
           />
         </div>
+        
+        <FormField
+          control={form.control}
+          name="category"
+          render={({ field }) => (
+            <FormItem>
+                <FormLabel>Category</FormLabel>
+                <FormControl>
+                    <div className="grid grid-cols-3 gap-2 text-center">
+                        {categories.map((category) => (
+                            <div 
+                                key={category.name} 
+                                className={cn(
+                                    "p-2 border rounded-lg flex flex-col items-center justify-center space-y-1 cursor-pointer transition-colors",
+                                    field.value === category.name 
+                                        ? "bg-accent/20 border-primary" 
+                                        : "hover:bg-accent/10 hover:border-accent"
+                                )}
+                                onClick={() => form.setValue('category', category.name, { shouldValidate: true })}
+                            >
+                                {category.icon}
+                                <span className="text-xs font-semibold">{category.name}</span>
+                            </div>
+                        ))}
+                    </div>
+                </FormControl>
+                <FormMessage />
+            </FormItem>
+          )}
+        />
+
+
         <FormField
           control={form.control}
           name="password"

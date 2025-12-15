@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -26,6 +27,7 @@ type ExpertUserProfile = {
     email: string;
     role: string;
     location?: string;
+    category?: string;
 };
 
 export default function ExpertDashboardPage() {
