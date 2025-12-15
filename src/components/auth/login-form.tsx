@@ -9,6 +9,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Building, Mail, Lock, LogIn, Eye, EyeOff } from "lucide-react";
 import { signInWithEmailAndPassword } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
 
 import { Button } from "@/components/ui/button";
 import {
@@ -21,7 +22,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth, useUser } from "@/firebase";
+import { useAuth, useUser, useFirestore } from "@/firebase";
 
 const formSchema = z.object({
   companyId: z.string().optional(),
@@ -36,6 +37,7 @@ export function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const auth = useAuth();
   const { user, isUserLoading } = useUser();
+  const firestore = useFirestore();
   const router = useRouter();
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -49,14 +51,26 @@ export function LoginForm() {
 
   useEffect(() => {
     if (!isUserLoading && user) {
-      router.push('/');
+      const checkAdminAndRedirect = async () => {
+        if (!firestore) return;
+        const superAdminDocRef = doc(firestore, 'roles_super_admin', user.uid);
+        const superAdminDoc = await getDoc(superAdminDocRef);
+        if (superAdminDoc.exists()) {
+          router.push('/admin');
+        } else {
+          router.push('/');
+        }
+      };
+
+      checkAdminAndRedirect();
     }
-  }, [user, isUserLoading, router]);
+  }, [user, isUserLoading, router, firestore]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
       await signInWithEmailAndPassword(auth, values.email, values.password);
-      // The onAuthStateChanged listener in the provider will handle the redirect.
+      // The onAuthStateChanged listener in the provider and the useEffect above
+      // will handle the redirect.
     } catch (error: any) {
       console.error("Login failed:", error);
       let errorMessage = "An unexpected error occurred. Please try again.";
