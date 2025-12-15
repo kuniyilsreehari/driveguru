@@ -9,7 +9,7 @@ import { useUser, useFirestore, useDoc, useMemoFirebase, useAuth, useCollection 
 import { deleteDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, CheckCircle2 } from 'lucide-react';
+import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, CheckCircle2, UserCheck, UserX } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
@@ -68,6 +68,9 @@ export default function AdminDashboardPage() {
   }, [firestore, isSuperAdmin]);
 
   const { data: users, isLoading: isUsersLoading } = useCollection<ExpertUser>(usersCollectionRef);
+
+  const verifiedCount = users?.filter(u => u.verified).length || 0;
+  const unverifiedCount = users?.filter(u => !u.verified).length || 0;
 
   useEffect(() => {
     // If auth is done loading and there's no user, redirect to login
@@ -165,6 +168,37 @@ export default function AdminDashboardPage() {
           </header>
 
           <main>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2 mb-8">
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">
+                    Verified Experts
+                  </CardTitle>
+                  <UserCheck className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{verifiedCount}</div>
+                  <p className="text-xs text-muted-foreground">
+                    Total number of verified experts
+                  </p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">
+                    Unverified Experts
+                  </CardTitle>
+                  <UserX className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{unverifiedCount}</div>
+                  <p className="text-xs text-muted-foreground">
+                    Experts pending verification
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+
             <Card>
               <CardHeader>
                 <div className="flex items-center gap-3">
