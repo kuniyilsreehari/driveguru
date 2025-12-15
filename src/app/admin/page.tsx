@@ -3,13 +3,16 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { doc } from 'firebase/firestore';
-import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
+import { signOut } from 'firebase/auth';
+import { useUser, useFirestore, useDoc, useMemoFirebase, useAuth } from '@/firebase';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Shield, Ban, Loader } from 'lucide-react';
+import { Shield, Ban, Loader, LogOut } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 export default function AdminDashboardPage() {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
+  const auth = useAuth();
   const router = useRouter();
 
   // Create a memoized reference to the user's role document
@@ -26,6 +29,10 @@ export default function AdminDashboardPage() {
       router.push('/login');
     }
   }, [user, isUserLoading, router]);
+
+  const handleLogout = () => {
+    signOut(auth);
+  };
 
   const isLoading = isUserLoading || isRoleLoading;
   const isSuperAdmin = superAdminData !== null;
@@ -60,25 +67,19 @@ export default function AdminDashboardPage() {
   return (
     <div className="min-h-screen bg-background p-8">
       <div className="mx-auto max-w-4xl">
-        <header className="flex items-center gap-4">
-          <Shield className="h-10 w-10 text-primary" />
-          <div>
-            <h1 className="text-4xl font-bold">Super Admin Dashboard</h1>
-            <p className="text-muted-foreground">Welcome, {user?.email || 'Admin'}.</p>
+        <header className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Shield className="h-10 w-10 text-primary" />
+            <div>
+              <h1 className="text-4xl font-bold">Super Admin</h1>
+              <p className="text-muted-foreground">Welcome, {user?.email || 'Admin'}.</p>
+            </div>
           </div>
+          <Button variant="outline" onClick={handleLogout}>
+            <LogOut className="mr-2 h-4 w-4" />
+            Log Out
+          </Button>
         </header>
-        <main className="mt-8">
-          <Card>
-            <CardHeader>
-              <CardTitle>System Overview</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">
-                This is a placeholder for your super admin dashboard content. You can add user management tables, system settings, and other administrative tools here.
-              </p>
-            </CardContent>
-          </Card>
-        </main>
       </div>
     </div>
   );
