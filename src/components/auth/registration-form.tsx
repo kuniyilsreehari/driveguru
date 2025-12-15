@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -53,7 +54,7 @@ export function RegistrationForm() {
 
   useEffect(() => {
     if (!isUserLoading && user) {
-      router.push('/');
+      router.push('/dashboard');
     }
   }, [user, isUserLoading, router]);
 

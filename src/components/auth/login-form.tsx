@@ -56,7 +56,7 @@ export function LoginForm() {
         if (superAdminDoc.exists()) {
           router.push('/admin');
         } else {
-          router.push('/');
+          router.push('/dashboard');
         }
       };
 

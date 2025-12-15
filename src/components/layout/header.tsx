@@ -1,10 +1,12 @@
+
 'use client';
 
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Icons } from '@/components/icons';
-import { useUser, useAuth } from '@/firebase';
-import { signOut } from 'firebase/auth';
+import { useUser, useAuth, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
+import { signOut, onAuthStateChanged } from 'firebase/auth';
+import { doc } from 'firebase/firestore';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,11 +18,31 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { User as UserIcon, LogOut, LayoutDashboard } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+
 
 export function Header() {
   const { user, isUserLoading } = useUser();
   const auth = useAuth();
+  const firestore = useFirestore();
   const router = useRouter();
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+  const [isCheckingAdmin, setIsCheckingAdmin] = useState(true);
+
+  useEffect(() => {
+    if (user) {
+      setIsCheckingAdmin(true);
+      const superAdminDocRef = doc(firestore, 'roles_super_admin', user.uid);
+      const unsub = onSnapshot(superAdminDocRef, (doc) => {
+        setIsSuperAdmin(doc.exists());
+        setIsCheckingAdmin(false);
+      });
+      return () => unsub();
+    } else if (!isUserLoading) {
+      setIsSuperAdmin(false);
+      setIsCheckingAdmin(false);
+    }
+  }, [user, isUserLoading, firestore]);
 
   const handleSignOut = async () => {
     await signOut(auth);
@@ -32,6 +54,8 @@ export function Header() {
     return email.substring(0, 2).toUpperCase();
   };
 
+  const dashboardPath = isSuperAdmin ? '/admin' : '/dashboard';
+
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-14 max-w-screen-2xl items-center">
@@ -41,7 +65,7 @@ export function Header() {
         </Link>
         <div className="flex flex-1 items-center justify-end space-x-4">
           <nav className="flex items-center space-x-2">
-            {isUserLoading ? null : user ? (
+            {isUserLoading || isCheckingAdmin ? null : user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="relative h-8 w-8 rounded-full">
@@ -59,7 +83,7 @@ export function Header() {
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => router.push('/admin')}>
+                  <DropdownMenuItem onClick={() => router.push(dashboardPath)}>
                     <LayoutDashboard className="mr-2 h-4 w-4" />
                     <span>Dashboard</span>
                   </DropdownMenuItem>
