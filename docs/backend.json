@@ -31,6 +31,10 @@
         "role": {
           "type": "string",
           "description": "The user's role within the application (e.g., Super Admin, Employer, User)."
+        },
+        "location": {
+          "type": "string",
+          "description": "The expert's physical location or service area."
         }
       },
       "required": [

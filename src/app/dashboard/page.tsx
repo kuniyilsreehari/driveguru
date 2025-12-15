@@ -25,6 +25,7 @@ type ExpertUserProfile = {
     lastName: string;
     email: string;
     role: string;
+    location?: string;
 };
 
 export default function ExpertDashboardPage() {

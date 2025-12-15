@@ -4,7 +4,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { User as UserIcon, Mail } from "lucide-react";
+import { User as UserIcon, Mail, MapPin } from "lucide-react";
 import { doc } from 'firebase/firestore';
 
 import { Button } from "@/components/ui/button";
@@ -24,6 +24,7 @@ import { updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 const formSchema = z.object({
   firstName: z.string().min(1, { message: "First name is required." }),
   lastName: z.string().min(1, { message: "Last name is required." }),
+  location: z.string().optional(),
 });
 
 type ExpertUserProfile = {
@@ -32,6 +33,7 @@ type ExpertUserProfile = {
     lastName: string;
     email: string;
     role: string;
+    location?: string;
 };
 
 interface EditProfileFormProps {
@@ -48,6 +50,7 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
     defaultValues: {
       firstName: userProfile.firstName || "",
       lastName: userProfile.lastName || "",
+      location: userProfile.location || "",
     },
   });
 
@@ -57,6 +60,7 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
     const updatedData = {
       firstName: values.firstName,
       lastName: values.lastName,
+      location: values.location,
     };
 
     updateDocumentNonBlocking(userDocRef, updatedData);
@@ -107,6 +111,23 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
             />
         </div>
         
+        <FormField
+          control={form.control}
+          name="location"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Location</FormLabel>
+              <div className="relative">
+                <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <FormControl>
+                  <Input placeholder="e.g. San Francisco, CA" {...field} className="pl-10" />
+                </FormControl>
+              </div>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
         <FormItem>
             <FormLabel>Email</FormLabel>
             <div className="relative">

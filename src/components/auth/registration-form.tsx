@@ -7,7 +7,7 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { User, Mail, Lock, LogIn, Eye, EyeOff, Briefcase } from "lucide-react";
+import { User, Mail, Lock, LogIn, Eye, EyeOff, Briefcase, MapPin } from "lucide-react";
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 
@@ -32,6 +32,7 @@ const formSchema = z.object({
   password: z
     .string()
     .min(8, { message: "Password must be at least 8 characters." }),
+  location: z.string().optional(),
 });
 
 export function RegistrationForm() {
@@ -49,6 +50,7 @@ export function RegistrationForm() {
       lastName: "",
       email: "",
       password: "",
+      location: "",
     },
   });
 
@@ -71,6 +73,7 @@ export function RegistrationForm() {
         lastName: values.lastName,
         email: values.email,
         role: "User", // Default role for new sign-ups
+        location: values.location,
       };
 
       // Use non-blocking write
@@ -148,6 +151,22 @@ export function RegistrationForm() {
                     {...field}
                     className="pl-10"
                   />
+                </FormControl>
+              </div>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="location"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Location</FormLabel>
+              <div className="relative">
+                <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <FormControl>
+                  <Input placeholder="e.g. San Francisco, CA" {...field} className="pl-10" />
                 </FormControl>
               </div>
               <FormMessage />
