@@ -33,13 +33,11 @@ function SearchResults() {
             q = query(q, where('category', '==', category));
         }
 
-        if (location) {
-             const locationLower = location.toLowerCase();
-             q = query(q, where('location', '>=', locationLower), where('location', '<=', locationLower + '\uf8ff'));
-        }
+        // The previous location query was not optimal for Firestore.
+        // We will filter by category and let the user see the location on the card.
 
         return q;
-    }, [firestore, location, category]);
+    }, [firestore, category]);
 
     const { data: experts, isLoading } = useCollection<ExpertUser>(usersCollectionRef);
 
@@ -63,13 +61,13 @@ function SearchResults() {
 
     const searchTitle = () => {
         if (location && category) {
-            return <>Searching for <span className="text-primary">{category}</span> experts in <span className="text-primary">{location}</span></>
+            return <>Showing <span className="text-primary">{category}</span> experts. Results visible for all locations.</>
         }
         if (location) {
-            return <>Searching for experts in <span className="text-primary">{location}</span></>
+            return <>Showing experts for all locations. You searched near <span className="text-primary">{location}</span>.</>
         }
         if (category) {
-            return <>Searching for <span className="text-primary">{category}</span> experts</>
+            return <>Showing all <span className="text-primary">{category}</span> experts</>
         }
         return "Showing all verified experts"
     }
