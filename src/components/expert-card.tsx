@@ -18,6 +18,8 @@ export type ExpertUser = {
     location?: string;
     role?: string;
     verified?: boolean;
+    hourlyRate?: number;
+    yearsOfExperience?: number;
 };
 
 interface ExpertCardProps {
@@ -73,8 +75,8 @@ export function ExpertCard({ expert }: ExpertCardProps) {
 
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm text-muted-foreground">
                             <div className="flex items-center gap-2"><MapPin className="h-4 w-4" /> {expert.location || 'N/A'}</div>
-                            <div className="flex items-center gap-2"><IndianRupee className="h-4 w-4" /> 500/hr</div>
-                            <div className="flex items-center gap-2"><Briefcase className="h-4 w-4" /> 15 years</div>
+                            <div className="flex items-center gap-2"><IndianRupee className="h-4 w-4" /> {expert.hourlyRate ? `${expert.hourlyRate}/hr` : 'N/A'}</div>
+                            <div className="flex items-center gap-2"><Briefcase className="h-4 w-4" /> {expert.yearsOfExperience ? `${expert.yearsOfExperience} years` : 'N/A'}</div>
                             <div className="flex items-center gap-2">
                                 <Badge variant="secondary">{expert.role}</Badge>
                             </div>

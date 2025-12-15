@@ -5,7 +5,7 @@ import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { User as UserIcon, Mail, MapPin, Phone, LocateIcon, Loader2, Wrench, Building, Smartphone, Laptop, Briefcase } from "lucide-react";
+import { User as UserIcon, Mail, MapPin, Phone, LocateIcon, Loader2, Wrench, Building, Smartphone, Laptop, Briefcase, IndianRupee, Calendar, Book, School, GraduationCap, Info } from "lucide-react";
 import { doc } from 'firebase/firestore';
 
 import { Button } from "@/components/ui/button";
@@ -24,6 +24,7 @@ import { updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Icons } from "../icons";
 import { cn } from "@/lib/utils";
+import { Textarea } from "@/components/ui/textarea";
 
 const categories = [
     { name: "MEDICAL HELP", icon: <Icons.medical className="w-8 h-8" /> },
@@ -48,6 +49,13 @@ const formSchema = z.object({
   category: z.string({ required_error: "Please select a category." }),
   role: z.string({ required_error: "Please select your expert type." }),
   companyName: z.string().optional(),
+  hourlyRate: z.coerce.number().min(0, "Hourly rate cannot be negative.").optional(),
+  yearsOfExperience: z.coerce.number().min(0, "Years of experience cannot be negative.").optional(),
+  gender: z.string().optional(),
+  qualification: z.string().optional(),
+  collegeName: z.string().optional(),
+  skills: z.string().optional(),
+  aboutMe: z.string().optional(),
 });
 
 type ExpertUserProfile = {
@@ -60,6 +68,13 @@ type ExpertUserProfile = {
     phoneNumber?: string;
     category?: string;
     companyName?: string;
+    hourlyRate?: number;
+    yearsOfExperience?: number;
+    gender?: string;
+    qualification?: string;
+    collegeName?: string;
+    skills?: string;
+    aboutMe?: string;
 };
 
 interface EditProfileFormProps {
@@ -101,6 +116,13 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
       category: userProfile.category || "",
       role: userProfile.role || "",
       companyName: userProfile.companyName || "",
+      hourlyRate: userProfile.hourlyRate || 0,
+      yearsOfExperience: userProfile.yearsOfExperience || 0,
+      gender: userProfile.gender || "",
+      qualification: userProfile.qualification || "",
+      collegeName: userProfile.collegeName || "",
+      skills: userProfile.skills || "",
+      aboutMe: userProfile.aboutMe || "",
     },
   });
 
@@ -177,13 +199,8 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
     const userDocRef = doc(firestore, "users", userProfile.id);
     
     const updatedData = {
-      firstName: values.firstName,
-      lastName: values.lastName,
-      location: values.location,
+      ...values,
       phoneNumber: values.countryCode && values.phoneNumber ? `${values.countryCode} ${values.phoneNumber}` : "",
-      category: values.category,
-      role: values.role,
-      companyName: values.companyName,
     };
 
     updateDocumentNonBlocking(userDocRef, updatedData);
@@ -344,6 +361,135 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
           />
         </div>
 
+        <div className="grid grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="hourlyRate"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Hourly Rate (INR)</FormLabel>
+                  <div className="relative">
+                    <IndianRupee className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <FormControl>
+                      <Input type="number" placeholder="500" {...field} className="pl-10" />
+                    </FormControl>
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="yearsOfExperience"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Years of Experience</FormLabel>
+                  <div className="relative">
+                    <Calendar className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <FormControl>
+                      <Input type="number" placeholder="5" {...field} className="pl-10" />
+                    </FormControl>
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+        </div>
+
+        <FormField
+          control={form.control}
+          name="gender"
+          render={({ field }) => (
+            <FormItem>
+                <FormLabel>Gender</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select your gender" />
+                        </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                        <SelectItem value="Male">Male</SelectItem>
+                        <SelectItem value="Female">Female</SelectItem>
+                        <SelectItem value="Other">Other</SelectItem>
+                        <SelectItem value="Prefer not to say">Prefer not to say</SelectItem>
+                    </SelectContent>
+                </Select>
+                <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <div className="grid grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="qualification"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Qualification</FormLabel>
+                  <div className="relative">
+                    <GraduationCap className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <FormControl>
+                      <Input placeholder="e.g. B.Tech in CS" {...field} className="pl-10" />
+                    </FormControl>
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="collegeName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>College Name (Optional)</FormLabel>
+                  <div className="relative">
+                    <School className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <FormControl>
+                      <Input placeholder="e.g. IIT Bombay" {...field} className="pl-10" />
+                    </FormControl>
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+        </div>
+        
+        <FormField
+          control={form.control}
+          name="skills"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Skills</FormLabel>
+              <div className="relative">
+                <Book className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <FormControl>
+                  <Input placeholder="e.g. React, Node.js, Firestore" {...field} className="pl-10" />
+                </FormControl>
+              </div>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        
+        <FormField
+          control={form.control}
+          name="aboutMe"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>About Me</FormLabel>
+              <div className="relative">
+                <Info className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <FormControl>
+                  <Textarea placeholder="Tell us a little bit about yourself" {...field} className="pl-10" />
+                </FormControl>
+              </div>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+
         <FormField
           control={form.control}
           name="category"
@@ -351,7 +497,7 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
             <FormItem>
                 <FormLabel>Category</FormLabel>
                 <FormControl>
-                    <div className="grid grid-cols-3 gap-2 text-center">
+                    <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 text-center">
                         {categories.map((category) => (
                             <div 
                                 key={category.name} 

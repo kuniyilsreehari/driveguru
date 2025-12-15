@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "User": {
@@ -57,6 +58,35 @@
         "verified": {
           "type": "boolean",
           "description": "Indicates if the expert has been verified by a super admin."
+        },
+        "hourlyRate": {
+          "type": "number",
+          "description": "The expert's hourly rate."
+        },
+        "yearsOfExperience": {
+          "type": "number",
+          "description": "The expert's years of professional experience."
+        },
+        "gender": {
+          "type": "string",
+          "description": "The expert's gender.",
+          "enum": ["Male", "Female", "Other", "Prefer not to say"]
+        },
+        "qualification": {
+          "type": "string",
+          "description": "The expert's highest qualification."
+        },
+        "collegeName": {
+          "type": "string",
+          "description": "The name of the college or university the expert attended."
+        },
+        "skills": {
+          "type": "string",
+          "description": "A comma-separated list of the expert's skills."
+        },
+        "aboutMe": {
+          "type": "string",
+          "description": "A brief biography about the expert."
         }
       },
       "required": [
