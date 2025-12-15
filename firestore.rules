@@ -132,8 +132,7 @@ service cloud.firestore {
      */
     match /roles_super_admin/{userId} {
       allow get: if isOwner(userId);
-      allow list: if isSuperAdmin();
-      allow create, update, delete: if isSuperAdmin();
+      allow list, create, update, delete: if isSuperAdmin();
     }
     
     /**
@@ -146,7 +145,7 @@ service cloud.firestore {
      */
     match /reviews/{reviewId} {
       allow get: if resource.data.status == 'approved' || isSuperAdmin();
-      allow list: if isSuperAdmin();
+      allow list: if request.query.where.status == 'approved' || isSuperAdmin();
       allow create: if isSignedIn();
       allow update, delete: if isSuperAdmin();
     }
