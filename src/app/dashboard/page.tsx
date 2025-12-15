@@ -23,6 +23,7 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 type ExpertUserProfile = {
     id: string;
@@ -30,6 +31,7 @@ type ExpertUserProfile = {
     lastName: string;
     email: string;
     role: string;
+    photoUrl?: string;
     location?: string;
     category?: string;
     verified?: boolean;
@@ -72,6 +74,13 @@ export default function ExpertDashboardPage() {
     }
   };
 
+  const getInitials = (firstName?: string, lastName?: string) => {
+    if (firstName && lastName) {
+      return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
+    }
+    return 'U';
+  };
+
   const calculateProfileCompletion = (profile: ExpertUserProfile | null): number => {
     if (!profile) return 0;
 
@@ -84,7 +93,8 @@ export default function ExpertDashboardPage() {
         profile.gender,
         profile.qualification,
         profile.skills,
-        profile.aboutMe
+        profile.aboutMe,
+        profile.photoUrl,
     ];
     
     // College name is optional but counts
@@ -126,7 +136,10 @@ export default function ExpertDashboardPage() {
             <CardHeader>
                 <div className="flex items-center justify-between">
                     <div className="flex items-start gap-4">
-                        <Briefcase className="h-10 w-10 text-primary" />
+                        <Avatar className="h-24 w-24 text-3xl">
+                          <AvatarImage src={userProfile.photoUrl} alt={`${userProfile.firstName} ${userProfile.lastName}`} />
+                          <AvatarFallback>{getInitials(userProfile.firstName, userProfile.lastName)}</AvatarFallback>
+                        </Avatar>
                         <div>
                             <CardTitle className="text-4xl font-bold">Expert Dashboard</CardTitle>
                             <CardDescription>Welcome, {userProfile.firstName} {userProfile.lastName}.</CardDescription>

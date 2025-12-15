@@ -5,7 +5,7 @@ import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { User as UserIcon, Mail, MapPin, Phone, LocateIcon, Loader2, Wrench, Building, Smartphone, Laptop, Briefcase, IndianRupee, Calendar, Book, School, GraduationCap, Info, Sparkles } from "lucide-react";
+import { User as UserIcon, Mail, MapPin, Phone, LocateIcon, Loader2, Wrench, Building, Smartphone, Laptop, Briefcase, IndianRupee, Calendar, Book, School, GraduationCap, Info, Sparkles, Image as ImageIcon } from "lucide-react";
 import { doc } from 'firebase/firestore';
 
 import { Button } from "@/components/ui/button";
@@ -45,6 +45,7 @@ const expertTypes = [
 const formSchema = z.object({
   firstName: z.string().min(1, { message: "First name is required." }),
   lastName: z.string().min(1, { message: "Last name is required." }),
+  photoUrl: z.string().url({ message: "Please enter a valid URL." }).optional().or(z.literal('')),
   location: z.string().optional(),
   countryCode: z.string().optional(),
   phoneNumber: z.string().optional(),
@@ -66,6 +67,7 @@ type ExpertUserProfile = {
     lastName: string;
     email: string;
     role: string;
+    photoUrl?: string;
     location?: string;
     phoneNumber?: string;
     category?: string;
@@ -114,6 +116,7 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
     defaultValues: {
       firstName: userProfile.firstName || "",
       lastName: userProfile.lastName || "",
+      photoUrl: userProfile.photoUrl || "",
       location: userProfile.location || "",
       countryCode: countryCode,
       phoneNumber: phoneNumber,
@@ -371,6 +374,23 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
               )}
             />
         </div>
+
+        <FormField
+          control={form.control}
+          name="photoUrl"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Photo URL</FormLabel>
+              <div className="relative">
+                <ImageIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <FormControl>
+                  <Input placeholder="https://example.com/your-photo.jpg" {...field} className="pl-10" />
+                </FormControl>
+              </div>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
         
         <div className="grid grid-cols-2 gap-4">
             <FormItem>

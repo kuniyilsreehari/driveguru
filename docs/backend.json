@@ -87,6 +87,11 @@
         "aboutMe": {
           "type": "string",
           "description": "A brief biography about the expert."
+        },
+        "photoUrl": {
+          "type": "string",
+          "description": "URL of the user's profile photo.",
+          "format": "uri"
         }
       },
       "required": [

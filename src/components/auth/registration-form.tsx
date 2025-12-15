@@ -173,6 +173,7 @@ export function RegistrationForm() {
         category: values.category,
         companyName: values.companyName,
         verified: false, // Default verified status to false
+        photoUrl: '', // Default photoUrl to empty string
       };
 
       // Use non-blocking write
