@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -206,7 +207,7 @@ export default function AdminDashboardPage() {
                                 <div className='flex items-center justify-center space-x-2'>
                                     <Switch 
                                         id={`verified-switch-${expert.id}`}
-                                        checked={expert.verified}
+                                        checked={expert.verified || false}
                                         onCheckedChange={() => handleVerificationToggle(expert)}
                                     />
                                     {expert.verified ? <CheckCircle2 className="h-5 w-5 text-green-500" /> : <Ban className="h-5 w-5 text-destructive" />}
