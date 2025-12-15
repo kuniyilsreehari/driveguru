@@ -47,9 +47,16 @@ export default function TalentSearchPage() {
                     const address = data.address;
                     const city = address.city || address.town || address.village || address.hamlet;
                     const state = address.state;
+                    const postcode = address.postcode;
 
-                    if (city && state) {
-                        const detectedLocation = `${city}, ${state}`;
+                    let detectedLocation = '';
+                    if (city && state && postcode) {
+                        detectedLocation = `${city}, ${state}, ${postcode}`;
+                    } else if (city && state) {
+                        detectedLocation = `${city}, ${state}`;
+                    }
+
+                    if (detectedLocation) {
                         setLocation(detectedLocation);
                         toast({
                             title: 'Location Detected',
@@ -59,7 +66,7 @@ export default function TalentSearchPage() {
                         setLocation(`${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
                          toast({
                             title: 'Coordinates Set',
-                            description: 'We could not find a city and state for your coordinates.',
+                            description: 'We could not find a city, state and pincode for your coordinates.',
                         });
                     }
                 } catch (apiError) {
