@@ -304,41 +304,44 @@ export function RegistrationForm() {
           )}
         />
         <div className="grid grid-cols-2 gap-4">
-          <FormItem>
-             <FormLabel>Phone Number</FormLabel>
-             <div className="flex items-center gap-2">
-                <FormField
+          <FormField
+            control={form.control}
+            name="phoneNumber"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Phone Number</FormLabel>
+                <div className="flex items-center gap-2">
+                  <FormField
                     control={form.control}
                     name="countryCode"
-                    render={({ field }) => (
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                                <SelectTrigger className="w-[80px]">
-                                    <SelectValue placeholder="Code" />
-                                </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                                <SelectItem value="+91">IN</SelectItem>
-                                <SelectItem value="+1">USA</SelectItem>
-                                <SelectItem value="+44">UK</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    )}
-                />
-                <FormField
-                  control={form.control}
-                  name="phoneNumber"
-                  render={({ field }) => (
-                      <div className="relative flex-grow">
+                    render={({ field: countryCodeField }) => (
+                      <Select
+                        onValueChange={countryCodeField.onChange}
+                        defaultValue={countryCodeField.value}
+                      >
                         <FormControl>
-                          <Input placeholder="555 123 4567" {...field} />
+                          <SelectTrigger className="w-[80px]">
+                            <SelectValue placeholder="Code" />
+                          </SelectTrigger>
                         </FormControl>
-                      </div>
-                  )}
-                />
-             </div>
-             <FormMessage />
-          </FormItem>
+                        <SelectContent>
+                          <SelectItem value="+91">IN</SelectItem>
+                          <SelectItem value="+1">USA</SelectItem>
+                          <SelectItem value="+44">UK</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                  <div className="relative flex-grow">
+                    <FormControl>
+                      <Input placeholder="555 123 4567" {...field} />
+                    </FormControl>
+                  </div>
+                </div>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
            <FormField
             control={form.control}
             name="location"
