@@ -113,14 +113,16 @@ service cloud.firestore {
 
     /**
      * @description Controls access to Super Admin role assignments. Only existing Super
-     * Admins can view or manage who has administrative privileges.
+     * Admins can view or manage who has administrative privileges. A user can check their own
+     * role.
      * @path /roles_super_admin/{userId}
-     * @allow (get) An existing Super Admin reading another admin's role document.
+     * @allow (get) An authenticated user reading their own role document.
      * @deny (create) A non-admin user attempting to grant themselves Super Admin rights.
      * @principle Enforces role-based access for managing administrative privileges.
      */
     match /roles_super_admin/{userId} {
-      allow get, list: if isSuperAdmin();
+      allow get: if isOwner(userId);
+      allow list: if isSuperAdmin();
       allow create, update, delete: if isSuperAdmin();
     }
 
