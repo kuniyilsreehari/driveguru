@@ -147,31 +147,31 @@ export default function ExpertDashboardPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
                     <div className="flex items-center gap-3">
                         <UserIcon className="h-5 w-5 text-muted-foreground" />
-                        <p><span className="font-semibold">Gender:</span> {userProfile.gender || 'Not specified'}</p>
+                        <p><span className="font-semibold">Gender:</span> {userProfile.gender || <span className="text-destructive">Not specified</span>}</p>
                     </div>
                      <div className="flex items-center gap-3">
                         <IndianRupee className="h-5 w-5 text-muted-foreground" />
-                        <p><span className="font-semibold">Hourly Rate:</span> {userProfile.hourlyRate ? `₹${userProfile.hourlyRate}/hr` : 'Not specified'}</p>
+                        <p><span className="font-semibold">Hourly Rate:</span> {userProfile.hourlyRate ? `₹${userProfile.hourlyRate}/hr` : <span className="text-destructive">Not specified</span>}</p>
                     </div>
                     <div className="flex items-center gap-3">
                         <Calendar className="h-5 w-5 text-muted-foreground" />
-                        <p><span className="font-semibold">Experience:</span> {userProfile.yearsOfExperience ? `${userProfile.yearsOfExperience} years` : 'Not specified'}</p>
+                        <p><span className="font-semibold">Experience:</span> {userProfile.yearsOfExperience ? `${userProfile.yearsOfExperience} years` : <span className="text-destructive">Not specified</span>}</p>
                     </div>
                     <div className="flex items-center gap-3">
                         <MapPin className="h-5 w-5 text-muted-foreground" />
-                        <p><span className="font-semibold">Location:</span> {userProfile.location || 'Not specified'}</p>
+                        <p><span className="font-semibold">Location:</span> {userProfile.location || <span className="text-destructive">Not specified</span>}</p>
                     </div>
                      <div className="flex items-center gap-3">
                         <Briefcase className="h-5 w-5 text-muted-foreground" />
-                        <p><span className="font-semibold">Category:</span> {userProfile.category || 'Not specified'}</p>
+                        <p><span className="font-semibold">Category:</span> {userProfile.category || <span className="text-destructive">Not specified</span>}</p>
                     </div>
                     <div className="flex items-center gap-3">
                         <GraduationCap className="h-5 w-5 text-muted-foreground" />
-                        <p><span className="font-semibold">Qualification:</span> {userProfile.qualification || 'Not specified'}</p>
+                        <p><span className="font-semibold">Qualification:</span> {userProfile.qualification || <span className="text-destructive">Not specified</span>}</p>
                     </div>
                     <div className="flex items-center gap-3">
                         <School className="h-5 w-5 text-muted-foreground" />
-                        <p><span className="font-semibold">College:</span> {userProfile.collegeName || 'Not specified'}</p>
+                        <p><span className="font-semibold">College:</span> {userProfile.collegeName || <span className="text-destructive">Not specified</span>}</p>
                     </div>
                 </div>
                 <Separator className="my-6" />
@@ -181,12 +181,12 @@ export default function ExpertDashboardPage() {
                         <div className="flex flex-wrap gap-2">
                             {userProfile.skills ? userProfile.skills.split(',').map((skill, index) => (
                                 <Badge key={index} variant="secondary">{skill.trim()}</Badge>
-                            )) : <p className="text-muted-foreground text-sm">No skills specified.</p>}
+                            )) : <p className="text-sm text-destructive">No skills specified.</p>}
                         </div>
                     </div>
                      <div>
                         <h4 className="font-semibold flex items-center gap-2 mb-2"><Info className="h-5 w-5" /> About Me</h4>
-                        <p className="text-muted-foreground text-sm">{userProfile.aboutMe || 'No information provided.'}</p>
+                        <p className="text-muted-foreground text-sm">{userProfile.aboutMe || <span className="text-destructive">No information provided.</span>}</p>
                     </div>
                 </div>
             </CardContent>
