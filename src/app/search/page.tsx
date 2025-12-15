@@ -33,12 +33,9 @@ function SearchResults() {
             q = query(q, where('category', '==', category));
         }
 
-        // The location search is tricky with Firestore. A simple inequality doesn't work for "contains".
-        // This is a common workaround for "starts with" search, case-sensitively.
-        // For a true "contains" or full-text search, a more advanced solution like Algolia/Elasticsearch is needed.
-        // We will keep it simple for now.
         if (location) {
-             q = query(q, where('location', '>=', location), where('location', '<=', location + '\uf8ff'));
+             const locationLower = location.toLowerCase();
+             q = query(q, where('location', '>=', locationLower), where('location', '<=', locationLower + '\uf8ff'));
         }
 
         return q;
@@ -66,13 +63,13 @@ function SearchResults() {
 
     const searchTitle = () => {
         if (location && category) {
-            return <>Searching for <span className="text-primary">{category}s</span> in <span className="text-primary">{location}</span></>
+            return <>Searching for <span className="text-primary">{category}</span> experts in <span className="text-primary">{location}</span></>
         }
         if (location) {
             return <>Searching for experts in <span className="text-primary">{location}</span></>
         }
         if (category) {
-            return <>Searching for <span className="text-primary">{category}s</span></>
+            return <>Searching for <span className="text-primary">{category}</span> experts</>
         }
         return "Showing all verified experts"
     }
@@ -88,7 +85,6 @@ function SearchResults() {
             {experts.map(expert => (
                 <ExpertCard key={expert.id} expert={expert} />
             ))}
-             <p className="text-center text-muted-foreground mt-8">Available in: kozhikode - Kerala</p>
         </div>
     );
 }
