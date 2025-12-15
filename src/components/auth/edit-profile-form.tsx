@@ -21,11 +21,13 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useFirestore } from "@/firebase";
 import { updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const formSchema = z.object({
   firstName: z.string().min(1, { message: "First name is required." }),
   lastName: z.string().min(1, { message: "Last name is required." }),
   location: z.string().optional(),
+  countryCode: z.string().optional(),
   phoneNumber: z.string().optional(),
 });
 
@@ -49,13 +51,32 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
   const firestore = useFirestore();
   const [isDetecting, setIsDetecting] = useState(false);
 
+  const extractPhoneNumberParts = (fullNumber?: string) => {
+    if (!fullNumber) return { countryCode: "+91", phoneNumber: "" };
+
+    const parts = fullNumber.split(' ');
+    if (parts.length > 1 && parts[0].startsWith('+')) {
+      const countryCode = parts[0];
+      const phoneNumber = parts.slice(1).join(' ');
+      if (['+91', '+1', '+44'].includes(countryCode)) {
+        return { countryCode, phoneNumber };
+      }
+    }
+    
+    // Fallback if format is unexpected
+    return { countryCode: "+91", phoneNumber: fullNumber };
+  }
+
+  const { countryCode, phoneNumber } = extractPhoneNumberParts(userProfile.phoneNumber);
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       firstName: userProfile.firstName || "",
       lastName: userProfile.lastName || "",
       location: userProfile.location || "",
-      phoneNumber: userProfile.phoneNumber || "",
+      countryCode: countryCode,
+      phoneNumber: phoneNumber,
     },
   });
 
@@ -133,7 +154,7 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
       firstName: values.firstName,
       lastName: values.lastName,
       location: values.location,
-      phoneNumber: values.phoneNumber,
+      phoneNumber: values.countryCode && values.phoneNumber ? `${values.countryCode} ${values.phoneNumber}` : "",
     };
 
     updateDocumentNonBlocking(userDocRef, updatedData);
@@ -185,22 +206,41 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
         </div>
         
         <div className="grid grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="phoneNumber"
-            render={({ field }) => (
-              <FormItem>
+            <FormItem>
                 <FormLabel>Phone Number</FormLabel>
-                <div className="relative">
-                  <Phone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <FormControl>
-                    <Input placeholder="+1 555 123 4567" {...field} className="pl-10" />
-                  </FormControl>
+                <div className="flex items-center gap-2">
+                    <FormField
+                        control={form.control}
+                        name="countryCode"
+                        render={({ field }) => (
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <FormControl>
+                                    <SelectTrigger className="w-[80px]">
+                                        <SelectValue placeholder="Code" />
+                                    </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                    <SelectItem value="+91">IN</SelectItem>
+                                    <SelectItem value="+1">USA</SelectItem>
+                                    <SelectItem value="+44">UK</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        )}
+                    />
+                    <FormField
+                    control={form.control}
+                    name="phoneNumber"
+                    render={({ field }) => (
+                        <div className="relative flex-grow">
+                            <FormControl>
+                                <Input placeholder="555 123 4567" {...field} />
+                            </FormControl>
+                        </div>
+                    )}
+                    />
                 </div>
                 <FormMessage />
-              </FormItem>
-            )}
-          />
+            </FormItem>
           <FormField
             control={form.control}
             name="location"

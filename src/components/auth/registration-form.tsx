@@ -9,7 +9,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { User, Mail, Lock, LogIn, Eye, EyeOff, Briefcase, MapPin, Phone, LocateIcon, Loader2 } from "lucide-react";
 import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc } from 'firebase/firestore';
 
 import { Button } from "@/components/ui/button";
 import {
@@ -24,6 +24,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth, useUser, useFirestore } from "@/firebase";
 import { setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const formSchema = z.object({
   firstName: z.string().min(1, { message: "First name is required." }),
@@ -33,6 +34,7 @@ const formSchema = z.object({
     .string()
     .min(8, { message: "Password must be at least 8 characters." }),
   location: z.string().optional(),
+  countryCode: z.string().optional(),
   phoneNumber: z.string().optional(),
 });
 
@@ -53,6 +55,7 @@ export function RegistrationForm() {
       email: "",
       password: "",
       location: "",
+      countryCode: "+91",
       phoneNumber: "",
     },
   });
@@ -144,7 +147,7 @@ export function RegistrationForm() {
         email: values.email,
         role: "User", // Default role for new sign-ups
         location: values.location,
-        phoneNumber: values.phoneNumber,
+        phoneNumber: values.countryCode && values.phoneNumber ? `${values.countryCode} ${values.phoneNumber}` : "",
       };
 
       // Use non-blocking write
@@ -229,22 +232,41 @@ export function RegistrationForm() {
           )}
         />
         <div className="grid grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="phoneNumber"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Phone Number</FormLabel>
-                <div className="relative">
-                  <Phone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <FormControl>
-                    <Input placeholder="+1 555 123 4567" {...field} className="pl-10" />
-                  </FormControl>
-                </div>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <FormItem>
+             <FormLabel>Phone Number</FormLabel>
+             <div className="flex items-center gap-2">
+                <FormField
+                    control={form.control}
+                    name="countryCode"
+                    render={({ field }) => (
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                                <SelectTrigger className="w-[80px]">
+                                    <SelectValue placeholder="Code" />
+                                </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                                <SelectItem value="+91">IN</SelectItem>
+                                <SelectItem value="+1">USA</SelectItem>
+                                <SelectItem value="+44">UK</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    )}
+                />
+                <FormField
+                  control={form.control}
+                  name="phoneNumber"
+                  render={({ field }) => (
+                      <div className="relative flex-grow">
+                        <FormControl>
+                          <Input placeholder="555 123 4567" {...field} />
+                        </FormControl>
+                      </div>
+                  )}
+                />
+             </div>
+             <FormMessage />
+          </FormItem>
            <FormField
             control={form.control}
             name="location"
@@ -258,7 +280,7 @@ export function RegistrationForm() {
                         <Input placeholder="e.g. San Francisco, CA" {...field} className="pl-10" />
                       </FormControl>
                     </div>
-                     <Button type="button" variant="outline" onClick={handleDetectLocation} disabled={isDetecting}>
+                     <Button type="button" variant="outline" size="icon" onClick={handleDetectLocation} disabled={isDetecting}>
                         {isDetecting ? (
                             <Loader2 className="h-4 w-4 animate-spin" />
                         ) : (
