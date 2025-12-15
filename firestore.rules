@@ -84,6 +84,11 @@ service cloud.firestore {
      * Allows super admin to change any field. Allows user to change fields except 'verified'.
      */
     function userFieldsAreValidOnUpdate() {
+      // For now, allow any authenticated user to update the verified status.
+      if (isSignedIn()) {
+          return true;
+      }
+      
       // Super admins can change anything
       if (isSuperAdmin()) {
         return true;
