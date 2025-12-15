@@ -3,7 +3,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Briefcase, Building, ChevronDown, Laptop, LocateIcon, MapPin, Search, Smartphone, Wrench, Loader2 } from "lucide-react"
+import { Briefcase, Building, ChevronDown, Laptop, LocateIcon, MapPin, Search, Smartphone, Wrench, Loader2, Star, UserCheck, Crown, Sparkles } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
@@ -14,6 +14,11 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Icons } from "@/components/icons"
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { collection, query, limit } from 'firebase/firestore';
+import { ExpertCard } from '@/components/expert-card';
+import type { ExpertUser } from '@/components/expert-card';
+
 
 const categories = [
     { name: "MEDICAL HELP", icon: <Icons.medical className="w-8 h-8" /> },
@@ -29,6 +34,15 @@ export default function TalentSearchPage() {
     const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
     const { toast } = useToast();
     const router = useRouter();
+    const firestore = useFirestore();
+
+    const expertsQuery = useMemoFirebase(() => {
+        if (!firestore) return null;
+        return query(collection(firestore, 'users'), limit(3));
+    }, [firestore]);
+
+    const { data: experts, isLoading: isLoadingExperts } = useCollection<ExpertUser>(expertsQuery);
+
 
     const handleDetectLocation = () => {
         if (!navigator.geolocation) {
@@ -203,6 +217,22 @@ export default function TalentSearchPage() {
                             </Button>
                         </CardContent>
                     </Card>
+
+                     <div className="mt-12">
+                        <h2 className="text-3xl font-bold text-center mb-8">Featured Experts</h2>
+                        {isLoadingExperts ? (
+                             <div className="flex justify-center items-center p-8">
+                                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                                <p className="ml-3 text-muted-foreground">Loading experts...</p>
+                            </div>
+                        ) : (
+                            <div className="space-y-6">
+                                {experts && experts.map(expert => (
+                                    <ExpertCard key={expert.id} expert={expert} />
+                                ))}
+                            </div>
+                        )}
+                    </div>
                 </main>
             </div>
         </div>
