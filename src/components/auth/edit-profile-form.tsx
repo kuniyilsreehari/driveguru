@@ -279,21 +279,49 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      if (file.size > 1024 * 1024) { // 1MB limit
-        toast({
-          variant: "destructive",
-          title: "Image too large",
-          description: "Please upload an image smaller than 1MB.",
-        });
-        return;
-      }
       const reader = new FileReader();
-      reader.onloadend = () => {
-        form.setValue('photoUrl', reader.result as string, { shouldValidate: true });
+      reader.onload = (e) => {
+        const img = document.createElement('img');
+        img.onload = () => {
+          let dataUrl: string;
+          if (file.size > 1024 * 1024) { // 1MB limit
+            const canvas = document.createElement('canvas');
+            const MAX_WIDTH = 800;
+            const MAX_HEIGHT = 800;
+            let width = img.width;
+            let height = img.height;
+
+            if (width > height) {
+              if (width > MAX_WIDTH) {
+                height *= MAX_WIDTH / width;
+                width = MAX_WIDTH;
+              }
+            } else {
+              if (height > MAX_HEIGHT) {
+                width *= MAX_HEIGHT / height;
+                height = MAX_HEIGHT;
+              }
+            }
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx?.drawImage(img, 0, 0, width, height);
+            dataUrl = canvas.toDataURL(file.type);
+            toast({
+              title: "Image Resized",
+              description: "The image was too large and has been automatically resized.",
+            });
+          } else {
+            dataUrl = img.src;
+          }
+          form.setValue('photoUrl', dataUrl, { shouldValidate: true });
+        };
+        img.src = e.target?.result as string;
       };
       reader.readAsDataURL(file);
     }
   };
+
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     const userDocRef = doc(firestore, "users", userProfile.id);
