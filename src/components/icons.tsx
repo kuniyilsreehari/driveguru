@@ -36,4 +36,16 @@ export const Icons = {
         />
     </svg>
   ),
+  medical: (props: SVGProps<SVGSVGElement>) => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8z"/><path d="M12 8v4l-2 2"/></svg>
+  ),
+  graduate: (props: SVGProps<SVGSVGElement>) => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <path d="M21.42 10.922a1 1 0 0 0-.019-1.838L12.5 5.162a1 1 0 0 0-.998 0L2.599 9.084a1 1 0 0 0-.019 1.838l8.481 3.923a1 1 0 0 0 .998 0l8.481-3.923z"/>
+      <path d="M12 14.24V22"/>
+      <path d="M12 22a2.5 2.5 0 0 0 2.5-2.5V14.24"/>
+      <path d="M12 22a2.5 2.5 0 0 1-2.5-2.5V14.24"/>
+      <path d="M4 11.76V16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4.24"/>
+    </svg>
+  )
 };
