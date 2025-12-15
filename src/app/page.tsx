@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -11,6 +12,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent } from "@/components/ui/card"
 import { Icons } from "@/components/icons"
 import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 
 const categories = [
     { name: "MEDICAL HELP", icon: <Icons.medical className="w-8 h-8" /> },
@@ -23,6 +25,7 @@ const categories = [
 export default function TalentSearchPage() {
     const [location, setLocation] = useState('');
     const [isDetecting, setIsDetecting] = useState(false);
+    const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
     const { toast } = useToast();
 
     const handleDetectLocation = () => {
@@ -149,7 +152,16 @@ export default function TalentSearchPage() {
 
                             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 mt-4 text-center">
                                 {categories.map((category) => (
-                                    <div key={category.name} className="p-4 border rounded-lg flex flex-col items-center justify-center space-y-2 hover:bg-accent/10 hover:border-accent cursor-pointer transition-colors">
+                                    <div 
+                                        key={category.name} 
+                                        className={cn(
+                                            "p-4 border rounded-lg flex flex-col items-center justify-center space-y-2 cursor-pointer transition-colors",
+                                            selectedCategory === category.name 
+                                                ? "bg-accent/20 border-primary" 
+                                                : "hover:bg-accent/10 hover:border-accent"
+                                        )}
+                                        onClick={() => setSelectedCategory(category.name)}
+                                    >
                                         {category.icon}
                                         <span className="text-xs font-semibold">{category.name}</span>
                                     </div>
