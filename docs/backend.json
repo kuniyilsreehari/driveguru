@@ -35,6 +35,10 @@
         "location": {
           "type": "string",
           "description": "The expert's physical location or service area."
+        },
+        "phoneNumber": {
+          "type": "string",
+          "description": "The user's mobile number, including country code."
         }
       },
       "required": [
