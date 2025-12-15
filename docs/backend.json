@@ -30,7 +30,13 @@
         },
         "role": {
           "type": "string",
-          "description": "The user's role within the application (e.g., Super Admin, Employer, User)."
+          "description": "The user's role within the application.",
+          "enum": [
+            "Super Admin",
+            "Freelancer",
+            "Company",
+            "Authorized Pro"
+          ]
         },
         "location": {
           "type": "string",

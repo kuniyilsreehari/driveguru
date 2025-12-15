@@ -5,7 +5,7 @@ import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { User as UserIcon, Mail, MapPin, Phone, LocateIcon, Loader2, Wrench, Building, Smartphone, Laptop } from "lucide-react";
+import { User as UserIcon, Mail, MapPin, Phone, LocateIcon, Loader2, Wrench, Building, Smartphone, Laptop, Briefcase } from "lucide-react";
 import { doc } from 'firebase/firestore';
 
 import { Button } from "@/components/ui/button";
@@ -33,6 +33,12 @@ const categories = [
     { name: "LAPTOP SERVICE", icon: <Laptop className="w-8 h-8" /> },
 ];
 
+const expertTypes = [
+    { name: "Freelancer", icon: <UserIcon className="w-8 h-8" /> },
+    { name: "Company", icon: <Building className="w-8 h-8" /> },
+    { name: "Authorized Pro", icon: <Briefcase className="w-8 h-8" /> },
+]
+
 const formSchema = z.object({
   firstName: z.string().min(1, { message: "First name is required." }),
   lastName: z.string().min(1, { message: "Last name is required." }),
@@ -40,6 +46,7 @@ const formSchema = z.object({
   countryCode: z.string().optional(),
   phoneNumber: z.string().optional(),
   category: z.string({ required_error: "Please select a category." }),
+  role: z.string({ required_error: "Please select your expert type." }),
 });
 
 type ExpertUserProfile = {
@@ -90,6 +97,7 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
       countryCode: countryCode,
       phoneNumber: phoneNumber,
       category: userProfile.category || "",
+      role: userProfile.role || "",
     },
   });
 
@@ -169,6 +177,7 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
       location: values.location,
       phoneNumber: values.countryCode && values.phoneNumber ? `${values.countryCode} ${values.phoneNumber}` : "",
       category: values.category,
+      role: values.role,
     };
 
     updateDocumentNonBlocking(userDocRef, updatedData);
@@ -184,6 +193,35 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <FormField
+          control={form.control}
+          name="role"
+          render={({ field }) => (
+            <FormItem>
+                <FormLabel>Are you an individual or representing a company?</FormLabel>
+                <FormControl>
+                    <div className="grid grid-cols-3 gap-2 text-center">
+                        {expertTypes.map((type) => (
+                            <div 
+                                key={type.name} 
+                                className={cn(
+                                    "p-2 border rounded-lg flex flex-col items-center justify-center space-y-1 cursor-pointer transition-colors h-24",
+                                    field.value === type.name 
+                                        ? "bg-accent/20 border-primary" 
+                                        : "hover:bg-accent/10 hover:border-accent"
+                                )}
+                                onClick={() => form.setValue('role', type.name, { shouldValidate: true })}
+                            >
+                                {type.icon}
+                                <span className="text-xs font-semibold">{type.name}</span>
+                            </div>
+                        ))}
+                    </div>
+                </FormControl>
+                <FormMessage />
+            </FormItem>
+          )}
+        />
         <div className="grid grid-cols-2 gap-4">
             <FormField
               control={form.control}

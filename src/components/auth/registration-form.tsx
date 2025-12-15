@@ -7,7 +7,7 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { User, Mail, Lock, LogIn, Eye, EyeOff, Briefcase, MapPin, Phone, LocateIcon, Loader2, Wrench, Building, Smartphone, Laptop } from "lucide-react";
+import { User as UserIcon, Mail, Lock, LogIn, Eye, EyeOff, Briefcase, MapPin, Phone, LocateIcon, Loader2, Wrench, Building, Smartphone, Laptop } from "lucide-react";
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc } from 'firebase/firestore';
 
@@ -36,6 +36,12 @@ const categories = [
     { name: "LAPTOP SERVICE", icon: <Laptop className="w-8 h-8" /> },
 ];
 
+const expertTypes = [
+    { name: "Freelancer", icon: <UserIcon className="w-8 h-8" /> },
+    { name: "Company", icon: <Building className="w-8 h-8" /> },
+    { name: "Authorized Pro", icon: <Briefcase className="w-8 h-8" /> },
+]
+
 const formSchema = z.object({
   firstName: z.string().min(1, { message: "First name is required." }),
   lastName: z.string().min(1, { message: "Last name is required." }),
@@ -47,6 +53,7 @@ const formSchema = z.object({
   countryCode: z.string().optional(),
   phoneNumber: z.string().optional(),
   category: z.string({ required_error: "Please select a category." }),
+  role: z.string({ required_error: "Please select your expert type." }),
 });
 
 export function RegistrationForm() {
@@ -156,7 +163,7 @@ export function RegistrationForm() {
         firstName: values.firstName,
         lastName: values.lastName,
         email: values.email,
-        role: "User", // Default role for new sign-ups
+        role: values.role,
         location: values.location,
         phoneNumber: values.countryCode && values.phoneNumber ? `${values.countryCode} ${values.phoneNumber}` : "",
         category: values.category,
@@ -188,6 +195,35 @@ export function RegistrationForm() {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <FormField
+          control={form.control}
+          name="role"
+          render={({ field }) => (
+            <FormItem>
+                <FormLabel>Are you an individual or representing a company?</FormLabel>
+                <FormControl>
+                    <div className="grid grid-cols-3 gap-2 text-center">
+                        {expertTypes.map((type) => (
+                            <div 
+                                key={type.name} 
+                                className={cn(
+                                    "p-2 border rounded-lg flex flex-col items-center justify-center space-y-1 cursor-pointer transition-colors h-24",
+                                    field.value === type.name 
+                                        ? "bg-accent/20 border-primary" 
+                                        : "hover:bg-accent/10 hover:border-accent"
+                                )}
+                                onClick={() => form.setValue('role', type.name, { shouldValidate: true })}
+                            >
+                                {type.icon}
+                                <span className="text-xs font-semibold">{type.name}</span>
+                            </div>
+                        ))}
+                    </div>
+                </FormControl>
+                <FormMessage />
+            </FormItem>
+          )}
+        />
         <div className="grid grid-cols-2 gap-4">
             <FormField
               control={form.control}
@@ -196,7 +232,7 @@ export function RegistrationForm() {
                 <FormItem>
                   <FormLabel>First Name</FormLabel>
                   <div className="relative">
-                    <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <UserIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <FormControl>
                       <Input placeholder="John" {...field} className="pl-10" />
                     </FormControl>
@@ -212,7 +248,7 @@ export function RegistrationForm() {
                 <FormItem>
                   <FormLabel>Last Name</FormLabel>
                   <div className="relative">
-                    <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <UserIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <FormControl>
                       <Input placeholder="Doe" {...field} className="pl-10" />
                     </FormControl>
