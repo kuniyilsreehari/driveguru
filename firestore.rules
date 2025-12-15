@@ -81,9 +81,19 @@ service cloud.firestore {
 
     /**
      * Validates that critical, immutable fields of a user document are not changed on update.
+     * Allows super admin to change any field. Allows user to change fields except 'verified'.
      */
-    function userFieldsAreImmutable() {
-      return request.resource.data.id == resource.data.id;
+    function userFieldsAreValidOnUpdate() {
+      // Super admins can change anything
+      if (isSuperAdmin()) {
+        return true;
+      }
+      // Regular users can update their own doc, but cannot change the 'verified' status
+      let isVerifiedUnchanged = true;
+      if (request.resource.data.keys().hasAny(['verified'])) {
+        isVerifiedUnchanged = request.resource.data.verified == resource.data.verified;
+      }
+      return request.resource.data.id == resource.data.id && isVerifiedUnchanged;
     }
     
     /**
@@ -149,13 +159,13 @@ service cloud.firestore {
      * @path /users/{userId}
      * @allow (create) A new user creating their own user document upon signup.
      * @allow (get, list) Any user (authenticated or not) can read profiles for search.
-     * @deny (update) A user trying to modify another user's profile unless they are an owner.
+     * @deny (update) A user trying to modify another user's profile unless they are an owner or super admin.
      * @principle Enforces user self-service for profiles while allowing admin oversight and public search.
      */
     match /users/{userId} {
       allow get, list: if true;
       allow create: if isCreatingOwnUserDoc(userId);
-      allow update: if isExistingOwner(userId) && userFieldsAreImmutable();
+      allow update: if (isExistingOwner(userId) && userFieldsAreValidOnUpdate()) || isSuperAdmin();
       allow delete: if (isOwner(userId) || isSuperAdmin()) && isExistingDoc();
 
       /**

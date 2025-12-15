@@ -53,6 +53,10 @@
         "category": {
           "type": "string",
           "description": "The service category the expert belongs to."
+        },
+        "verified": {
+          "type": "boolean",
+          "description": "Indicates if the expert has been verified by a super admin."
         }
       },
       "required": [

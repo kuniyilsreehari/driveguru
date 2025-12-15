@@ -22,6 +22,7 @@ type ExpertUser = {
     category?: string;
     location?: string;
     role?: string;
+    verified?: boolean;
 };
 
 function SearchResults() {
@@ -36,7 +37,7 @@ function SearchResults() {
         if (!firestore) return null;
         
         const baseQuery = collection(firestore, 'users');
-        const queries = [];
+        const queries = [where('verified', '==', true)];
         
         if (category) {
             queries.push(where('category', '==', category));
@@ -50,7 +51,7 @@ function SearchResults() {
             return query(baseQuery, ...queries);
         }
         
-        return baseQuery;
+        return query(baseQuery, where('verified', '==', true));
     }, [firestore, location, category]);
 
     const { data: experts, isLoading } = useCollection<ExpertUser>(usersCollectionRef);
@@ -76,7 +77,7 @@ function SearchResults() {
         return (
             <div className="flex h-64 w-full items-center justify-center">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                <p className="ml-4 text-muted-foreground">Searching for experts...</p>
+                <p className="ml-4 text-muted-foreground">Searching for verified experts...</p>
             </div>
         );
     }
@@ -84,8 +85,8 @@ function SearchResults() {
     if (!experts || experts.length === 0) {
         return (
             <div className="text-center py-16">
-                <h2 className="text-2xl font-semibold">No Experts Found</h2>
-                <p className="text-muted-foreground mt-2">Try adjusting your search filters.</p>
+                <h2 className="text-2xl font-semibold">No Verified Experts Found</h2>
+                <p className="text-muted-foreground mt-2">Try adjusting your search filters or check back later.</p>
             </div>
         );
     }
@@ -112,7 +113,7 @@ function SearchResults() {
                                     <div>
                                         <div className="flex items-center gap-2 mb-1">
                                             <h3 className="text-2xl font-bold">{getDisplayName(expert)}</h3>
-                                            <UserCheck className="h-5 w-5 text-green-500" />
+                                            {expert.verified && <UserCheck className="h-5 w-5 text-green-500" />}
                                             <Badge variant="outline" className="border-purple-500 text-purple-500"><Crown className="mr-1 h-3 w-3" /> Premier</Badge>
                                             <Badge variant="outline" className="border-blue-500 text-blue-500"><Sparkles className="mr-1 h-3 w-3" /> Super Premier</Badge>
                                         </div>

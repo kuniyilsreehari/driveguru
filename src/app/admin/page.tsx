@@ -2,13 +2,13 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { collection, doc, deleteDoc } from 'firebase/firestore';
+import { collection, doc, deleteDoc, updateDoc } from 'firebase/firestore';
 import { signOut } from 'firebase/auth';
 import { useUser, useFirestore, useDoc, useMemoFirebase, useAuth, useCollection } from '@/firebase';
-import { deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { deleteDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit } from 'lucide-react';
+import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
@@ -28,6 +28,8 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 
 // Define the User type based on your Firestore structure
 type ExpertUser = {
@@ -35,6 +37,7 @@ type ExpertUser = {
     firstName?: string;
     lastName?: string;
     email?: string;
+    verified?: boolean;
     // Add other fields from your user document as needed
 };
 
@@ -93,6 +96,17 @@ export default function AdminDashboardPage() {
     });
     setIsDeleteDialogOpen(false);
     setSelectedUser(null);
+  }
+
+  const handleVerificationToggle = (expert: ExpertUser) => {
+    if (!firestore) return;
+    const userDocRef = doc(firestore, 'users', expert.id);
+    const newVerifiedStatus = !expert.verified;
+    updateDocumentNonBlocking(userDocRef, { verified: newVerifiedStatus });
+    toast({
+        title: `Expert ${newVerifiedStatus ? 'Verified' : 'Unverified'}`,
+        description: `${expert.firstName} ${expert.lastName} is now ${newVerifiedStatus ? 'verified' : 'unverified'}.`
+    });
   }
 
   const getInitials = (firstName?: string, lastName?: string) => {
@@ -173,6 +187,7 @@ export default function AdminDashboardPage() {
                         <TableHead className="w-[80px]">Avatar</TableHead>
                         <TableHead>Full Name</TableHead>
                         <TableHead>Email</TableHead>
+                        <TableHead className="text-center">Verified</TableHead>
                         <TableHead className="text-right">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -187,6 +202,16 @@ export default function AdminDashboardPage() {
                             </TableCell>
                             <TableCell className="font-medium">{expert.firstName} {expert.lastName}</TableCell>
                             <TableCell>{expert.email}</TableCell>
+                            <TableCell className="text-center">
+                                <div className='flex items-center justify-center space-x-2'>
+                                    <Switch 
+                                        id={`verified-switch-${expert.id}`}
+                                        checked={expert.verified}
+                                        onCheckedChange={() => handleVerificationToggle(expert)}
+                                    />
+                                    {expert.verified ? <CheckCircle2 className="h-5 w-5 text-green-500" /> : <Ban className="h-5 w-5 text-destructive" />}
+                                </div>
+                            </TableCell>
                             <TableCell className="text-right">
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
@@ -211,7 +236,7 @@ export default function AdminDashboardPage() {
                         ))
                       ) : (
                         <TableRow>
-                          <TableCell colSpan={4} className="text-center text-muted-foreground h-24">
+                          <TableCell colSpan={5} className="text-center text-muted-foreground h-24">
                             No experts found.
                           </TableCell>
                         </TableRow>

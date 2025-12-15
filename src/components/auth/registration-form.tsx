@@ -172,6 +172,7 @@ export function RegistrationForm() {
         phoneNumber: values.countryCode && values.phoneNumber ? `${values.countryCode} ${values.phoneNumber}` : "",
         category: values.category,
         companyName: values.companyName,
+        verified: false, // Default verified status to false
       };
 
       // Use non-blocking write
