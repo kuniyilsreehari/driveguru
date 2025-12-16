@@ -16,7 +16,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { User as UserIcon, LogOut, LayoutDashboard, MessageSquare, Home, Award } from 'lucide-react';
+import { User as UserIcon, LogOut, LayoutDashboard, MessageSquare, Home, Award, Briefcase } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
@@ -81,6 +81,12 @@ export function Header() {
                   Home
                 </Link>
               </Button>
+              <Button asChild variant="ghost">
+                <Link href="/vacancies">
+                    <Briefcase className="mr-2 h-4 w-4" />
+                    Vacancies
+                </Link>
+              </Button>
                <Button asChild variant="ghost">
                 <Link href="/featured-experts">
                   <Award className="mr-2 h-4 w-4" />
@@ -116,6 +122,12 @@ export function Header() {
                 Home
               </Link>
             </Button>
+             <Button asChild variant="ghost">
+                <Link href="/vacancies">
+                    <Briefcase className="mr-2 h-4 w-4" />
+                    Vacancies
+                </Link>
+              </Button>
             <Button asChild variant="ghost">
                 <Link href="/featured-experts">
                   <Award className="mr-2 h-4 w-4" />

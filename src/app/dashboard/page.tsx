@@ -4,10 +4,10 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { signOut } from 'firebase/auth';
-import { doc } from 'firebase/firestore';
-import { useUser, useAuth, useFirestore, useDoc, useMemoFirebase, updateDocumentNonBlocking } from '@/firebase';
+import { doc, collection, query, where } from 'firebase/firestore';
+import { useUser, useAuth, useFirestore, useDoc, useCollection, useMemoFirebase, updateDocumentNonBlocking } from '@/firebase';
 import { Button } from '@/components/ui/button';
-import { LogOut, Briefcase, Loader, Edit, UserCheck, XCircle, MapPin, IndianRupee, Calendar, Book, GraduationCap, School, Info, User as UserIcon, Check, Power, Building } from 'lucide-react';
+import { LogOut, Briefcase, Loader, Edit, UserCheck, XCircle, MapPin, IndianRupee, Calendar, Book, GraduationCap, School, Info, User as UserIcon, Check, Power, Building, PlusCircle } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import {
   Dialog,
@@ -19,6 +19,7 @@ import {
   DialogFooter
 } from '@/components/ui/dialog';
 import { EditProfileForm } from '@/components/auth/edit-profile-form';
+import { PostVacancyForm } from '@/components/auth/post-vacancy-form';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
@@ -27,6 +28,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
+import type { Vacancy } from '@/app/vacancies/page';
+import Link from 'next/link';
 
 type ExpertUserProfile = {
     id: string;
@@ -48,7 +51,78 @@ type ExpertUserProfile = {
     companyName?: string;
     department?: string;
     isAvailable?: boolean;
+    companyId?: string;
 };
+
+function CompanyVacancies({ userProfile }: { userProfile: ExpertUserProfile }) {
+  const firestore = useFirestore();
+  const [isPostDialogOpen, setIsPostDialogOpen] = useState(false);
+
+  const vacanciesQuery = useMemoFirebase(() => {
+    if (!firestore || !userProfile.companyId) return null;
+    return query(collection(firestore, 'vacancies'), where('companyId', '==', userProfile.companyId));
+  }, [firestore, userProfile.companyId]);
+
+  const { data: vacancies, isLoading } = useCollection<Vacancy>(vacanciesQuery);
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle>Manage Vacancies</CardTitle>
+            <CardDescription>Post and view job openings for your company.</CardDescription>
+          </div>
+           <Dialog open={isPostDialogOpen} onOpenChange={setIsPostDialogOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Post New Vacancy
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[600px]">
+              <DialogHeader>
+                <DialogTitle>Create a New Vacancy</DialogTitle>
+                <DialogDescription>Fill out the details below to post a new job opening.</DialogDescription>
+              </DialogHeader>
+              <PostVacancyForm
+                companyId={userProfile.companyId!}
+                companyName={userProfile.companyName!}
+                onSuccess={() => setIsPostDialogOpen(false)}
+              />
+            </DialogContent>
+          </Dialog>
+        </div>
+      </CardHeader>
+      <CardContent>
+        {isLoading ? (
+          <div className="flex items-center justify-center p-8">
+            <Loader className="h-6 w-6 animate-spin" />
+          </div>
+        ) : vacancies && vacancies.length > 0 ? (
+          <div className="space-y-4">
+            {vacancies.map((vacancy) => (
+              <div key={vacancy.id} className="p-4 border rounded-lg flex justify-between items-center">
+                <div>
+                  <h4 className="font-semibold">{vacancy.title}</h4>
+                  <p className="text-sm text-muted-foreground">{vacancy.location} &middot; {vacancy.employmentType}</p>
+                </div>
+                <Button variant="outline" size="sm" asChild>
+                  <Link href={`/vacancies#${vacancy.id}`}>View</Link>
+                </Button>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center p-8 border-2 border-dashed rounded-lg">
+            <p className="text-muted-foreground">You haven&apos;t posted any vacancies yet.</p>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 
 export default function ExpertDashboardPage() {
   const { user, isUserLoading } = useUser();
@@ -58,7 +132,6 @@ export default function ExpertDashboardPage() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const { toast } = useToast();
 
-  // Fetch the user's profile from Firestore
   const userDocRef = useMemoFirebase(() => {
     if (!user) return null;
     return doc(firestore, 'users', user.uid);
@@ -67,7 +140,6 @@ export default function ExpertDashboardPage() {
   const { data: userProfile, isLoading: isProfileLoading } = useDoc<ExpertUserProfile>(userDocRef);
 
   useEffect(() => {
-    // If auth is done loading and there's no user, redirect to login
     if (!isUserLoading && !user) {
       router.push('/login');
     }
@@ -110,10 +182,8 @@ export default function ExpertDashboardPage() {
         profile.photoUrl,
     ];
     
-    // College name is optional but counts
     if (profile.collegeName) fields.push(profile.collegeName);
     
-    // Company/department fields are conditional
     if (profile.role === 'Company' || profile.role === 'Authorized Pro') {
         fields.push(profile.companyName);
         fields.push(profile.department);
@@ -139,13 +209,12 @@ export default function ExpertDashboardPage() {
   }
 
   if (!user || !userProfile) {
-    // This will be shown briefly before the redirect in useEffect kicks in
     return null;
   }
 
   return (
     <div className="min-h-screen bg-background p-4 sm:p-8">
-      <div className="mx-auto max-w-4xl">
+      <div className="mx-auto max-w-4xl space-y-8">
         <Card>
             <CardHeader>
                 <div className="flex items-center justify-between">
@@ -282,6 +351,9 @@ export default function ExpertDashboardPage() {
                 </p>
             </CardFooter>
         </Card>
+        
+        {userProfile.role === 'Company' && <CompanyVacancies userProfile={userProfile} />}
+
       </div>
     </div>
   );
