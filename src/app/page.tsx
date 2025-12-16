@@ -66,13 +66,11 @@ export default function TalentSearchPage() {
                     const address = data.address;
                     const place = address.city || address.town || address.village || address.hamlet;
                     const state = address.state;
-                    const pin = address.postcode;
 
                     let detectedLocationParts = [];
                     if (state) detectedLocationParts.push(state);
                     if (place) detectedLocationParts.push(place);
-                    if (pin) detectedLocationParts.push(pin);
-
+                    
                     let detectedLocation = detectedLocationParts.join(', ');
 
                     if (detectedLocation) {
@@ -86,7 +84,7 @@ export default function TalentSearchPage() {
                         setLocation(coords);
                          toast({
                             title: 'Coordinates Set',
-                            description: `We could not find a place, state, or postcode for your coordinates. Using lat/lon instead.`,
+                            description: `We could not find a place or state for your coordinates. Using lat/lon instead.`,
                         });
                     }
                 } catch (apiError) {
@@ -165,6 +163,7 @@ export default function TalentSearchPage() {
                                     <Tabs defaultValue="experts" className="mt-2">
                                         <TabsList className="grid w-full grid-cols-2">
                                             <TabsTrigger value="experts"><Briefcase className="mr-2" />Experts</TabsTrigger>
+
                                             <TabsTrigger value="freshers"><Icons.graduate className="mr-2" />Freshers</TabsTrigger>
                                         </TabsList>
                                     </Tabs>
