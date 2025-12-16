@@ -145,8 +145,8 @@ service cloud.firestore {
      * @allow (update, delete) Only Super Admins can modify or delete reviews.
      */
     match /reviews/{reviewId} {
-      allow get: if isSuperAdmin() || resource.data.status == 'approved';
-      allow list: if isSignedIn();
+      allow get: if resource.data.status == 'approved' || isSuperAdmin();
+      allow list: if true; // Allow anyone to query the reviews collection
       allow create: if isSignedIn();
       allow update, delete: if isSuperAdmin();
     }

@@ -2,7 +2,7 @@
 
 import { Suspense } from 'react';
 import Link from 'next/link';
-import { collection, query, where } from 'firebase/firestore';
+import { collection, query, where, orderBy } from 'firebase/firestore';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -26,7 +26,11 @@ function ReviewsList() {
 
     const reviewsQuery = useMemoFirebase(() => {
         if (!firestore) return null;
-        return query(collection(firestore, 'reviews'), where('status', '==', 'approved'));
+        return query(
+            collection(firestore, 'reviews'), 
+            where('status', '==', 'approved'),
+            orderBy('createdAt', 'desc')
+        );
     }, [firestore]);
 
     const { data: reviews, isLoading } = useCollection<Review>(reviewsQuery);
@@ -56,7 +60,9 @@ function ReviewsList() {
                     <CardHeader>
                         <div className="flex justify-between items-start">
                             <div>
-                                <CardTitle className="text-xl">{review.expertName}</CardTitle>
+                                <CardTitle className="text-xl hover:underline">
+                                    <Link href={`/expert/${review.expertId}`}>{review.expertName}</Link>
+                                </CardTitle>
                                 <CardDescription>Reviewed by {review.reviewerName}</CardDescription>
                             </div>
                             <div className="flex items-center gap-1">
@@ -73,7 +79,7 @@ function ReviewsList() {
                         <p className="text-muted-foreground mb-4">&quot;{review.comment}&quot;</p>
                         <div className="flex justify-between items-center text-xs text-muted-foreground">
                             <span>{formatDistanceToNow(new Date(review.createdAt.seconds * 1000), { addSuffix: true })}</span>
-                            <Badge variant="default">Approved</Badge>
+                            <Badge variant="secondary">Approved</Badge>
                         </div>
                     </CardContent>
                 </Card>

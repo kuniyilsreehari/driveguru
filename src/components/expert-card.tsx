@@ -164,9 +164,11 @@ export function ExpertCard({ expert }: ExpertCardProps) {
                                 <Separator className="my-4" />
 
                                 <div className="flex flex-wrap items-center gap-2" onClick={(e) => e.stopPropagation()}>
-                                    <CollapsibleTrigger asChild>
-                                        <Button variant="outline"><Edit2 className="mr-2 h-4 w-4" />Leave a Review</Button>
-                                    </CollapsibleTrigger>
+                                    {user && (
+                                        <CollapsibleTrigger asChild>
+                                            <Button variant="outline"><Edit2 className="mr-2 h-4 w-4" />Leave a Review</Button>
+                                        </CollapsibleTrigger>
+                                    )}
                                     <div className="flex-grow"></div>
                                     <Button variant="secondary"><Calendar className="mr-2 h-4 w-4" /> Book</Button>
                                     <Button className="bg-orange-500 hover:bg-orange-600"><Phone className="mr-2 h-4 w-4" /> Call</Button>
