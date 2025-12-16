@@ -68,12 +68,12 @@ export default function TalentSearchPage() {
                     const state = address.state;
                     const postcode = address.postcode;
 
-                    let detectedLocation = '';
-                    if (city && state && postcode) {
-                        detectedLocation = `${city}, ${state}, ${postcode}`;
-                    } else if (city && state) {
-                        detectedLocation = `${city}, ${state}`;
-                    }
+                    let detectedLocationParts = [];
+                    if (city) detectedLocationParts.push(city);
+                    if (state) detectedLocationParts.push(state);
+                    if (postcode) detectedLocationParts.push(postcode);
+
+                    let detectedLocation = detectedLocationParts.join(', ');
 
                     if (detectedLocation) {
                         setLocation(detectedLocation);
@@ -82,14 +82,16 @@ export default function TalentSearchPage() {
                             description: `Your location has been set to ${detectedLocation}.`,
                         });
                     } else {
-                        setLocation(`${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
+                        const coords = `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
+                        setLocation(coords);
                          toast({
                             title: 'Coordinates Set',
-                            description: 'We could not find a city, state, or postcode for your coordinates.',
+                            description: `We could not find a city, state, or postcode for your coordinates. Using lat/lon instead.`,
                         });
                     }
                 } catch (apiError) {
-                    setLocation(`${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
+                    const coords = `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
+                    setLocation(coords);
                     toast({
                         variant: 'destructive',
                         title: 'Could not fetch location name.',
@@ -134,7 +136,7 @@ export default function TalentSearchPage() {
                 <main>
                     <Card className="p-6 sm:p-8">
                         <CardContent className="p-0">
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
                                     <Label htmlFor="location">Location</Label>
                                     <div className="flex items-center gap-2 mt-2">
