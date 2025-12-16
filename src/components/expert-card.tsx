@@ -118,8 +118,8 @@ export function ExpertCard({ expert }: ExpertCardProps) {
     return (
         <Collapsible open={isReviewOpen} onOpenChange={setIsReviewOpen}>
              <Card key={expert.id} className="overflow-hidden transition-all hover:shadow-lg hover:border-primary/50">
-                <div className="block cursor-pointer">
-                    <CardContent className="p-4 md:p-6" onClick={() => { if(!isReviewOpen) { window.location.href = `/expert/${expert.id}`; } }}>
+                <Link href={`/expert/${expert.id}`} className="block cursor-pointer">
+                    <CardContent className="p-4 md:p-6">
                         <div className="grid grid-cols-1 md:grid-cols-[auto_1fr] gap-6">
                             <div className="flex flex-col items-center space-y-4">
                                 <Avatar className="h-24 w-24 text-4xl">
@@ -179,18 +179,18 @@ export function ExpertCard({ expert }: ExpertCardProps) {
                                         </CollapsibleTrigger>
                                     )}
                                     <div className="flex-grow"></div>
-                                    <Button variant="secondary"><Calendar className="mr-2 h-4 w-4" /> Book</Button>
+                                    <Button variant="secondary" onClick={(e) => { e.preventDefault(); toast({ title: 'Booking coming soon!' }); }}><Calendar className="mr-2 h-4 w-4" /> Book</Button>
                                     <Button asChild className="bg-orange-500 hover:bg-orange-600" disabled={!formattedPhoneNumber}>
-                                        <a href={`tel:${formattedPhoneNumber}`}><Phone className="mr-2 h-4 w-4" /> Call</a>
+                                        <a href={`tel:${formattedPhoneNumber}`} onClick={(e) => e.stopPropagation()}><Phone className="mr-2 h-4 w-4" /> Call</a>
                                     </Button>
                                     <Button asChild className="bg-green-500 hover:bg-green-600" disabled={!formattedPhoneNumber}>
-                                        <a href={`https://wa.me/${formattedPhoneNumber}`} target="_blank" rel="noopener noreferrer"><MessageCircle className="mr-2 h-4 w-4" /> WhatsApp</a>
+                                        <a href={`https://wa.me/${formattedPhoneNumber}`} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}><MessageCircle className="mr-2 h-4 w-4" /> WhatsApp</a>
                                     </Button>
                                 </div>
                             </div>
                         </div>
                     </CardContent>
-                </div>
+                </Link>
                 <CollapsibleContent>
                     <div className="p-6 bg-card-foreground/5 dark:bg-card-foreground/10 border-t" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center gap-3 mb-4">
