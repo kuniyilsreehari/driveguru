@@ -12,19 +12,19 @@
  * - /companies/{companyId}: A top-level collection for company data.
  * - /roles_super_admin/{userId}: An authorization-specific collection. The existence of a
  *   document here grants a user Super Admin privileges across the application.
- * - /reviews/{reviewId}: A collection for expert reviews, moderated by Super Admains.
+ * - /reviews/{reviewId}: A collection for expert reviews, moderated by Super Admins.
  *
  * Key Security Decisions:
- * - Super Admin Role: A user is considered a Super Admin if a document with their UID exists
+ * - Super Admin Role: A user is a Super Admin if a document with their UID exists
  *   in the /roles_super_admin collection. This role grants read/write access to the /users,
  *   /companies, and /reviews collections. This avoids costly lookups on user documents for role checks.
- * - User Privacy: Regular users can only read their own profile and create their own location
- *   data. They cannot list other users or access another user's private subcollections.
+ * - User Privacy: Users can only read/update their own profile and create their own location
+ *   data. They cannot list other users or access another user's private subcollections unless public.
  * - Location Data: This data is considered highly sensitive and is secured using a path-based
  *   ownership model. Only the user specified in the path can access their location data. Super
  *   Admins are explicitly denied access to maintain user privacy.
  * - Immutable Ownership: Relational fields critical for authorization, such as a user's own ID
- *   within their document, are enforced as immutable on creation to prevent ownership hijacking.
+ *   within their document, are enforced as immutable to prevent ownership hijacking.
  * - Default Deny: All paths not explicitly matched are denied access by default.
  */
 rules_version = '2';
@@ -51,13 +51,6 @@ service cloud.firestore {
     }
     
     /**
-     * Checks if a document currently exists. Used for safe updates and deletes.
-     */
-    function isExistingDoc() {
-      return resource != null;
-    }
-
-    /**
      * Checks if the requesting user is a Super Admin by checking for the
      * existence of their UID in the roles_super_admin collection.
      * This is a performant way to manage global roles.
@@ -66,13 +59,6 @@ service cloud.firestore {
       return isSignedIn() && exists(/databases/$(database)/documents/roles_super_admin/$(request.auth.uid));
     }
 
-    /**
-     * Verifies that the user owns the existing resource. Used for update/delete.
-     */
-    function isExistingOwner(userId) {
-      return isOwner(userId) && isExistingDoc();
-    }
-    
     /**
      * Validates that the user ID in a new user document matches the document ID.
      * Enforces relational integrity on creation.
@@ -83,18 +69,20 @@ service cloud.firestore {
 
     /**
      * Validates that critical, immutable fields of a user document are not changed on update.
-     * Allows user to change fields except 'verified'. A Super Admin can change any field.
+     * A regular user cannot change their ID or their verification status.
+     * A Super Admin can change any field except the user ID.
      */
     function userFieldsAreValidOnUpdate() {
-        // Immutable fields for all users
-        let isBaseValid = request.resource.data.id == resource.data.id;
+        let isIdImmutable = request.resource.data.id == resource.data.id;
         
-        // Non-admin users cannot change their 'verified' status.
+        // Non-admin users cannot change their 'verified' status. This rule is safer
+        // as it checks the existing value if it's present, and denies if it's being added.
         if (!isSuperAdmin()) {
-            return isBaseValid && (!('verified' in request.resource.data) || request.resource.data.verified == resource.data.verified);
+            let isVerifiedUnchanged = !('verified' in request.resource.data) || request.resource.data.verified == resource.data.verified;
+            return isIdImmutable && isVerifiedUnchanged;
         }
         
-        return isBaseValid;
+        return isIdImmutable;
     }
     
     /**
@@ -112,17 +100,13 @@ service cloud.firestore {
     }
 
     /**
-     * Checks if a user belongs to a specific company by reading their user profile.
-     */
-    function isMemberOfCompany(companyId) {
-      return isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.companyId == companyId;
-    }
-    
-    /**
-     * Validates that the reviewer ID on a new review matches the authenticated user's ID.
+     * Validates that a new review is being created by the authenticated user
+     * and that its initial status is 'pending'.
      */
     function isCreatingOwnReview() {
-      return isSignedIn() && request.resource.data.reviewerId == request.auth.uid;
+      return isSignedIn() && 
+             request.resource.data.reviewerId == request.auth.uid &&
+             request.resource.data.status == 'pending';
     }
 
     // --------------------------------------------------------------------------------
@@ -131,12 +115,7 @@ service cloud.firestore {
 
     /**
      * @description Controls access to Super Admin role assignments. Only existing Super
-     * Admins can view or manage who has administrative privileges. A user can check their own
-     * role.
-     * @path /roles_super_admin/{userId}
-     * @allow (get) An authenticated user reading their own role document.
-     * @deny (create) A non-admin user attempting to grant themselves Super Admin rights.
-     * @principle Enforces role-based access for managing administrative privileges.
+     * Admins can manage administrative privileges. A user can check their own role.
      */
     match /roles_super_admin/{userId} {
       allow get: if isOwner(userId);
@@ -144,63 +123,41 @@ service cloud.firestore {
     }
     
     /**
-     * @description Controls access to reviews. Any signed-in user can create a review. 
-     * Super Admins can moderate all reviews. Anyone can read approved reviews.
-     * @path /reviews/{reviewId}
-     * @allow (list, get) Anyone can read reviews for public display.
-     * @allow (create) Any authenticated user can submit a review, as long as they own it.
-     * @allow (update, delete) Only Super Admins can modify or delete reviews.
+     * @description Controls access to reviews. Anyone can read approved reviews.
+     * Authenticated users can create their own reviews (which start as 'pending').
+     * Super Admins can moderate (update/delete) all reviews.
      */
     match /reviews/{reviewId} {
       allow list, get: if true;
-      allow create: if isSignedIn() && isCreatingOwnReview();
+      allow create: if isCreatingOwnReview();
       allow update, delete: if isSuperAdmin();
     }
 
     /**
-     * @description Defines access rules for company profiles. Super Admins have full control,
-     * while regular signed-in users can only read the details of their own company.
-     * @path /companies/{companyId}
-     * @allow (get) if isSuperAdmin() || isMemberOfCompany(companyId);
-     * @allow list: if isSuperAdmin();
-     * @allow create: if isSuperAdmin();
-     * @allow update: if isSuperAdmin() && isExistingDoc();
-     * @allow delete: if isSuperAdmin() && isExistingDoc();
+     * @description Defines access rules for company profiles. Only Super Admins have
+     * full read and write control.
      */
      match /companies/{companyId} {
-      allow get, list: if isSuperAdmin();
-      allow create, update, delete: if isSuperAdmin();
+      allow get, list, create, update, delete: if isSuperAdmin();
     }
 
     /**
-     * @description Manages access to user profile documents. Users can create and update their
-     * own profile. Super Admins can read any profile and delete accounts. Public search is allowed.
-     * @path /users/{userId}
-     * @allow (create) A new user creating their own user document upon signup.
-     * @allow (get, list) Any user (authenticated or not) can read profiles for search.
-     * @deny (update) A user trying to modify another user's profile unless they are an owner or super admin.
-     * @principle Enforces user self-service for profiles while allowing admin oversight and public search.
+     * @description Manages access to user profile documents. Anyone can read profiles.
+     * Users can create and securely update their own profile. Super Admins have broad
+     * management capabilities.
      */
     match /users/{userId} {
       allow get, list: if true;
       allow create: if isCreatingOwnUserDoc(userId);
       allow update: if (isOwner(userId) && userFieldsAreValidOnUpdate()) || isSuperAdmin();
-      allow delete: if (isOwner(userId) || isSuperAdmin()) && isExistingDoc();
+      allow delete: if isOwner(userId) || isSuperAdmin();
 
       /**
        * @description Secures a user's private location data. Access is strictly limited to
-       * the owner of the data. Even Super Admins cannot access this sensitive information.
-       * @path /users/{userId}/location_data/{locationDataId}
-       * @allow (create) A user creating a new location data entry for themselves.
-       * @deny (get) A user attempting to read the location data of another user.
-       * @deny (list) A Super Admin trying to list a user's location history.
-       * @principle Enforces a strict, path-based ownership model for sensitive user data.
+       * the owner. Even Super Admins cannot access this sensitive information to protect user privacy.
        */
       match /location_data/{locationDataId} {
-        allow get, list: if isOwner(userId);
-        allow create: if isOwner(userId) && isCreatingOwnLocationData(userId);
-        allow update: if isExistingOwner(userId) && locationDataFieldsAreImmutable();
-        allow delete: if isExistingOwner(userId);
+        allow read, write: if isOwner(userId);
       }
     }
   }
