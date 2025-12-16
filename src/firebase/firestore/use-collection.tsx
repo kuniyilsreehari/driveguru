@@ -91,9 +91,12 @@ export function useCollection<T = any>(
         if (memoizedTargetRefOrQuery.type === 'collection') {
             path = (memoizedTargetRefOrQuery as CollectionReference).path;
         } else if (memoizedTargetRefOrQuery.type === 'query') {
+            // A Query's 'ref' property points to the CollectionReference it is querying.
+            // This is a stable, public API property.
             const queryRef = (memoizedTargetRefOrQuery as Query);
-            // The ref of a query points to the collection it's querying
-            path = (queryRef as any)._query.path.toString();
+            if (queryRef.ref) {
+                path = queryRef.ref.path;
+            }
         }
 
         const contextualError = new FirestorePermissionError({
