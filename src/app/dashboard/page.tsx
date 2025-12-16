@@ -60,7 +60,7 @@ type ExpertUserProfile = {
 function CompanyVacancies({ userProfile }: { userProfile: ExpertUserProfile }) {
   const firestore = useFirestore();
   const [isPostDialogOpen, setIsPostDialogOpen] = useState(false);
-  const isPremiumWithCompanyId = (userProfile.tier === 'Premier' || userProfile.tier === 'Super Premier') && !!userProfile.companyId;
+  const isPremierWithCompanyId = userProfile.tier === 'Premier' && !!userProfile.companyId;
 
   const vacanciesQuery = useMemoFirebase(() => {
     if (!firestore || !userProfile.companyId) return null;
@@ -77,7 +77,7 @@ function CompanyVacancies({ userProfile }: { userProfile: ExpertUserProfile }) {
             <CardTitle>Manage Vacancies</CardTitle>
             <CardDescription>Post and view job openings for your company.</CardDescription>
           </div>
-           {isPremiumWithCompanyId ? (
+           {isPremierWithCompanyId ? (
               <Dialog open={isPostDialogOpen} onOpenChange={setIsPostDialogOpen}>
                 <DialogTrigger asChild>
                   <Button>
@@ -107,7 +107,7 @@ function CompanyVacancies({ userProfile }: { userProfile: ExpertUserProfile }) {
                             </Button>
                         </TooltipTrigger>
                         <TooltipContent>
-                            <p>This is a premium feature. Upgrade to post vacancies.</p>
+                            <p>This is a Premier feature. Upgrade to post vacancies.</p>
                         </TooltipContent>
                     </Tooltip>
                 </TooltipProvider>
@@ -387,5 +387,7 @@ export default function ExpertDashboardPage() {
     </div>
   );
 }
+
+    
 
     
