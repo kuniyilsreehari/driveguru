@@ -16,7 +16,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useFirestore, useUser } from '@/firebase';
 import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
-import { collection } from 'firebase/firestore';
+import { collection, serverTimestamp } from 'firebase/firestore';
 import { cn } from '@/lib/utils';
 
 
@@ -101,7 +101,7 @@ export function ExpertCard({ expert }: ExpertCardProps) {
             reviewerName: reviewerName,
             rating: rating,
             comment: comment,
-            createdAt: new Date(),
+            createdAt: serverTimestamp(),
             status: 'pending'
         };
         
@@ -120,17 +120,18 @@ export function ExpertCard({ expert }: ExpertCardProps) {
              <Card key={expert.id} className="overflow-hidden transition-all hover:shadow-lg hover:border-primary/50">
                 <CardContent className="p-4 md:p-6">
                     <div className="grid grid-cols-1 md:grid-cols-[auto_1fr] gap-6">
-                        <Link href={`/expert/${expert.id}`} className="block cursor-pointer">
-                            <div className="flex flex-col items-center space-y-4">
+                        <div className="flex flex-col items-center space-y-4">
+                            <Link href={`/expert/${expert.id}`} className="block cursor-pointer">
                                 <Avatar className="h-24 w-24 text-4xl">
                                     <AvatarImage src={expert.photoUrl} alt={getDisplayName(expert)} />
                                     <AvatarFallback>{getInitials(expert)}</AvatarFallback>
                                 </Avatar>
-                            </div>
-                        </Link>
+                            </Link>
+                        </div>
+
                         <div className="w-full">
-                            <Link href={`/expert/${expert.id}`} className="block cursor-pointer">
-                                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between">
+                            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between">
+                                <Link href={`/expert/${expert.id}`} className="block cursor-pointer flex-grow">
                                     <div>
                                         <div className="flex items-center gap-2 mb-1">
                                             <h3 className="text-2xl font-bold">{getDisplayName(expert)}</h3>
@@ -154,13 +155,15 @@ export function ExpertCard({ expert }: ExpertCardProps) {
                                             <span className="text-xs text-muted-foreground ml-1">(1 review)</span>
                                         </div>
                                     </div>
-                                    {expert.isAvailable ? (
-                                        <Badge className="bg-green-500 text-white mt-2 sm:mt-0">Available</Badge>
-                                    ) : (
-                                        <Badge variant="secondary" className="mt-2 sm:mt-0">Unavailable</Badge>
-                                    )}
-                                </div>
-
+                                </Link>
+                                {expert.isAvailable ? (
+                                    <Badge className="bg-green-500 text-white mt-2 sm:mt-0">Available</Badge>
+                                ) : (
+                                    <Badge variant="secondary" className="mt-2 sm:mt-0">Unavailable</Badge>
+                                )}
+                            </div>
+                            
+                            <Link href={`/expert/${expert.id}`} className="block cursor-pointer">
                                 <Separator className="my-4" />
 
                                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm text-muted-foreground">
@@ -182,11 +185,11 @@ export function ExpertCard({ expert }: ExpertCardProps) {
                                     </CollapsibleTrigger>
                                 )}
                                 <div className="flex-grow"></div>
-                                <Button asChild variant="secondary"><Link href={`/expert/${expert.id}/book`}><Calendar className="mr-2 h-4 w-4" /> Book</Link></Button>
-                                <Button asChild className="bg-orange-500 hover:bg-orange-600" disabled={!formattedPhoneNumber}>
+                                <Button asChild variant="secondary" onClick={(e) => e.stopPropagation()}><Link href={`/expert/${expert.id}/book`}><Calendar className="mr-2 h-4 w-4" /> Book</Link></Button>
+                                <Button asChild className="bg-orange-500 hover:bg-orange-600" disabled={!formattedPhoneNumber} onClick={(e) => e.stopPropagation()}>
                                     <a href={`tel:${formattedPhoneNumber}`}><Phone className="mr-2 h-4 w-4" /> Call</a>
                                 </Button>
-                                <Button asChild className="bg-green-500 hover:bg-green-600" disabled={!formattedPhoneNumber}>
+                                <Button asChild className="bg-green-500 hover:bg-green-600" disabled={!formattedPhoneNumber} onClick={(e) => e.stopPropagation()}>
                                     <a href={`https://wa.me/${formattedPhoneNumber}`} target="_blank" rel="noopener noreferrer"><MessageCircle className="mr-2 h-4 w-4" /> WhatsApp</a>
                                 </Button>
                             </div>

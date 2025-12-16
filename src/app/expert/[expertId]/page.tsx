@@ -4,7 +4,7 @@
 import { useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { doc, collection, query, where, addDoc } from 'firebase/firestore';
+import { doc, collection, query, where, addDoc, serverTimestamp } from 'firebase/firestore';
 import { useFirestore, useDoc, useCollection, useMemoFirebase, useUser } from '@/firebase';
 import { Loader2, Star, ChevronLeft, MapPin, IndianRupee, Briefcase, Calendar, Info, Book, GraduationCap, School, User as UserIcon, UserCheck, XCircle, Crown, Sparkles, MessageSquare, LogIn, Edit2, Send } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -120,7 +120,7 @@ function ExpertProfileContent() {
             reviewerName: reviewerName,
             rating: rating,
             comment: comment,
-            createdAt: new Date(),
+            createdAt: serverTimestamp(),
             status: 'pending'
         };
         
