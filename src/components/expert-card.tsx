@@ -105,7 +105,7 @@ export function ExpertCard({ expert }: ExpertCardProps) {
             status: 'pending'
         };
         
-        await addDocumentNonBlocking(reviewsCollectionRef, reviewData);
+        addDocumentNonBlocking(reviewsCollectionRef, reviewData);
 
         toast({ title: "Review Submitted", description: "Your review is pending approval. Thank you!" });
         // Reset form
@@ -120,18 +120,18 @@ export function ExpertCard({ expert }: ExpertCardProps) {
              <Card key={expert.id} className="overflow-hidden transition-all hover:shadow-lg hover:border-primary/50">
                 <CardContent className="p-4 md:p-6">
                     <div className="grid grid-cols-1 md:grid-cols-[auto_1fr] gap-6">
-                        <div className="flex flex-col items-center space-y-4">
-                            <Link href={`/expert/${expert.id}`} className="block cursor-pointer">
+                        <Link href={`/expert/${expert.id}`} className="block cursor-pointer" onClick={(e) => e.stopPropagation()}>
+                            <div className="flex flex-col items-center space-y-4">
                                 <Avatar className="h-24 w-24 text-4xl">
                                     <AvatarImage src={expert.photoUrl} alt={getDisplayName(expert)} />
                                     <AvatarFallback>{getInitials(expert)}</AvatarFallback>
                                 </Avatar>
-                            </Link>
-                        </div>
+                            </div>
+                        </Link>
 
                         <div className="w-full">
-                            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between">
-                                <Link href={`/expert/${expert.id}`} className="block cursor-pointer flex-grow">
+                             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between">
+                                <Link href={`/expert/${expert.id}`} className="block cursor-pointer flex-grow" onClick={(e) => e.stopPropagation()}>
                                     <div>
                                         <div className="flex items-center gap-2 mb-1">
                                             <h3 className="text-2xl font-bold">{getDisplayName(expert)}</h3>
@@ -163,9 +163,8 @@ export function ExpertCard({ expert }: ExpertCardProps) {
                                 )}
                             </div>
                             
-                            <Link href={`/expert/${expert.id}`} className="block cursor-pointer">
-                                <Separator className="my-4" />
-
+                            <Separator className="my-4" />
+                            <Link href={`/expert/${expert.id}`} className="block cursor-pointer" onClick={(e) => e.stopPropagation()}>
                                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm text-muted-foreground">
                                     <div className="flex items-center gap-2"><MapPin className="h-4 w-4" /> {expert.location || 'N/A'}</div>
                                     <div className="flex items-center gap-2"><IndianRupee className="h-4 w-4" /> {expert.hourlyRate ? `${expert.hourlyRate}/hr` : 'N/A'}</div>
