@@ -379,7 +379,7 @@ export function RegistrationForm() {
           render={({ field }) => (
             <FormItem>
                 <FormLabel>Category</FormLabel>
-                <ScrollArea className="h-40 w-full rounded-md border p-2">
+                <ScrollArea className="h-40 w-full rounded-md border p-2 focus-within:border-primary">
                     <FormControl>
                         <div className="grid grid-cols-2 gap-2 text-center">
                             {categories.map((category) => (
