@@ -84,8 +84,6 @@ service cloud.firestore {
         // A non-admin user cannot change their 'verified' status.
         if (!isSuperAdmin()) {
             // The 'verified' field must not change from its existing value.
-            // If resource.data does not have 'verified', it means it was not verified before,
-            // so the new resource must not try to set it to true.
             let isVerifiedUnchanged = request.resource.data.verified == resource.data.verified;
             return isIdImmutable && isVerifiedUnchanged;
         }
