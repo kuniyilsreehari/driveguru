@@ -23,6 +23,7 @@ import * as LucideIcons from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
 function HomePageContent() {
+    const [searchQuery, setSearchQuery] = useState('');
     const [location, setLocation] = useState('');
     const [locationName, setLocationName] = useState('');
     const [isDetecting, setIsDetecting] = useState(false);
@@ -116,6 +117,9 @@ function HomePageContent() {
 
     const handleSearch = () => {
         const queryParams = new URLSearchParams();
+        if (searchQuery) {
+            queryParams.set('q', searchQuery);
+        }
         if (location) {
             queryParams.set('location', location);
         }
@@ -144,6 +148,19 @@ function HomePageContent() {
                 <main>
                     <Card className="p-6 sm:p-8">
                         <CardContent className="p-0">
+                             <div className="mb-4">
+                                <Label htmlFor="search">I&apos;m looking for...</Label>
+                                <div className="relative mt-2">
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                    <Input
+                                        id="search"
+                                        placeholder="e.g. 'Software Developer', 'Plumber', 'Acme Inc.'"
+                                        className="pl-10"
+                                        value={searchQuery}
+                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                    />
+                                </div>
+                            </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
                                     <Label htmlFor="location">Location</Label>
@@ -169,11 +186,10 @@ function HomePageContent() {
                                     </div>
                                 </div>
                                 <div>
-                                    <Label>I&apos;m looking for...</Label>
+                                    <Label>User Type</Label>
                                     <Tabs defaultValue="experts" className="mt-2">
                                         <TabsList className="grid w-full grid-cols-2">
                                             <TabsTrigger value="experts"><Briefcase className="mr-2" />Experts</TabsTrigger>
-
                                             <TabsTrigger value="freshers"><Icons.graduate className="mr-2" />Freshers</TabsTrigger>
                                         </TabsList>
                                     </Tabs>

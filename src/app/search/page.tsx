@@ -5,7 +5,7 @@
 import { Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { collection, query, where, limit } from 'firebase/firestore';
+import { collection, query, where, limit, or } from 'firebase/firestore';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -22,6 +22,7 @@ function SearchResults() {
     const firestore = useFirestore();
     const router = useRouter();
 
+    const searchQueryParam = searchParams.get('q');
     const location = searchParams.get('location');
     const locationName = searchParams.get('locationName');
     const verified = searchParams.get('verified') === 'true';
@@ -30,24 +31,56 @@ function SearchResults() {
     const expertsQuery = useMemoFirebase(() => {
         if (!firestore) return null;
         
-        let q = query(collection(firestore, 'users'));
+        let constraints = [];
 
         if (verified) {
-            q = query(q, where('verified', '==', true));
+            constraints.push(where('verified', '==', true));
         }
 
         if (available) {
-            q = query(q, where('isAvailable', '==', true));
+            constraints.push(where('isAvailable', '==', true));
+        }
+        
+        // Firestore does not support case-insensitive search or partial text search natively.
+        // For a simple search, we can use multiple `where` clauses with an `or` condition.
+        // This is still limited but better than nothing.
+        // For a robust solution, a dedicated search service like Algolia is recommended.
+        if (searchQueryParam) {
+            const q = searchQueryParam.trim();
+            // This will not work as Firestore does not support 'OR' queries on different fields.
+            // We will filter on the client side.
+        }
+        
+        if (constraints.length > 0) {
+            return query(collection(firestore, 'users'), ...constraints);
         }
 
-        // Firestore does not support robust text search on parts of a string (like location).
-        // A more advanced solution like Algolia would be needed for that.
-        // For now, we will filter by available toggles and let the user see the location on the card.
+        return query(collection(firestore, 'users'));
 
-        return q;
     }, [firestore, verified, available]);
 
-    const { data: experts, isLoading } = useCollection<ExpertUser>(expertsQuery);
+    const { data: allExperts, isLoading } = useCollection<ExpertUser>(expertsQuery);
+    
+    const filteredExperts = useMemoFirebase(() => {
+        if (!allExperts) return null;
+        if (!searchQueryParam) return allExperts;
+
+        const lowercasedQuery = searchQueryParam.toLowerCase();
+        
+        return allExperts.filter(expert => {
+            const name = `${expert.firstName || ''} ${expert.lastName || ''}`.toLowerCase();
+            const company = expert.companyName?.toLowerCase() || '';
+            const role = expert.role?.toLowerCase() || '';
+            const skills = expert.skills?.toLowerCase() || '';
+
+            return name.includes(lowercasedQuery) ||
+                   company.includes(lowercasedQuery) ||
+                   role.includes(lowercasedQuery) ||
+                   skills.includes(lowercasedQuery);
+        });
+
+    }, [allExperts, searchQueryParam]);
+
 
     if (isLoading) {
         return (
@@ -57,6 +90,8 @@ function SearchResults() {
             </div>
         );
     }
+    
+    const experts = filteredExperts;
 
     if (!experts || experts.length === 0) {
         return (
@@ -70,7 +105,11 @@ function SearchResults() {
     const searchTitle = () => {
         let titleParts: (string | JSX.Element)[] = [];
         
-        titleParts.push(<span key="all">Showing all experts</span>);
+        if (searchQueryParam) {
+             titleParts.push(<span key="query">Results for &quot;<span className="text-primary">{searchQueryParam}</span>&quot;</span>);
+        } else {
+             titleParts.push(<span key="all">Showing all experts</span>);
+        }
 
         if (locationName) {
             titleParts.push(<span key="locationName"> in <span className="text-primary">{locationName}</span></span>);
@@ -79,10 +118,13 @@ function SearchResults() {
         if (location && !locationName) {
             titleParts.push(<span key="location"> near <span className="text-primary">{location}</span></span>);
         }
-
-        if (location || locationName) {
+        
+        if (searchQueryParam && (location || locationName)) {
+            titleParts.push(<span key="all_locations_else">. Location filter is not applied.</span>);
+        } else if (location || locationName) {
              titleParts.push(<span key="all_locations_else">. Results visible for all locations.</span>);
         }
+
 
         return <>{titleParts}</>
     }
