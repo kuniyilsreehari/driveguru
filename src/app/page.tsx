@@ -64,14 +64,17 @@ export default function TalentSearchPage() {
                     const data = await response.json();
                     
                     const address = data.address;
-                    const place = address.city || address.town || address.village || address.hamlet;
+                    const city = address.city || address.town || address.village || address.hamlet;
                     const state = address.state;
 
-                    let detectedLocationParts = [];
-                    if (state) detectedLocationParts.push(state);
-                    if (place) detectedLocationParts.push(place);
-                    
-                    let detectedLocation = detectedLocationParts.join(', ');
+                    let detectedLocation = '';
+                    if (state && city) {
+                        detectedLocation = `${state}, ${city}`;
+                    } else if (state) {
+                        detectedLocation = state;
+                    } else if (city) {
+                        detectedLocation = city;
+                    }
 
                     if (detectedLocation) {
                         setLocation(detectedLocation);
@@ -84,7 +87,7 @@ export default function TalentSearchPage() {
                         setLocation(coords);
                          toast({
                             title: 'Coordinates Set',
-                            description: `We could not find a place or state for your coordinates. Using lat/lon instead.`,
+                            description: `We could not find a city or state for your coordinates. Using lat/lon instead.`,
                         });
                     }
                 } catch (apiError) {
