@@ -16,7 +16,7 @@ import { Icons } from "@/components/icons"
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, limit } from 'firebase/firestore';
+import { collection, query, where, limit } from 'firebase/firestore';
 import { ExpertCard } from '@/components/expert-card';
 import type { ExpertUser } from '@/components/expert-card';
 
@@ -40,7 +40,7 @@ export default function TalentSearchPage() {
 
     const expertsQuery = useMemoFirebase(() => {
         if (!firestore) return null;
-        return query(collection(firestore, 'users'), limit(3));
+        return query(collection(firestore, 'users'), where('verified', '==', true), limit(3));
     }, [firestore]);
 
     const { data: experts, isLoading: isLoadingExperts } = useCollection<ExpertUser>(expertsQuery);
