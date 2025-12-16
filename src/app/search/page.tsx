@@ -90,6 +90,25 @@ function SearchResults() {
             );
         }
         
+        // Sort experts
+        experts.sort((a, b) => {
+            const tierOrder = { 'Super Premier': 0, 'Premier': 1, 'Standard': 2 };
+            const aTier = a.tier || 'Standard';
+            const bTier = b.tier || 'Standard';
+
+            // Sort by tier first
+            if (tierOrder[aTier] !== tierOrder[bTier]) {
+                return tierOrder[aTier] - tierOrder[bTier];
+            }
+
+            // If tiers are the same, sort by verification status (verified first)
+            if (a.verified !== b.verified) {
+                return a.verified ? -1 : 1;
+            }
+
+            return 0;
+        });
+
         return experts;
 
     }, [allExperts, searchQueryParam, location, maxRate]);
