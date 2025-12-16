@@ -1,3 +1,4 @@
+
 /**
  * Core Philosophy: This ruleset implements a multi-tiered security model. It combines a strict
  * user-ownership model for private data (like location tracking) with a powerful, role-based
