@@ -1,169 +1,122 @@
-
-/**
- * Core Philosophy: This ruleset implements a multi-tiered security model. It combines a strict
- * user-ownership model for private data (like location tracking) with a powerful, role-based
- * access control system for administrative functions. A special "Super Admin" role grants
- * broad permissions to manage core application entities like users and companies.
- *
- * Data Structure:
- * - /users/{userId}: Stores public user profiles.
- * - /users/{userId}/location_data/{locationDataId}: A private subcollection containing a user's
- *   sensitive location history. Access is strictly limited to the user who owns the data.
- * - /companies/{companyId}: A top-level collection for company data.
- * - /roles_super_admin/{userId}: An authorization-specific collection. The existence of a
- *   document here grants a user Super Admin privileges across the application.
- * - /reviews/{reviewId}: A collection for expert reviews, moderated by Super Admins.
- * - /app_config/{configId}: Stores global application settings, manageable only by Super Admins.
- */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // --------------------------------------------------------------------------------
-    // Helper Functions
-    // --------------------------------------------------------------------------------
+    /* =====================================================
+     * Helper Functions
+     * ===================================================== */
 
-    /**
-     * Checks if the user is authenticated.
-     */
     function isSignedIn() {
       return request.auth != null;
     }
 
-    /**
-     * Checks if the requesting user's UID matches the provided userId.
-     * This is the foundation of the user-ownership model.
-     */
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
-    
-    /**
-     * Checks if the requesting user is a Super Admin by checking for the
-     * existence of their UID in the roles_super_admin collection.
-     * This is a performant way to manage global roles.
-     */
+
     function isSuperAdmin() {
-      return isSignedIn() && exists(/databases/$(database)/documents/roles_super_admin/$(request.auth.uid));
+      return isSignedIn() &&
+        exists(/databases/$(database)/documents/roles_super_admin/$(request.auth.uid));
     }
 
-    /**
-     * Validates that a new user document is being created correctly.
-     * Enforces that the document ID matches the user's UID, the 'id' field matches,
-     * and key fields like 'verified' and 'isAvailable' are set to their proper initial values.
-     */
+    function isExistingDoc() {
+      return resource != null;
+    }
+
     function isCreatingOwnUserDoc(userId) {
-      let resourceData = request.resource.data;
-      return isOwner(userId) && 
-             resourceData.id == userId &&
-             resourceData.verified == false &&
-             resourceData.isAvailable == true;
+      return isOwner(userId) &&
+        request.resource.data.id == userId;
     }
 
-    /**
-     * Validates that critical, immutable fields of a user document are not changed on update.
-     * A regular user cannot change their ID or their verification status.
-     * A Super Admin can change any field except the user ID.
-     */
-    function userFieldsAreValidOnUpdate() {
-        let isIdImmutable = request.resource.data.id == resource.data.id;
-        
-        if (!isSuperAdmin()) {
-            let isVerifiedUnchanged = !('verified' in request.resource.data) || request.resource.data.verified == resource.data.verified;
-            return isIdImmutable && isVerifiedUnchanged;
-        }
-        
-        return isIdImmutable;
+    function userIdImmutable() {
+      return request.resource.data.id == resource.data.id;
     }
-    
-    /**
-     * Validates that the userId in new location data matches the parent document's user ID.
-     */
+
     function isCreatingOwnLocationData(userId) {
       return request.resource.data.userId == userId;
     }
-    
-    /**
-     * Validates that the userId in location data is immutable on update.
-     */
-    function locationDataFieldsAreImmutable() {
+
+    function locationUserImmutable() {
       return request.resource.data.userId == resource.data.userId;
     }
 
-    /**
-     * Validates that a new review is being created by the authenticated user
-     * and that its initial status is 'pending'. This prevents users from creating
-     * reviews for others or bypassing the moderation queue.
-     */
-    function isCreatingOwnReview() {
-      let resourceData = request.resource.data;
+    function isMemberOfCompany(companyId) {
       return isSignedIn() &&
-             resourceData.reviewerId == request.auth.uid &&
-             resourceData.status == 'pending';
+        get(/databases/$(database)/documents/users/$(request.auth.uid))
+          .data.companyId == companyId;
     }
 
-    // --------------------------------------------------------------------------------
-    // Collection Rules
-    // --------------------------------------------------------------------------------
-    
-    /**
-     * @description Controls access to global application settings. Any user can read
-     * these settings, but only Super Admins can write to them. Public read is necessary for the homepage.
-     */
+    /* =====================================================
+     * Super Admin Roles
+     * ===================================================== */
+
+    match /roles_super_admin/{userId} {
+      allow get: if isOwner(userId);
+      allow list, create, update, delete: if isSuperAdmin();
+    }
+
+    /* =====================================================
+     * App Configuration
+     * ===================================================== */
     match /app_config/{configId} {
       allow read: if true;
       allow write: if isSuperAdmin();
     }
 
-    /**
-     * @description Controls access to Super Admin role assignments. Only existing Super
-     * Admins can manage administrative privileges. A user can check their own role.
-     */
-    match /roles_super_admin/{userId} {
-      allow get: if isOwner(userId);
-      allow list, create, update, delete: if isSuperAdmin();
-    }
-    
-    /**
-     * @description Controls access to reviews. Users can read approved reviews or list them if querying for approved status.
-     * Authenticated users can create their own reviews (which start as 'pending').
-     * Super Admins can moderate (update status/delete) all reviews.
-     */
-    match /reviews/{reviewId} {
-      allow get: if (resource.data.status == 'approved' || isOwner(resource.data.reviewerId)) || isSuperAdmin();
-      allow list: if request.query.get('status') == 'approved' || isSuperAdmin();
-      allow create: if isCreatingOwnReview();
-      allow update, delete: if isSuperAdmin();
+    /* =====================================================
+     * Companies
+     * ===================================================== */
+
+    match /companies/{companyId} {
+      allow get: if isSuperAdmin() || isMemberOfCompany(companyId);
+      allow list: if isSuperAdmin();
+      allow create, update, delete: if isSuperAdmin() && isExistingDoc();
     }
 
-    /**
-     * @description Defines access rules for company profiles. Authenticated users can read.
-     * Only Super Admins have full write control.
-     */
-     match /companies/{companyId} {
-      allow read: if isSignedIn();
-      allow write: if isSuperAdmin();
-    }
-    
-    /**
-     * @description Manages access to user profile documents. Any signed-in user can read profiles.
-     * Users can create and securely update their own profile. Super Admins have broad
-     * management capabilities.
-     */
+    /* =====================================================
+     * Users
+     * ===================================================== */
+
     match /users/{userId} {
-      allow get: if isSignedIn();
-      allow list: if isSignedIn() && (request.query.keys().hasAny(['tier']) || isSuperAdmin());
-      allow create: if isCreatingOwnUserDoc(userId);
-      allow update: if (isOwner(userId) && userFieldsAreValidOnUpdate()) || isSuperAdmin();
-      allow delete: if isOwner(userId) || isSuperAdmin();
+      // Public profiles (search, listings)
+      allow get, list: if true;
 
-      /**
-       * @description Secures a user's private location data. Access is strictly limited to
-       * the owner. Even Super Admins cannot access this sensitive information to protect user privacy.
-       */
+      // User onboarding
+      allow create: if isCreatingOwnUserDoc(userId);
+
+      // Secure updates
+      allow update: if
+        (isOwner(userId) && userIdImmutable()) ||
+        isSuperAdmin();
+
+      allow delete: if
+        (isOwner(userId) || isSuperAdmin()) &&
+        isExistingDoc();
+
+      /* ---------------------------------------------
+       * Private Location Data (STRICT PRIVACY)
+       * --------------------------------------------- */
+
       match /location_data/{locationDataId} {
-        allow read, write: if isOwner(userId);
+        allow get, list: if isOwner(userId);
+        allow create: if isOwner(userId) && isCreatingOwnLocationData(userId);
+        allow update: if isOwner(userId) && locationUserImmutable();
+        allow delete: if isOwner(userId);
       }
     }
+    
+    /* =====================================================
+     * Reviews
+     * ===================================================== */
+    match /reviews/{reviewId} {
+        allow get: if true; // anyone can read approved reviews
+        allow list: if true;
+        allow create: if isSignedIn(); // only signed in users can create a review
+        allow update, delete: if isSuperAdmin(); // only admins can moderate
+    }
+
+    /* =====================================================
+     * Default Deny (implicit)
+     * ===================================================== */
   }
 }
