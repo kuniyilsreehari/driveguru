@@ -9,7 +9,7 @@ import { useUser, useFirestore, useDoc, useMemoFirebase, useAuth, useCollection,
 import { deleteDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, CheckCircle2, UserCheck, UserX, Crown, Sparkles, User as UserIcon, Settings, Save } from 'lucide-react';
+import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, CheckCircle2, UserCheck, UserX, Crown, Sparkles, User as UserIcon, Settings, Save, Briefcase, Building } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
@@ -45,6 +45,7 @@ type ExpertUser = {
     email?: string;
     verified?: boolean;
     tier?: 'Standard' | 'Premier' | 'Super Premier';
+    role?: 'Super Admin' | 'Freelancer' | 'Company' | 'Authorized Pro';
 };
 
 type AppConfig = {
@@ -180,6 +181,21 @@ export default function AdminDashboardPage() {
         return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
     }
     return 'U';
+  }
+  
+  const renderRoleBadge = (role?: ExpertUser['role']) => {
+    switch (role) {
+        case 'Freelancer':
+            return <Badge variant="secondary"><UserIcon className="mr-1 h-3 w-3" /> Freelancer</Badge>;
+        case 'Company':
+            return <Badge variant="secondary"><Building className="mr-1 h-3 w-3" /> Company</Badge>;
+        case 'Authorized Pro':
+            return <Badge variant="secondary"><Briefcase className="mr-1 h-3 w-3" /> Authorized Pro</Badge>;
+        case 'Super Admin':
+            return <Badge variant="outline" className="border-primary text-primary"><Shield className="mr-1 h-3 w-3" /> Super Admin</Badge>;
+        default:
+            return <Badge variant="secondary">{role || 'N/A'}</Badge>;
+    }
   }
 
   const renderTierBadge = (tier?: ExpertUser['tier']) => {
@@ -362,6 +378,7 @@ export default function AdminDashboardPage() {
                         <TableHead className="w-[80px]">Avatar</TableHead>
                         <TableHead>Full Name</TableHead>
                         <TableHead>Email</TableHead>
+                        <TableHead className="text-center">Role</TableHead>
                         <TableHead className="text-center">Tier</TableHead>
                         <TableHead className="text-center">Verified</TableHead>
                         <TableHead className="text-right">Actions</TableHead>
@@ -378,6 +395,7 @@ export default function AdminDashboardPage() {
                             </TableCell>
                             <TableCell className="font-medium">{expert.firstName} {expert.lastName}</TableCell>
                             <TableCell>{expert.email}</TableCell>
+                            <TableCell className="text-center">{renderRoleBadge(expert.role)}</TableCell>
                             <TableCell className="text-center">{renderTierBadge(expert.tier)}</TableCell>
                             <TableCell className="text-center">
                                 <div className='flex items-center justify-center space-x-2'>
@@ -404,7 +422,7 @@ export default function AdminDashboardPage() {
                             </TableCell>
                           </TableRow>
                         ))
-                      ) : ( <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground h-24">No experts found.</TableCell></TableRow> )}
+                      ) : ( <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground h-24">No experts found.</TableCell></TableRow> )}
                     </TableBody>
                   </Table>
                 )}
@@ -433,5 +451,3 @@ export default function AdminDashboardPage() {
     </>
   );
 }
-
-    
