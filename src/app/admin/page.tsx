@@ -3,15 +3,15 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { collection, doc, deleteDoc, updateDoc, addDoc, setDoc } from 'firebase/firestore';
+import { collection, doc, deleteDoc, updateDoc, addDoc, setDoc, Timestamp, orderBy } from 'firebase/firestore';
 import { signOut } from 'firebase/auth';
 import { useUser, useFirestore, useDoc, useMemoFirebase, useAuth, useCollection, setDocumentNonBlocking } from '@/firebase';
 import { deleteDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, CheckCircle2, UserCheck, UserX, Crown, Sparkles, User as UserIcon, Settings, Save, Briefcase, Building } from 'lucide-react';
+import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, CheckCircle2, UserCheck, UserX, Crown, Sparkles, User as UserIcon, Settings, Save, Briefcase, Building, MessageSquare, ThumbsUp, ThumbsDown, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -38,6 +38,8 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { formatDistanceToNow } from 'date-fns';
+import Link from 'next/link';
 
 type ExpertUser = {
     id: string;
@@ -47,6 +49,17 @@ type ExpertUser = {
     verified?: boolean;
     tier?: 'Standard' | 'Premier' | 'Super Premier';
     role?: 'Super Admin' | 'Freelancer' | 'Company' | 'Authorized Pro';
+};
+
+type Review = {
+    id: string;
+    expertId: string;
+    expertName: string;
+    reviewerName: string;
+    rating: number;
+    comment: string;
+    createdAt: Timestamp;
+    status: 'pending' | 'approved' | 'rejected';
 };
 
 type AppConfig = {
@@ -131,6 +144,54 @@ const UserTable = ({ users, onTierChange, onVerificationToggle, onDelete }: { us
     )
 }
 
+const ReviewTable = ({ reviews, onApprove, onReject }: { reviews: Review[], onApprove: (review: Review) => void, onReject: (review: Review) => void }) => {
+    return (
+        <Table>
+            <TableHeader>
+                <TableRow>
+                    <TableHead>Expert</TableHead>
+                    <TableHead>Reviewer</TableHead>
+                    <TableHead className="text-center">Rating</TableHead>
+                    <TableHead>Comment</TableHead>
+                    <TableHead>Submitted</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+            </TableHeader>
+            <TableBody>
+                {reviews && reviews.length > 0 ? (
+                    reviews.map((review) => (
+                        <TableRow key={review.id}>
+                            <TableCell className="font-medium">
+                                <Link href={`/expert/${review.expertId}`} className="hover:underline">{review.expertName}</Link>
+                            </TableCell>
+                            <TableCell>{review.reviewerName}</TableCell>
+                            <TableCell className="text-center">
+                                <div className="flex items-center justify-center gap-1">
+                                    {review.rating} <Star className="h-4 w-4 text-yellow-400 fill-yellow-400" />
+                                </div>
+                            </TableCell>
+                            <TableCell className="max-w-xs truncate">{review.comment}</TableCell>
+                            <TableCell>{formatDistanceToNow(review.createdAt.toDate(), { addSuffix: true })}</TableCell>
+                            <TableCell className="text-right">
+                                {review.status === 'pending' ? (
+                                    <div className="flex gap-2 justify-end">
+                                        <Button variant="outline" size="sm" onClick={() => onApprove(review)}><ThumbsUp className="mr-2 h-4 w-4" />Approve</Button>
+                                        <Button variant="destructive" size="sm" onClick={() => onReject(review)}><ThumbsDown className="mr-2 h-4 w-4" />Reject</Button>
+                                    </div>
+                                ) : (
+                                    <Badge variant="outline" className="border-green-500 text-green-500">Approved</Badge>
+                                )}
+                            </TableCell>
+                        </TableRow>
+                    ))
+                ) : (
+                    <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground h-24">No reviews found.</TableCell></TableRow>
+                )}
+            </TableBody>
+        </Table>
+    )
+}
+
 
 export default function AdminDashboardPage() {
   const { user, isUserLoading } = useUser();
@@ -140,7 +201,9 @@ export default function AdminDashboardPage() {
   const { toast } = useToast();
 
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isReviewRejectDialogOpen, setIsReviewRejectDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<ExpertUser | null>(null);
+  const [selectedReview, setSelectedReview] = useState<Review | null>(null);
   const [featuredExpertsLimit, setFeaturedExpertsLimit] = useState(3);
   const [isSavingSettings, setIsSavingSettings] = useState(false);
 
@@ -157,7 +220,19 @@ export default function AdminDashboardPage() {
     return collection(firestore, 'users');
   }, [firestore, isSuperAdmin]);
 
+  const reviewsCollectionRef = useMemoFirebase(() => {
+    if (!firestore || !isSuperAdmin) return null;
+    return collection(firestore, 'reviews');
+}, [firestore, isSuperAdmin]);
+
+
   const { data: users, isLoading: isUsersLoading } = useCollection<ExpertUser>(usersCollectionRef);
+  const { data: reviews, isLoading: isReviewsLoading } = useCollection<Review>(
+    useMemoFirebase(() => {
+        if (!reviewsCollectionRef) return null;
+        return orderBy(reviewsCollectionRef, 'createdAt', 'desc');
+    }, [reviewsCollectionRef])
+  );
   
   const appConfigDocRef = useMemoFirebase(() => {
       if (!firestore) return null;
@@ -253,13 +328,44 @@ export default function AdminDashboardPage() {
     }
   }
 
+  const handleApproveReview = (review: Review) => {
+    if (!firestore) return;
+    const reviewDocRef = doc(firestore, 'reviews', review.id);
+    updateDocumentNonBlocking(reviewDocRef, { status: 'approved' });
+    toast({
+      title: "Review Approved",
+      description: `The review for ${review.expertName} is now public.`,
+    });
+  };
+
+  const openReviewRejectDialog = (review: Review) => {
+    setSelectedReview(review);
+    setIsReviewRejectDialogOpen(true);
+  };
+
+  const handleRejectReview = () => {
+    if (!selectedReview || !firestore) return;
+    const reviewDocRef = doc(firestore, 'reviews', selectedReview.id);
+    deleteDocumentNonBlocking(reviewDocRef); // Rejecting by deleting
+    toast({
+      title: "Review Rejected",
+      description: "The review has been permanently deleted.",
+      variant: 'destructive'
+    });
+    setIsReviewRejectDialogOpen(false);
+    setSelectedReview(null);
+  };
+
   const isLoading = isUserLoading || isRoleLoading;
-  const areTablesLoading = isSuperAdmin && isUsersLoading;
+  const areTablesLoading = isSuperAdmin && (isUsersLoading || isReviewsLoading);
 
   const freelancers = users?.filter(user => user.role === 'Freelancer');
   const companies = users?.filter(user => user.role === 'Company');
   const authorizedPros = users?.filter(user => user.role === 'Authorized Pro');
   const superAdmins = users?.filter(user => user.role === 'Super Admin');
+  
+  const pendingReviews = reviews?.filter(r => r.status === 'pending');
+  const approvedReviews = reviews?.filter(r => r.status === 'approved');
 
 
   if (isLoading) {
@@ -404,50 +510,92 @@ export default function AdminDashboardPage() {
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <div className="flex items-center gap-3">
-                  <Users className="h-6 w-6" />
-                  <div>
-                    <CardTitle>Expert Users</CardTitle>
-                    <CardDescription>Manage all registered users in the system.</CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                {areTablesLoading ? (
-                  <div className="flex justify-center items-center p-8">
-                    <Loader className="h-6 w-6 animate-spin text-primary" />
-                    <p className="ml-3 text-muted-foreground">Loading users...</p>
-                  </div>
-                ) : (
-                    <Tabs defaultValue="all">
-                        <TabsList className="grid w-full grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
-                            <TabsTrigger value="all">All Users</TabsTrigger>
-                            <TabsTrigger value="freelancers">Freelancers</TabsTrigger>
-                            <TabsTrigger value="companies">Companies</TabsTrigger>
-                            <TabsTrigger value="authorizedPros">Authorized Pros</TabsTrigger>
-                            <TabsTrigger value="superAdmins">Super Admins</TabsTrigger>
-                        </TabsList>
-                        <TabsContent value="all" className="mt-4">
-                            <UserTable users={users || []} onTierChange={handleTierChange} onVerificationToggle={handleVerificationToggle} onDelete={openDeleteDialog} />
-                        </TabsContent>
-                        <TabsContent value="freelancers" className="mt-4">
-                            <UserTable users={freelancers || []} onTierChange={handleTierChange} onVerificationToggle={handleVerificationToggle} onDelete={openDeleteDialog} />
-                        </TabsContent>
-                         <TabsContent value="companies" className="mt-4">
-                            <UserTable users={companies || []} onTierChange={handleTierChange} onVerificationToggle={handleVerificationToggle} onDelete={openDeleteDialog} />
-                        </TabsContent>
-                         <TabsContent value="authorizedPros" className="mt-4">
-                            <UserTable users={authorizedPros || []} onTierChange={handleTierChange} onVerificationToggle={handleVerificationToggle} onDelete={openDeleteDialog} />
-                        </TabsContent>
-                         <TabsContent value="superAdmins" className="mt-4">
-                            <UserTable users={superAdmins || []} onTierChange={handleTierChange} onVerificationToggle={handleVerificationToggle} onDelete={openDeleteDialog} />
-                        </TabsContent>
-                    </Tabs>
-                )}
-              </CardContent>
-            </Card>
+            <Tabs defaultValue="users">
+              <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="users">User Management</TabsTrigger>
+                  <TabsTrigger value="reviews">Review Management</TabsTrigger>
+              </TabsList>
+              <TabsContent value="users" className="mt-4">
+                  <Card>
+                    <CardHeader>
+                      <div className="flex items-center gap-3">
+                        <Users className="h-6 w-6" />
+                        <div>
+                          <CardTitle>Expert Users</CardTitle>
+                          <CardDescription>Manage all registered users in the system.</CardDescription>
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      {areTablesLoading ? (
+                        <div className="flex justify-center items-center p-8">
+                          <Loader className="h-6 w-6 animate-spin text-primary" />
+                          <p className="ml-3 text-muted-foreground">Loading users...</p>
+                        </div>
+                      ) : (
+                          <Tabs defaultValue="all">
+                              <TabsList className="grid w-full grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
+                                  <TabsTrigger value="all">All Users</TabsTrigger>
+                                  <TabsTrigger value="freelancers">Freelancers</TabsTrigger>
+                                  <TabsTrigger value="companies">Companies</TabsTrigger>
+                                  <TabsTrigger value="authorizedPros">Authorized Pros</TabsTrigger>
+                                  <TabsTrigger value="superAdmins">Super Admins</TabsTrigger>
+                              </TabsList>
+                              <TabsContent value="all" className="mt-4">
+                                  <UserTable users={users || []} onTierChange={handleTierChange} onVerificationToggle={handleVerificationToggle} onDelete={openDeleteDialog} />
+                              </TabsContent>
+                              <TabsContent value="freelancers" className="mt-4">
+                                  <UserTable users={freelancers || []} onTierChange={handleTierChange} onVerificationToggle={handleVerificationToggle} onDelete={openDeleteDialog} />
+                              </TabsContent>
+                              <TabsContent value="companies" className="mt-4">
+                                  <UserTable users={companies || []} onTierChange={handleTierChange} onVerificationToggle={handleVerificationToggle} onDelete={openDeleteDialog} />
+                              </TabsContent>
+                              <TabsContent value="authorizedPros" className="mt-4">
+                                  <UserTable users={authorizedPros || []} onTierChange={handleTierChange} onVerificationToggle={handleVerificationToggle} onDelete={openDeleteDialog} />
+                              </TabsContent>
+                              <TabsContent value="superAdmins" className="mt-4">
+                                  <UserTable users={superAdmins || []} onTierChange={handleTierChange} onVerificationToggle={handleVerificationToggle} onDelete={openDeleteDialog} />
+                              </TabsContent>
+                          </Tabs>
+                      )}
+                    </CardContent>
+                  </Card>
+              </TabsContent>
+              <TabsContent value="reviews" className="mt-4">
+                  <Card>
+                    <CardHeader>
+                      <div className="flex items-center gap-3">
+                        <MessageSquare className="h-6 w-6" />
+                        <div>
+                          <CardTitle>Review Moderation</CardTitle>
+                          <CardDescription>Approve or reject reviews submitted by users.</CardDescription>
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                        {isReviewsLoading ? (
+                             <div className="flex justify-center items-center p-8">
+                                <Loader className="h-6 w-6 animate-spin text-primary" />
+                                <p className="ml-3 text-muted-foreground">Loading reviews...</p>
+                              </div>
+                        ) : (
+                            <Tabs defaultValue="pending">
+                                <TabsList className="grid w-full grid-cols-2">
+                                    <TabsTrigger value="pending">Pending Reviews</TabsTrigger>
+                                    <TabsTrigger value="approved">Approved Reviews</TabsTrigger>
+                                </TabsList>
+                                <TabsContent value="pending" className="mt-4">
+                                    <ReviewTable reviews={pendingReviews || []} onApprove={handleApproveReview} onReject={openReviewRejectDialog} />
+                                </TabsContent>
+                                <TabsContent value="approved" className="mt-4">
+                                    <ReviewTable reviews={approvedReviews || []} onApprove={handleApproveReview} onReject={openReviewRejectDialog} />
+                                </TabsContent>
+                            </Tabs>
+                        )}
+                    </CardContent>
+                  </Card>
+              </TabsContent>
+            </Tabs>
           </main>
         </div>
       </div>
@@ -468,6 +616,24 @@ export default function AdminDashboardPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      <AlertDialog open={isReviewRejectDialogOpen} onOpenChange={setIsReviewRejectDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Reject Review?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to reject and permanently delete this review? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleRejectReview} className="bg-destructive hover:bg-destructive/90">
+              Reject and Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
+
+    

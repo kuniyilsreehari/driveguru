@@ -4,7 +4,7 @@
 import { Suspense, useState, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { doc, collection, query, where, addDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, collection, query, where, addDoc, serverTimestamp, orderBy } from 'firebase/firestore';
 import { useFirestore, useDoc, useCollection, useMemoFirebase, useUser } from '@/firebase';
 import { Loader2, Star, ChevronLeft, MapPin, IndianRupee, Briefcase, Calendar, Info, Book, GraduationCap, School, User as UserIcon, UserCheck, XCircle, Crown, Sparkles, MessageSquare, LogIn, Edit2, Send, Lock, Building, FileDown, Home } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -84,7 +84,8 @@ function ExpertProfileContent() {
         return query(
             collection(firestore, 'reviews'), 
             where('expertId', '==', expertId), 
-            where('status', '==', 'approved')
+            where('status', '==', 'approved'),
+            orderBy('createdAt', 'desc')
         );
     }, [firestore, expertId]);
 
@@ -472,3 +473,5 @@ export default function ExpertProfilePage() {
         </Suspense>
     );
 }
+
+    
