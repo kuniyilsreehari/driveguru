@@ -16,7 +16,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { User as UserIcon, LogOut, LayoutDashboard } from 'lucide-react';
+import { User as UserIcon, LogOut, LayoutDashboard, MessageSquare } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
@@ -65,6 +65,12 @@ export function Header() {
         </Link>
         <div className="flex flex-1 items-center justify-end space-x-4">
           <nav className="flex items-center space-x-2">
+            <Button asChild variant="ghost">
+              <Link href="/reviews">
+                <MessageSquare className="mr-2 h-4 w-4" />
+                Reviews
+              </Link>
+            </Button>
             {isUserLoading || isCheckingAdmin ? null : user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
