@@ -101,6 +101,9 @@ export default function AdminDashboardPage() {
 
   const verifiedCount = users?.filter(u => u.verified).length || 0;
   const unverifiedCount = users?.filter(u => !u.verified).length || 0;
+  const premierCount = users?.filter(u => u.tier === 'Premier').length || 0;
+  const superPremierCount = users?.filter(u => u.tier === 'Super Premier').length || 0;
+
 
   useEffect(() => {
     if (!isUserLoading && !user) {
@@ -240,7 +243,17 @@ export default function AdminDashboardPage() {
           </header>
 
           <main>
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 mb-8">
+            <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-5 mb-8">
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Total Experts</CardTitle>
+                  <Users className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{users?.length || 0}</div>
+                  <p className="text-xs text-muted-foreground">Total registered experts</p>
+                </CardContent>
+              </Card>
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Verified Experts</CardTitle>
@@ -251,7 +264,7 @@ export default function AdminDashboardPage() {
                   <p className="text-xs text-muted-foreground">Total number of verified experts</p>
                 </CardContent>
               </Card>
-              <Card>
+               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Unverified Experts</CardTitle>
                   <UserX className="h-4 w-4 text-muted-foreground" />
@@ -263,12 +276,22 @@ export default function AdminDashboardPage() {
               </Card>
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Experts</CardTitle>
-                  <Users className="h-4 w-4 text-muted-foreground" />
+                  <CardTitle className="text-sm font-medium">Premier Experts</CardTitle>
+                  <Crown className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{users?.length || 0}</div>
-                  <p className="text-xs text-muted-foreground">Total registered experts</p>
+                  <div className="text-2xl font-bold">{premierCount}</div>
+                  <p className="text-xs text-muted-foreground">Total Premier tier experts</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Super Premier</CardTitle>
+                  <Sparkles className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{superPremierCount}</div>
+                  <p className="text-xs text-muted-foreground">Total Super Premier experts</p>
                 </CardContent>
               </Card>
             </div>
