@@ -39,7 +39,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { formatDistanceToNow } from 'date-fns';
+import { format, formatDistanceToNow } from 'date-fns';
 import Link from 'next/link';
 
 type ExpertUser = {
@@ -50,6 +50,7 @@ type ExpertUser = {
     verified?: boolean;
     tier?: 'Standard' | 'Premier' | 'Super Premier';
     role?: 'Super Admin' | 'Freelancer' | 'Company' | 'Authorized Pro';
+    createdAt?: Timestamp;
 };
 
 type Review = {
@@ -110,7 +111,14 @@ const UserTable = ({ users, onTierChange, onVerificationToggle, onDelete }: { us
                             <AvatarFallback>{getInitials(expert.firstName, expert.lastName)}</AvatarFallback>
                         </Avatar>
                     </TableCell>
-                    <TableCell className="font-medium">{expert.firstName} {expert.lastName}</TableCell>
+                    <TableCell>
+                        <div className="font-medium">{expert.firstName} {expert.lastName}</div>
+                        {expert.createdAt && (
+                            <div className="text-xs text-muted-foreground">
+                                {format(expert.createdAt.toDate(), 'PPP')}
+                            </div>
+                        )}
+                    </TableCell>
                     <TableCell>{expert.email}</TableCell>
                     <TableCell><Badge variant="secondary">{expert.role}</Badge></TableCell>
                     <TableCell className="text-center">{renderTierBadge(expert.tier)}</TableCell>
@@ -223,17 +231,12 @@ export default function AdminDashboardPage() {
 
   const reviewsCollectionRef = useMemoFirebase(() => {
     if (!firestore || !isSuperAdmin) return null;
-    return collection(firestore, 'reviews');
+    return query(collection(firestore, 'reviews'), orderBy('createdAt', 'desc'));
 }, [firestore, isSuperAdmin]);
 
 
   const { data: users, isLoading: isUsersLoading } = useCollection<ExpertUser>(usersCollectionRef);
-  const { data: reviews, isLoading: isReviewsLoading } = useCollection<Review>(
-    useMemoFirebase(() => {
-        if (!reviewsCollectionRef) return null;
-        return query(reviewsCollectionRef, orderBy('createdAt', 'desc'));
-    }, [reviewsCollectionRef])
-  );
+  const { data: reviews, isLoading: isReviewsLoading } = useCollection<Review>(reviewsCollectionRef);
   
   const appConfigDocRef = useMemoFirebase(() => {
       if (!firestore) return null;
@@ -638,3 +641,5 @@ export default function AdminDashboardPage() {
     </>
   );
 }
+
+    

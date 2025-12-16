@@ -105,6 +105,11 @@
         "isAvailable": {
           "type": "boolean",
           "description": "Indicates if the expert is currently available for work."
+        },
+        "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp of when the user account was created."
         }
       },
       "required": [
@@ -112,7 +117,8 @@
         "firstName",
         "lastName",
         "email",
-        "role"
+        "role",
+        "createdAt"
       ]
     },
     "Company": {

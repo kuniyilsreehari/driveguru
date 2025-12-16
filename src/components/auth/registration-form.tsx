@@ -9,7 +9,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { User as UserIcon, Mail, Lock, Eye, EyeOff, Briefcase, MapPin, Phone, LocateIcon, Loader2, Building, Home } from "lucide-react";
 import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { doc } from 'firebase/firestore';
+import { doc, serverTimestamp } from 'firebase/firestore';
 
 import { Button } from "@/components/ui/button";
 import {
@@ -206,6 +206,7 @@ export function RegistrationForm() {
         verified: false, // Default verified status to false
         photoUrl: '', // Default photoUrl to empty string
         isAvailable: true, // Default to available
+        createdAt: serverTimestamp(),
       };
 
       // Use non-blocking write
@@ -523,3 +524,5 @@ export function RegistrationForm() {
     </Form>
   );
 }
+
+    
