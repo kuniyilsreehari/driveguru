@@ -51,6 +51,13 @@ service cloud.firestore {
         return isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'Company';
     }
 
+    function isPremiumCompanyUser() {
+      let user = get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+      return isSignedIn() &&
+             user.role == 'Company' &&
+             (user.tier == 'Premier' || user.tier == 'Super Premier');
+    }
+
     function isVacancyOwner(vacancy) {
         return isCompanyUser() && vacancy.companyId == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.companyId;
     }
@@ -132,9 +139,9 @@ service cloud.firestore {
     match /vacancies/{vacancyId} {
         allow get: if true;
         allow list: if true;
-        allow create: if isCompanyUser();
-        allow update: if isVacancyOwner(request.resource.data);
-        allow delete: if isVacancyOwner(resource.data);
+        allow create: if isPremiumCompanyUser();
+        allow update: if isPremiumCompanyUser() && isVacancyOwner(request.resource.data);
+        allow delete: if isPremiumCompanyUser() && isVacancyOwner(resource.data);
     }
 
 
