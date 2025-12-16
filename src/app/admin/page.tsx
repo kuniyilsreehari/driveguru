@@ -86,10 +86,17 @@ export default function AdminDashboardPage() {
   const { data: appConfig, isLoading: isAppConfigLoading } = useDoc<AppConfig>(appConfigDocRef);
   
   useEffect(() => {
+    // When the component loads and we have the appConfig data
+    if (!isAppConfigLoading) {
       if (appConfig?.featuredExpertsLimit) {
-          setFeaturedExpertsLimit(appConfig.featuredExpertsLimit);
+        // If config exists, set the state from it
+        setFeaturedExpertsLimit(appConfig.featuredExpertsLimit);
+      } else if (appConfig === null && appConfigDocRef) {
+        // If document doesn't exist (appConfig is null), create it with a default
+        setDocumentNonBlocking(appConfigDocRef, { featuredExpertsLimit: 3 }, { merge: true });
       }
-  }, [appConfig]);
+    }
+  }, [appConfig, isAppConfigLoading, appConfigDocRef]);
 
 
   const verifiedCount = users?.filter(u => u.verified).length || 0;
@@ -403,3 +410,5 @@ export default function AdminDashboardPage() {
     </>
   );
 }
+
+    
