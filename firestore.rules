@@ -109,10 +109,10 @@ service cloud.firestore {
      * Reviews
      * ===================================================== */
     match /reviews/{reviewId} {
-        allow get: if true; // anyone can read approved reviews
+        allow get: if true;
         allow list: if true;
-        allow create: if isSignedIn(); // only signed in users can create a review
-        allow update, delete: if isSuperAdmin(); // only admins can moderate
+        allow create: if isSignedIn();
+        allow update, delete: if isSuperAdmin();
     }
 
     /* =====================================================
