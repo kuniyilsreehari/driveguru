@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -85,10 +86,15 @@ export function useCollection<T = any>(
         setIsLoading(false);
       },
       (error: FirestoreError) => {
-        const path: string =
-          memoizedTargetRefOrQuery.type === 'collection'
-            ? (memoizedTargetRefOrQuery as CollectionReference).path
-            : (memoizedTargetRefOrQuery as Query)._query.path.parent.canonicalString();
+        let path: string = 'unknown';
+
+        if (memoizedTargetRefOrQuery.type === 'collection') {
+            path = (memoizedTargetRefOrQuery as CollectionReference).path;
+        } else if (memoizedTargetRefOrQuery.type === 'query') {
+            const queryRef = (memoizedTargetRefOrQuery as Query);
+            // The ref of a query points to the collection it's querying
+            path = (queryRef as any)._query.path.toString();
+        }
 
         const contextualError = new FirestorePermissionError({
           operation: 'list',
