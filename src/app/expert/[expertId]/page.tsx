@@ -1,12 +1,12 @@
 
 'use client';
 
-import { Suspense, useState } from 'react';
+import { Suspense, useState, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { doc, collection, query, where, addDoc, serverTimestamp } from 'firebase/firestore';
 import { useFirestore, useDoc, useCollection, useMemoFirebase, useUser } from '@/firebase';
-import { Loader2, Star, ChevronLeft, MapPin, IndianRupee, Briefcase, Calendar, Info, Book, GraduationCap, School, User as UserIcon, UserCheck, XCircle, Crown, Sparkles, MessageSquare, LogIn, Edit2, Send, Lock, Building } from 'lucide-react';
+import { Loader2, Star, ChevronLeft, MapPin, IndianRupee, Briefcase, Calendar, Info, Book, GraduationCap, School, User as UserIcon, UserCheck, XCircle, Crown, Sparkles, MessageSquare, LogIn, Edit2, Send, Lock, Building, FileDown } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -20,6 +20,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 
 type ExpertUserProfile = {
@@ -62,6 +64,8 @@ function ExpertProfileContent() {
     const firestore = useFirestore();
     const { user, isUserLoading } = useUser();
     const { toast } = useToast();
+    const profileCardRef = useRef<HTMLDivElement>(null);
+    const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
 
     const [isReviewOpen, setIsReviewOpen] = useState(false);
     const [rating, setRating] = useState(0);
@@ -95,6 +99,54 @@ function ExpertProfileContent() {
     
     const displayName = expert?.companyName || `${expert?.firstName} ${expert?.lastName}`;
     
+    const handleDownloadPdf = async () => {
+        const element = profileCardRef.current;
+        if (!element || !expert) {
+            toast({ variant: 'destructive', title: 'Error', description: 'Could not capture profile content.' });
+            return;
+        }
+
+        setIsGeneratingPdf(true);
+
+        try {
+            const canvas = await html2canvas(element, {
+                scale: 2, // Increase resolution
+                useCORS: true, // For external images
+                backgroundColor: null, // Use element's background
+            });
+            const imgData = canvas.toDataURL('image/png');
+
+            // A4 page dimensions in mm: 210 x 297
+            const pdf = new jsPDF('p', 'mm', 'a4');
+            const pdfWidth = pdf.internal.pageSize.getWidth();
+            const pdfHeight = pdf.internal.pageSize.getHeight();
+            
+            const imgWidth = canvas.width;
+            const imgHeight = canvas.height;
+            const ratio = imgWidth / imgHeight;
+
+            let finalImgWidth = pdfWidth - 20; // with margin
+            let finalImgHeight = finalImgWidth / ratio;
+            
+            if (finalImgHeight > pdfHeight - 20) {
+                finalImgHeight = pdfHeight - 20;
+                finalImgWidth = finalImgHeight * ratio;
+            }
+            
+            const x = (pdfWidth - finalImgWidth) / 2;
+            const y = 10; // Top margin
+
+            pdf.addImage(imgData, 'PNG', x, y, finalImgWidth, finalImgHeight);
+            pdf.save(`${displayName}-profile.pdf`);
+        } catch (error) {
+            console.error("Error generating PDF:", error);
+            toast({ variant: 'destructive', title: 'PDF Generation Failed', description: 'An unexpected error occurred.' });
+        } finally {
+            setIsGeneratingPdf(false);
+        }
+    };
+
+
     const handleSubmitReview = async () => {
         if (!firestore) {
             toast({ variant: 'destructive', title: "Error", description: "Database connection not found." });
@@ -160,9 +212,19 @@ function ExpertProfileContent() {
     return (
         <div className="min-h-screen bg-background p-4 sm:p-8">
             <div className="mx-auto max-w-4xl">
-                 <Button variant="outline" asChild className="mb-6">
-                    <Link href="/"><ChevronLeft className="mr-2 h-4 w-4" /> Back to Home</Link>
-                </Button>
+                 <div className="mb-6 flex justify-between items-center">
+                    <Button variant="outline" asChild>
+                        <Link href="/"><ChevronLeft className="mr-2 h-4 w-4" /> Back to Home</Link>
+                    </Button>
+                    <Button variant="outline" onClick={handleDownloadPdf} disabled={isGeneratingPdf}>
+                        {isGeneratingPdf ? (
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        ) : (
+                            <FileDown className="mr-2 h-4 w-4" />
+                        )}
+                        {isGeneratingPdf ? 'Generating...' : 'Download PDF'}
+                    </Button>
+                </div>
                 
                 {!user && (
                     <Card className="mb-6 bg-primary/10 border-primary/50">
@@ -182,7 +244,7 @@ function ExpertProfileContent() {
                     </Card>
                 )}
 
-                <Card>
+                <Card ref={profileCardRef}>
                     <CardHeader>
                         <div className="flex flex-col sm:flex-row items-start gap-6">
                             <Avatar className="h-32 w-32 text-5xl">
