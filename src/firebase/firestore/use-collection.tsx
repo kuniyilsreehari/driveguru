@@ -88,15 +88,19 @@ export function useCollection<T = any>(
       (error: FirestoreError) => {
         let path: string = 'unknown';
 
-        if (memoizedTargetRefOrQuery.type === 'collection') {
-            path = (memoizedTargetRefOrQuery as CollectionReference).path;
-        } else if (memoizedTargetRefOrQuery.type === 'query') {
-            // A Query's 'ref' property points to the CollectionReference it is querying.
-            // This is a stable, public API property.
-            const queryRef = (memoizedTargetRefOrQuery as Query);
-            if (queryRef.ref) {
-                path = queryRef.ref.path;
+        try {
+            if (memoizedTargetRefOrQuery.type === 'collection') {
+                path = (memoizedTargetRefOrQuery as CollectionReference).path;
+            } else if (memoizedTargetRefOrQuery.type === 'query') {
+                const internalQuery = memoizedTargetRefOrQuery as InternalQuery;
+                if (internalQuery._query?.path) {
+                    path = internalQuery._query.path.canonicalString();
+                } else if ((memoizedTargetRefOrQuery as Query).ref) {
+                    path = (memoizedTargetRefOrQuery as Query).ref.path;
+                }
             }
+        } catch (e) {
+            console.error("Failed to extract path for permission error reporting:", e);
         }
 
         const contextualError = new FirestorePermissionError({
