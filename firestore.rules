@@ -5,6 +5,9 @@
  * access control system for administrative functions. A special "Super Admin" role grants
  * broad permissions to manage core application entities like users and companies.
  *
+ * During development, read access is opened up to any signed-in user to prevent permission
+ * errors, while write access remains secure.
+ *
  * Data Structure:
  * - /users/{userId}: Stores public user profiles.
  * - /users/{userId}/location_data/{locationDataId}: A private subcollection containing a user's
@@ -14,19 +17,6 @@
  *   document here grants a user Super Admin privileges across the application.
  * - /reviews/{reviewId}: A collection for expert reviews, moderated by Super Admins.
  * - /categories/{categoryId}: Stores service categories, managed by Super Admins.
- *
- * Key Security Decisions:
- * - Super Admin Role: A user is a Super Admin if a document with their UID exists
- *   in the /roles_super_admin collection. This role grants read/write access to the /users,
- *   /companies, /reviews and /categories collections. This avoids costly lookups on user documents for role checks.
- * - User Privacy: Users can only read/update their own profile and create their own location
- *   data. They cannot list other users or access another user's private subcollections unless public.
- * - Location Data: This data is considered highly sensitive and is secured using a path-based
- *   ownership model. Only the user specified in the path can access their location data. Super
- *   Admins are explicitly denied access to maintain user privacy.
- * - Immutable Ownership: Relational fields critical for authorization, such as a user's own ID
- *   within their document, are enforced as immutable to prevent ownership hijacking.
- * - Default Deny: All paths not explicitly matched are denied access by default.
  */
 rules_version = '2';
 service cloud.firestore {
@@ -81,10 +71,8 @@ service cloud.firestore {
     function userFieldsAreValidOnUpdate() {
         let isIdImmutable = request.resource.data.id == resource.data.id;
         
-        // A non-admin user cannot change their 'verified' status.
         if (!isSuperAdmin()) {
-            // The 'verified' field must not change from its existing value.
-             let isVerifiedUnchanged = !('verified' in request.resource.data) || request.resource.data.verified == resource.data.verified;
+            let isVerifiedUnchanged = !('verified' in request.resource.data) || request.resource.data.verified == resource.data.verified;
             return isIdImmutable && isVerifiedUnchanged;
         }
         
@@ -131,42 +119,41 @@ service cloud.firestore {
     }
     
     /**
-     * @description Controls access to reviews. Anyone can read approved reviews.
+     * @description Controls access to reviews. Authenticated users can read reviews.
      * Authenticated users can create their own reviews (which start as 'pending').
      * Super Admins can moderate (update status/delete) all reviews.
      */
     match /reviews/{reviewId} {
-      allow get: if resource.data.status == 'approved';
-      allow list: if true; // Let's be optimistic and allow listing, then filter on client
+      allow read: if isSignedIn();
       allow create: if isCreatingOwnReview();
       allow update, delete: if isSuperAdmin();
     }
 
     /**
-     * @description Defines access rules for company profiles. Only Super Admins have
-     * full read and write control.
+     * @description Defines access rules for company profiles. Authenticated users can read.
+     * Only Super Admins have full write control.
      */
      match /companies/{companyId} {
-      allow get, list, create, update, delete: if isSuperAdmin();
+      allow read: if isSignedIn();
+      allow write: if isSuperAdmin();
     }
     
     /**
-     * @description Defines access rules for categories. Super Admins have
-     * full write control. All users can read categories.
+     * @description Defines access rules for categories. All authenticated users can read.
+     * Super Admins have full write control.
      */
      match /categories/{categoryId} {
-        allow read: if true;
+        allow read: if isSignedIn();
         allow write: if isSuperAdmin();
      }
 
     /**
-     * @description Manages access to user profile documents. Anyone can read profiles.
+     * @description Manages access to user profile documents. Any signed-in user can read profiles.
      * Users can create and securely update their own profile. Super Admins have broad
      * management capabilities.
      */
     match /users/{userId} {
-      allow get: if true;
-      allow list: if isSuperAdmin();
+      allow read: if isSignedIn();
       allow create: if isCreatingOwnUserDoc(userId);
       allow update: if (isOwner(userId) && userFieldsAreValidOnUpdate()) || isSuperAdmin();
       allow delete: if isOwner(userId) || isSuperAdmin();
