@@ -26,6 +26,7 @@ function HomePageContent() {
     const [searchQuery, setSearchQuery] = useState('');
     const [location, setLocation] = useState('');
     const [locationName, setLocationName] = useState('');
+    const [maxRate, setMaxRate] = useState<number | null>(null);
     const [isDetecting, setIsDetecting] = useState(false);
     const [showVerifiedOnly, setShowVerifiedOnly] = useState(false);
     const [showAvailableOnly, setShowAvailableOnly] = useState(false);
@@ -132,6 +133,9 @@ function HomePageContent() {
         if (showAvailableOnly) {
             queryParams.set('available', 'true');
         }
+        if (maxRate !== null) {
+            queryParams.set('maxRate', maxRate.toString());
+        }
         router.push(`/search?${queryParams.toString()}`);
     };
 
@@ -211,8 +215,16 @@ function HomePageContent() {
                             </div>
 
                             <div className="mt-6">
-                                <Label htmlFor="hourly-rate">Max Hourly Rate: <span className="text-primary font-bold">Any</span></Label>
-                                <Slider defaultValue={[100]} max={100} step={1} className="mt-3" />
+                                <Label htmlFor="hourly-rate">
+                                    Max Hourly Rate: {maxRate ? <span className="text-primary font-bold">up to ₹{maxRate}/hr</span> : <span className="text-primary font-bold">Any</span>}
+                                </Label>
+                                <Slider 
+                                    defaultValue={[1000]} 
+                                    max={5000} 
+                                    step={100} 
+                                    className="mt-3" 
+                                    onValueChange={(value) => setMaxRate(value[0])}
+                                />
                             </div>
 
                             <div className="flex items-center space-x-4 mt-6">

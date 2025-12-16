@@ -27,6 +27,8 @@ function SearchResults() {
     const locationName = searchParams.get('locationName');
     const verified = searchParams.get('verified') === 'true';
     const available = searchParams.get('available') === 'true';
+    const maxRateParam = searchParams.get('maxRate');
+    const maxRate = maxRateParam ? parseInt(maxRateParam, 10) : null;
 
     const expertsQuery = useMemoFirebase(() => {
         if (!firestore) return null;
@@ -81,9 +83,16 @@ function SearchResults() {
             );
         }
         
+        // Filter by max rate
+        if (maxRate !== null) {
+            experts = experts.filter(expert =>
+                expert.hourlyRate !== undefined && expert.hourlyRate <= maxRate
+            );
+        }
+        
         return experts;
 
-    }, [allExperts, searchQueryParam, location]);
+    }, [allExperts, searchQueryParam, location, maxRate]);
 
 
     if (isLoading) {
