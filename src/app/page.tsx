@@ -2,7 +2,7 @@
 
 'use client';
 
-import { Suspense, useState } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Briefcase, Building, ChevronDown, Laptop, LocateIcon, MapPin, Search, Smartphone, Wrench, Loader2, Star, UserCheck, Crown, Sparkles, HelpCircle, Bot } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -15,13 +15,19 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Icons } from "@/components/icons"
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, query, where, limit } from 'firebase/firestore';
+import { useFirestore, useCollection, useDoc, useMemoFirebase } from '@/firebase';
+import { collection, query, where, limit, doc } from 'firebase/firestore';
 import { ExpertCard } from '@/components/expert-card';
 import type { ExpertUser } from '@/components/expert-card';
 import * as LucideIcons from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { parseSearchQuery } from '@/ai/flows/ai-search-flow';
+
+
+type AppConfig = {
+    featuredExpertsLimit?: number;
+};
+
 
 function HomePageContent() {
     const [searchQuery, setSearchQuery] = useState('');
@@ -37,10 +43,19 @@ function HomePageContent() {
     const [aiSearchQuery, setAiSearchQuery] = useState('');
     const [isParsingQuery, setIsParsingQuery] = useState(false);
 
-    const expertsQuery = useMemoFirebase(() => {
+    const appConfigDocRef = useMemoFirebase(() => {
         if (!firestore) return null;
-        return query(collection(firestore, 'users'), where('verified', '==', true), limit(3));
+        return doc(firestore, 'app_config', 'homepage');
     }, [firestore]);
+    
+    const { data: appConfig, isLoading: isAppConfigLoading } = useDoc<AppConfig>(appConfigDocRef);
+    const featuredExpertsLimit = appConfig?.featuredExpertsLimit || 3;
+
+
+    const expertsQuery = useMemoFirebase(() => {
+        if (!firestore || isAppConfigLoading) return null;
+        return query(collection(firestore, 'users'), where('verified', '==', true), limit(featuredExpertsLimit));
+    }, [firestore, isAppConfigLoading, featuredExpertsLimit]);
     
 
     const { data: experts, isLoading: isLoadingExperts } = useCollection<ExpertUser>(expertsQuery);

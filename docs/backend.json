@@ -222,6 +222,18 @@
         }
       },
       "required": ["id", "expertId", "reviewerName", "rating", "comment", "createdAt", "status"]
+    },
+    "AppConfig": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "AppConfig",
+      "type": "object",
+      "description": "Stores global application settings.",
+      "properties": {
+        "featuredExpertsLimit": {
+          "type": "number",
+          "description": "The number of featured experts to show on the homepage."
+        }
+      }
     }
   },
   "auth": {
@@ -312,6 +324,22 @@
             {
               "name": "userId",
               "description": "The unique identifier of the user."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/app_config/{configId}",
+        "definition": {
+          "entityName": "AppConfig",
+          "schema": {
+            "$ref": "#/backend/entities/AppConfig"
+          },
+          "description": "Stores global application settings. Use a single document, e.g., 'homepage' for homepage settings.",
+          "params": [
+            {
+              "name": "configId",
+              "description": "The unique identifier of the configuration document (e.g., 'homepage')."
             }
           ]
         }

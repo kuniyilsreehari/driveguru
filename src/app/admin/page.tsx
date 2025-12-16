@@ -3,13 +3,13 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { collection, doc, deleteDoc, updateDoc, addDoc } from 'firebase/firestore';
+import { collection, doc, deleteDoc, updateDoc, addDoc, setDoc } from 'firebase/firestore';
 import { signOut } from 'firebase/auth';
-import { useUser, useFirestore, useDoc, useMemoFirebase, useAuth, useCollection, addDocumentNonBlocking } from '@/firebase';
+import { useUser, useFirestore, useDoc, useMemoFirebase, useAuth, useCollection, setDocumentNonBlocking } from '@/firebase';
 import { deleteDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, CheckCircle2, UserCheck, UserX, Crown, Sparkles, User as UserIcon } from 'lucide-react';
+import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, CheckCircle2, UserCheck, UserX, Crown, Sparkles, User as UserIcon, Settings, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
@@ -35,6 +35,8 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 type ExpertUser = {
     id: string;
@@ -43,6 +45,10 @@ type ExpertUser = {
     email?: string;
     verified?: boolean;
     tier?: 'Standard' | 'Premier' | 'Super Premier';
+};
+
+type AppConfig = {
+    featuredExpertsLimit?: number;
 };
 
 export default function AdminDashboardPage() {
@@ -54,6 +60,8 @@ export default function AdminDashboardPage() {
 
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<ExpertUser | null>(null);
+  const [featuredExpertsLimit, setFeaturedExpertsLimit] = useState(3);
+  const [isSavingSettings, setIsSavingSettings] = useState(false);
 
   const superAdminDocRef = useMemoFirebase(() => {
     if (!user) return null;
@@ -67,9 +75,21 @@ export default function AdminDashboardPage() {
     if (!firestore || !isSuperAdmin) return null;
     return collection(firestore, 'users');
   }, [firestore, isSuperAdmin]);
-  
 
   const { data: users, isLoading: isUsersLoading } = useCollection<ExpertUser>(usersCollectionRef);
+  
+  const appConfigDocRef = useMemoFirebase(() => {
+      if (!firestore) return null;
+      return doc(firestore, 'app_config', 'homepage');
+  }, [firestore]);
+  
+  const { data: appConfig, isLoading: isAppConfigLoading } = useDoc<AppConfig>(appConfigDocRef);
+  
+  useEffect(() => {
+      if (appConfig?.featuredExpertsLimit) {
+          setFeaturedExpertsLimit(appConfig.featuredExpertsLimit);
+      }
+  }, [appConfig]);
 
 
   const verifiedCount = users?.filter(u => u.verified).length || 0;
@@ -123,6 +143,26 @@ export default function AdminDashboardPage() {
         title: `Expert ${newVerifiedStatus ? 'Verified' : 'Unverified'}`,
         description: `${expert.firstName} ${expert.lastName} is now ${newVerifiedStatus ? 'verified' : 'unverified'}.`
     });
+  }
+
+  const handleSaveSettings = async () => {
+    if (!appConfigDocRef) return;
+    setIsSavingSettings(true);
+    try {
+        await setDocumentNonBlocking(appConfigDocRef, { featuredExpertsLimit: Number(featuredExpertsLimit) }, { merge: true });
+        toast({
+            title: "Settings Saved",
+            description: "Homepage settings have been updated.",
+        });
+    } catch(e) {
+        toast({
+            variant: "destructive",
+            title: "Error saving settings",
+            description: "Could not save settings. Please try again.",
+        });
+    } finally {
+        setIsSavingSettings(false);
+    }
   }
 
   const getInitials = (firstName?: string, lastName?: string) => {
@@ -226,6 +266,49 @@ export default function AdminDashboardPage() {
               </Card>
             </div>
             
+            <Card className="mb-8">
+              <CardHeader>
+                  <div className="flex items-center gap-3">
+                      <Settings className="h-6 w-6" />
+                      <div>
+                          <CardTitle>Homepage Settings</CardTitle>
+                          <CardDescription>Control content displayed on the main landing page.</CardDescription>
+                      </div>
+                  </div>
+              </CardHeader>
+              <CardContent>
+                  {isAppConfigLoading ? (
+                      <div className="flex items-center space-x-2">
+                          <Loader className="h-4 w-4 animate-spin" />
+                          <p className="text-sm text-muted-foreground">Loading settings...</p>
+                      </div>
+                  ) : (
+                    <div className="flex items-end gap-4">
+                      <div className="flex-grow">
+                          <Label htmlFor="featured-limit">Featured Experts Limit</Label>
+                          <Input 
+                              id="featured-limit"
+                              type="number" 
+                              value={featuredExpertsLimit}
+                              onChange={(e) => setFeaturedExpertsLimit(Number(e.target.value))}
+                              min="1"
+                              max="12"
+                              className="mt-1"
+                          />
+                      </div>
+                      <Button onClick={handleSaveSettings} disabled={isSavingSettings}>
+                          {isSavingSettings ? (
+                              <Loader className="mr-2 h-4 w-4 animate-spin" />
+                          ) : (
+                              <Save className="mr-2 h-4 w-4" />
+                          )}
+                          Save Settings
+                      </Button>
+                    </div>
+                  )}
+              </CardContent>
+            </Card>
+
             <Card>
               <CardHeader>
                 <div className="flex items-center gap-3">

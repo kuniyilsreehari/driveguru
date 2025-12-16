@@ -13,6 +13,7 @@
  * - /roles_super_admin/{userId}: An authorization-specific collection. The existence of a
  *   document here grants a user Super Admin privileges across the application.
  * - /reviews/{reviewId}: A collection for expert reviews, moderated by Super Admins.
+ * - /app_config/{configId}: Stores global application settings, manageable only by Super Admins.
  */
 rules_version = '2';
 service cloud.firestore {
@@ -104,6 +105,14 @@ service cloud.firestore {
     // --------------------------------------------------------------------------------
     // Collection Rules
     // --------------------------------------------------------------------------------
+    
+    /**
+     * @description Controls access to global application settings. Only Super Admins
+     * can read or write these settings. This is a highly sensitive collection.
+     */
+    match /app_config/{configId} {
+      allow read, write: if isSuperAdmin();
+    }
 
     /**
      * @description Controls access to Super Admin role assignments. Only existing Super
@@ -120,7 +129,7 @@ service cloud.firestore {
      * Super Admins can moderate (update status/delete) all reviews.
      */
     match /reviews/{reviewId} {
-      allow get: if resource.data.status == 'approved' || isSuperAdmin();
+      allow get: if (resource.data.status == 'approved' || isOwner(resource.data.reviewerId)) || isSuperAdmin();
       allow list: if request.query.get('status') == 'approved' || isSuperAdmin();
       allow create: if isCreatingOwnReview();
       allow update, delete: if isSuperAdmin();
