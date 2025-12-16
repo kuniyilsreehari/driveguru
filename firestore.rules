@@ -143,8 +143,11 @@ service cloud.firestore {
      * Super Admins have full write control.
      */
      match /categories/{categoryId} {
-        allow get, list: if isSignedIn();
+        allow get: if isSignedIn();
         allow write: if isSuperAdmin();
+     }
+     match /categories {
+        allow list: if isSignedIn();
      }
 
     /**
