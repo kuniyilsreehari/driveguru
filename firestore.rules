@@ -107,11 +107,11 @@ service cloud.firestore {
     // --------------------------------------------------------------------------------
     
     /**
-     * @description Controls access to global application settings. Any signed-in user
-     * can read these settings, but only Super Admins can write to them.
+     * @description Controls access to global application settings. Any user can read
+     * these settings, but only Super Admins can write to them. Public read is necessary for the homepage.
      */
     match /app_config/{configId} {
-      allow read: if isSignedIn();
+      allow read: if true;
       allow write: if isSuperAdmin();
     }
 
