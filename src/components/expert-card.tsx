@@ -33,6 +33,7 @@ export type ExpertUser = {
     yearsOfExperience?: number;
     tier?: 'Standard' | 'Premier' | 'Super Premier';
     photoUrl?: string;
+    isAvailable?: boolean;
 };
 
 interface ExpertCardProps {
@@ -140,7 +141,11 @@ export function ExpertCard({ expert }: ExpertCardProps) {
                                         <span className="text-xs text-muted-foreground ml-1">(1 review)</span>
                                     </div>
                                 </div>
-                                <Badge className="bg-orange-500 text-white mt-2 sm:mt-0">Available</Badge>
+                                {expert.isAvailable ? (
+                                    <Badge className="bg-green-500 text-white mt-2 sm:mt-0">Available</Badge>
+                                ) : (
+                                    <Badge variant="secondary" className="mt-2 sm:mt-0">Unavailable</Badge>
+                                )}
                             </div>
 
                             <Separator className="my-4" />
@@ -222,3 +227,5 @@ export function ExpertCard({ expert }: ExpertCardProps) {
         </Collapsible>
     )
 }
+
+    

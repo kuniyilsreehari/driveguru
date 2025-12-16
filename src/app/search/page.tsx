@@ -25,14 +25,21 @@ function SearchResults() {
     const location = searchParams.get('location');
     const category = searchParams.get('category');
     const locationName = searchParams.get('locationName');
+    const verified = searchParams.get('verified') === 'true';
+    const available = searchParams.get('available') === 'true';
 
     const usersCollectionRef = useMemoFirebase(() => {
         if (!firestore) return null;
         
         let q = query(collection(firestore, 'users'));
 
-        // No longer filtering for only verified users
-        // q = query(q, where('verified', '==', true));
+        if (verified) {
+            q = query(q, where('verified', '==', true));
+        }
+
+        if (available) {
+            q = query(q, where('isAvailable', '==', true));
+        }
 
         if (category) {
             q = query(q, where('category', '==', category));
@@ -43,7 +50,7 @@ function SearchResults() {
         // For now, we will filter by category and let the user see the location on the card.
 
         return q;
-    }, [firestore, category]);
+    }, [firestore, category, verified, available]);
 
     const { data: experts, isLoading } = useCollection<ExpertUser>(usersCollectionRef);
 
@@ -128,3 +135,5 @@ export default function SearchPage() {
         </div>
     )
 }
+
+    

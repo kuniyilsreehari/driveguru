@@ -5,10 +5,10 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { signOut } from 'firebase/auth';
 import { doc } from 'firebase/firestore';
-import { useUser, useAuth, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
+import { useUser, useAuth, useFirestore, useDoc, useMemoFirebase, updateDocumentNonBlocking } from '@/firebase';
 import { Button } from '@/components/ui/button';
-import { LogOut, Briefcase, Loader, Edit, UserCheck, XCircle, MapPin, IndianRupee, Calendar, Book, GraduationCap, School, Info, User as UserIcon } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { LogOut, Briefcase, Loader, Edit, UserCheck, XCircle, MapPin, IndianRupee, Calendar, Book, GraduationCap, School, Info, User as UserIcon, Check, Power } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
@@ -24,6 +24,9 @@ import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { useToast } from '@/hooks/use-toast';
 
 type ExpertUserProfile = {
     id: string;
@@ -44,6 +47,7 @@ type ExpertUserProfile = {
     aboutMe?: string;
     phoneNumber?: string;
     companyName?: string;
+    isAvailable?: boolean;
 };
 
 export default function ExpertDashboardPage() {
@@ -52,6 +56,7 @@ export default function ExpertDashboardPage() {
   const firestore = useFirestore();
   const router = useRouter();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const { toast } = useToast();
 
   // Fetch the user's profile from Firestore
   const userDocRef = useMemoFirebase(() => {
@@ -73,6 +78,15 @@ export default function ExpertDashboardPage() {
         signOut(auth);
     }
   };
+
+  const handleAvailabilityToggle = (isAvailable: boolean) => {
+    if (!userDocRef) return;
+    updateDocumentNonBlocking(userDocRef, { isAvailable });
+    toast({
+        title: "Availability Updated",
+        description: `You are now set as ${isAvailable ? 'Available' : 'Unavailable'}.`,
+    });
+  }
 
   const getInitials = (firstName?: string, lastName?: string) => {
     if (firstName && lastName) {
@@ -244,8 +258,30 @@ export default function ExpertDashboardPage() {
                     </div>
                 </div>
             </CardContent>
+            <CardFooter className="flex-col items-start gap-4 pt-6">
+                <div className="flex items-center space-x-2">
+                    <Switch 
+                        id="availability-mode" 
+                        checked={userProfile.isAvailable} 
+                        onCheckedChange={handleAvailabilityToggle}
+                        aria-label="Availability status"
+                    />
+                    <Label htmlFor="availability-mode" className="flex items-center gap-2">
+                        {userProfile.isAvailable ? (
+                            <><Check className="h-4 w-4 text-green-500"/> I am currently available for new projects.</>
+                        ) : (
+                            <><Power className="h-4 w-4 text-red-500"/> I am not available for new projects.</>
+                        )}
+                    </Label>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                    Use this toggle to control your visibility for new job offers in search results.
+                </p>
+            </CardFooter>
         </Card>
       </div>
     </div>
   );
 }
+
+    

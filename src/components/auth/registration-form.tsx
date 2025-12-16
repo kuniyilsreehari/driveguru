@@ -176,6 +176,7 @@ export function RegistrationForm() {
         companyName: values.companyName,
         verified: false, // Default verified status to false
         photoUrl: '', // Default photoUrl to empty string
+        isAvailable: true, // Default to available
       };
 
       // Use non-blocking write
@@ -447,3 +448,5 @@ export function RegistrationForm() {
     </Form>
   );
 }
+
+    

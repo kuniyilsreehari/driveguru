@@ -34,6 +34,8 @@ export default function TalentSearchPage() {
     const [locationName, setLocationName] = useState('');
     const [isDetecting, setIsDetecting] = useState(false);
     const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+    const [showVerifiedOnly, setShowVerifiedOnly] = useState(false);
+    const [showAvailableOnly, setShowAvailableOnly] = useState(false);
     const { toast } = useToast();
     const router = useRouter();
     const firestore = useFirestore();
@@ -129,6 +131,12 @@ export default function TalentSearchPage() {
         }
         if (selectedCategory) {
             queryParams.set('category', selectedCategory);
+        }
+        if (showVerifiedOnly) {
+            queryParams.set('verified', 'true');
+        }
+        if (showAvailableOnly) {
+            queryParams.set('available', 'true');
         }
         router.push(`/search?${queryParams.toString()}`);
     };
@@ -229,11 +237,11 @@ export default function TalentSearchPage() {
 
                             <div className="flex items-center space-x-4 mt-6">
                                 <div className="flex items-center space-x-2">
-                                    <Checkbox id="verified" />
+                                    <Checkbox id="verified" checked={showVerifiedOnly} onCheckedChange={(checked) => setShowVerifiedOnly(!!checked)} />
                                     <Label htmlFor="verified">Show verified only</Label>
                                 </div>
                                 <div className="flex items-center space-x-2">
-                                    <Checkbox id="available" />
+                                    <Checkbox id="available" checked={showAvailableOnly} onCheckedChange={(checked) => setShowAvailableOnly(!!checked)} />
                                     <Label htmlFor="available">Show available only</Label>
                                 </div>
                             </div>
@@ -265,3 +273,5 @@ export default function TalentSearchPage() {
         </div>
     )
 }
+
+    
