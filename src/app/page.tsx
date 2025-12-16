@@ -32,8 +32,8 @@ const DynamicIcon = ({ name, ...props }: { name: string } & LucideIcons.LucidePr
   const IconComponent = (LucideIcons as any)[name];
 
   if (!IconComponent) {
-    // Return a default icon if the specified one doesn't exist.
-    return <HelpCircle {...props} />;
+    // Use Wrench as a fallback icon if the specified one doesn't exist.
+    return <Wrench {...props} />;
   }
 
   return <IconComponent {...props} />;
