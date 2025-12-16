@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { Suspense } from 'react';
@@ -23,6 +24,7 @@ function SearchResults() {
 
     const location = searchParams.get('location');
     const category = searchParams.get('category');
+    const locationName = searchParams.get('locationName');
 
     const usersCollectionRef = useMemoFirebase(() => {
         if (!firestore) return null;
@@ -64,16 +66,30 @@ function SearchResults() {
     }
 
     const searchTitle = () => {
-        if (location && category) {
-            return <>Showing <span className="text-primary">{category}</span> experts. Results visible for all locations.</>
-        }
-        if (location) {
-            return <>Showing experts for all locations. You searched near <span className="text-primary">{location}</span>.</>
-        }
+        let titleParts: (string | JSX.Element)[] = [];
         if (category) {
-            return <>Showing all <span className="text-primary">{category}</span> experts</>
+            titleParts.push(<>Showing <span className="text-primary">{category}</span> experts</>);
+        } else {
+            titleParts.push(<>Showing all experts</>);
         }
-        return "Showing all verified experts"
+
+        if (locationName) {
+            titleParts.push(<> in <span className="text-primary">{locationName}</span></>);
+        }
+        
+        if (location && !locationName) {
+            titleParts.push(<> near <span className="text-primary">{location}</span></>);
+        } else if (location && locationName) {
+            titleParts.push(<>,</>);
+        }
+
+        if (category && (location || locationName)) {
+            titleParts.push(<>. Results visible for all locations.</>);
+        } else {
+             titleParts.push(<>. Results visible for all locations.</>);
+        }
+
+        return <>{titleParts}</>
     }
 
     return (

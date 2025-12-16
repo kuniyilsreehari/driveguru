@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState } from 'react';
@@ -30,6 +31,7 @@ const categories = [
 
 export default function TalentSearchPage() {
     const [location, setLocation] = useState('');
+    const [locationName, setLocationName] = useState('');
     const [isDetecting, setIsDetecting] = useState(false);
     const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
     const { toast } = useToast();
@@ -117,6 +119,9 @@ export default function TalentSearchPage() {
         if (location) {
             queryParams.set('location', location);
         }
+        if (locationName) {
+            queryParams.set('locationName', locationName);
+        }
         if (selectedCategory) {
             queryParams.set('category', selectedCategory);
         }
@@ -169,6 +174,20 @@ export default function TalentSearchPage() {
                                             <TabsTrigger value="freshers"><Icons.graduate className="mr-2" />Freshers</TabsTrigger>
                                         </TabsList>
                                     </Tabs>
+                                </div>
+                            </div>
+                            
+                            <div className="mt-4">
+                                <Label htmlFor="locationName">Name of the location</Label>
+                                <div className="relative mt-2">
+                                    <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                    <Input 
+                                        id="locationName" 
+                                        placeholder="Enter a specific place or area" 
+                                        className="pl-10"
+                                        value={locationName}
+                                        onChange={(e) => setLocationName(e.target.value)}
+                                    />
                                 </div>
                             </div>
 
