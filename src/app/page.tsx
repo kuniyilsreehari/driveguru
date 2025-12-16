@@ -134,7 +134,7 @@ export default function TalentSearchPage() {
                 <main>
                     <Card className="p-6 sm:p-8">
                         <CardContent className="p-0">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                 <div>
                                     <Label htmlFor="location">Location</Label>
                                     <div className="flex items-center gap-2 mt-2">
