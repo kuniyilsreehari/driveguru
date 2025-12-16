@@ -9,7 +9,7 @@ import { useUser, useFirestore, useDoc, useMemoFirebase, useAuth, useCollection 
 import { deleteDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, CheckCircle2, UserCheck, UserX, Crown, Sparkles, User as UserIcon, ThumbsUp, ThumbsDown, MessageSquare, Star } from 'lucide-react';
+import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, CheckCircle2, UserCheck, UserX, Crown, Sparkles, User as UserIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
@@ -34,10 +34,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { formatDistanceToNow } from 'date-fns';
-import { cn } from '@/lib/utils';
 
 type ExpertUser = {
     id: string;
@@ -46,17 +43,6 @@ type ExpertUser = {
     email?: string;
     verified?: boolean;
     tier?: 'Standard' | 'Premier' | 'Super Premier';
-};
-
-type Review = {
-    id: string;
-    expertId: string;
-    expertName: string;
-    reviewerName: string;
-    rating: number;
-    comment: string;
-    createdAt: { seconds: number; nanoseconds: number; }; // Firestore Timestamp structure
-    status: 'pending' | 'approved' | 'rejected';
 };
 
 export default function AdminDashboardPage() {
@@ -84,16 +70,8 @@ export default function AdminDashboardPage() {
 
   const { data: users, isLoading: isUsersLoading } = useCollection<ExpertUser>(usersCollectionRef);
 
-  const reviewsCollectionRef = useMemoFirebase(() => {
-    if (!firestore || !isSuperAdmin) return null;
-    return collection(firestore, 'reviews');
-  }, [firestore, isSuperAdmin]);
-
-  const { data: reviews, isLoading: isReviewsLoading } = useCollection<Review>(reviewsCollectionRef);
-
   const verifiedCount = users?.filter(u => u.verified).length || 0;
   const unverifiedCount = users?.filter(u => !u.verified).length || 0;
-  const pendingReviewsCount = reviews?.filter(r => r.status === 'pending').length || 0;
 
   useEffect(() => {
     if (!isUserLoading && !user) {
@@ -132,16 +110,6 @@ export default function AdminDashboardPage() {
         title: "Expert Tier Updated",
         description: `${expert.firstName} ${expert.lastName}'s tier is now ${tier}.`
     });
-  }
-  
-  const handleReviewStatusChange = (review: Review, status: Review['status']) => {
-    if(!firestore) return;
-    const reviewDocRef = doc(firestore, 'reviews', review.id);
-    updateDocumentNonBlocking(reviewDocRef, { status });
-    toast({
-      title: `Review ${status.charAt(0).toUpperCase() + status.slice(1)}`,
-      description: `The review for ${review.expertName} has been ${status}.`
-    })
   }
 
   const handleVerificationToggle = (expert: ExpertUser) => {
@@ -244,17 +212,17 @@ export default function AdminDashboardPage() {
               </Card>
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Pending Reviews</CardTitle>
-                  <MessageSquare className="h-4 w-4 text-muted-foreground" />
+                  <CardTitle className="text-sm font-medium">Total Experts</CardTitle>
+                  <Users className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{pendingReviewsCount}</div>
-                  <p className="text-xs text-muted-foreground">Reviews awaiting your approval</p>
+                  <div className="text-2xl font-bold">{users?.length || 0}</div>
+                  <p className="text-xs text-muted-foreground">Total registered experts</p>
                 </CardContent>
               </Card>
             </div>
             
-            <div className="grid gap-8 lg:grid-cols-2">
+            <div className="grid gap-8">
               <Card>
                 <CardHeader>
                   <div className="flex items-center gap-3">
@@ -327,63 +295,6 @@ export default function AdminDashboardPage() {
                 </CardContent>
               </Card>
 
-              <Card>
-                <CardHeader>
-                  <div className="flex items-center gap-3">
-                    <MessageSquare className="h-6 w-6" />
-                    <div>
-                      <CardTitle>Review Management</CardTitle>
-                      <CardDescription>Approve or reject submitted reviews.</CardDescription>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  {isReviewsLoading ? (
-                    <div className="flex justify-center items-center p-8">
-                      <Loader className="h-6 w-6 animate-spin text-primary" />
-                      <p className="ml-3 text-muted-foreground">Loading reviews...</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      {reviews && reviews.length > 0 ? (
-                        reviews.map(review => (
-                          <div key={review.id} className="p-4 border rounded-lg space-y-3">
-                            <div className="flex justify-between items-start">
-                              <div>
-                                <p className="font-bold">{review.reviewerName} <span className="font-normal text-muted-foreground">on</span> {review.expertName}</p>
-                                <p className="text-xs text-muted-foreground">{formatDistanceToNow(new Date(review.createdAt.seconds * 1000), { addSuffix: true })}</p>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <div className="flex items-center">
-                                    {[...Array(5)].map((_, i) => (
-                                        <Star
-                                            key={i}
-                                            className={cn(
-                                                "h-4 w-4",
-                                                i < review.rating ? "text-yellow-400 fill-yellow-400" : "text-gray-400"
-                                            )}
-                                        />
-                                    ))}
-                                </div>
-                                <Badge variant={review.status === 'approved' ? 'default' : review.status === 'rejected' ? 'destructive' : 'secondary'}>{review.status}</Badge>
-                              </div>
-                            </div>
-                            <p className="text-sm text-muted-foreground">&quot;{review.comment}&quot;</p>
-                            {review.status === 'pending' && (
-                              <div className="flex justify-end gap-2">
-                                <Button variant="outline" size="sm" onClick={() => handleReviewStatusChange(review, 'approved')}><ThumbsUp className="mr-2 h-4 w-4" />Approve</Button>
-                                <Button variant="destructive" size="sm" onClick={() => handleReviewStatusChange(review, 'rejected')}><ThumbsDown className="mr-2 h-4 w-4" />Reject</Button>
-                              </div>
-                            )}
-                          </div>
-                        ))
-                      ) : (
-                        <p className="text-center text-muted-foreground py-8">No reviews submitted yet.</p>
-                      )}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
             </div>
 
           </main>
@@ -409,3 +320,5 @@ export default function AdminDashboardPage() {
     </>
   );
 }
+
+    
