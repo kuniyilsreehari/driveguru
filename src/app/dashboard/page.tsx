@@ -7,7 +7,7 @@ import { signOut } from 'firebase/auth';
 import { doc, collection, query, where } from 'firebase/firestore';
 import { useUser, useAuth, useFirestore, useDoc, useCollection, useMemoFirebase, updateDocumentNonBlocking } from '@/firebase';
 import { Button } from '@/components/ui/button';
-import { LogOut, Briefcase, Loader, Edit, UserCheck, XCircle, MapPin, IndianRupee, Calendar, Book, GraduationCap, School, Info, User as UserIcon, Check, Power, Building, PlusCircle, Crown, Sparkles } from 'lucide-react';
+import { LogOut, Briefcase, Loader, Edit, UserCheck, XCircle, MapPin, IndianRupee, Calendar, Book, GraduationCap, School, Info, User as UserIcon, Check, Power, Building, PlusCircle, Crown, Sparkles, Lock } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import {
   Dialog,
@@ -30,6 +30,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import type { Vacancy } from '@/app/vacancies/page';
 import Link from 'next/link';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 type ExpertUserProfile = {
     id: string;
@@ -58,6 +59,7 @@ type ExpertUserProfile = {
 function CompanyVacancies({ userProfile }: { userProfile: ExpertUserProfile }) {
   const firestore = useFirestore();
   const [isPostDialogOpen, setIsPostDialogOpen] = useState(false);
+  const isPremium = userProfile.tier === 'Premier' || userProfile.tier === 'Super Premier';
 
   const vacanciesQuery = useMemoFirebase(() => {
     if (!firestore || !userProfile.companyId) return null;
@@ -74,25 +76,41 @@ function CompanyVacancies({ userProfile }: { userProfile: ExpertUserProfile }) {
             <CardTitle>Manage Vacancies</CardTitle>
             <CardDescription>Post and view job openings for your company.</CardDescription>
           </div>
-           <Dialog open={isPostDialogOpen} onOpenChange={setIsPostDialogOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <PlusCircle className="mr-2 h-4 w-4" />
-                Post New Vacancy
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[600px]">
-              <DialogHeader>
-                <DialogTitle>Create a New Vacancy</DialogTitle>
-                <DialogDescription>Fill out the details below to post a new job opening.</DialogDescription>
-              </DialogHeader>
-              <PostVacancyForm
-                companyId={userProfile.companyId!}
-                companyName={userProfile.companyName!}
-                onSuccess={() => setIsPostDialogOpen(false)}
-              />
-            </DialogContent>
-          </Dialog>
+           {isPremium ? (
+              <Dialog open={isPostDialogOpen} onOpenChange={setIsPostDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button>
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Post New Vacancy
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[600px]">
+                  <DialogHeader>
+                    <DialogTitle>Create a New Vacancy</DialogTitle>
+                    <DialogDescription>Fill out the details below to post a new job opening.</DialogDescription>
+                  </DialogHeader>
+                  <PostVacancyForm
+                    companyId={userProfile.companyId!}
+                    companyName={userProfile.companyName!}
+                    onSuccess={() => setIsPostDialogOpen(false)}
+                  />
+                </DialogContent>
+              </Dialog>
+           ) : (
+                <TooltipProvider>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button disabled>
+                                <Lock className="mr-2 h-4 w-4" />
+                                Post New Vacancy
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                            <p>This is a premium feature. Upgrade to post vacancies.</p>
+                        </TooltipContent>
+                    </Tooltip>
+                </TooltipProvider>
+           )}
         </div>
       </CardHeader>
       <CardContent>
@@ -361,3 +379,5 @@ export default function ExpertDashboardPage() {
     </div>
   );
 }
+
+    
