@@ -26,6 +26,22 @@ export interface UseCollectionResult<T> {
   error: FirestoreError | Error | null; // Error object, or null.
 }
 
+function getPathFromQuery(q: Query): string {
+    if ((q as any)._query) {
+        // This is a robust way to get the path from a v9 query object
+        const internalQuery = (q as any)._query;
+        if (internalQuery.path) {
+            return internalQuery.path.canonicalString();
+        }
+    }
+    // Fallback for collection references or other query types
+    if ((q as any).path) {
+        return (q as any).path;
+    }
+    return 'unknown';
+}
+
+
 /**
  * React hook to subscribe to a Firestore collection or query in real-time.
  * Handles nullable references/queries.
@@ -79,16 +95,7 @@ export function useCollection<T = any>(
             let path: string = 'unknown';
             if (memoizedTargetRefOrQuery) {
                 try {
-                    if ((memoizedTargetRefOrQuery as CollectionReference).path) {
-                        path = (memoizedTargetRefOrQuery as CollectionReference).path;
-                    } else if ((memoizedTargetRefOrQuery as Query)._query) {
-                        // This is an internal property, but often the most reliable way.
-                        // @ts-ignore
-                        const internalQuery = (memoizedTargetRefOrQuery as Query)._query;
-                        if (internalQuery.path) {
-                            path = internalQuery.path.canonicalString();
-                        }
-                    }
+                   path = getPathFromQuery(memoizedTargetRefOrQuery);
                 } catch (e) {
                     console.error("Could not determine path for Firestore permission error", e);
                 }
