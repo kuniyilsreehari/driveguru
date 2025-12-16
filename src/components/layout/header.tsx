@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Icons } from '@/components/icons';
 import { useUser, useAuth, useFirestore } from '@/firebase';
-import { signOut, onAuthStateChanged } from 'firebase/auth';
+import { signOut } from 'firebase/auth';
 import { doc, onSnapshot } from 'firebase/firestore';
 import {
   DropdownMenu,
@@ -31,8 +31,7 @@ export function Header() {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    // This effect runs once on the client after the component mounts
-    setMounted(true); 
+    setMounted(true);
   }, []);
 
   useEffect(() => {
@@ -65,6 +64,36 @@ export function Header() {
   const dashboardPath = isSuperAdmin ? '/admin' : '/dashboard';
 
   const isLoading = isUserLoading || isCheckingAdmin;
+  
+  if (!mounted) {
+    return (
+      <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="container flex h-14 max-w-screen-2xl items-center">
+          <Link href="/" className="mr-6 flex items-center space-x-2">
+            <Icons.logo className="h-6 w-6" />
+            <span className="hidden font-bold sm:inline-block">Find Local Talent</span>
+          </Link>
+          <div className="flex flex-1 items-center justify-end space-x-4">
+            <nav className="flex items-center space-x-2">
+               <Button asChild variant="ghost">
+                <Link href="/">
+                  <Home className="mr-2 h-4 w-4" />
+                  Home
+                </Link>
+              </Button>
+              <Button asChild variant="ghost">
+                <Link href="/reviews">
+                  <MessageSquare className="mr-2 h-4 w-4" />
+                  Reviews
+                </Link>
+              </Button>
+              <div className="h-8 w-20" />
+            </nav>
+          </div>
+        </div>
+      </header>
+    );
+  }
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -88,12 +117,7 @@ export function Header() {
               </Link>
             </Button>
             
-            {/* We only render the dynamic part of the UI on the client after mounting */}
-            {!mounted ? (
-              // On the server and initial client render, render a placeholder or nothing
-              // to prevent mismatch. A simple div that matches the loader's size is good.
-              <div className="h-8 w-20" />
-            ) : isLoading ? (
+            {isLoading ? (
               <div className="h-8 w-20 animate-pulse rounded-md bg-muted" />
             ) : user ? (
               <DropdownMenu>
