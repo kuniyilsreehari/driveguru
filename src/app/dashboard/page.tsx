@@ -7,7 +7,7 @@ import { signOut } from 'firebase/auth';
 import { doc, collection, query, where } from 'firebase/firestore';
 import { useUser, useAuth, useFirestore, useDoc, useCollection, useMemoFirebase, updateDocumentNonBlocking } from '@/firebase';
 import { Button } from '@/components/ui/button';
-import { LogOut, Briefcase, Loader, Edit, UserCheck, XCircle, MapPin, IndianRupee, Calendar, Book, GraduationCap, School, Info, User as UserIcon, Check, Power, Building, PlusCircle, Crown, Sparkles, Lock } from 'lucide-react';
+import { LogOut, Briefcase, Loader, Edit, UserCheck, XCircle, MapPin, IndianRupee, Calendar, Book, GraduationCap, School, Info, User as UserIcon, Check, Power, Building, PlusCircle, Crown, Sparkles, Lock, Home } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import {
   Dialog,
@@ -40,6 +40,7 @@ type ExpertUserProfile = {
     role: string;
     photoUrl?: string;
     location?: string;
+    address?: string;
     verified?: boolean;
     hourlyRate?: number;
     yearsOfExperience?: number;
@@ -206,6 +207,7 @@ export default function ExpertDashboardPage() {
     if (profile.role === 'Company' || profile.role === 'Authorized Pro') {
         fields.push(profile.companyName);
         fields.push(profile.department);
+        fields.push(profile.address);
     }
 
     const filledFields = fields.filter(field => field !== null && field !== undefined && field !== '').length;
@@ -344,10 +346,16 @@ export default function ExpertDashboardPage() {
                         <p><span className="font-semibold">College:</span> {userProfile.collegeName || <span className="text-destructive">Not specified</span>}</p>
                     </div>
                     {(userProfile.role === 'Company' || userProfile.role === 'Authorized Pro') && (
-                        <div className="flex items-center gap-3">
-                            <Building className="h-5 w-5 text-muted-foreground" />
-                            <p><span className="font-semibold">Department:</span> {userProfile.department || <span className="text-destructive">Not specified</span>}</p>
-                        </div>
+                        <>
+                            <div className="flex items-center gap-3">
+                                <Building className="h-5 w-5 text-muted-foreground" />
+                                <p><span className="font-semibold">Department:</span> {userProfile.department || <span className="text-destructive">Not specified</span>}</p>
+                            </div>
+                            <div className="flex items-start gap-3">
+                                <Home className="h-5 w-5 text-muted-foreground mt-1 flex-shrink-0" />
+                                <p><span className="font-semibold">Address:</span> {userProfile.address || <span className="text-destructive">Not specified</span>}</p>
+                            </div>
+                        </>
                     )}
                 </div>
                 <Separator className="my-6" />

@@ -7,7 +7,7 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { User as UserIcon, Mail, Lock, Eye, EyeOff, Briefcase, MapPin, Phone, LocateIcon, Loader2, Building } from "lucide-react";
+import { User as UserIcon, Mail, Lock, Eye, EyeOff, Briefcase, MapPin, Phone, LocateIcon, Loader2, Building, Home } from "lucide-react";
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc } from 'firebase/firestore';
 
@@ -26,6 +26,7 @@ import { useAuth, useUser, useFirestore } from "@/firebase";
 import { setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { Textarea } from "../ui/textarea";
 
 const expertTypes = [
     { name: "Freelancer", icon: <UserIcon className="w-8 h-8" /> },
@@ -41,6 +42,7 @@ const formSchema = z.object({
     .string()
     .min(8, { message: "Password must be at least 8 characters." }),
   location: z.string().min(1, { message: "Location is required." }),
+  address: z.string().optional(),
   countryCode: z.string().optional(),
   phoneNumber: z.string().min(1, { message: "Phone number is required." }),
   role: z.string({ required_error: "Please select your expert type." }),
@@ -62,6 +64,14 @@ const formSchema = z.object({
 }, {
     message: "Department is required.",
     path: ["department"],
+}).refine(data => {
+    if (data.role === 'Company' || data.role === 'Authorized Pro') {
+        return !!data.address;
+    }
+    return true;
+}, {
+    message: "Address is required.",
+    path: ["address"],
 });
 
 
@@ -83,6 +93,7 @@ export function RegistrationForm() {
       email: "",
       password: "",
       location: "",
+      address: "",
       countryCode: "+91",
       phoneNumber: "",
       companyName: "",
@@ -189,6 +200,7 @@ export function RegistrationForm() {
         role: values.role,
         department: values.department,
         location: values.location,
+        address: values.address,
         phoneNumber: values.countryCode && values.phoneNumber ? `${values.countryCode} ${values.phoneNumber}` : "",
         companyName: values.companyName,
         verified: false, // Default verified status to false
@@ -325,6 +337,22 @@ export function RegistrationForm() {
                         </SelectContent>
                     </Select>
                     <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="address"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Address & Building Details</FormLabel>
+                   <div className="relative">
+                    <Home className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <FormControl>
+                      <Textarea placeholder="Enter the full company address" {...field} className="pl-10" />
+                    </FormControl>
+                  </div>
+                  <FormMessage />
                 </FormItem>
               )}
             />

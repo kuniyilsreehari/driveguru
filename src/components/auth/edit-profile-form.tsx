@@ -6,7 +6,7 @@ import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { User as UserIcon, Mail, MapPin, Phone, LocateIcon, Loader2, Building, Briefcase, IndianRupee, Calendar, Book, School, GraduationCap, Info, Sparkles, Upload } from "lucide-react";
+import { User as UserIcon, Mail, MapPin, Phone, LocateIcon, Loader2, Building, Briefcase, IndianRupee, Calendar, Book, School, GraduationCap, Info, Sparkles, Upload, Home } from "lucide-react";
 import { doc } from 'firebase/firestore';
 import { getStorage, ref, uploadString, getDownloadURL } from 'firebase/storage';
 import { v4 as uuidv4 } from 'uuid';
@@ -42,6 +42,7 @@ const formSchema = z.object({
   lastName: z.string().min(1, { message: "Last name is required." }),
   photoUrl: z.string().optional().or(z.literal('')),
   location: z.string().optional(),
+  address: z.string().optional(),
   countryCode: z.string().optional(),
   phoneNumber: z.string().optional(),
   role: z.string({ required_error: "Please select your expert type." }),
@@ -64,6 +65,7 @@ type ExpertUserProfile = {
     role: string;
     photoUrl?: string;
     location?: string;
+    address?: string;
     phoneNumber?: string;
     companyName?: string;
     department?: string;
@@ -116,6 +118,7 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
       lastName: userProfile.lastName || "",
       photoUrl: userProfile.photoUrl || "",
       location: userProfile.location || "",
+      address: userProfile.address || "",
       countryCode: countryCode,
       phoneNumber: phoneNumber,
       role: userProfile.role || "",
@@ -451,6 +454,22 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
                         </SelectContent>
                     </Select>
                     <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="address"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Address & Building Details</FormLabel>
+                   <div className="relative">
+                    <Home className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <FormControl>
+                      <Textarea placeholder="Enter the full company address" {...field} className="pl-10" />
+                    </FormControl>
+                  </div>
+                  <FormMessage />
                 </FormItem>
               )}
             />

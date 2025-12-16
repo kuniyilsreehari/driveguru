@@ -51,6 +51,10 @@
           "type": "string",
           "description": "The expert's physical location or service area."
         },
+        "address": {
+          "type": "string",
+          "description": "The detailed address of the company or user."
+        },
         "phoneNumber": {
           "type": "string",
           "description": "The user's mobile number, including country code."

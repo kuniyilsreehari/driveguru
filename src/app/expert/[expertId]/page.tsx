@@ -6,7 +6,7 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { doc, collection, query, where, addDoc, serverTimestamp } from 'firebase/firestore';
 import { useFirestore, useDoc, useCollection, useMemoFirebase, useUser } from '@/firebase';
-import { Loader2, Star, ChevronLeft, MapPin, IndianRupee, Briefcase, Calendar, Info, Book, GraduationCap, School, User as UserIcon, UserCheck, XCircle, Crown, Sparkles, MessageSquare, LogIn, Edit2, Send, Lock, Building, FileDown } from 'lucide-react';
+import { Loader2, Star, ChevronLeft, MapPin, IndianRupee, Briefcase, Calendar, Info, Book, GraduationCap, School, User as UserIcon, UserCheck, XCircle, Crown, Sparkles, MessageSquare, LogIn, Edit2, Send, Lock, Building, FileDown, Home } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -32,6 +32,7 @@ type ExpertUserProfile = {
     role: string;
     photoUrl?: string;
     location?: string;
+    address?: string;
     verified?: boolean;
     hourlyRate?: number;
     yearsOfExperience?: number;
@@ -325,11 +326,21 @@ function ExpertProfileContent() {
                                 <School className="h-5 w-5 text-muted-foreground mt-1" />
                                 <p><span className="font-semibold">College:</span> {expert.collegeName || 'Not specified'}</p>
                             </div>
-                             {(expert.role === 'Company' || expert.role === 'Authorized Pro') && expert.department && (
-                                <div className="flex items-start gap-3">
-                                    <Building className="h-5 w-5 text-muted-foreground mt-1" />
-                                    <p><span className="font-semibold">Department:</span> {expert.department}</p>
-                                </div>
+                             {(expert.role === 'Company' || expert.role === 'Authorized Pro') && (
+                                <>
+                                    {expert.department && (
+                                    <div className="flex items-start gap-3">
+                                        <Building className="h-5 w-5 text-muted-foreground mt-1" />
+                                        <p><span className="font-semibold">Department:</span> {expert.department}</p>
+                                    </div>
+                                    )}
+                                    {expert.address && (
+                                    <div className="flex items-start gap-3 md:col-span-2">
+                                        <Home className="h-5 w-5 text-muted-foreground mt-1 flex-shrink-0" />
+                                        <p><span className="font-semibold">Address:</span> {expert.address}</p>
+                                    </div>
+                                    )}
+                                </>
                             )}
                         </div>
                         <Separator className="my-6" />
