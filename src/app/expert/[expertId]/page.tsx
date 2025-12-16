@@ -209,6 +209,8 @@ function ExpertProfileContent() {
         );
     }
 
+    const isPremium = expert.tier === 'Premier' || expert.tier === 'Super Premier';
+
     return (
         <div className="min-h-screen bg-background p-4 sm:p-8">
             <div className="mx-auto max-w-4xl">
@@ -216,14 +218,21 @@ function ExpertProfileContent() {
                     <Button variant="outline" asChild>
                         <Link href="/"><ChevronLeft className="mr-2 h-4 w-4" /> Back to Home</Link>
                     </Button>
-                    <Button variant="outline" onClick={handleDownloadPdf} disabled={isGeneratingPdf}>
-                        {isGeneratingPdf ? (
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        ) : (
-                            <FileDown className="mr-2 h-4 w-4" />
-                        )}
-                        {isGeneratingPdf ? 'Generating...' : 'Download PDF'}
-                    </Button>
+                    {isPremium ? (
+                         <Button variant="outline" onClick={handleDownloadPdf} disabled={isGeneratingPdf}>
+                            {isGeneratingPdf ? (
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            ) : (
+                                <FileDown className="mr-2 h-4 w-4" />
+                            )}
+                            {isGeneratingPdf ? 'Generating...' : 'Download PDF'}
+                        </Button>
+                    ) : (
+                         <Button variant="outline" disabled>
+                            <Lock className="mr-2 h-4 w-4" />
+                            Download PDF (Premium)
+                        </Button>
+                    )}
                 </div>
                 
                 {!user && (
