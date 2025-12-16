@@ -87,7 +87,8 @@ service cloud.firestore {
     match /companies/{companyId} {
       allow get: if isSuperAdmin() || isMemberOfCompany(companyId);
       allow list: if isSuperAdmin();
-      allow create, update, delete: if isSuperAdmin() && isExistingDoc();
+      allow create: if isSuperAdmin();
+      allow update, delete: if isSuperAdmin() && isExistingDoc();
     }
 
     /* =====================================================
@@ -129,8 +130,13 @@ service cloud.firestore {
     match /reviews/{reviewId} {
         allow get: if true;
         allow list: if isSuperAdmin();
-        allow create: if isSignedIn();
-        allow update, delete: if isSuperAdmin();
+        allow create: if isSignedIn()
+            && request.resource.data.keys().hasAll(['expertId', 'reviewerName', 'rating', 'comment', 'status'])
+            && request.resource.data.status == 'pending';
+        allow update: if isSuperAdmin()
+            && request.resource.data.keys().hasOnly(['status'])
+            && request.resource.data.status in ['approved', 'rejected'];
+        allow delete: if isSuperAdmin();
     }
     
     /* =====================================================
