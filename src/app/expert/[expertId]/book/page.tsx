@@ -1,15 +1,14 @@
 
 'use client';
 
-import { Suspense } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { Suspense, useState } from 'react';
+import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { doc } from 'firebase/firestore';
 import { useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Loader2, ChevronLeft, Calendar, Construction } from 'lucide-react';
-import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 
 type ExpertUserProfile = {
     id: string;
@@ -22,7 +21,7 @@ function BookingPageContent() {
     const params = useParams();
     const expertId = params.expertId as string;
     const firestore = useFirestore();
-    const [date, setDate] = React.useState<Date | undefined>(new Date());
+    const [date, setDate] = useState<Date | undefined>(new Date());
 
 
     const expertDocRef = useMemoFirebase(() => {
