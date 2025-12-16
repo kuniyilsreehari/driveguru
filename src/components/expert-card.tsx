@@ -116,89 +116,80 @@ export function ExpertCard({ expert }: ExpertCardProps) {
 
     return (
         <Collapsible open={isReviewOpen} onOpenChange={setIsReviewOpen}>
-             <Card key={expert.id} className="overflow-hidden transition-all hover:shadow-lg hover:border-primary/50">
+             <Card key={expert.id} className="relative overflow-hidden transition-all hover:shadow-lg hover:border-primary/50">
+                {expert.isAvailable && (
+                    <Badge className="absolute top-4 right-4 bg-green-500 text-white">Available</Badge>
+                )}
                 <CardContent className="p-4">
-                    <div className="grid grid-cols-1 md:grid-cols-[auto_1fr] gap-4">
+                    <div className="flex items-start space-x-4">
                         <Link href={`/expert/${expert.id}`} className="block cursor-pointer" onClick={(e) => e.stopPropagation()}>
-                            <div className="flex flex-col items-center space-y-4">
-                                <Avatar className="h-20 w-20 text-3xl">
-                                    <AvatarImage src={expert.photoUrl} alt={getDisplayName(expert)} />
-                                    <AvatarFallback>{getInitials(expert)}</AvatarFallback>
-                                </Avatar>
-                            </div>
+                            <Avatar className="h-20 w-20 text-3xl">
+                                <AvatarImage src={expert.photoUrl} alt={getDisplayName(expert)} />
+                                <AvatarFallback>{getInitials(expert)}</AvatarFallback>
+                            </Avatar>
                         </Link>
 
-                        <div className="w-full">
-                             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between">
-                                <Link href={`/expert/${expert.id}`} className="block cursor-pointer flex-grow" onClick={(e) => e.stopPropagation()}>
-                                    <div>
-                                        <div className="flex items-center gap-2 mb-1">
-                                            <h3 className="text-xl font-bold">{getDisplayName(expert)}</h3>
-                                            {expert.verified ? (
-                                                <Badge variant="outline" className="border-green-500 text-green-500">
-                                                    <UserCheck className="mr-1 h-3 w-3" />
-                                                    Verified
-                                                </Badge>
-                                            ) : (
-                                                <Badge variant="destructive">
-                                                    <XCircle className="mr-1 h-3 w-3" />
-                                                    Not Verified
-                                                </Badge>
-                                            )}
-                                            {expert.tier === 'Premier' && <Badge variant="outline" className="border-purple-500 text-purple-500"><Crown className="mr-1 h-3 w-3" /> Premier</Badge>}
-                                            {expert.tier === 'Super Premier' && <Badge variant="outline" className="border-blue-500 text-blue-500"><Sparkles className="mr-1 h-3 w-3" /> Super Premier</Badge>}
-                                        </div>
-                                        <div className="flex items-center gap-1 mt-1">
-                                            {[...Array(5)].map((_, i) => <Star key={i} className="h-4 w-4 text-yellow-400 fill-yellow-400" />)}
-                                            <span className="text-xs text-muted-foreground ml-1">(1 review)</span>
-                                        </div>
-                                    </div>
-                                </Link>
-                                {expert.isAvailable ? (
-                                    <Badge className="bg-green-500 text-white mt-2 sm:mt-0">Available</Badge>
-                                ) : (
-                                    <Badge variant="secondary" className="mt-2 sm:mt-0">Unavailable</Badge>
-                                )}
-                            </div>
-                            
-                            <Separator className="my-3" />
+                        <div className="flex-1">
                             <Link href={`/expert/${expert.id}`} className="block cursor-pointer" onClick={(e) => e.stopPropagation()}>
-                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm text-muted-foreground">
-                                    <div className="flex items-center gap-2"><MapPin className="h-4 w-4" /> {expert.location || 'N/A'}</div>
-                                    <div className="flex items-center gap-2"><IndianRupee className="h-4 w-4" /> {expert.hourlyRate ? `${expert.hourlyRate}/hr` : 'N/A'}</div>
-                                    <div className="flex items-center gap-2"><Briefcase className="h-4 w-4" /> {expert.yearsOfExperience ? `${expert.yearsOfExperience} years` : 'N/A'}</div>
-                                    <div className="flex items-center gap-2">
-                                        <Badge variant="secondary">{expert.role}</Badge>
-                                    </div>
+                                <h3 className="text-xl font-bold">{getDisplayName(expert)}</h3>
+                                <div className="flex flex-wrap items-center gap-2 mt-1">
+                                    {expert.verified ? (
+                                        <Badge variant="outline" className="border-green-500 text-green-500">
+                                            <UserCheck className="mr-1 h-3 w-3" />
+                                            Verified
+                                        </Badge>
+                                    ) : (
+                                        <Badge variant="destructive">
+                                            <XCircle className="mr-1 h-3 w-3" />
+                                            Not Verified
+                                        </Badge>
+                                    )}
+                                    {expert.tier === 'Premier' && <Badge variant="outline" className="border-purple-500 text-purple-500"><Crown className="mr-1 h-3 w-3" /> Premier</Badge>}
+                                    {expert.tier === 'Super Premier' && <Badge variant="outline" className="border-blue-500 text-blue-500"><Sparkles className="mr-1 h-3 w-3" /> Super Premier</Badge>}
+                                </div>
+                                <div className="flex items-center gap-1 mt-2">
+                                    {[...Array(5)].map((_, i) => <Star key={i} className="h-4 w-4 text-yellow-400 fill-yellow-400" />)}
+                                    <span className="text-xs text-muted-foreground ml-1">(1 review)</span>
                                 </div>
                             </Link>
-                            
-                            <Separator className="my-3" />
 
-                            <div className="flex flex-wrap items-center gap-2">
-                                {user && expert.verified && (
-                                     <CollapsibleTrigger asChild>
-                                        <Button variant="outline" size="sm" onClick={(e) => e.stopPropagation()}><Edit2 className="mr-2 h-4 w-4" />Leave a Review</Button>
-                                    </CollapsibleTrigger>
-                                )}
-                                <div className="flex-grow"></div>
-                                {expert.verified ? (
-                                    <>
-                                        <Button asChild size="sm" variant="secondary" onClick={(e) => e.stopPropagation()}><Link href={`/expert/${expert.id}/book`}><Calendar className="mr-2 h-4 w-4" /> Book</Link></Button>
-                                        <Button asChild size="sm" className="bg-orange-500 hover:bg-orange-600" disabled={!formattedPhoneNumber} onClick={(e) => e.stopPropagation()}>
-                                            <a href={`tel:${formattedPhoneNumber}`}><Phone className="mr-2 h-4 w-4" /> Call</a>
-                                        </Button>
-                                        <Button asChild size="sm" className="bg-green-500 hover:bg-green-600" disabled={!formattedPhoneNumber} onClick={(e) => e.stopPropagation()}>
-                                            <a href={`https://wa.me/${formattedPhoneNumber}`} target="_blank" rel="noopener noreferrer"><MessageCircle className="mr-2 h-4 w-4" /> WhatsApp</a>
-                                        </Button>
-                                    </>
-                                ) : (
-                                     <Button variant="secondary" disabled size="sm">
-                                        <Lock className="mr-2 h-4 w-4" /> Contact actions locked
-                                    </Button>
-                                )}
-                            </div>
+                            <Separator className="my-3" />
+                            
+                             <Link href={`/expert/${expert.id}`} className="block cursor-pointer" onClick={(e) => e.stopPropagation()}>
+                                <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm text-muted-foreground">
+                                    <div className="flex items-center gap-2 truncate"><MapPin className="h-4 w-4 flex-shrink-0" /> <span className="truncate">{expert.location || 'N/A'}</span></div>
+                                    <div className="flex items-center gap-2"><IndianRupee className="h-4 w-4 flex-shrink-0" /> {expert.hourlyRate ? `${expert.hourlyRate}/hr` : 'N/A'}</div>
+                                    <div className="flex items-center gap-2"><Briefcase className="h-4 w-4 flex-shrink-0" /> {expert.yearsOfExperience ? `${expert.yearsOfExperience} years` : 'N/A'}</div>
+                                    <div className="flex items-center gap-2"><Badge variant="secondary" className="truncate">{expert.role}</Badge></div>
+                                </div>
+                            </Link>
                         </div>
+                    </div>
+                    
+                    <Separator className="my-4" />
+
+                    <div className="flex flex-wrap items-center gap-2">
+                         {user && expert.verified && (
+                             <CollapsibleTrigger asChild>
+                                <Button variant="outline" size="sm" onClick={(e) => e.stopPropagation()}><Edit2 className="mr-2 h-4 w-4" />Leave a Review</Button>
+                            </CollapsibleTrigger>
+                        )}
+                        <div className="flex-grow"></div>
+                        {expert.verified ? (
+                            <>
+                                <Button asChild size="sm" variant="secondary" onClick={(e) => e.stopPropagation()}><Link href={`/expert/${expert.id}/book`}><Calendar className="mr-2 h-4 w-4" /> Book</Link></Button>
+                                <Button asChild size="sm" className="bg-orange-500 hover:bg-orange-600" disabled={!formattedPhoneNumber} onClick={(e) => e.stopPropagation()}>
+                                    <a href={`tel:${formattedPhoneNumber}`}><Phone className="mr-2 h-4 w-4" /> Call</a>
+                                </Button>
+                                <Button asChild size="sm" className="bg-green-500 hover:bg-green-600" disabled={!formattedPhoneNumber} onClick={(e) => e.stopPropagation()}>
+                                    <a href={`https://wa.me/${formattedPhoneNumber}`} target="_blank" rel="noopener noreferrer"><MessageCircle className="mr-2 h-4 w-4" /> WhatsApp</a>
+                                </Button>
+                            </>
+                        ) : (
+                             <Button variant="secondary" disabled size="sm">
+                                <Lock className="mr-2 h-4 w-4" /> Contact actions locked
+                            </Button>
+                        )}
                     </div>
                 </CardContent>
                 <CollapsibleContent>
