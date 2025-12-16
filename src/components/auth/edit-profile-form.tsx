@@ -7,7 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { User as UserIcon, Mail, MapPin, Phone, LocateIcon, Loader2, Wrench, Building, Smartphone, Laptop, Briefcase, IndianRupee, Calendar, Book, School, GraduationCap, Info, Sparkles, Image as ImageIcon, Upload, HelpCircle, type LucideProps } from "lucide-react";
-import { doc, collection, query } from 'firebase/firestore';
+import { doc } from 'firebase/firestore';
 import Image from 'next/image';
 import { getStorage, ref, uploadString, getDownloadURL } from 'firebase/storage';
 import { v4 as uuidv4 } from 'uuid';
@@ -34,12 +34,6 @@ import { generateAboutMe } from "@/ai/flows/generate-about-me-flow";
 import { suggestSkills } from "@/ai/flows/suggest-skills-flow";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 
-type Category = {
-    id: string;
-    name: string;
-    icon: string;
-};
-
 const expertTypes = [
     { name: "Freelancer", icon: <UserIcon className="w-8 h-8" /> },
     { name: "Company", icon: <Building className="w-8 h-8" /> },
@@ -53,7 +47,6 @@ const formSchema = z.object({
   location: z.string().optional(),
   countryCode: z.string().optional(),
   phoneNumber: z.string().optional(),
-  category: z.string({ required_error: "Please select a category." }),
   role: z.string({ required_error: "Please select your expert type." }),
   companyName: z.string().optional(),
   hourlyRate: z.coerce.number().min(0, "Hourly rate cannot be negative.").optional(),
@@ -74,7 +67,6 @@ type ExpertUserProfile = {
     photoUrl?: string;
     location?: string;
     phoneNumber?: string;
-    category?: string;
     companyName?: string;
     hourlyRate?: number;
     yearsOfExperience?: number;
@@ -90,17 +82,6 @@ interface EditProfileFormProps {
     onSuccess: () => void;
 }
 
-const DynamicIcon = ({ name, ...props }: { name: string } & LucideProps) => {
-  const IconComponent = (LucideIcons as any)[name];
-
-  if (!IconComponent) {
-    // Return a default icon if the specified one doesn't exist.
-    return <HelpCircle {...props} />;
-  }
-
-  return <IconComponent {...props} />;
-};
-
 export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps) {
   const { toast } = useToast();
   const firestore = useFirestore();
@@ -110,12 +91,6 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
   const [isSuggestingSkills, setIsSuggestingSkills] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
-
-  const categoriesQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return query(collection(firestore, 'categories'));
-  }, [firestore]);
-  const { data: categories, isLoading: areCategoriesLoading } = useCollection<Category>(categoriesQuery);
 
   const extractPhoneNumberParts = (fullNumber?: string) => {
     if (!fullNumber) return { countryCode: "+91", phoneNumber: "" };
@@ -144,7 +119,6 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
       location: userProfile.location || "",
       countryCode: countryCode,
       phoneNumber: phoneNumber,
-      category: userProfile.category || "",
       role: userProfile.role || "",
       companyName: userProfile.companyName || "",
       hourlyRate: userProfile.hourlyRate || 0,
@@ -713,43 +687,6 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
           )}
         />
 
-
-        <FormField
-          control={form.control}
-          name="category"
-          render={({ field }) => (
-            <FormItem>
-                <FormLabel>Category</FormLabel>
-                {areCategoriesLoading ? (
-                    <div className="flex justify-center items-center p-4 rounded-md border h-24">
-                        <Loader2 className="h-5 w-5 animate-spin text-primary" />
-                    </div>
-                ) : (
-                    <FormControl>
-                        <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 text-center">
-                            {categories?.map((category) => (
-                                <div 
-                                    key={category.id} 
-                                    className={cn(
-                                        "p-2 border rounded-lg flex flex-col items-center justify-center space-y-1 cursor-pointer transition-colors",
-                                        field.value === category.name 
-                                            ? "bg-accent/20 border-primary" 
-                                            : "hover:bg-accent/10 hover:border-accent"
-                                    )}
-                                    onClick={() => form.setValue('category', category.name, { shouldValidate: true })}
-                                >
-                                    <DynamicIcon name={category.icon} className="w-8 h-8" />
-                                    <span className="text-xs font-semibold">{category.name}</span>
-                                </div>
-                            ))}
-                        </div>
-                    </FormControl>
-                )}
-                <FormMessage />
-            </FormItem>
-          )}
-        />
-
         <FormItem>
             <FormLabel>Email</FormLabel>
             <div className="relative">
@@ -772,5 +709,3 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
     </Form>
   );
 }
-
-    

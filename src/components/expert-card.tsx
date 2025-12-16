@@ -26,7 +26,6 @@ export type ExpertUser = {
     lastName?: string;
     companyName?: string;
     email?: string;
-    category?: string;
     location?: string;
     role?: string;
     verified?: boolean;
@@ -149,7 +148,6 @@ export function ExpertCard({ expert }: ExpertCardProps) {
                                             {expert.tier === 'Premier' && <Badge variant="outline" className="border-purple-500 text-purple-500"><Crown className="mr-1 h-3 w-3" /> Premier</Badge>}
                                             {expert.tier === 'Super Premier' && <Badge variant="outline" className="border-blue-500 text-blue-500"><Sparkles className="mr-1 h-3 w-3" /> Super Premier</Badge>}
                                         </div>
-                                        <p className="text-muted-foreground font-semibold">{expert.category}</p>
                                         <div className="flex items-center gap-1 mt-1">
                                             {[...Array(5)].map((_, i) => <Star key={i} className="h-4 w-4 text-yellow-400 fill-yellow-400" />)}
                                             <span className="text-xs text-muted-foreground ml-1">(1 review)</span>

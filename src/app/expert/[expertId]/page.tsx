@@ -30,7 +30,6 @@ type ExpertUserProfile = {
     role: string;
     photoUrl?: string;
     location?: string;
-    category?: string;
     verified?: boolean;
     hourlyRate?: number;
     yearsOfExperience?: number;
@@ -198,7 +197,6 @@ function ExpertProfileContent() {
                                         <Badge variant="secondary">Unavailable</Badge>
                                     )}
                                 </div>
-                                <p className="text-xl text-muted-foreground mt-1">{expert.category}</p>
                                 <div className="flex items-center gap-2 mt-3 flex-wrap">
                                     {expert.verified ? (
                                         <Badge variant="outline" className="border-green-500 text-green-500">

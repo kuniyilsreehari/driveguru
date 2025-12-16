@@ -36,7 +36,6 @@ type ExpertUserProfile = {
     role: string;
     photoUrl?: string;
     location?: string;
-    category?: string;
     verified?: boolean;
     hourlyRate?: number;
     yearsOfExperience?: number;
@@ -101,7 +100,6 @@ export default function ExpertDashboardPage() {
     const fields = [
         profile.location,
         profile.phoneNumber,
-        profile.category,
         profile.hourlyRate,
         profile.yearsOfExperience,
         profile.gender,
@@ -243,10 +241,6 @@ export default function ExpertDashboardPage() {
                     <div className="flex items-center gap-3">
                         <MapPin className="h-5 w-5 text-muted-foreground" />
                         <p><span className="font-semibold">Location:</span> {userProfile.location || <span className="text-destructive">Not specified</span>}</p>
-                    </div>
-                     <div className="flex items-center gap-3">
-                        <Briefcase className="h-5 w-5 text-muted-foreground" />
-                        <p><span className="font-semibold">Category:</span> {userProfile.category || <span className="text-destructive">Not specified</span>}</p>
                     </div>
                     <div className="flex items-center gap-3">
                         <GraduationCap className="h-5 w-5 text-muted-foreground" />

@@ -23,7 +23,6 @@ function SearchResults() {
     const router = useRouter();
 
     const location = searchParams.get('location');
-    const category = searchParams.get('category');
     const locationName = searchParams.get('locationName');
     const verified = searchParams.get('verified') === 'true';
     const available = searchParams.get('available') === 'true';
@@ -41,16 +40,12 @@ function SearchResults() {
             q = query(q, where('isAvailable', '==', true));
         }
 
-        if (category) {
-            q = query(q, where('category', '==', category));
-        }
-
         // Firestore does not support robust text search on parts of a string (like location).
         // A more advanced solution like Algolia would be needed for that.
-        // For now, we will filter by category and let the user see the location on the card.
+        // For now, we will filter by available toggles and let the user see the location on the card.
 
         return q;
-    }, [firestore, category, verified, available]);
+    }, [firestore, verified, available]);
 
     const { data: experts, isLoading } = useCollection<ExpertUser>(expertsQuery);
 
@@ -74,11 +69,8 @@ function SearchResults() {
 
     const searchTitle = () => {
         let titleParts: (string | JSX.Element)[] = [];
-        if (category) {
-            titleParts.push(<span key="category">Showing <span className="text-primary">{category}</span> experts</span>);
-        } else {
-            titleParts.push(<span key="all">Showing all experts</span>);
-        }
+        
+        titleParts.push(<span key="all">Showing all experts</span>);
 
         if (locationName) {
             titleParts.push(<span key="locationName"> in <span className="text-primary">{locationName}</span></span>);
@@ -88,9 +80,7 @@ function SearchResults() {
             titleParts.push(<span key="location"> near <span className="text-primary">{location}</span></span>);
         }
 
-        if (category && (location || locationName)) {
-            titleParts.push(<span key="all_locations">. Results visible for all locations.</span>);
-        } else if (!category && (location || locationName)) {
+        if (location || locationName) {
              titleParts.push(<span key="all_locations_else">. Results visible for all locations.</span>);
         }
 

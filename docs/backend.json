@@ -51,10 +51,6 @@
           "type": "string",
           "description": "The user's mobile number, including country code."
         },
-        "category": {
-          "type": "string",
-          "description": "The service category the expert belongs to."
-        },
         "verified": {
           "type": "boolean",
           "description": "Indicates if the expert has been verified by a super admin."
@@ -222,27 +218,6 @@
         }
       },
       "required": ["id", "expertId", "reviewerName", "rating", "comment", "createdAt", "status"]
-    },
-    "Category": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Category",
-      "type": "object",
-      "description": "Represents a service category for experts.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the category."
-        },
-        "name": {
-          "type": "string",
-          "description": "The name of the category (e.g., 'ELECTRICAL SERVICE')."
-        },
-        "icon": {
-          "type": "string",
-          "description": "The name of the lucide-react icon for the category (e.g., 'Wrench')."
-        }
-      },
-      "required": ["id", "name", "icon"]
     }
   },
   "auth": {
@@ -336,26 +311,8 @@
             }
           ]
         }
-      },
-      {
-        "path": "/categories/{categoryId}",
-        "definition": {
-          "entityName": "Category",
-          "schema": {
-            "$ref": "#/backend/entities/Category"
-          },
-          "description": "Stores all service categories. Managed by Super Admins, readable by all.",
-          "params": [
-            {
-              "name": "categoryId",
-              "description": "The unique identifier of the category."
-            }
-          ]
-        }
       }
     ],
     "reasoning": "The Firestore structure is designed to support GeoTrack Pro's core features while adhering to the principles of Authorization Independence, Structural Segregation, and Access Modeling. User data, company information, and location data are stored in separate collections to maintain clarity and enforce consistent security rules. Crucially, authorization data is denormalized to avoid `get()` calls in security rules and ensure atomic operations.\n\n1.  **Authorization Independence:** A separate `/roles_super_admin/{userId}` collection determines super admin privileges based on document existence rather than user document content. This simplifies security rules and avoids hierarchical dependencies.\n\n2.  **Structural Segregation:**  User data, company data, location data, and reviews are stored in separate collections, each with distinct security requirements. This segregation simplifies security rule management and prevents unintended access.\n\n3.  **Access Modeling:**\n    *   User-owned location data is structured under `/users/{userId}/location_data/{locationDataId}`. This allows for path-based security rules, ensuring that only the user can access their own location data.\n    *   Companies are stored in a top-level `/companies` collection.\n    *   The super admin role is managed through the `/roles_super_admin/{userId}` collection, where the existence of a document for a user ID grants super admin privileges.\n    *   Reviews are in a top-level collection to allow admins to easily list and moderate all submitted reviews, while rules can still be written to allow users to create reviews or read approved ones."
   }
 }
-
-    

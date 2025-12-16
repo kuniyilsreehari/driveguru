@@ -22,29 +22,10 @@ import type { ExpertUser } from '@/components/expert-card';
 import * as LucideIcons from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
-type Category = {
-    id: string;
-    name: string;
-    icon: string;
-};
-
-const DynamicIcon = ({ name, ...props }: { name: string } & LucideIcons.LucideProps) => {
-  const IconComponent = (LucideIcons as any)[name];
-
-  if (!IconComponent) {
-    // Use Wrench as a fallback icon if the specified one doesn't exist.
-    return <Wrench {...props} />;
-  }
-
-  return <IconComponent {...props} />;
-};
-
-
 function HomePageContent() {
     const [location, setLocation] = useState('');
     const [locationName, setLocationName] = useState('');
     const [isDetecting, setIsDetecting] = useState(false);
-    const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
     const [showVerifiedOnly, setShowVerifiedOnly] = useState(false);
     const [showAvailableOnly, setShowAvailableOnly] = useState(false);
     const { toast } = useToast();
@@ -56,13 +37,8 @@ function HomePageContent() {
         return query(collection(firestore, 'users'), where('verified', '==', true), limit(3));
     }, [firestore]);
     
-    const categoriesQuery = useMemoFirebase(() => {
-        if (!firestore) return null;
-        return query(collection(firestore, 'categories'));
-    }, [firestore]);
 
     const { data: experts, isLoading: isLoadingExperts } = useCollection<ExpertUser>(expertsQuery);
-    const { data: categories, isLoading: areCategoriesLoading } = useCollection<Category>(categoriesQuery);
 
 
     const handleDetectLocation = () => {
@@ -146,9 +122,6 @@ function HomePageContent() {
         if (locationName) {
             queryParams.set('locationName', locationName);
         }
-        if (selectedCategory) {
-            queryParams.set('category', selectedCategory);
-        }
         if (showVerifiedOnly) {
             queryParams.set('verified', 'true');
         }
@@ -220,43 +193,6 @@ function HomePageContent() {
                                     />
                                 </div>
                             </div>
-
-                            <div className="mt-6">
-                                <Label htmlFor="category-search">Category</Label>
-                                <div className="relative mt-2">
-                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                    <Input id="category-search" placeholder="Search categories..." className="pl-10" />
-                                </div>
-                            </div>
-
-                            {areCategoriesLoading ? (
-                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 mt-4 text-center">
-                                    {[...Array(5)].map((_, i) => (
-                                        <div key={i} className="p-4 border rounded-lg flex flex-col items-center justify-center space-y-2 h-[100px]">
-                                            <Skeleton className="w-8 h-8 rounded-full" />
-                                            <Skeleton className="h-4 w-16" />
-                                        </div>
-                                    ))}
-                                </div>
-                            ) : (
-                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 mt-4 text-center">
-                                    {categories?.map((category) => (
-                                        <div 
-                                            key={category.id} 
-                                            className={cn(
-                                                "p-4 border rounded-lg flex flex-col items-center justify-center space-y-2 cursor-pointer transition-colors h-[100px]",
-                                                selectedCategory === category.name 
-                                                    ? "bg-accent/20 border-primary" 
-                                                    : "hover:bg-accent/10 hover:border-accent"
-                                            )}
-                                            onClick={() => setSelectedCategory(category.name === selectedCategory ? null : category.name)}
-                                        >
-                                            <DynamicIcon name={category.icon} className="w-8 h-8" />
-                                            <span className="text-xs font-semibold">{category.name}</span>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
 
                             <div className="mt-6">
                                 <Label htmlFor="hourly-rate">Max Hourly Rate: <span className="text-primary font-bold">Any</span></Label>

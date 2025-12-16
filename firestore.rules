@@ -13,7 +13,6 @@
  * - /roles_super_admin/{userId}: An authorization-specific collection. The existence of a
  *   document here grants a user Super Admin privileges across the application.
  * - /reviews/{reviewId}: A collection for expert reviews, moderated by Super Admins.
- * - /categories/{categoryId}: Stores service categories, managed by Super Admins.
  */
 rules_version = '2';
 service cloud.firestore {
@@ -135,15 +134,6 @@ service cloud.firestore {
       allow write: if isSuperAdmin();
     }
     
-    /**
-     * @description Defines access rules for categories. All users (including anonymous) can read/list.
-     * Super Admins have full write control. This is the correct way to allow public list access.
-     */
-     match /categories/{categoryId} {
-        allow read: if true;
-        allow write: if isSuperAdmin();
-     }
-
     /**
      * @description Manages access to user profile documents. Any signed-in user can read profiles.
      * Users can create and securely update their own profile. Super Admins have broad

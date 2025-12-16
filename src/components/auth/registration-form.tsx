@@ -9,7 +9,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { User as UserIcon, Mail, Lock, LogIn, Eye, EyeOff, Briefcase, MapPin, Phone, LocateIcon, Loader2, Wrench, Building, Smartphone, Laptop, type LucideIcon } from "lucide-react";
 import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { doc, collection, query } from 'firebase/firestore';
+import { doc } from 'firebase/firestore';
 
 import { Button } from "@/components/ui/button";
 import {
@@ -30,12 +30,6 @@ import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import * as LucideIcons from 'lucide-react';
 
-type Category = {
-    id: string;
-    name: string;
-    icon: string;
-};
-
 const expertTypes = [
     { name: "Freelancer", icon: <UserIcon className="w-8 h-8" /> },
     { name: "Company", icon: <Building className="w-8 h-8" /> },
@@ -52,21 +46,9 @@ const formSchema = z.object({
   location: z.string().optional(),
   countryCode: z.string().optional(),
   phoneNumber: z.string().min(1, { message: "Phone number is required." }),
-  category: z.string({ required_error: "Please select a category." }),
   role: z.string({ required_error: "Please select your expert type." }),
   companyName: z.string().optional(),
 });
-
-const DynamicIcon = ({ name, ...props }: { name: string } & LucideIcons.LucideProps) => {
-  const IconComponent = (LucideIcons as any)[name];
-
-  if (!IconComponent) {
-    // Return a default icon if the specified one doesn't exist.
-    return <LucideIcons.HelpCircle {...props} />;
-  }
-
-  return <IconComponent {...props} />;
-};
 
 
 export function RegistrationForm() {
@@ -77,13 +59,6 @@ export function RegistrationForm() {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
   const router = useRouter();
-
-  const categoriesQuery = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return query(collection(firestore, 'categories'));
-  }, [firestore]);
-
-  const { data: categories, isLoading: areCategoriesLoading } = useCollection<Category>(categoriesQuery);
 
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -199,7 +174,6 @@ export function RegistrationForm() {
         role: values.role,
         location: values.location,
         phoneNumber: values.countryCode && values.phoneNumber ? `${values.countryCode} ${values.phoneNumber}` : "",
-        category: values.category,
         companyName: values.companyName,
         verified: false, // Default verified status to false
         photoUrl: '', // Default photoUrl to empty string
@@ -400,45 +374,6 @@ export function RegistrationForm() {
             </Button>
           </div>
         </div>
-        
-        <FormField
-          control={form.control}
-          name="category"
-          render={({ field }) => (
-            <FormItem>
-                <FormLabel>Category</FormLabel>
-                <ScrollArea className="h-40 w-full rounded-md border p-2 focus-within:border-primary">
-                    {areCategoriesLoading ? (
-                         <div className="flex justify-center items-center p-4">
-                            <Loader2 className="h-5 w-5 animate-spin text-primary" />
-                         </div>
-                    ) : (
-                        <FormControl>
-                            <div className="grid grid-cols-2 gap-2 text-center">
-                                {categories?.map((category) => (
-                                    <div 
-                                        key={category.id} 
-                                        className={cn(
-                                            "p-2 border rounded-lg flex flex-col items-center justify-center space-y-1 cursor-pointer transition-colors h-24",
-                                            field.value === category.name 
-                                                ? "bg-accent/20 border-primary" 
-                                                : "hover:bg-accent/10 hover:border-accent"
-                                        )}
-                                        onClick={() => form.setValue('category', category.name, { shouldValidate: true })}
-                                    >
-                                        <DynamicIcon name={category.icon} className="w-8 h-8" />
-                                        <span className="text-xs font-semibold">{category.name}</span>
-                                    </div>
-                                ))}
-                            </div>
-                        </FormControl>
-                    )}
-                </ScrollArea>
-                <FormMessage />
-            </FormItem>
-          )}
-        />
-
 
         <FormField
           control={form.control}
@@ -481,5 +416,3 @@ export function RegistrationForm() {
     </Form>
   );
 }
-
-    
