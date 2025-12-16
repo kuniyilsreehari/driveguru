@@ -4,7 +4,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { collection, doc, deleteDoc, updateDoc, addDoc, setDoc, Timestamp, orderBy } from 'firebase/firestore';
+import { collection, doc, deleteDoc, updateDoc, addDoc, setDoc, Timestamp, orderBy, query } from 'firebase/firestore';
 import { signOut } from 'firebase/auth';
 import { useUser, useFirestore, useDoc, useMemoFirebase, useAuth, useCollection, setDocumentNonBlocking } from '@/firebase';
 import { deleteDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
@@ -231,7 +231,7 @@ export default function AdminDashboardPage() {
   const { data: reviews, isLoading: isReviewsLoading } = useCollection<Review>(
     useMemoFirebase(() => {
         if (!reviewsCollectionRef) return null;
-        return orderBy(reviewsCollectionRef, 'createdAt', 'desc');
+        return query(reviewsCollectionRef, orderBy('createdAt', 'desc'));
     }, [reviewsCollectionRef])
   );
   
