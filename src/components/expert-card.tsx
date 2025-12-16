@@ -8,7 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { Star, IndianRupee, Briefcase, Calendar, Phone, MessageCircle, ChevronDown, UserCheck, Crown, Sparkles, MapPin, Send, MessageSquare as MessageSquareIcon, Edit2, XCircle } from 'lucide-react';
+import { Star, IndianRupee, Briefcase, Calendar, Phone, MessageCircle, ChevronDown, UserCheck, Crown, Sparkles, MapPin, Send, MessageSquare as MessageSquareIcon, Edit2, XCircle, Lock } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -176,19 +176,27 @@ export function ExpertCard({ expert }: ExpertCardProps) {
                             <Separator className="my-4" />
 
                             <div className="flex flex-wrap items-center gap-2">
-                                {user && (
+                                {user && expert.verified && (
                                      <CollapsibleTrigger asChild>
                                         <Button variant="outline" onClick={(e) => e.stopPropagation()}><Edit2 className="mr-2 h-4 w-4" />Leave a Review</Button>
                                     </CollapsibleTrigger>
                                 )}
                                 <div className="flex-grow"></div>
-                                <Button asChild variant="secondary" onClick={(e) => e.stopPropagation()} disabled={!expert.verified}><Link href={`/expert/${expert.id}/book`}><Calendar className="mr-2 h-4 w-4" /> Book</Link></Button>
-                                <Button asChild className="bg-orange-500 hover:bg-orange-600" disabled={!formattedPhoneNumber || !expert.verified} onClick={(e) => e.stopPropagation()}>
-                                    <a href={`tel:${formattedPhoneNumber}`}><Phone className="mr-2 h-4 w-4" /> Call</a>
-                                </Button>
-                                <Button asChild className="bg-green-500 hover:bg-green-600" disabled={!formattedPhoneNumber || !expert.verified} onClick={(e) => e.stopPropagation()}>
-                                    <a href={`https://wa.me/${formattedPhoneNumber}`} target="_blank" rel="noopener noreferrer"><MessageCircle className="mr-2 h-4 w-4" /> WhatsApp</a>
-                                </Button>
+                                {expert.verified ? (
+                                    <>
+                                        <Button asChild variant="secondary" onClick={(e) => e.stopPropagation()}><Link href={`/expert/${expert.id}/book`}><Calendar className="mr-2 h-4 w-4" /> Book</Link></Button>
+                                        <Button asChild className="bg-orange-500 hover:bg-orange-600" disabled={!formattedPhoneNumber} onClick={(e) => e.stopPropagation()}>
+                                            <a href={`tel:${formattedPhoneNumber}`}><Phone className="mr-2 h-4 w-4" /> Call</a>
+                                        </Button>
+                                        <Button asChild className="bg-green-500 hover:bg-green-600" disabled={!formattedPhoneNumber} onClick={(e) => e.stopPropagation()}>
+                                            <a href={`https://wa.me/${formattedPhoneNumber}`} target="_blank" rel="noopener noreferrer"><MessageCircle className="mr-2 h-4 w-4" /> WhatsApp</a>
+                                        </Button>
+                                    </>
+                                ) : (
+                                     <Button variant="secondary" disabled className="w-full">
+                                        <Lock className="mr-2 h-4 w-4" /> Contact actions locked until expert is verified
+                                    </Button>
+                                )}
                             </div>
                         </div>
                     </div>

@@ -6,7 +6,7 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { doc, collection, query, where, addDoc, serverTimestamp } from 'firebase/firestore';
 import { useFirestore, useDoc, useCollection, useMemoFirebase, useUser } from '@/firebase';
-import { Loader2, Star, ChevronLeft, MapPin, IndianRupee, Briefcase, Calendar, Info, Book, GraduationCap, School, User as UserIcon, UserCheck, XCircle, Crown, Sparkles, MessageSquare, LogIn, Edit2, Send } from 'lucide-react';
+import { Loader2, Star, ChevronLeft, MapPin, IndianRupee, Briefcase, Calendar, Info, Book, GraduationCap, School, User as UserIcon, UserCheck, XCircle, Crown, Sparkles, MessageSquare, LogIn, Edit2, Send, Lock } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -214,7 +214,13 @@ function ExpertProfileContent() {
                                     {expert.tier === 'Super Premier' && <Badge variant="outline" className="border-blue-500 text-blue-500"><Sparkles className="mr-1 h-3 w-3" /> Super Premier</Badge>}
                                 </div>
                                  <div className="mt-4">
-                                     <Button asChild variant="secondary" disabled={!expert.verified}><Link href={`/expert/${expert.id}/book`}><Calendar className="mr-2 h-4 w-4" /> Book Appointment</Link></Button>
+                                     {expert.verified ? (
+                                        <Button asChild variant="secondary"><Link href={`/expert/${expert.id}/book`}><Calendar className="mr-2 h-4 w-4" /> Book Appointment</Link></Button>
+                                     ) : (
+                                        <Button variant="secondary" disabled>
+                                            <Lock className="mr-2 h-4 w-4" /> Appointment booking locked
+                                        </Button>
+                                     )}
                                 </div>
                             </div>
                         </div>
@@ -265,7 +271,7 @@ function ExpertProfileContent() {
                         <Separator className="my-6" />
                         <Collapsible open={isReviewOpen} onOpenChange={setIsReviewOpen}>
                             <h4 className="font-semibold flex items-center gap-2 mb-4 text-lg"><MessageSquare className="h-5 w-5" /> Customer Reviews</h4>
-                            {user && (
+                            {user && expert.verified && (
                                 <CollapsibleTrigger asChild>
                                      <Button variant="outline"><Edit2 className="mr-2 h-4 w-4" />Leave a Review</Button>
                                 </CollapsibleTrigger>
