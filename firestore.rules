@@ -146,7 +146,7 @@ service cloud.firestore {
      */
     match /reviews/{reviewId} {
       allow get: if resource.data.status == 'approved' || isSuperAdmin();
-      allow list: if true; // Allow anyone to query the reviews collection
+      allow list: if request.query.get('status') == 'approved' || isSuperAdmin();
       allow create: if isSignedIn();
       allow update, delete: if isSuperAdmin();
     }
