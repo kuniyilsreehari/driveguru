@@ -306,7 +306,7 @@ function HomePageContent() {
                                 <p className="ml-3 text-muted-foreground">Loading experts...</p>
                             </div>
                         ) : (
-                            <div className="space-y-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 {experts && experts.length > 0 ? (
                                     experts.map(expert => (
                                         <ExpertCard key={expert.id} expert={expert} />
