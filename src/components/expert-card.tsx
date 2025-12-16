@@ -117,11 +117,11 @@ export function ExpertCard({ expert }: ExpertCardProps) {
     return (
         <Collapsible open={isReviewOpen} onOpenChange={setIsReviewOpen}>
              <Card key={expert.id} className="overflow-hidden transition-all hover:shadow-lg hover:border-primary/50">
-                <CardContent className="p-4 md:p-6">
-                    <div className="grid grid-cols-1 md:grid-cols-[auto_1fr] gap-6">
+                <CardContent className="p-4">
+                    <div className="grid grid-cols-1 md:grid-cols-[auto_1fr] gap-4">
                         <Link href={`/expert/${expert.id}`} className="block cursor-pointer" onClick={(e) => e.stopPropagation()}>
                             <div className="flex flex-col items-center space-y-4">
-                                <Avatar className="h-24 w-24 text-4xl">
+                                <Avatar className="h-20 w-20 text-3xl">
                                     <AvatarImage src={expert.photoUrl} alt={getDisplayName(expert)} />
                                     <AvatarFallback>{getInitials(expert)}</AvatarFallback>
                                 </Avatar>
@@ -133,7 +133,7 @@ export function ExpertCard({ expert }: ExpertCardProps) {
                                 <Link href={`/expert/${expert.id}`} className="block cursor-pointer flex-grow" onClick={(e) => e.stopPropagation()}>
                                     <div>
                                         <div className="flex items-center gap-2 mb-1">
-                                            <h3 className="text-2xl font-bold">{getDisplayName(expert)}</h3>
+                                            <h3 className="text-xl font-bold">{getDisplayName(expert)}</h3>
                                             {expert.verified ? (
                                                 <Badge variant="outline" className="border-green-500 text-green-500">
                                                     <UserCheck className="mr-1 h-3 w-3" />
@@ -161,9 +161,9 @@ export function ExpertCard({ expert }: ExpertCardProps) {
                                 )}
                             </div>
                             
-                            <Separator className="my-4" />
+                            <Separator className="my-3" />
                             <Link href={`/expert/${expert.id}`} className="block cursor-pointer" onClick={(e) => e.stopPropagation()}>
-                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm text-muted-foreground">
+                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm text-muted-foreground">
                                     <div className="flex items-center gap-2"><MapPin className="h-4 w-4" /> {expert.location || 'N/A'}</div>
                                     <div className="flex items-center gap-2"><IndianRupee className="h-4 w-4" /> {expert.hourlyRate ? `${expert.hourlyRate}/hr` : 'N/A'}</div>
                                     <div className="flex items-center gap-2"><Briefcase className="h-4 w-4" /> {expert.yearsOfExperience ? `${expert.yearsOfExperience} years` : 'N/A'}</div>
@@ -173,28 +173,28 @@ export function ExpertCard({ expert }: ExpertCardProps) {
                                 </div>
                             </Link>
                             
-                            <Separator className="my-4" />
+                            <Separator className="my-3" />
 
                             <div className="flex flex-wrap items-center gap-2">
                                 {user && expert.verified && (
                                      <CollapsibleTrigger asChild>
-                                        <Button variant="outline" onClick={(e) => e.stopPropagation()}><Edit2 className="mr-2 h-4 w-4" />Leave a Review</Button>
+                                        <Button variant="outline" size="sm" onClick={(e) => e.stopPropagation()}><Edit2 className="mr-2 h-4 w-4" />Leave a Review</Button>
                                     </CollapsibleTrigger>
                                 )}
                                 <div className="flex-grow"></div>
                                 {expert.verified ? (
                                     <>
-                                        <Button asChild variant="secondary" onClick={(e) => e.stopPropagation()}><Link href={`/expert/${expert.id}/book`}><Calendar className="mr-2 h-4 w-4" /> Book</Link></Button>
-                                        <Button asChild className="bg-orange-500 hover:bg-orange-600" disabled={!formattedPhoneNumber} onClick={(e) => e.stopPropagation()}>
+                                        <Button asChild size="sm" variant="secondary" onClick={(e) => e.stopPropagation()}><Link href={`/expert/${expert.id}/book`}><Calendar className="mr-2 h-4 w-4" /> Book</Link></Button>
+                                        <Button asChild size="sm" className="bg-orange-500 hover:bg-orange-600" disabled={!formattedPhoneNumber} onClick={(e) => e.stopPropagation()}>
                                             <a href={`tel:${formattedPhoneNumber}`}><Phone className="mr-2 h-4 w-4" /> Call</a>
                                         </Button>
-                                        <Button asChild className="bg-green-500 hover:bg-green-600" disabled={!formattedPhoneNumber} onClick={(e) => e.stopPropagation()}>
+                                        <Button asChild size="sm" className="bg-green-500 hover:bg-green-600" disabled={!formattedPhoneNumber} onClick={(e) => e.stopPropagation()}>
                                             <a href={`https://wa.me/${formattedPhoneNumber}`} target="_blank" rel="noopener noreferrer"><MessageCircle className="mr-2 h-4 w-4" /> WhatsApp</a>
                                         </Button>
                                     </>
                                 ) : (
-                                     <Button variant="secondary" disabled className="w-full">
-                                        <Lock className="mr-2 h-4 w-4" /> Contact actions locked until expert is verified
+                                     <Button variant="secondary" disabled size="sm">
+                                        <Lock className="mr-2 h-4 w-4" /> Contact actions locked
                                     </Button>
                                 )}
                             </div>
@@ -255,3 +255,5 @@ export function ExpertCard({ expert }: ExpertCardProps) {
         </Collapsible>
     )
 }
+
+    
