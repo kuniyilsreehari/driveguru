@@ -85,26 +85,22 @@ export function useCollection<T = any>(
         setIsLoading(false);
       },
       (error: FirestoreError) => {
-        // Instead of throwing, just log the error to the console.
-        // This prevents the disruptive overlay for permission errors on list operations.
-        console.error("Firestore 'useCollection' permission error:", error);
-        setError(error); // Set the error state for component-level handling if needed
+        const path: string =
+          memoizedTargetRefOrQuery.type === 'collection'
+            ? (memoizedTargetRefOrQuery as CollectionReference).path
+            : (memoizedTargetRefOrQuery as unknown as InternalQuery)._query.path.canonicalString()
+
+        const contextualError = new FirestorePermissionError({
+          operation: 'list',
+          path,
+        })
+        
+        setError(contextualError);
         setData(null);
         setIsLoading(false);
 
-        // We are no longer emitting a global error that causes an overlay.
-        // If you need global error handling, you could re-enable this, but
-        // for list operations, console logging is often sufficient.
-        // const path: string =
-        //   memoizedTargetRefOrQuery.type === 'collection'
-        //     ? (memoizedTargetRefOrQuery as CollectionReference).path
-        //     : (memoizedTargetRefOrQuery as unknown as InternalQuery)._query.path.canonicalString()
-
-        // const contextualError = new FirestorePermissionError({
-        //   operation: 'list',
-        //   path,
-        // })
-        // errorEmitter.emit('permission-error', contextualError);
+        // trigger global error propagation
+        errorEmitter.emit('permission-error', contextualError);
       }
     );
 
