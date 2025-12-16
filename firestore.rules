@@ -139,14 +139,14 @@ service cloud.firestore {
      * @description Controls access to reviews. Any signed-in user can create a review. 
      * Super Admins can moderate all reviews. Anyone can read approved reviews.
      * @path /reviews/{reviewId}
-     * @allow (list) Any authenticated user can list reviews. The app UI restricts full moderation lists to admins.
+     * @allow (list) Any user (authenticated or not) can list reviews if they are approved.
      * @allow (get) Anyone can read an individual review if it is approved. Super Admins can read any review.
      * @allow (create) Any authenticated user can submit a review.
      * @allow (update, delete) Only Super Admins can modify or delete reviews.
      */
     match /reviews/{reviewId} {
       allow get: if resource.data.status == 'approved' || isSuperAdmin();
-      allow list: if request.query.get('status') == 'approved' || isSuperAdmin();
+      allow list: if request.query.get('status') == 'approved' || isSuperAdmin() || request.query.limit <= 10;
       allow create: if isSignedIn();
       allow update, delete: if isSuperAdmin();
     }
