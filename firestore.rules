@@ -115,12 +115,13 @@ service cloud.firestore {
     }
     
     /**
-     * @description Controls access to reviews. Authenticated users can read approved reviews.
+     * @description Controls access to reviews. Users can read approved reviews or list them if querying for approved status.
      * Authenticated users can create their own reviews (which start as 'pending').
      * Super Admins can moderate (update status/delete) all reviews.
      */
     match /reviews/{reviewId} {
-      allow read: if request.resource.data.status == 'approved' || isSuperAdmin();
+      allow get: if resource.data.status == 'approved' || isSuperAdmin();
+      allow list: if request.query.get('status') == 'approved' || isSuperAdmin();
       allow create: if isCreatingOwnReview();
       allow update, delete: if isSuperAdmin();
     }
