@@ -23,7 +23,7 @@
  *   ownership model. Only the user specified in the path can access their location data. Super
  *   Admins are explicitly denied access to maintain user privacy.
  * - Immutable Ownership: Relational fields critical for authorization, such as a user's own ID
- *   within their document, are enforced as immutable after creation to prevent ownership hijacking.
+ *   within their document, are enforced as immutable on creation to prevent ownership hijacking.
  * - Default Deny: All paths not explicitly matched are denied access by default.
  */
 rules_version = '2';
@@ -146,7 +146,7 @@ service cloud.firestore {
      */
     match /reviews/{reviewId} {
       allow get: if resource.data.status == 'approved' || isSuperAdmin();
-      allow list: if request.query.get('status') == 'approved' || isSuperAdmin() || request.query.limit <= 10;
+      allow list: if isSignedIn() || isSuperAdmin();
       allow create: if isSignedIn();
       allow update, delete: if isSuperAdmin();
     }
