@@ -7,7 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { User as UserIcon, Mail, MapPin, Phone, LocateIcon, Loader2, Wrench, Building, Smartphone, Laptop, Briefcase, IndianRupee, Calendar, Book, School, GraduationCap, Info, Sparkles, Image as ImageIcon, Upload, HelpCircle, type LucideProps } from "lucide-react";
-import { doc, collection } from 'firebase/firestore';
+import { doc, collection, query } from 'firebase/firestore';
 import Image from 'next/image';
 import { getStorage, ref, uploadString, getDownloadURL } from 'firebase/storage';
 import { v4 as uuidv4 } from 'uuid';
@@ -111,11 +111,11 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
-  const categoriesCollectionRef = useMemoFirebase(() => {
+  const categoriesQuery = useMemoFirebase(() => {
     if (!firestore) return null;
-    return collection(firestore, 'categories');
+    return query(collection(firestore, 'categories'));
   }, [firestore]);
-  const { data: categories, isLoading: areCategoriesLoading } = useCollection<Category>(categoriesCollectionRef);
+  const { data: categories, isLoading: areCategoriesLoading } = useCollection<Category>(categoriesQuery);
 
   const extractPhoneNumberParts = (fullNumber?: string) => {
     if (!fullNumber) return { countryCode: "+91", phoneNumber: "" };

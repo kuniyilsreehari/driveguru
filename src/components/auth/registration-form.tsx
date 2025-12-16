@@ -9,7 +9,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { User as UserIcon, Mail, Lock, LogIn, Eye, EyeOff, Briefcase, MapPin, Phone, LocateIcon, Loader2, Wrench, Building, Smartphone, Laptop, type LucideIcon } from "lucide-react";
 import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { doc, collection } from 'firebase/firestore';
+import { doc, collection, query } from 'firebase/firestore';
 
 import { Button } from "@/components/ui/button";
 import {
@@ -78,11 +78,12 @@ export function RegistrationForm() {
   const firestore = useFirestore();
   const router = useRouter();
 
-  const categoriesCollectionRef = useMemoFirebase(() => {
+  const categoriesQuery = useMemoFirebase(() => {
     if (!firestore) return null;
-    return collection(firestore, 'categories');
+    return query(collection(firestore, 'categories'));
   }, [firestore]);
-  const { data: categories, isLoading: areCategoriesLoading } = useCollection<Category>(categoriesCollectionRef);
+
+  const { data: categories, isLoading: areCategoriesLoading } = useCollection<Category>(categoriesQuery);
 
 
   const form = useForm<z.infer<typeof formSchema>>({

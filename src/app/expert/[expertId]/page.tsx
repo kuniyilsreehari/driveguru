@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { doc, collection, query, where, addDoc, serverTimestamp } from 'firebase/firestore';
@@ -368,20 +368,13 @@ function ExpertProfileContent() {
 
 // Wrapper component to handle Firebase context availability
 export default function ExpertProfilePage() {
-    try {
-        // useFirebase will throw if not in a provider. We can use this to detect
-        // if we are in a "logged out" state where the provider isn't fully active.
-        // Even if public, we need the provider for hooks.
-        useFirestore(); 
-        return <ExpertProfileContent />;
-    } catch (error) {
-        // This case will likely not be hit if provider is at root,
-        // but it's a safeguard. The main logic is inside ExpertProfileContent.
-        return (
-             <div className="flex h-screen w-full items-center justify-center bg-background">
+    return (
+        <Suspense fallback={
+            <div className="flex h-screen w-full items-center justify-center bg-background">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                <p className="ml-4 text-muted-foreground">Initializing...</p>
             </div>
-        )
-    }
+        }>
+            <ExpertProfileContent />
+        </Suspense>
+    );
 }

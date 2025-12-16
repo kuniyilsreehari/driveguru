@@ -5,9 +5,6 @@
  * access control system for administrative functions. A special "Super Admin" role grants
  * broad permissions to manage core application entities like users and companies.
  *
- * During development, read access is opened up to any signed-in user to prevent permission
- * errors, while write access remains secure.
- *
  * Data Structure:
  * - /users/{userId}: Stores public user profiles.
  * - /users/{userId}/location_data/{locationDataId}: A private subcollection containing a user's
@@ -140,14 +137,11 @@ service cloud.firestore {
     
     /**
      * @description Defines access rules for categories. All users (including anonymous) can read/list.
-     * Super Admins have full write control.
+     * Super Admins have full write control. This is the correct way to allow public list access.
      */
      match /categories/{categoryId} {
-        allow get: if true;
+        allow read: if true;
         allow write: if isSuperAdmin();
-     }
-     match /categories {
-        allow list: if true;
      }
 
     /**

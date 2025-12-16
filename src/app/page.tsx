@@ -2,7 +2,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Briefcase, Building, ChevronDown, Laptop, LocateIcon, MapPin, Search, Smartphone, Wrench, Loader2, Star, UserCheck, Crown, Sparkles, HelpCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -40,7 +40,7 @@ const DynamicIcon = ({ name, ...props }: { name: string } & LucideIcons.LucidePr
 };
 
 
-export default function TalentSearchPage() {
+function HomePageContent() {
     const [location, setLocation] = useState('');
     const [locationName, setLocationName] = useState('');
     const [isDetecting, setIsDetecting] = useState(false);
@@ -56,13 +56,13 @@ export default function TalentSearchPage() {
         return query(collection(firestore, 'users'), where('verified', '==', true), limit(3));
     }, [firestore]);
     
-    const categoriesCollectionRef = useMemoFirebase(() => {
+    const categoriesQuery = useMemoFirebase(() => {
         if (!firestore) return null;
-        return collection(firestore, 'categories');
+        return query(collection(firestore, 'categories'));
     }, [firestore]);
 
     const { data: experts, isLoading: isLoadingExperts } = useCollection<ExpertUser>(expertsQuery);
-    const { data: categories, isLoading: areCategoriesLoading } = useCollection<Category>(categoriesCollectionRef);
+    const { data: categories, isLoading: areCategoriesLoading } = useCollection<Category>(categoriesQuery);
 
 
     const handleDetectLocation = () => {
@@ -232,7 +232,7 @@ export default function TalentSearchPage() {
                             {areCategoriesLoading ? (
                                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 mt-4 text-center">
                                     {[...Array(5)].map((_, i) => (
-                                        <div key={i} className="p-4 border rounded-lg flex flex-col items-center justify-center space-y-2">
+                                        <div key={i} className="p-4 border rounded-lg flex flex-col items-center justify-center space-y-2 h-[100px]">
                                             <Skeleton className="w-8 h-8 rounded-full" />
                                             <Skeleton className="h-4 w-16" />
                                         </div>
@@ -244,12 +244,12 @@ export default function TalentSearchPage() {
                                         <div 
                                             key={category.id} 
                                             className={cn(
-                                                "p-4 border rounded-lg flex flex-col items-center justify-center space-y-2 cursor-pointer transition-colors",
+                                                "p-4 border rounded-lg flex flex-col items-center justify-center space-y-2 cursor-pointer transition-colors h-[100px]",
                                                 selectedCategory === category.name 
                                                     ? "bg-accent/20 border-primary" 
                                                     : "hover:bg-accent/10 hover:border-accent"
                                             )}
-                                            onClick={() => setSelectedCategory(category.name)}
+                                            onClick={() => setSelectedCategory(category.name === selectedCategory ? null : category.name)}
                                         >
                                             <DynamicIcon name={category.icon} className="w-8 h-8" />
                                             <span className="text-xs font-semibold">{category.name}</span>
@@ -260,7 +260,7 @@ export default function TalentSearchPage() {
 
                             <div className="mt-6">
                                 <Label htmlFor="hourly-rate">Max Hourly Rate: <span className="text-primary font-bold">Any</span></Label>
-                                <Slider defaultValue={[50]} max={100} step={1} className="mt-3" />
+                                <Slider defaultValue={[100]} max={100} step={1} className="mt-3" />
                             </div>
 
                             <div className="flex items-center space-x-4 mt-6">
@@ -300,4 +300,16 @@ export default function TalentSearchPage() {
             </div>
         </div>
     )
+}
+
+export default function TalentSearchPage() {
+    return (
+        <Suspense fallback={
+            <div className="flex h-screen w-full items-center justify-center bg-background">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+        }>
+            <HomePageContent />
+        </Suspense>
+    );
 }
