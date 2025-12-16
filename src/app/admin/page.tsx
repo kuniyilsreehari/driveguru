@@ -9,7 +9,7 @@ import { useUser, useFirestore, useDoc, useMemoFirebase, useAuth, useCollection 
 import { deleteDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, CheckCircle2, UserCheck, UserX, Crown, Sparkles, User as UserIcon, ThumbsUp, ThumbsDown, MessageSquare } from 'lucide-react';
+import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, CheckCircle2, UserCheck, UserX, Crown, Sparkles, User as UserIcon, ThumbsUp, ThumbsDown, MessageSquare, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
@@ -37,6 +37,7 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { formatDistanceToNow } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 type ExpertUser = {
     id: string;
@@ -352,7 +353,20 @@ export default function AdminDashboardPage() {
                                 <p className="font-bold">{review.reviewerName} <span className="font-normal text-muted-foreground">on</span> {review.expertName}</p>
                                 <p className="text-xs text-muted-foreground">{formatDistanceToNow(new Date(review.createdAt.seconds * 1000), { addSuffix: true })}</p>
                               </div>
-                              <Badge variant={review.status === 'approved' ? 'default' : review.status === 'rejected' ? 'destructive' : 'secondary'}>{review.status}</Badge>
+                              <div className="flex items-center gap-2">
+                                <div className="flex items-center">
+                                    {[...Array(5)].map((_, i) => (
+                                        <Star
+                                            key={i}
+                                            className={cn(
+                                                "h-4 w-4",
+                                                i < review.rating ? "text-yellow-400 fill-yellow-400" : "text-gray-400"
+                                            )}
+                                        />
+                                    ))}
+                                </div>
+                                <Badge variant={review.status === 'approved' ? 'default' : review.status === 'rejected' ? 'destructive' : 'secondary'}>{review.status}</Badge>
+                              </div>
                             </div>
                             <p className="text-sm text-muted-foreground">&quot;{review.comment}&quot;</p>
                             {review.status === 'pending' && (
