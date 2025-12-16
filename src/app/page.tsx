@@ -64,14 +64,14 @@ export default function TalentSearchPage() {
                     const data = await response.json();
                     
                     const address = data.address;
-                    const city = address.city || address.town || address.village || address.hamlet;
+                    const place = address.city || address.town || address.village || address.hamlet;
                     const state = address.state;
-                    const postcode = address.postcode;
+                    const pin = address.postcode;
 
                     let detectedLocationParts = [];
-                    if (city) detectedLocationParts.push(city);
                     if (state) detectedLocationParts.push(state);
-                    if (postcode) detectedLocationParts.push(postcode);
+                    if (place) detectedLocationParts.push(place);
+                    if (pin) detectedLocationParts.push(pin);
 
                     let detectedLocation = detectedLocationParts.join(', ');
 
@@ -144,7 +144,7 @@ export default function TalentSearchPage() {
                                             <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                             <Input 
                                                 id="location" 
-                                                placeholder="state,place,pin" 
+                                                placeholder="state, place, pin" 
                                                 className="pl-10"
                                                 value={location}
                                                 onChange={(e) => setLocation(e.target.value)}
