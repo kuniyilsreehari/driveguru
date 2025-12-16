@@ -128,7 +128,7 @@ service cloud.firestore {
      * ===================================================== */
     match /reviews/{reviewId} {
         allow get: if true;
-        allow list: if true;
+        allow list: if isSuperAdmin();
         allow create: if isSignedIn();
         allow update, delete: if isSuperAdmin();
     }
@@ -150,5 +150,3 @@ service cloud.firestore {
      * ===================================================== */
   }
 }
-
-    
