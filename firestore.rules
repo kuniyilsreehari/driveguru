@@ -79,7 +79,8 @@ service cloud.firestore {
 
     match /users/{userId} {
       // Public profiles (search, listings)
-      allow get, list: if true;
+      allow get: if true;
+      allow list: if true;
 
       // User onboarding
       allow create: if isCreatingOwnUserDoc(userId);
