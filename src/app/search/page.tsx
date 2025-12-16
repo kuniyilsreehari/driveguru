@@ -2,7 +2,7 @@
 
 'use client';
 
-import { Suspense } from 'react';
+import { Suspense, useMemo } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { collection, query, where, limit, or } from 'firebase/firestore';
@@ -41,16 +41,7 @@ function SearchResults() {
             constraints.push(where('isAvailable', '==', true));
         }
         
-        // Firestore does not support case-insensitive search or partial text search natively.
-        // For a simple search, we can use multiple `where` clauses with an `or` condition.
-        // This is still limited but better than nothing.
-        // For a robust solution, a dedicated search service like Algolia is recommended.
-        if (searchQueryParam) {
-            const q = searchQueryParam.trim();
-            // This will not work as Firestore does not support 'OR' queries on different fields.
-            // We will filter on the client side.
-        }
-        
+        // We will query with basic filters first, then apply text and location search on the client.
         if (constraints.length > 0) {
             return query(collection(firestore, 'users'), ...constraints);
         }
@@ -61,25 +52,38 @@ function SearchResults() {
 
     const { data: allExperts, isLoading } = useCollection<ExpertUser>(expertsQuery);
     
-    const filteredExperts = useMemoFirebase(() => {
+    const filteredExperts = useMemo(() => {
         if (!allExperts) return null;
-        if (!searchQueryParam) return allExperts;
-
-        const lowercasedQuery = searchQueryParam.toLowerCase();
         
-        return allExperts.filter(expert => {
-            const name = `${expert.firstName || ''} ${expert.lastName || ''}`.toLowerCase();
-            const company = expert.companyName?.toLowerCase() || '';
-            const role = expert.role?.toLowerCase() || '';
-            const skills = expert.skills?.toLowerCase() || '';
+        let experts = allExperts;
 
-            return name.includes(lowercasedQuery) ||
-                   company.includes(lowercasedQuery) ||
-                   role.includes(lowercasedQuery) ||
-                   skills.includes(lowercasedQuery);
-        });
+        // Filter by search query
+        if (searchQueryParam) {
+            const lowercasedQuery = searchQueryParam.toLowerCase();
+            experts = experts.filter(expert => {
+                const name = `${expert.firstName || ''} ${expert.lastName || ''}`.toLowerCase();
+                const company = expert.companyName?.toLowerCase() || '';
+                const role = expert.role?.toLowerCase() || '';
+                const skills = expert.skills?.toLowerCase() || '';
 
-    }, [allExperts, searchQueryParam]);
+                return name.includes(lowercasedQuery) ||
+                       company.includes(lowercasedQuery) ||
+                       role.includes(lowercasedQuery) ||
+                       skills.includes(lowercasedQuery);
+            });
+        }
+
+        // Filter by location
+        if (location) {
+            const lowercasedLocation = location.toLowerCase();
+            experts = experts.filter(expert => 
+                expert.location?.toLowerCase().includes(lowercasedLocation)
+            );
+        }
+        
+        return experts;
+
+    }, [allExperts, searchQueryParam, location]);
 
 
     if (isLoading) {
@@ -108,25 +112,16 @@ function SearchResults() {
         if (searchQueryParam) {
              titleParts.push(<span key="query">Results for &quot;<span className="text-primary">{searchQueryParam}</span>&quot;</span>);
         } else {
-             titleParts.push(<span key="all">Showing all experts</span>);
+             titleParts.push(<span key="all">Showing experts</span>);
         }
 
         if (locationName) {
             titleParts.push(<span key="locationName"> in <span className="text-primary">{locationName}</span></span>);
-        }
-        
-        if (location && !locationName) {
+        } else if (location) {
             titleParts.push(<span key="location"> near <span className="text-primary">{location}</span></span>);
         }
-        
-        if (searchQueryParam && (location || locationName)) {
-            titleParts.push(<span key="all_locations_else">. Location filter is not applied.</span>);
-        } else if (location || locationName) {
-             titleParts.push(<span key="all_locations_else">. Results visible for all locations.</span>);
-        }
 
-
-        return <>{titleParts}</>
+        return <>{titleParts.map((part, i) => <span key={i}>{part}</span>)}</>
     }
 
     return (
