@@ -20,6 +20,7 @@ import { collection, query, where, limit } from 'firebase/firestore';
 import { ExpertCard } from '@/components/expert-card';
 import type { ExpertUser } from '@/components/expert-card';
 import * as LucideIcons from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 
 type Category = {
     id: string;
@@ -229,8 +230,13 @@ export default function TalentSearchPage() {
                             </div>
 
                             {areCategoriesLoading ? (
-                                <div className="flex justify-center items-center h-24">
-                                    <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 mt-4 text-center">
+                                    {[...Array(5)].map((_, i) => (
+                                        <div key={i} className="p-4 border rounded-lg flex flex-col items-center justify-center space-y-2">
+                                            <Skeleton className="w-8 h-8 rounded-full" />
+                                            <Skeleton className="h-4 w-16" />
+                                        </div>
+                                    ))}
                                 </div>
                             ) : (
                                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 mt-4 text-center">
@@ -295,5 +301,3 @@ export default function TalentSearchPage() {
         </div>
     )
 }
-
-    
