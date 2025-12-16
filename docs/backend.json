@@ -223,6 +223,53 @@
       },
       "required": ["id", "expertId", "reviewerName", "rating", "comment", "createdAt", "status"]
     },
+    "Vacancy": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Vacancy",
+      "type": "object",
+      "description": "Represents a job vacancy posted by a company.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the vacancy."
+        },
+        "title": {
+          "type": "string",
+          "description": "The title of the job vacancy."
+        },
+        "description": {
+          "type": "string",
+          "description": "A detailed description of the job."
+        },
+        "companyId": {
+          "type": "string",
+          "description": "The ID of the company that posted the vacancy."
+        },
+        "companyName": {
+          "type": "string",
+          "description": "The name of the company that posted the vacancy."
+        },
+        "location": {
+          "type": "string",
+          "description": "The location of the job."
+        },
+        "employmentType": {
+          "type": "string",
+          "description": "The type of employment (e.g., Full-time, Contract).",
+          "enum": ["Full-time", "Part-time", "Contract", "Internship"]
+        },
+        "skillsRequired": {
+          "type": "string",
+          "description": "A comma-separated list of required skills."
+        },
+        "postedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp of when the vacancy was posted."
+        }
+      },
+      "required": ["id", "title", "description", "companyId", "companyName", "location", "employmentType", "postedAt"]
+    },
     "AppConfig": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "AppConfig",
@@ -310,6 +357,22 @@
               "description": "The unique identifier of the review."
             }
           ]
+        }
+      },
+      {
+        "path": "/vacancies/{vacancyId}",
+        "definition": {
+            "entityName": "Vacancy",
+            "schema": {
+                "$ref": "#/backend/entities/Vacancy"
+            },
+            "description": "Stores job vacancies posted by companies.",
+            "params": [
+                {
+                    "name": "vacancyId",
+                    "description": "The unique identifier of the vacancy."
+                }
+            ]
         }
       },
       {

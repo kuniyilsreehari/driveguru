@@ -1,3 +1,4 @@
+
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -45,6 +46,15 @@ service cloud.firestore {
         get(/databases/$(database)/documents/users/$(request.auth.uid))
           .data.companyId == companyId;
     }
+    
+    function isCompanyUser() {
+        return isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'Company';
+    }
+
+    function isVacancyOwner(vacancy) {
+        return isCompanyUser() && vacancy.companyId == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.companyId;
+    }
+
 
     /* =====================================================
      * Super Admin Roles
@@ -115,6 +125,18 @@ service cloud.firestore {
         allow create: if isSignedIn();
         allow update, delete: if isSuperAdmin();
     }
+    
+    /* =====================================================
+     * Vacancies
+     * ===================================================== */
+    match /vacancies/{vacancyId} {
+        allow get: if true;
+        allow list: if true;
+        allow create: if isCompanyUser();
+        allow update: if isVacancyOwner(request.resource.data);
+        allow delete: if isVacancyOwner(resource.data);
+    }
+
 
     /* =====================================================
      * Default Deny (implicit)
