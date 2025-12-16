@@ -253,6 +253,40 @@ export function RegistrationForm() {
                 </FormItem>
               )}
             />
+             <div className="grid grid-cols-2 gap-4">
+                <FormField
+                control={form.control}
+                name="firstName"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Contact First Name</FormLabel>
+                    <div className="relative">
+                        <UserIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                        <FormControl>
+                        <Input placeholder="John" {...field} className="pl-10" />
+                        </FormControl>
+                    </div>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+                <FormField
+                control={form.control}
+                name="lastName"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Contact Last Name</FormLabel>
+                    <div className="relative">
+                        <UserIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                        <FormControl>
+                        <Input placeholder="Doe" {...field} className="pl-10" />
+                        </FormControl>
+                    </div>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+            </div>
              <FormField
               control={form.control}
               name="department"
@@ -280,40 +314,42 @@ export function RegistrationForm() {
             />
           </>
         )}
-        <div className="grid grid-cols-2 gap-4">
-            <FormField
-              control={form.control}
-              name="firstName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>First Name</FormLabel>
-                  <div className="relative">
-                    <UserIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <FormControl>
-                      <Input placeholder="John" {...field} className="pl-10" />
-                    </FormControl>
-                  </div>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="lastName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Last Name</FormLabel>
-                  <div className="relative">
-                    <UserIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <FormControl>
-                      <Input placeholder="Doe" {...field} className="pl-10" />
-                    </FormControl>
-                  </div>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-        </div>
+        {selectedRole === 'Freelancer' && (
+            <div className="grid grid-cols-2 gap-4">
+                <FormField
+                control={form.control}
+                name="firstName"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>First Name</FormLabel>
+                    <div className="relative">
+                        <UserIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                        <FormControl>
+                        <Input placeholder="John" {...field} className="pl-10" />
+                        </FormControl>
+                    </div>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+                <FormField
+                control={form.control}
+                name="lastName"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Last Name</FormLabel>
+                    <div className="relative">
+                        <UserIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                        <FormControl>
+                        <Input placeholder="Doe" {...field} className="pl-10" />
+                        </FormControl>
+                    </div>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+            </div>
+        )}
         <FormField
           control={form.control}
           name="email"
