@@ -307,9 +307,13 @@ function HomePageContent() {
                             </div>
                         ) : (
                             <div className="space-y-6">
-                                {experts && experts.map(expert => (
-                                    <ExpertCard key={expert.id} expert={expert} />
-                                ))}
+                                {experts && experts.length > 0 ? (
+                                    experts.map(expert => (
+                                        <ExpertCard key={expert.id} expert={expert} />
+                                    ))
+                                ) : (
+                                    <p className="text-center text-muted-foreground">No featured experts available right now.</p>
+                                )}
                             </div>
                         )}
                     </div>
