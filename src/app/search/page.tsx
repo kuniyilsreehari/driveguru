@@ -24,7 +24,7 @@ function SearchResults() {
 
     const location = searchParams.get('location');
     const category = searchParams.get('category');
-    const locationName = searchParams.get('locationName');
+    const locationName = search_params.get('locationName');
 
     const usersCollectionRef = useMemoFirebase(() => {
         if (!firestore) return null;
@@ -68,25 +68,25 @@ function SearchResults() {
     const searchTitle = () => {
         let titleParts: (string | JSX.Element)[] = [];
         if (category) {
-            titleParts.push(<>Showing <span className="text-primary">{category}</span> experts</>);
+            titleParts.push(<span key="category">Showing <span className="text-primary">{category}</span> experts</span>);
         } else {
-            titleParts.push(<>Showing all experts</>);
+            titleParts.push(<span key="all">Showing all experts</span>);
         }
 
         if (locationName) {
-            titleParts.push(<> in <span className="text-primary">{locationName}</span></>);
+            titleParts.push(<span key="locationName"> in <span className="text-primary">{locationName}</span></span>);
         }
         
         if (location && !locationName) {
-            titleParts.push(<> near <span className="text-primary">{location}</span></>);
+            titleParts.push(<span key="location"> near <span className="text-primary">{location}</span></span>);
         } else if (location && locationName) {
-            titleParts.push(<>,</>);
+            titleParts.push(<span key="separator">,</span>);
         }
 
         if (category && (location || locationName)) {
-            titleParts.push(<>. Results visible for all locations.</>);
+            titleParts.push(<span key="all_locations">. Results visible for all locations.</span>);
         } else {
-             titleParts.push(<>. Results visible for all locations.</>);
+             titleParts.push(<span key="all_locations_else">. Results visible for all locations.</span>);
         }
 
         return <>{titleParts}</>
