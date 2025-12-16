@@ -43,6 +43,10 @@
             "Authorized Pro"
           ]
         },
+        "department": {
+          "type": "string",
+          "description": "The department the user belongs to, if applicable."
+        },
         "location": {
           "type": "string",
           "description": "The expert's physical location or service area."

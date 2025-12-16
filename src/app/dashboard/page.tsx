@@ -7,7 +7,7 @@ import { signOut } from 'firebase/auth';
 import { doc } from 'firebase/firestore';
 import { useUser, useAuth, useFirestore, useDoc, useMemoFirebase, updateDocumentNonBlocking } from '@/firebase';
 import { Button } from '@/components/ui/button';
-import { LogOut, Briefcase, Loader, Edit, UserCheck, XCircle, MapPin, IndianRupee, Calendar, Book, GraduationCap, School, Info, User as UserIcon, Check, Power } from 'lucide-react';
+import { LogOut, Briefcase, Loader, Edit, UserCheck, XCircle, MapPin, IndianRupee, Calendar, Book, GraduationCap, School, Info, User as UserIcon, Check, Power, Building } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import {
   Dialog,
@@ -46,6 +46,7 @@ type ExpertUserProfile = {
     aboutMe?: string;
     phoneNumber?: string;
     companyName?: string;
+    department?: string;
     isAvailable?: boolean;
 };
 
@@ -112,9 +113,10 @@ export default function ExpertDashboardPage() {
     // College name is optional but counts
     if (profile.collegeName) fields.push(profile.collegeName);
     
-    // Company name is conditional
+    // Company/department fields are conditional
     if (profile.role === 'Company' || profile.role === 'Authorized Pro') {
         fields.push(profile.companyName);
+        fields.push(profile.department);
     }
 
     const filledFields = fields.filter(field => field !== null && field !== undefined && field !== '').length;
@@ -168,6 +170,7 @@ export default function ExpertDashboardPage() {
                                     </Badge>
                                 )}
                                 <Badge variant="secondary">{userProfile.role}</Badge>
+                                {userProfile.companyName && <Badge variant="secondary">{userProfile.companyName}</Badge>}
                             </div>
                             <div className="flex items-center space-x-2 mt-4">
                                 <Switch 
@@ -250,6 +253,12 @@ export default function ExpertDashboardPage() {
                         <School className="h-5 w-5 text-muted-foreground" />
                         <p><span className="font-semibold">College:</span> {userProfile.collegeName || <span className="text-destructive">Not specified</span>}</p>
                     </div>
+                    {(userProfile.role === 'Company' || userProfile.role === 'Authorized Pro') && (
+                        <div className="flex items-center gap-3">
+                            <Building className="h-5 w-5 text-muted-foreground" />
+                            <p><span className="font-semibold">Department:</span> {userProfile.department || <span className="text-destructive">Not specified</span>}</p>
+                        </div>
+                    )}
                 </div>
                 <Separator className="my-6" />
                  <div className="space-y-4">

@@ -45,6 +45,7 @@ const formSchema = z.object({
   countryCode: z.string().optional(),
   phoneNumber: z.string().optional(),
   role: z.string({ required_error: "Please select your expert type." }),
+  department: z.string().optional(),
   companyName: z.string().optional(),
   hourlyRate: z.coerce.number().min(0, "Hourly rate cannot be negative.").optional(),
   yearsOfExperience: z.coerce.number().min(0, "Years of experience cannot be negative.").optional(),
@@ -65,6 +66,7 @@ type ExpertUserProfile = {
     location?: string;
     phoneNumber?: string;
     companyName?: string;
+    department?: string;
     hourlyRate?: number;
     yearsOfExperience?: number;
     gender?: string;
@@ -117,6 +119,7 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
       countryCode: countryCode,
       phoneNumber: phoneNumber,
       role: userProfile.role || "",
+      department: userProfile.department || "",
       companyName: userProfile.companyName || "",
       hourlyRate: userProfile.hourlyRate || 0,
       yearsOfExperience: userProfile.yearsOfExperience || 0,
@@ -409,6 +412,7 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
           )}
         />
         {(selectedRole === 'Company' || selectedRole === 'Authorized Pro') && (
+          <>
             <FormField
               control={form.control}
               name="companyName"
@@ -425,6 +429,32 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
                 </FormItem>
               )}
             />
+             <FormField
+              control={form.control}
+              name="department"
+              render={({ field }) => (
+                <FormItem>
+                    <FormLabel>Department</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select a department" />
+                            </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                            <SelectItem value="Engineering">Engineering</SelectItem>
+                            <SelectItem value="Sales">Sales</SelectItem>
+                            <SelectItem value="Marketing">Marketing</SelectItem>
+                            <SelectItem value="HR">Human Resources</SelectItem>
+                            <SelectItem value="Support">Support</SelectItem>
+                            <SelectItem value="Other">Other</SelectItem>
+                        </SelectContent>
+                    </Select>
+                    <FormMessage />
+                </FormItem>
+              )}
+            />
+          </>
         )}
         <div className="grid grid-cols-2 gap-4">
             <FormField

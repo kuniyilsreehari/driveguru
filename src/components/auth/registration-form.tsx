@@ -44,6 +44,7 @@ const formSchema = z.object({
   countryCode: z.string().optional(),
   phoneNumber: z.string().min(1, { message: "Phone number is required." }),
   role: z.string({ required_error: "Please select your expert type." }),
+  department: z.string().optional(),
   companyName: z.string().optional(),
 });
 
@@ -69,6 +70,7 @@ export function RegistrationForm() {
       countryCode: "+91",
       phoneNumber: "",
       companyName: "",
+      department: "",
     },
   });
 
@@ -169,6 +171,7 @@ export function RegistrationForm() {
         lastName: values.lastName,
         email: values.email,
         role: values.role,
+        department: values.department,
         location: values.location,
         phoneNumber: values.countryCode && values.phoneNumber ? `${values.countryCode} ${values.phoneNumber}` : "",
         companyName: values.companyName,
@@ -233,6 +236,7 @@ export function RegistrationForm() {
           )}
         />
         {(selectedRole === 'Company' || selectedRole === 'Authorized Pro') && (
+          <>
             <FormField
               control={form.control}
               name="companyName"
@@ -249,6 +253,32 @@ export function RegistrationForm() {
                 </FormItem>
               )}
             />
+             <FormField
+              control={form.control}
+              name="department"
+              render={({ field }) => (
+                <FormItem>
+                    <FormLabel>Department</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select a department" />
+                            </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                            <SelectItem value="Engineering">Engineering</SelectItem>
+                            <SelectItem value="Sales">Sales</SelectItem>
+                            <SelectItem value="Marketing">Marketing</SelectItem>
+                            <SelectItem value="HR">Human Resources</SelectItem>
+                            <SelectItem value="Support">Support</SelectItem>
+                            <SelectItem value="Other">Other</SelectItem>
+                        </SelectContent>
+                    </Select>
+                    <FormMessage />
+                </FormItem>
+              )}
+            />
+          </>
         )}
         <div className="grid grid-cols-2 gap-4">
             <FormField

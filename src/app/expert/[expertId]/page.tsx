@@ -6,7 +6,7 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { doc, collection, query, where, addDoc, serverTimestamp } from 'firebase/firestore';
 import { useFirestore, useDoc, useCollection, useMemoFirebase, useUser } from '@/firebase';
-import { Loader2, Star, ChevronLeft, MapPin, IndianRupee, Briefcase, Calendar, Info, Book, GraduationCap, School, User as UserIcon, UserCheck, XCircle, Crown, Sparkles, MessageSquare, LogIn, Edit2, Send, Lock } from 'lucide-react';
+import { Loader2, Star, ChevronLeft, MapPin, IndianRupee, Briefcase, Calendar, Info, Book, GraduationCap, School, User as UserIcon, UserCheck, XCircle, Crown, Sparkles, MessageSquare, LogIn, Edit2, Send, Lock, Building } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -40,6 +40,7 @@ type ExpertUserProfile = {
     aboutMe?: string;
     phoneNumber?: string;
     companyName?: string;
+    department?: string;
     isAvailable?: boolean;
     tier?: 'Standard' | 'Premier' | 'Super Premier';
 };
@@ -210,6 +211,7 @@ function ExpertProfileContent() {
                                         </Badge>
                                     )}
                                     <Badge variant="secondary">{expert.role}</Badge>
+                                    {expert.department && <Badge variant="secondary">{expert.department}</Badge>}
                                     {expert.tier === 'Premier' && <Badge variant="outline" className="border-purple-500 text-purple-500"><Crown className="mr-1 h-3 w-3" /> Premier</Badge>}
                                     {expert.tier === 'Super Premier' && <Badge variant="outline" className="border-blue-500 text-blue-500"><Sparkles className="mr-1 h-3 w-3" /> Super Premier</Badge>}
                                 </div>
@@ -252,6 +254,12 @@ function ExpertProfileContent() {
                                 <School className="h-5 w-5 text-muted-foreground mt-1" />
                                 <p><span className="font-semibold">College:</span> {expert.collegeName || 'Not specified'}</p>
                             </div>
+                             {(expert.role === 'Company' || expert.role === 'Authorized Pro') && expert.department && (
+                                <div className="flex items-start gap-3">
+                                    <Building className="h-5 w-5 text-muted-foreground mt-1" />
+                                    <p><span className="font-semibold">Department:</span> {expert.department}</p>
+                                </div>
+                            )}
                         </div>
                         <Separator className="my-6" />
                         <div className="space-y-6">
