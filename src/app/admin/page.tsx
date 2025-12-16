@@ -1,16 +1,15 @@
 
-
 'use client';
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { collection, doc, Timestamp, orderBy, query } from 'firebase/firestore';
+import { collection, Timestamp, orderBy, query } from 'firebase/firestore';
 import { signOut } from 'firebase/auth';
 import { useUser, useFirestore, useDoc, useMemoFirebase, useAuth, useCollection, setDocumentNonBlocking } from '@/firebase';
 import { deleteDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, CheckCircle2, UserCheck, UserX, Crown, Sparkles, User as UserIcon, Settings, Save, Briefcase, Building, MessageSquare, ThumbsUp, ThumbsDown, Star } from 'lucide-react';
+import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, CheckCircle2, UserCheck, UserX, Crown, Sparkles, User as UserIcon, Settings, Save, Briefcase, Building, MessageSquare, ThumbsUp, ThumbsDown, Star, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -41,6 +40,7 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { format, formatDistanceToNow } from 'date-fns';
 import Link from 'next/link';
+import { cn } from '@/lib/utils';
 
 type ExpertUser = {
     id: string;
@@ -188,7 +188,9 @@ const ReviewTable = ({ reviews, onApprove, onReject }: { reviews: Review[], onAp
                                         <Button variant="destructive" size="sm" onClick={() => onReject(review)}><ThumbsDown className="mr-2 h-4 w-4" />Reject</Button>
                                     </div>
                                 ) : (
-                                    <Badge variant="outline" className="border-green-500 text-green-500">Approved</Badge>
+                                    <Badge variant={review.status === 'approved' ? 'outline' : 'destructive'} className={review.status === 'approved' ? 'border-green-500 text-green-500' : ''}>
+                                        {review.status.charAt(0).toUpperCase() + review.status.slice(1)}
+                                    </Badge>
                                 )}
                             </TableCell>
                         </TableRow>
@@ -215,6 +217,10 @@ export default function AdminDashboardPage() {
   const [selectedReview, setSelectedReview] = useState<Review | null>(null);
   const [featuredExpertsLimit, setFeaturedExpertsLimit] = useState(3);
   const [isSavingSettings, setIsSavingSettings] = useState(false);
+
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeFilter, setActiveFilter] = useState<string | null>(null);
+
 
   const superAdminDocRef = useMemoFirebase(() => {
     if (!user) return null;
@@ -350,14 +356,22 @@ export default function AdminDashboardPage() {
   const handleRejectReview = () => {
     if (!selectedReview || !firestore) return;
     const reviewDocRef = doc(firestore, 'reviews', selectedReview.id);
-    deleteDocumentNonBlocking(reviewDocRef); // Rejecting by deleting
+    updateDocumentNonBlocking(reviewDocRef, { status: 'rejected' });
     toast({
       title: "Review Rejected",
-      description: "The review has been permanently deleted.",
+      description: "The review has been marked as rejected.",
       variant: 'destructive'
     });
     setIsReviewRejectDialogOpen(false);
     setSelectedReview(null);
+  };
+
+  const handleFilterClick = (filter: string | null) => {
+    if (activeFilter === filter) {
+        setActiveFilter(null); // Toggle off if clicked again
+    } else {
+        setActiveFilter(filter);
+    }
   };
 
   const isLoading = isUserLoading || isRoleLoading;
@@ -365,13 +379,31 @@ export default function AdminDashboardPage() {
   
   const sortedUsers = users ? [...users].sort((a, b) => (a.firstName || '').localeCompare(b.firstName || '')) : [];
 
-  const freelancers = sortedUsers?.filter(user => user.role === 'Freelancer');
-  const companies = sortedUsers?.filter(user => user.role === 'Company');
-  const authorizedPros = sortedUsers?.filter(user => user.role === 'Authorized Pro');
-  const superAdmins = sortedUsers?.filter(user => user.role === 'Super Admin');
+  const filteredUsers = sortedUsers.filter(user => {
+      const searchMatch = searchQuery.length > 0 ? 
+            (user.firstName?.toLowerCase().includes(searchQuery.toLowerCase()) || 
+             user.lastName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+             user.email?.toLowerCase().includes(searchQuery.toLowerCase())) 
+          : true;
+
+      const filterMatch = activeFilter ? {
+          'verified': user.verified === true,
+          'unverified': user.verified === false,
+          'premier': user.tier === 'Premier',
+          'super-premier': user.tier === 'Super Premier'
+      }[activeFilter] : true;
+
+      return searchMatch && filterMatch;
+  });
+
+  const freelancers = filteredUsers?.filter(user => user.role === 'Freelancer');
+  const companies = filteredUsers?.filter(user => user.role === 'Company');
+  const authorizedPros = filteredUsers?.filter(user => user.role === 'Authorized Pro');
+  const superAdmins = filteredUsers?.filter(user => user.role === 'Super Admin');
   
   const pendingReviews = reviews?.filter(r => r.status === 'pending');
   const approvedReviews = reviews?.filter(r => r.status === 'approved');
+  const rejectedReviews = reviews?.filter(r => r.status === 'rejected');
 
 
   if (isLoading) {
@@ -533,6 +565,24 @@ export default function AdminDashboardPage() {
                       </div>
                     </CardHeader>
                     <CardContent>
+                        <div className="flex flex-col sm:flex-row items-stretch gap-4 mb-6">
+                            <div className="relative flex-grow">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                <Input
+                                    placeholder="Search by name or email..."
+                                    className="pl-10"
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                />
+                            </div>
+                            <div className="flex items-center gap-2 flex-wrap">
+                                <Button variant={activeFilter === 'verified' ? 'default' : 'outline'} size="sm" onClick={() => handleFilterClick('verified')}>Verified</Button>
+                                <Button variant={activeFilter === 'unverified' ? 'default' : 'outline'} size="sm" onClick={() => handleFilterClick('unverified')}>Unverified</Button>
+                                <Button variant={activeFilter === 'premier' ? 'default' : 'outline'} size="sm" onClick={() => handleFilterClick('premier')}>Premier</Button>
+                                <Button variant={activeFilter === 'super-premier' ? 'default' : 'outline'} size="sm" onClick={() => handleFilterClick('super-premier')}>Super Premier</Button>
+                            </div>
+                        </div>
+
                       {areTablesLoading ? (
                         <div className="flex justify-center items-center p-8">
                           <Loader className="h-6 w-6 animate-spin text-primary" />
@@ -548,7 +598,7 @@ export default function AdminDashboardPage() {
                                   <TabsTrigger value="superAdmins">Super Admins</TabsTrigger>
                               </TabsList>
                               <TabsContent value="all" className="mt-4">
-                                  <UserTable users={sortedUsers} onTierChange={handleTierChange} onVerificationToggle={handleVerificationToggle} onDelete={openDeleteDialog} />
+                                  <UserTable users={filteredUsers} onTierChange={handleTierChange} onVerificationToggle={handleVerificationToggle} onDelete={openDeleteDialog} />
                               </TabsContent>
                               <TabsContent value="freelancers" className="mt-4">
                                   <UserTable users={freelancers || []} onTierChange={handleTierChange} onVerificationToggle={handleVerificationToggle} onDelete={openDeleteDialog} />
@@ -586,15 +636,19 @@ export default function AdminDashboardPage() {
                               </div>
                         ) : (
                             <Tabs defaultValue="pending">
-                                <TabsList className="grid w-full grid-cols-2">
-                                    <TabsTrigger value="pending">Pending Reviews</TabsTrigger>
-                                    <TabsTrigger value="approved">Approved Reviews</TabsTrigger>
+                                <TabsList className="grid w-full grid-cols-3">
+                                    <TabsTrigger value="pending">Pending</TabsTrigger>
+                                    <TabsTrigger value="approved">Approved</TabsTrigger>
+                                    <TabsTrigger value="rejected">Rejected</TabsTrigger>
                                 </TabsList>
                                 <TabsContent value="pending" className="mt-4">
                                     <ReviewTable reviews={pendingReviews || []} onApprove={handleApproveReview} onReject={openReviewRejectDialog} />
                                 </TabsContent>
                                 <TabsContent value="approved" className="mt-4">
                                     <ReviewTable reviews={approvedReviews || []} onApprove={handleApproveReview} onReject={openReviewRejectDialog} />
+                                </TabsContent>
+                                 <TabsContent value="rejected" className="mt-4">
+                                    <ReviewTable reviews={rejectedReviews || []} onApprove={handleApproveReview} onReject={openReviewRejectDialog} />
                                 </TabsContent>
                             </Tabs>
                         )}
@@ -627,13 +681,13 @@ export default function AdminDashboardPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Reject Review?</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to reject and permanently delete this review? This action cannot be undone.
+              Are you sure you want to reject this review? This action can be undone later.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={handleRejectReview} className="bg-destructive hover:bg-destructive/90">
-              Reject and Delete
+              Reject
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
