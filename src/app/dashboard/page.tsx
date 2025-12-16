@@ -171,6 +171,21 @@ export default function ExpertDashboardPage() {
                                 )}
                                 <Badge variant="secondary">{userProfile.role}</Badge>
                             </div>
+                            <div className="flex items-center space-x-2 mt-4">
+                                <Switch 
+                                    id="availability-mode" 
+                                    checked={userProfile.isAvailable} 
+                                    onCheckedChange={handleAvailabilityToggle}
+                                    aria-label="Availability status"
+                                />
+                                <Label htmlFor="availability-mode" className="flex items-center gap-2 text-sm">
+                                    {userProfile.isAvailable ? (
+                                        <><Check className="h-4 w-4 text-green-500"/> I am currently available for new projects.</>
+                                    ) : (
+                                        <><Power className="h-4 w-4 text-red-500"/> I am not available for new projects.</>
+                                    )}
+                                </Label>
+                            </div>
                         </div>
                     </div>
                     <div className="flex items-center gap-2">
@@ -259,23 +274,8 @@ export default function ExpertDashboardPage() {
                 </div>
             </CardContent>
             <CardFooter className="flex-col items-start gap-4 pt-6">
-                <div className="flex items-center space-x-2">
-                    <Switch 
-                        id="availability-mode" 
-                        checked={userProfile.isAvailable} 
-                        onCheckedChange={handleAvailabilityToggle}
-                        aria-label="Availability status"
-                    />
-                    <Label htmlFor="availability-mode" className="flex items-center gap-2">
-                        {userProfile.isAvailable ? (
-                            <><Check className="h-4 w-4 text-green-500"/> I am currently available for new projects.</>
-                        ) : (
-                            <><Power className="h-4 w-4 text-red-500"/> I am not available for new projects.</>
-                        )}
-                    </Label>
-                </div>
                 <p className="text-xs text-muted-foreground">
-                    Use this toggle to control your visibility for new job offers in search results.
+                    Use the toggle at the top to control your visibility for new job offers in search results.
                 </p>
             </CardFooter>
         </Card>
@@ -283,5 +283,3 @@ export default function ExpertDashboardPage() {
     </div>
   );
 }
-
-    
