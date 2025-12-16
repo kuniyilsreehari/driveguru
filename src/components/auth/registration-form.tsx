@@ -7,9 +7,9 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { User as UserIcon, Mail, Lock, LogIn, Eye, EyeOff, Briefcase, MapPin, Phone, LocateIcon, Loader2, Wrench, Building, Smartphone, Laptop } from "lucide-react";
+import { User as UserIcon, Mail, Lock, LogIn, Eye, EyeOff, Briefcase, MapPin, Phone, LocateIcon, Loader2, Wrench, Building, Smartphone, Laptop, type LucideIcon } from "lucide-react";
 import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { doc } from 'firebase/firestore';
+import { doc, collection } from 'firebase/firestore';
 
 import { Button } from "@/components/ui/button";
 import {
@@ -22,20 +22,19 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth, useUser, useFirestore } from "@/firebase";
+import { useAuth, useUser, useFirestore, useCollection, useMemoFirebase } from "@/firebase";
 import { setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Icons } from "@/components/icons";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import * as LucideIcons from 'lucide-react';
 
-const categories = [
-    { name: "MEDICAL HELP", icon: <Icons.medical className="w-8 h-8" /> },
-    { name: "ELECTRICAL SERVICE", icon: <Wrench className="w-8 h-8" /> },
-    { name: "SECURITY GUARDS", icon: <Building className="w-8 h-8" /> },
-    { name: "MOBILE PHONE SERVICE", icon: <Smartphone className="w-8 h-8" /> },
-    { name: "LAPTOP SERVICE", icon: <Laptop className="w-8 h-8" /> },
-];
+type Category = {
+    id: string;
+    name: string;
+    icon: string;
+};
 
 const expertTypes = [
     { name: "Freelancer", icon: <UserIcon className="w-8 h-8" /> },
@@ -58,6 +57,18 @@ const formSchema = z.object({
   companyName: z.string().optional(),
 });
 
+const DynamicIcon = ({ name, ...props }: { name: string } & LucideIcons.LucideProps) => {
+  const IconComponent = (LucideIcons as any)[name];
+
+  if (!IconComponent) {
+    // Return a default icon if the specified one doesn't exist.
+    return <LucideIcons.HelpCircle {...props} />;
+  }
+
+  return <IconComponent {...props} />;
+};
+
+
 export function RegistrationForm() {
   const { toast } = useToast();
   const [showPassword, setShowPassword] = useState(false);
@@ -66,6 +77,13 @@ export function RegistrationForm() {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
   const router = useRouter();
+
+  const categoriesCollectionRef = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return collection(firestore, 'categories');
+  }, [firestore]);
+  const { data: categories, isLoading: areCategoriesLoading } = useCollection<Category>(categoriesCollectionRef);
+
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -158,6 +176,14 @@ export function RegistrationForm() {
   }, [user, isUserLoading, router]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
+    if (!auth || !firestore) {
+      toast({
+        variant: "destructive",
+        title: "Registration Failed",
+        description: "Firebase services are not available.",
+      });
+      return;
+    }
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
       const newUser = userCredential.user;
@@ -381,25 +407,31 @@ export function RegistrationForm() {
             <FormItem>
                 <FormLabel>Category</FormLabel>
                 <ScrollArea className="h-40 w-full rounded-md border p-2 focus-within:border-primary">
-                    <FormControl>
-                        <div className="grid grid-cols-2 gap-2 text-center">
-                            {categories.map((category) => (
-                                <div 
-                                    key={category.name} 
-                                    className={cn(
-                                        "p-2 border rounded-lg flex flex-col items-center justify-center space-y-1 cursor-pointer transition-colors h-24",
-                                        field.value === category.name 
-                                            ? "bg-accent/20 border-primary" 
-                                            : "hover:bg-accent/10 hover:border-accent"
-                                    )}
-                                    onClick={() => form.setValue('category', category.name, { shouldValidate: true })}
-                                >
-                                    {category.icon}
-                                    <span className="text-xs font-semibold">{category.name}</span>
-                                </div>
-                            ))}
-                        </div>
-                    </FormControl>
+                    {areCategoriesLoading ? (
+                         <div className="flex justify-center items-center p-4">
+                            <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                         </div>
+                    ) : (
+                        <FormControl>
+                            <div className="grid grid-cols-2 gap-2 text-center">
+                                {categories?.map((category) => (
+                                    <div 
+                                        key={category.id} 
+                                        className={cn(
+                                            "p-2 border rounded-lg flex flex-col items-center justify-center space-y-1 cursor-pointer transition-colors h-24",
+                                            field.value === category.name 
+                                                ? "bg-accent/20 border-primary" 
+                                                : "hover:bg-accent/10 hover:border-accent"
+                                        )}
+                                        onClick={() => form.setValue('category', category.name, { shouldValidate: true })}
+                                    >
+                                        <DynamicIcon name={category.icon} className="w-8 h-8" />
+                                        <span className="text-xs font-semibold">{category.name}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </FormControl>
+                    )}
                 </ScrollArea>
                 <FormMessage />
             </FormItem>

@@ -3,13 +3,13 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { collection, doc, deleteDoc, updateDoc } from 'firebase/firestore';
+import { collection, doc, deleteDoc, updateDoc, addDoc } from 'firebase/firestore';
 import { signOut } from 'firebase/auth';
-import { useUser, useFirestore, useDoc, useMemoFirebase, useAuth, useCollection } from '@/firebase';
+import { useUser, useFirestore, useDoc, useMemoFirebase, useAuth, useCollection, addDocumentNonBlocking } from '@/firebase';
 import { deleteDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, CheckCircle2, UserCheck, UserX, Crown, Sparkles, User as UserIcon } from 'lucide-react';
+import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, CheckCircle2, UserCheck, UserX, Crown, Sparkles, User as UserIcon, ListPlus, PlusCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
@@ -35,6 +35,8 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 type ExpertUser = {
     id: string;
@@ -45,6 +47,12 @@ type ExpertUser = {
     tier?: 'Standard' | 'Premier' | 'Super Premier';
 };
 
+type Category = {
+    id: string;
+    name: string;
+    icon: string;
+};
+
 export default function AdminDashboardPage() {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
@@ -53,7 +61,11 @@ export default function AdminDashboardPage() {
   const { toast } = useToast();
 
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isCategoryDeleteDialogOpen, setIsCategoryDeleteDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<ExpertUser | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [newCategoryIcon, setNewCategoryIcon] = useState('');
 
   const superAdminDocRef = useMemoFirebase(() => {
     if (!user) return null;
@@ -67,8 +79,15 @@ export default function AdminDashboardPage() {
     if (!firestore || !isSuperAdmin) return null;
     return collection(firestore, 'users');
   }, [firestore, isSuperAdmin]);
+  
+  const categoriesCollectionRef = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return collection(firestore, 'categories');
+  }, [firestore]);
 
   const { data: users, isLoading: isUsersLoading } = useCollection<ExpertUser>(usersCollectionRef);
+  const { data: categories, isLoading: areCategoriesLoading } = useCollection<Category>(categoriesCollectionRef);
+
 
   const verifiedCount = users?.filter(u => u.verified).length || 0;
   const unverifiedCount = users?.filter(u => !u.verified).length || 0;
@@ -121,6 +140,39 @@ export default function AdminDashboardPage() {
         title: `Expert ${newVerifiedStatus ? 'Verified' : 'Unverified'}`,
         description: `${expert.firstName} ${expert.lastName} is now ${newVerifiedStatus ? 'verified' : 'unverified'}.`
     });
+  }
+
+  const handleAddCategory = () => {
+    if (!newCategoryName || !newCategoryIcon || !categoriesCollectionRef) return;
+
+    addDocumentNonBlocking(categoriesCollectionRef, {
+        name: newCategoryName,
+        icon: newCategoryIcon,
+    });
+
+    toast({
+        title: "Category Added",
+        description: `The category "${newCategoryName}" has been added.`
+    });
+    setNewCategoryName('');
+    setNewCategoryIcon('');
+  }
+
+  const openCategoryDeleteDialog = (category: Category) => {
+    setSelectedCategory(category);
+    setIsCategoryDeleteDialogOpen(true);
+  };
+
+  const handleDeleteCategory = () => {
+    if (!selectedCategory || !firestore) return;
+    const categoryDocRef = doc(firestore, 'categories', selectedCategory.id);
+    deleteDocumentNonBlocking(categoryDocRef);
+    toast({
+        title: "Category Deleted",
+        description: `The category "${selectedCategory.name}" has been removed.`,
+    });
+    setIsCategoryDeleteDialogOpen(false);
+    setSelectedCategory(null);
   }
 
   const getInitials = (firstName?: string, lastName?: string) => {
@@ -189,7 +241,7 @@ export default function AdminDashboardPage() {
           </header>
 
           <main>
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 mb-8">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Verified Experts</CardTitle>
@@ -220,10 +272,20 @@ export default function AdminDashboardPage() {
                   <p className="text-xs text-muted-foreground">Total registered experts</p>
                 </CardContent>
               </Card>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Total Categories</CardTitle>
+                  <ListPlus className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{categories?.length || 0}</div>
+                  <p className="text-xs text-muted-foreground">Total service categories</p>
+                </CardContent>
+              </Card>
             </div>
             
-            <div className="grid gap-8">
-              <Card>
+            <div className="grid gap-8 lg:grid-cols-3">
+              <Card className="lg:col-span-2">
                 <CardHeader>
                   <div className="flex items-center gap-3">
                     <Users className="h-6 w-6" />
@@ -295,6 +357,62 @@ export default function AdminDashboardPage() {
                 </CardContent>
               </Card>
 
+              <Card>
+                <CardHeader>
+                    <div className="flex items-center gap-3">
+                        <ListPlus className="h-6 w-6" />
+                        <div>
+                          <CardTitle>Category Management</CardTitle>
+                          <CardDescription>Add, view, or remove service categories.</CardDescription>
+                        </div>
+                    </div>
+                </CardHeader>
+                <CardContent>
+                    <div className='space-y-4'>
+                        <div className="space-y-2">
+                          <Label htmlFor="category-name">Category Name</Label>
+                          <Input id="category-name" placeholder="e.g. PLUMBING" value={newCategoryName} onChange={(e) => setNewCategoryName(e.target.value)} />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="category-icon">Lucide Icon Name</Label>
+                          <Input id="category-icon" placeholder="e.g. Wrench" value={newCategoryIcon} onChange={(e) => setNewCategoryIcon(e.target.value)} />
+                        </div>
+                        <Button onClick={handleAddCategory} className="w-full" disabled={!newCategoryName || !newCategoryIcon}>
+                            <PlusCircle className="mr-2 h-4 w-4" />
+                            Add Category
+                        </Button>
+                    </div>
+
+                    <div className="mt-6">
+                        <h4 className="font-semibold text-sm mb-2 text-muted-foreground">Existing Categories</h4>
+                        {areCategoriesLoading ? (
+                           <div className="flex justify-center items-center p-4">
+                              <Loader className="h-5 w-5 animate-spin text-primary" />
+                            </div>
+                        ) : (
+                          <div className="space-y-2">
+                            {categories && categories.length > 0 ? (
+                                categories.map(category => (
+                                    <div key={category.id} className="flex items-center justify-between rounded-md border p-2">
+                                        <div>
+                                            <p className="font-semibold">{category.name}</p>
+                                            <p className="text-xs text-muted-foreground">Icon: {category.icon}</p>
+                                        </div>
+                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => openCategoryDeleteDialog(category)}>
+                                            <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                ))
+                            ) : (
+                                <p className="text-center text-sm text-muted-foreground py-4">No categories found.</p>
+                            )}
+                          </div>
+                        )}
+                    </div>
+
+                </CardContent>
+              </Card>
+
             </div>
 
           </main>
@@ -312,6 +430,24 @@ export default function AdminDashboardPage() {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={handleDeleteUser} className="bg-destructive hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+       <AlertDialog open={isCategoryDeleteDialogOpen} onOpenChange={setIsCategoryDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the category
+              named <span className="font-bold">{selectedCategory?.name}</span>.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteCategory} className="bg-destructive hover:bg-destructive/90">
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>

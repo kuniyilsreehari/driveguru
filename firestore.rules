@@ -13,11 +13,12 @@
  * - /roles_super_admin/{userId}: An authorization-specific collection. The existence of a
  *   document here grants a user Super Admin privileges across the application.
  * - /reviews/{reviewId}: A collection for expert reviews, moderated by Super Admins.
+ * - /categories/{categoryId}: Stores service categories, managed by Super Admins.
  *
  * Key Security Decisions:
  * - Super Admin Role: A user is a Super Admin if a document with their UID exists
  *   in the /roles_super_admin collection. This role grants read/write access to the /users,
- *   /companies, and /reviews collections. This avoids costly lookups on user documents for role checks.
+ *   /companies, /reviews and /categories collections. This avoids costly lookups on user documents for role checks.
  * - User Privacy: Users can only read/update their own profile and create their own location
  *   data. They cannot list other users or access another user's private subcollections unless public.
  * - Location Data: This data is considered highly sensitive and is secured using a path-based
@@ -140,6 +141,15 @@ service cloud.firestore {
      match /companies/{companyId} {
       allow get, list, create, update, delete: if isSuperAdmin();
     }
+    
+    /**
+     * @description Defines access rules for categories. Super Admins have
+     * full read and write control. All users can read categories.
+     */
+     match /categories/{categoryId} {
+        allow get, list: if true;
+        allow create, update, delete: if isSuperAdmin();
+     }
 
     /**
      * @description Manages access to user profile documents. Anyone can read profiles.
@@ -162,3 +172,5 @@ service cloud.firestore {
     }
   }
 }
+
+    

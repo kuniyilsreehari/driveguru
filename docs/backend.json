@@ -222,6 +222,27 @@
         }
       },
       "required": ["id", "expertId", "reviewerName", "rating", "comment", "createdAt", "status"]
+    },
+    "Category": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Category",
+      "type": "object",
+      "description": "Represents a service category for experts.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the category."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the category (e.g., 'ELECTRICAL SERVICE')."
+        },
+        "icon": {
+          "type": "string",
+          "description": "The name of the lucide-react icon for the category (e.g., 'Wrench')."
+        }
+      },
+      "required": ["id", "name", "icon"]
     }
   },
   "auth": {
@@ -312,6 +333,22 @@
             {
               "name": "userId",
               "description": "The unique identifier of the user."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/categories/{categoryId}",
+        "definition": {
+          "entityName": "Category",
+          "schema": {
+            "$ref": "#/backend/entities/Category"
+          },
+          "description": "Stores all service categories. Managed by Super Admins, readable by all.",
+          "params": [
+            {
+              "name": "categoryId",
+              "description": "The unique identifier of the category."
             }
           ]
         }

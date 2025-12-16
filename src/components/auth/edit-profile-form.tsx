@@ -6,11 +6,12 @@ import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { User as UserIcon, Mail, MapPin, Phone, LocateIcon, Loader2, Wrench, Building, Smartphone, Laptop, Briefcase, IndianRupee, Calendar, Book, School, GraduationCap, Info, Sparkles, Image as ImageIcon, Upload } from "lucide-react";
-import { doc } from 'firebase/firestore';
+import { User as UserIcon, Mail, MapPin, Phone, LocateIcon, Loader2, Wrench, Building, Smartphone, Laptop, Briefcase, IndianRupee, Calendar, Book, School, GraduationCap, Info, Sparkles, Image as ImageIcon, Upload, HelpCircle, type LucideProps } from "lucide-react";
+import { doc, collection } from 'firebase/firestore';
 import Image from 'next/image';
 import { getStorage, ref, uploadString, getDownloadURL } from 'firebase/storage';
 import { v4 as uuidv4 } from 'uuid';
+import * as LucideIcons from 'lucide-react';
 
 import { Button } from "@/components/ui/button";
 import {
@@ -23,7 +24,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { useFirestore, useUser } from "@/firebase";
+import { useFirestore, useUser, useCollection, useMemoFirebase } from "@/firebase";
 import { updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Icons } from "../icons";
@@ -33,13 +34,11 @@ import { generateAboutMe } from "@/ai/flows/generate-about-me-flow";
 import { suggestSkills } from "@/ai/flows/suggest-skills-flow";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 
-const categories = [
-    { name: "MEDICAL HELP", icon: <Icons.medical className="w-8 h-8" /> },
-    { name: "ELECTRICAL SERVICE", icon: <Wrench className="w-8 h-8" /> },
-    { name: "SECURITY GUARDS", icon: <Building className="w-8 h-8" /> },
-    { name: "MOBILE PHONE SERVICE", icon: <Smartphone className="w-8 h-8" /> },
-    { name: "LAPTOP SERVICE", icon: <Laptop className="w-8 h-8" /> },
-];
+type Category = {
+    id: string;
+    name: string;
+    icon: string;
+};
 
 const expertTypes = [
     { name: "Freelancer", icon: <UserIcon className="w-8 h-8" /> },
@@ -91,6 +90,17 @@ interface EditProfileFormProps {
     onSuccess: () => void;
 }
 
+const DynamicIcon = ({ name, ...props }: { name: string } & LucideProps) => {
+  const IconComponent = (LucideIcons as any)[name];
+
+  if (!IconComponent) {
+    // Return a default icon if the specified one doesn't exist.
+    return <HelpCircle {...props} />;
+  }
+
+  return <IconComponent {...props} />;
+};
+
 export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps) {
   const { toast } = useToast();
   const firestore = useFirestore();
@@ -100,6 +110,12 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
   const [isSuggestingSkills, setIsSuggestingSkills] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  const categoriesCollectionRef = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return collection(firestore, 'categories');
+  }, [firestore]);
+  const { data: categories, isLoading: areCategoriesLoading } = useCollection<Category>(categoriesCollectionRef);
 
   const extractPhoneNumberParts = (fullNumber?: string) => {
     if (!fullNumber) return { countryCode: "+91", phoneNumber: "" };
@@ -283,7 +299,7 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file && user) {
+    if (file && user && firestore) {
       setIsUploading(true);
       const reader = new FileReader();
       reader.onload = async (e) => {
@@ -337,6 +353,7 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
 
 
   function onSubmit(values: z.infer<typeof formSchema>) {
+    if (!firestore) return;
     const userDocRef = doc(firestore, "users", userProfile.id);
     
     const updatedData = {
@@ -703,25 +720,31 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
           render={({ field }) => (
             <FormItem>
                 <FormLabel>Category</FormLabel>
-                <FormControl>
-                    <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 text-center">
-                        {categories.map((category) => (
-                            <div 
-                                key={category.name} 
-                                className={cn(
-                                    "p-2 border rounded-lg flex flex-col items-center justify-center space-y-1 cursor-pointer transition-colors",
-                                    field.value === category.name 
-                                        ? "bg-accent/20 border-primary" 
-                                        : "hover:bg-accent/10 hover:border-accent"
-                                )}
-                                onClick={() => form.setValue('category', category.name, { shouldValidate: true })}
-                            >
-                                {category.icon}
-                                <span className="text-xs font-semibold">{category.name}</span>
-                            </div>
-                        ))}
+                {areCategoriesLoading ? (
+                    <div className="flex justify-center items-center p-4 rounded-md border h-24">
+                        <Loader2 className="h-5 w-5 animate-spin text-primary" />
                     </div>
-                </FormControl>
+                ) : (
+                    <FormControl>
+                        <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 text-center">
+                            {categories?.map((category) => (
+                                <div 
+                                    key={category.id} 
+                                    className={cn(
+                                        "p-2 border rounded-lg flex flex-col items-center justify-center space-y-1 cursor-pointer transition-colors",
+                                        field.value === category.name 
+                                            ? "bg-accent/20 border-primary" 
+                                            : "hover:bg-accent/10 hover:border-accent"
+                                    )}
+                                    onClick={() => form.setValue('category', category.name, { shouldValidate: true })}
+                                >
+                                    <DynamicIcon name={category.icon} className="w-8 h-8" />
+                                    <span className="text-xs font-semibold">{category.name}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </FormControl>
+                )}
                 <FormMessage />
             </FormItem>
           )}
@@ -749,3 +772,5 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
     </Form>
   );
 }
+
+    

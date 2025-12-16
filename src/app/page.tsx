@@ -4,7 +4,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Briefcase, Building, ChevronDown, Laptop, LocateIcon, MapPin, Search, Smartphone, Wrench, Loader2, Star, UserCheck, Crown, Sparkles } from "lucide-react"
+import { Briefcase, Building, ChevronDown, Laptop, LocateIcon, MapPin, Search, Smartphone, Wrench, Loader2, Star, UserCheck, Crown, Sparkles, HelpCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
@@ -19,15 +19,25 @@ import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, where, limit } from 'firebase/firestore';
 import { ExpertCard } from '@/components/expert-card';
 import type { ExpertUser } from '@/components/expert-card';
+import * as LucideIcons from 'lucide-react';
 
+type Category = {
+    id: string;
+    name: string;
+    icon: string;
+};
 
-const categories = [
-    { name: "MEDICAL HELP", icon: <Icons.medical className="w-8 h-8" /> },
-    { name: "ELECTRICAL SERVICE", icon: <Wrench className="w-88 h-8" /> },
-    { name: "SECURITY GUARDS", icon: <Building className="w-8 h-8" /> },
-    { name: "MOBILE PHONE SERVICE", icon: <Smartphone className="w-8 h-8" /> },
-    { name: "LAPTOP SERVICE", icon: <Laptop className="w-8 h-8" /> },
-];
+const DynamicIcon = ({ name, ...props }: { name: string } & LucideIcons.LucideProps) => {
+  const IconComponent = (LucideIcons as any)[name];
+
+  if (!IconComponent) {
+    // Return a default icon if the specified one doesn't exist.
+    return <HelpCircle {...props} />;
+  }
+
+  return <IconComponent {...props} />;
+};
+
 
 export default function TalentSearchPage() {
     const [location, setLocation] = useState('');
@@ -44,8 +54,14 @@ export default function TalentSearchPage() {
         if (!firestore) return null;
         return query(collection(firestore, 'users'), where('verified', '==', true), limit(3));
     }, [firestore]);
+    
+    const categoriesCollectionRef = useMemoFirebase(() => {
+        if (!firestore) return null;
+        return collection(firestore, 'categories');
+    }, [firestore]);
 
     const { data: experts, isLoading: isLoadingExperts } = useCollection<ExpertUser>(expertsQuery);
+    const { data: categories, isLoading: areCategoriesLoading } = useCollection<Category>(categoriesCollectionRef);
 
 
     const handleDetectLocation = () => {
@@ -212,23 +228,29 @@ export default function TalentSearchPage() {
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 mt-4 text-center">
-                                {categories.map((category) => (
-                                    <div 
-                                        key={category.name} 
-                                        className={cn(
-                                            "p-4 border rounded-lg flex flex-col items-center justify-center space-y-2 cursor-pointer transition-colors",
-                                            selectedCategory === category.name 
-                                                ? "bg-accent/20 border-primary" 
-                                                : "hover:bg-accent/10 hover:border-accent"
-                                        )}
-                                        onClick={() => setSelectedCategory(category.name)}
-                                    >
-                                        {category.icon}
-                                        <span className="text-xs font-semibold">{category.name}</span>
-                                    </div>
-                                ))}
-                            </div>
+                            {areCategoriesLoading ? (
+                                <div className="flex justify-center items-center h-24">
+                                    <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 mt-4 text-center">
+                                    {categories?.map((category) => (
+                                        <div 
+                                            key={category.id} 
+                                            className={cn(
+                                                "p-4 border rounded-lg flex flex-col items-center justify-center space-y-2 cursor-pointer transition-colors",
+                                                selectedCategory === category.name 
+                                                    ? "bg-accent/20 border-primary" 
+                                                    : "hover:bg-accent/10 hover:border-accent"
+                                            )}
+                                            onClick={() => setSelectedCategory(category.name)}
+                                        >
+                                            <DynamicIcon name={category.icon} className="w-8 h-8" />
+                                            <span className="text-xs font-semibold">{category.name}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
 
                             <div className="mt-6">
                                 <Label htmlFor="hourly-rate">Max Hourly Rate: <span className="text-primary font-bold">Any</span></Label>
