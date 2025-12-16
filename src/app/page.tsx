@@ -69,6 +69,8 @@ export default function TalentSearchPage() {
                     const city = address.city || address.town || address.village || address.hamlet;
                     const state = address.state;
                     const pincode = address.postcode;
+                    const specificPlace = address.neighbourhood || address.road || data.display_name.split(',')[0];
+
 
                     let detectedLocationParts = [];
                     if (state) detectedLocationParts.push(state);
@@ -79,6 +81,9 @@ export default function TalentSearchPage() {
 
                     if (detectedLocation) {
                         setLocation(detectedLocation);
+                        if (specificPlace) {
+                            setLocationName(specificPlace);
+                        }
                         toast({
                             title: 'Location Detected',
                             description: `Your location has been set to ${detectedLocation}.`,
