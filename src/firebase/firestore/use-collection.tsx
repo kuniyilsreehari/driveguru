@@ -61,57 +61,68 @@ export function useCollection<T = any>(
     setIsLoading(true);
     setError(null);
 
-    // Directly use memoizedTargetRefOrQuery as it's assumed to be the final query
-    const unsubscribe = onSnapshot(
-      memoizedTargetRefOrQuery,
-      (snapshot: QuerySnapshot<DocumentData>) => {
-        const results: ResultItemType[] = [];
-        for (const doc of snapshot.docs) {
-          results.push({ ...(doc.data() as T), id: doc.id });
-        }
-        setData(results);
-        setError(null);
-        setIsLoading(false);
-      },
-      (error: FirestoreError) => {
-        let path: string = 'unknown';
-        if (memoizedTargetRefOrQuery) {
-            try {
-                if (memoizedTargetRefOrQuery.type === 'collection') {
-                    path = (memoizedTargetRefOrQuery as CollectionReference).path;
-                } else if (memoizedTargetRefOrQuery.type === 'query') {
-                    const q = memoizedTargetRefOrQuery as Query;
-                    // @ts-ignore - _query is an internal but useful property
-                    if (q._query?.path?.canonicalString) {
-                         // @ts-ignore
-                        path = q._query.path.canonicalString();
-                    } else if ('_path' in q && typeof (q as any)._path?.canonicalString === 'function') {
-                        path = (q as any)._path.canonicalString();
-                    }
-                }
-            } catch (e) {
-                console.error("Could not determine path for Firestore permission error", e);
+    let unsubscribe: (() => void) | null = null;
+    
+    try {
+        unsubscribe = onSnapshot(
+          memoizedTargetRefOrQuery,
+          (snapshot: QuerySnapshot<DocumentData>) => {
+            const results: ResultItemType[] = [];
+            for (const doc of snapshot.docs) {
+              results.push({ ...(doc.data() as T), id: doc.id });
             }
-        }
-
-        const contextualError = new FirestorePermissionError({
-          operation: 'list',
-          path,
-        })
-        
-        setError(contextualError);
-        setData(null);
+            setData(results);
+            setError(null);
+            setIsLoading(false);
+          },
+          (error: FirestoreError) => {
+            let path: string = 'unknown';
+            if (memoizedTargetRefOrQuery) {
+                try {
+                    if ((memoizedTargetRefOrQuery as CollectionReference).path) {
+                        path = (memoizedTargetRefOrQuery as CollectionReference).path;
+                    } else if ((memoizedTargetRefOrQuery as Query)._query) {
+                        // This is an internal property, but often the most reliable way.
+                        // @ts-ignore
+                        const internalQuery = (memoizedTargetRefOrQuery as Query)._query;
+                        if (internalQuery.path) {
+                            path = internalQuery.path.canonicalString();
+                        }
+                    }
+                } catch (e) {
+                    console.error("Could not determine path for Firestore permission error", e);
+                }
+            }
+    
+            const contextualError = new FirestorePermissionError({
+              operation: 'list',
+              path,
+            })
+            
+            setError(contextualError);
+            setData(null);
+            setIsLoading(false);
+    
+            // trigger global error propagation
+            errorEmitter.emit('permission-error', contextualError);
+          }
+        );
+    } catch(e) {
+        console.error("Error setting up onSnapshot listener in useCollection", e);
+        setError(e instanceof Error ? e : new Error("An unknown error occurred while setting up the listener."));
         setIsLoading(false);
+    }
 
-        // trigger global error propagation
-        errorEmitter.emit('permission-error', contextualError);
-      }
-    );
-
-    return () => unsubscribe();
+    return () => {
+        if(unsubscribe) {
+            unsubscribe();
+        }
+    }
   }, [memoizedTargetRefOrQuery]); // Re-run if the target query/reference changes.
+  
   if(memoizedTargetRefOrQuery && !memoizedTargetRefOrQuery.__memo) {
     throw new Error(memoizedTargetRefOrQuery + ' was not properly memoized using useMemoFirebase');
   }
+
   return { data, isLoading, error };
 }
