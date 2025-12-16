@@ -162,13 +162,14 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
                 const address = data.address;
                 const city = address.city || address.town || address.village || address.hamlet;
                 const state = address.state;
+                const pincode = address.postcode;
 
-                let detectedLocation = '';
-                if (city && state) {
-                    detectedLocation = `${city}, ${state}`;
-                } else if (city) {
-                    detectedLocation = city;
-                }
+                let detectedLocationParts = [];
+                if (state) detectedLocationParts.push(state);
+                if (city) detectedLocationParts.push(city);
+                if (pincode) detectedLocationParts.push(pincode);
+                
+                const detectedLocation = detectedLocationParts.join(', ');
 
                 if (detectedLocation) {
                     form.setValue('location', detectedLocation, { shouldValidate: true });
@@ -181,7 +182,7 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
                     form.setValue('location', coords, { shouldValidate: true });
                      toast({
                         title: 'Coordinates Set',
-                        description: 'We could not find a city and state for your coordinates.',
+                        description: 'We could not find address details for your coordinates.',
                     });
                 }
             } catch (apiError) {
@@ -506,7 +507,7 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
                     <div className="relative flex-grow">
                       <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                       <FormControl>
-                        <Input placeholder="e.g. San Francisco, CA" {...field} className="pl-10" />
+                        <Input placeholder="e.g. city, state, pincode" {...field} className="pl-10" />
                       </FormControl>
                     </div>
                      <Button type="button" variant="outline" size="icon" onClick={handleDetectLocation} disabled={isDetecting}>
