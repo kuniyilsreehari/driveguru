@@ -139,12 +139,16 @@ service cloud.firestore {
     }
     
     /**
-     * @description Defines access rules for categories. All authenticated users can read.
+     * @description Defines access rules for categories. All authenticated users can list and get categories.
      * Super Admins have full write control.
      */
      match /categories/{categoryId} {
-        allow read: if isSignedIn();
+        allow get: if isSignedIn();
         allow write: if isSuperAdmin();
+     }
+     
+     match /categories {
+        allow list: if isSignedIn();
      }
 
     /**
