@@ -359,11 +359,13 @@ export default function AdminDashboardPage() {
 
   const isLoading = isUserLoading || isRoleLoading;
   const areTablesLoading = isSuperAdmin && (isUsersLoading || isReviewsLoading);
+  
+  const sortedUsers = users ? [...users].sort((a, b) => (a.firstName || '').localeCompare(b.firstName || '')) : [];
 
-  const freelancers = users?.filter(user => user.role === 'Freelancer');
-  const companies = users?.filter(user => user.role === 'Company');
-  const authorizedPros = users?.filter(user => user.role === 'Authorized Pro');
-  const superAdmins = users?.filter(user => user.role === 'Super Admin');
+  const freelancers = sortedUsers?.filter(user => user.role === 'Freelancer');
+  const companies = sortedUsers?.filter(user => user.role === 'Company');
+  const authorizedPros = sortedUsers?.filter(user => user.role === 'Authorized Pro');
+  const superAdmins = sortedUsers?.filter(user => user.role === 'Super Admin');
   
   const pendingReviews = reviews?.filter(r => r.status === 'pending');
   const approvedReviews = reviews?.filter(r => r.status === 'approved');
@@ -543,7 +545,7 @@ export default function AdminDashboardPage() {
                                   <TabsTrigger value="superAdmins">Super Admins</TabsTrigger>
                               </TabsList>
                               <TabsContent value="all" className="mt-4">
-                                  <UserTable users={users || []} onTierChange={handleTierChange} onVerificationToggle={handleVerificationToggle} onDelete={openDeleteDialog} />
+                                  <UserTable users={sortedUsers} onTierChange={handleTierChange} onVerificationToggle={handleVerificationToggle} onDelete={openDeleteDialog} />
                               </TabsContent>
                               <TabsContent value="freelancers" className="mt-4">
                                   <UserTable users={freelancers || []} onTierChange={handleTierChange} onVerificationToggle={handleVerificationToggle} onDelete={openDeleteDialog} />
