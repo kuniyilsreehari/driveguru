@@ -40,12 +40,28 @@ const formSchema = z.object({
   password: z
     .string()
     .min(8, { message: "Password must be at least 8 characters." }),
-  location: z.string().optional(),
+  location: z.string().min(1, { message: "Location is required." }),
   countryCode: z.string().optional(),
   phoneNumber: z.string().min(1, { message: "Phone number is required." }),
   role: z.string({ required_error: "Please select your expert type." }),
   department: z.string().optional(),
   companyName: z.string().optional(),
+}).refine(data => {
+    if (data.role === 'Company' || data.role === 'Authorized Pro') {
+        return !!data.companyName;
+    }
+    return true;
+}, {
+    message: "Company name is required.",
+    path: ["companyName"],
+}).refine(data => {
+    if (data.role === 'Company' || data.role === 'Authorized Pro') {
+        return !!data.department;
+    }
+    return true;
+}, {
+    message: "Department is required.",
+    path: ["department"],
 });
 
 
@@ -479,5 +495,3 @@ export function RegistrationForm() {
     </Form>
   );
 }
-
-    
