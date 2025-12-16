@@ -85,7 +85,7 @@ export default function TalentSearchPage() {
                         setLocation(`${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
                          toast({
                             title: 'Coordinates Set',
-                            description: 'We could not find a city, state and pincode for your coordinates.',
+                            description: 'We could not find a city, state, or postcode for your coordinates.',
                         });
                     }
                 } catch (apiError) {
