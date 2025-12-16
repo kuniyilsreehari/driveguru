@@ -2,6 +2,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -107,83 +108,85 @@ export function ExpertCard({ expert }: ExpertCardProps) {
 
     return (
         <Collapsible open={isReviewOpen} onOpenChange={setIsReviewOpen}>
-            <Card key={expert.id} className="overflow-hidden">
-                <CardContent className="p-4 md:p-6">
-                    <div className="grid grid-cols-1 md:grid-cols-[auto_1fr] gap-6">
-                        <div className="flex flex-col items-center space-y-4">
-                            <Avatar className="h-24 w-24 text-4xl">
-                                <AvatarImage src={expert.photoUrl} alt={getDisplayName(expert)} />
-                                <AvatarFallback>{getInitials(expert)}</AvatarFallback>
-                            </Avatar>
-                        </div>
-                        <div className="w-full">
-                            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between">
-                                <div>
-                                    <div className="flex items-center gap-2 mb-1">
-                                        <h3 className="text-2xl font-bold">{getDisplayName(expert)}</h3>
-                                        {expert.verified ? (
-                                            <Badge variant="outline" className="border-green-500 text-green-500">
-                                                <UserCheck className="mr-1 h-3 w-3" />
-                                                Verified
-                                            </Badge>
-                                        ) : (
-                                            <Badge variant="destructive">
-                                                <XCircle className="mr-1 h-3 w-3" />
-                                                Not Verified
-                                            </Badge>
-                                        )}
-                                        {expert.tier === 'Premier' && <Badge variant="outline" className="border-purple-500 text-purple-500"><Crown className="mr-1 h-3 w-3" /> Premier</Badge>}
-                                        {expert.tier === 'Super Premier' && <Badge variant="outline" className="border-blue-500 text-blue-500"><Sparkles className="mr-1 h-3 w-3" /> Super Premier</Badge>}
+             <Card key={expert.id} className="overflow-hidden transition-all hover:shadow-lg hover:border-primary/50">
+                <Link href={`/expert/${expert.id}`} className="block">
+                    <CardContent className="p-4 md:p-6">
+                        <div className="grid grid-cols-1 md:grid-cols-[auto_1fr] gap-6">
+                            <div className="flex flex-col items-center space-y-4">
+                                <Avatar className="h-24 w-24 text-4xl">
+                                    <AvatarImage src={expert.photoUrl} alt={getDisplayName(expert)} />
+                                    <AvatarFallback>{getInitials(expert)}</AvatarFallback>
+                                </Avatar>
+                            </div>
+                            <div className="w-full">
+                                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between">
+                                    <div>
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <h3 className="text-2xl font-bold">{getDisplayName(expert)}</h3>
+                                            {expert.verified ? (
+                                                <Badge variant="outline" className="border-green-500 text-green-500">
+                                                    <UserCheck className="mr-1 h-3 w-3" />
+                                                    Verified
+                                                </Badge>
+                                            ) : (
+                                                <Badge variant="destructive">
+                                                    <XCircle className="mr-1 h-3 w-3" />
+                                                    Not Verified
+                                                </Badge>
+                                            )}
+                                            {expert.tier === 'Premier' && <Badge variant="outline" className="border-purple-500 text-purple-500"><Crown className="mr-1 h-3 w-3" /> Premier</Badge>}
+                                            {expert.tier === 'Super Premier' && <Badge variant="outline" className="border-blue-500 text-blue-500"><Sparkles className="mr-1 h-3 w-3" /> Super Premier</Badge>}
+                                        </div>
+                                        <p className="text-muted-foreground font-semibold">{expert.category}</p>
+                                        <div className="flex items-center gap-1 mt-1">
+                                            {[...Array(5)].map((_, i) => <Star key={i} className="h-4 w-4 text-yellow-400 fill-yellow-400" />)}
+                                            <span className="text-xs text-muted-foreground ml-1">(1 review)</span>
+                                        </div>
                                     </div>
-                                    <p className="text-muted-foreground font-semibold">{expert.category}</p>
-                                    <div className="flex items-center gap-1 mt-1">
-                                        {[...Array(5)].map((_, i) => <Star key={i} className="h-4 w-4 text-yellow-400 fill-yellow-400" />)}
-                                        <span className="text-xs text-muted-foreground ml-1">(1 review)</span>
+                                    {expert.isAvailable ? (
+                                        <Badge className="bg-green-500 text-white mt-2 sm:mt-0">Available</Badge>
+                                    ) : (
+                                        <Badge variant="secondary" className="mt-2 sm:mt-0">Unavailable</Badge>
+                                    )}
+                                </div>
+
+                                <Separator className="my-4" />
+
+                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm text-muted-foreground">
+                                    <div className="flex items-center gap-2"><MapPin className="h-4 w-4" /> {expert.location || 'N/A'}</div>
+                                    <div className="flex items-center gap-2"><IndianRupee className="h-4 w-4" /> {expert.hourlyRate ? `${expert.hourlyRate}/hr` : 'N/A'}</div>
+                                    <div className="flex items-center gap-2"><Briefcase className="h-4 w-4" /> {expert.yearsOfExperience ? `${expert.yearsOfExperience} years` : 'N/A'}</div>
+                                    <div className="flex items-center gap-2">
+                                        <Badge variant="secondary">{expert.role}</Badge>
                                     </div>
                                 </div>
-                                {expert.isAvailable ? (
-                                    <Badge className="bg-green-500 text-white mt-2 sm:mt-0">Available</Badge>
-                                ) : (
-                                    <Badge variant="secondary" className="mt-2 sm:mt-0">Unavailable</Badge>
-                                )}
-                            </div>
+                                
+                                <Separator className="my-4" />
 
-                            <Separator className="my-4" />
-
-                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm text-muted-foreground">
-                                <div className="flex items-center gap-2"><MapPin className="h-4 w-4" /> {expert.location || 'N/A'}</div>
-                                <div className="flex items-center gap-2"><IndianRupee className="h-4 w-4" /> {expert.hourlyRate ? `${expert.hourlyRate}/hr` : 'N/A'}</div>
-                                <div className="flex items-center gap-2"><Briefcase className="h-4 w-4" /> {expert.yearsOfExperience ? `${expert.yearsOfExperience} years` : 'N/A'}</div>
-                                <div className="flex items-center gap-2">
-                                    <Badge variant="secondary">{expert.role}</Badge>
+                                <div className="flex flex-wrap items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                                    <CollapsibleTrigger asChild>
+                                        <Button variant="outline"><Edit2 className="mr-2 h-4 w-4" />Leave a Review</Button>
+                                    </CollapsibleTrigger>
+                                    <div className="flex-grow"></div>
+                                    <Button variant="secondary"><Calendar className="mr-2 h-4 w-4" /> Book</Button>
+                                    <Button className="bg-orange-500 hover:bg-orange-600"><Phone className="mr-2 h-4 w-4" /> Call</Button>
+                                    <Button className="bg-green-500 hover:bg-green-600"><MessageCircle className="mr-2 h-4 w-4" /> WhatsApp</Button>
                                 </div>
                             </div>
-                            
-                            <Separator className="my-4" />
-
-                            <div className="flex flex-wrap items-center gap-2">
-                                <CollapsibleTrigger asChild>
-                                    <Button variant="outline">Profile <ChevronDown className="ml-2 h-4 w-4" /></Button>
-                                </CollapsibleTrigger>
-                                <div className="flex-grow"></div>
-                                <Button variant="secondary"><Calendar className="mr-2 h-4 w-4" /> Book</Button>
-                                <Button className="bg-orange-500 hover:bg-orange-600"><Phone className="mr-2 h-4 w-4" /> Call</Button>
-                                <Button className="bg-green-500 hover:bg-green-600"><MessageCircle className="mr-2 h-4 w-4" /> WhatsApp</Button>
-                            </div>
                         </div>
-                    </div>
-                </CardContent>
+                    </CardContent>
+                </Link>
                 <CollapsibleContent>
-                    <div className="p-6 bg-card-foreground/5 dark:bg-card-foreground/10 border-t">
+                    <div className="p-6 bg-card-foreground/5 dark:bg-card-foreground/10 border-t" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center gap-3 mb-4">
-                            <Edit2 className="h-6 w-6 text-primary"/>
-                            <h4 className="text-xl font-bold">Leave a Review</h4>
+                            <MessageSquareIcon className="h-6 w-6 text-primary"/>
+                            <h4 className="text-xl font-bold">Leave a Review for {getDisplayName(expert)}</h4>
                         </div>
                         <div className="space-y-4">
                              <div>
-                                <Label htmlFor="reviewerName">Your Name</Label>
+                                <Label htmlFor={`reviewerName-${expert.id}`}>Your Name</Label>
                                 <Input 
-                                    id="reviewerName" 
+                                    id={`reviewerName-${expert.id}`}
                                     placeholder="e.g. Jane Doe" 
                                     value={reviewerName}
                                     onChange={(e) => setReviewerName(e.target.value)}
@@ -209,9 +212,9 @@ export function ExpertCard({ expert }: ExpertCardProps) {
                                 </div>
                             </div>
                              <div>
-                                <Label htmlFor="comment">Comment</Label>
+                                <Label htmlFor={`comment-${expert.id}`}>Comment</Label>
                                 <Textarea
-                                    id="comment"
+                                    id={`comment-${expert.id}`}
                                     placeholder="Share your experience..."
                                     value={comment}
                                     onChange={(e) => setComment(e.target.value)}
@@ -227,5 +230,3 @@ export function ExpertCard({ expert }: ExpertCardProps) {
         </Collapsible>
     )
 }
-
-    
