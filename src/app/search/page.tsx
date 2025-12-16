@@ -5,7 +5,7 @@
 import { Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { collection, query, where } from 'firebase/firestore';
+import { collection, query, where, limit } from 'firebase/firestore';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -28,7 +28,7 @@ function SearchResults() {
     const verified = searchParams.get('verified') === 'true';
     const available = searchParams.get('available') === 'true';
 
-    const usersCollectionRef = useMemoFirebase(() => {
+    const expertsQuery = useMemoFirebase(() => {
         if (!firestore) return null;
         
         let q = query(collection(firestore, 'users'));
@@ -52,7 +52,7 @@ function SearchResults() {
         return q;
     }, [firestore, category, verified, available]);
 
-    const { data: experts, isLoading } = useCollection<ExpertUser>(usersCollectionRef);
+    const { data: experts, isLoading } = useCollection<ExpertUser>(expertsQuery);
 
     if (isLoading) {
         return (
