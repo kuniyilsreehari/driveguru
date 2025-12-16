@@ -77,13 +77,10 @@ export default function FeaturedExpertsPage() {
                             <Loader2 className="h-8 w-8 animate-spin text-primary" />
                         </div>
                     }>
-                        <SearchResults />
+                        <FeaturedExpertsContent />
                     </Suspense>
                 </main>
             </div>
         </div>
     )
 }
-
-// Renaming to avoid conflict, using the same content as it fits the purpose.
-const SearchResults = FeaturedExpertsContent;
