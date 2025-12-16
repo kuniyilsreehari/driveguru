@@ -9,6 +9,8 @@ import * as z from "zod";
 import { User as UserIcon, Mail, MapPin, Phone, LocateIcon, Loader2, Wrench, Building, Smartphone, Laptop, Briefcase, IndianRupee, Calendar, Book, School, GraduationCap, Info, Sparkles, Image as ImageIcon, Upload } from "lucide-react";
 import { doc } from 'firebase/firestore';
 import Image from 'next/image';
+import { getStorage, ref, uploadString, getDownloadURL } from 'firebase/storage';
+import { v4 as uuidv4 } from 'uuid';
 
 import { Button } from "@/components/ui/button";
 import {
@@ -21,7 +23,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { useFirestore } from "@/firebase";
+import { useFirestore, useUser } from "@/firebase";
 import { updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Icons } from "../icons";
@@ -92,9 +94,11 @@ interface EditProfileFormProps {
 export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps) {
   const { toast } = useToast();
   const firestore = useFirestore();
+  const { user } = useUser();
   const [isDetecting, setIsDetecting] = useState(false);
   const [isGeneratingAboutMe, setIsGeneratingAboutMe] = useState(false);
   const [isSuggestingSkills, setIsSuggestingSkills] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const extractPhoneNumberParts = (fullNumber?: string) => {
@@ -279,43 +283,51 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) {
+    if (file && user) {
+      setIsUploading(true);
       const reader = new FileReader();
-      reader.onload = (e) => {
+      reader.onload = async (e) => {
         const img = document.createElement('img');
-        img.onload = () => {
+        img.onload = async () => {
           let dataUrl: string;
-          if (file.size > 1024 * 1024) { // 1MB limit
-            const canvas = document.createElement('canvas');
-            const MAX_WIDTH = 800;
-            const MAX_HEIGHT = 800;
-            let width = img.width;
-            let height = img.height;
+          // Resize image if it's large
+          const canvas = document.createElement('canvas');
+          const MAX_WIDTH = 400;
+          let width = img.width;
+          let height = img.height;
 
-            if (width > height) {
-              if (width > MAX_WIDTH) {
-                height *= MAX_WIDTH / width;
-                width = MAX_WIDTH;
-              }
-            } else {
-              if (height > MAX_HEIGHT) {
-                width *= MAX_HEIGHT / height;
-                height = MAX_HEIGHT;
-              }
-            }
-            canvas.width = width;
-            canvas.height = height;
-            const ctx = canvas.getContext('2d');
-            ctx?.drawImage(img, 0, 0, width, height);
-            dataUrl = canvas.toDataURL(file.type);
-            toast({
-              title: "Image Resized",
-              description: "The image was too large and has been automatically resized.",
-            });
-          } else {
-            dataUrl = img.src;
+          if (width > MAX_WIDTH) {
+            height *= MAX_WIDTH / width;
+            width = MAX_WIDTH;
           }
-          form.setValue('photoUrl', dataUrl, { shouldValidate: true });
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx?.drawImage(img, 0, 0, width, height);
+          dataUrl = canvas.toDataURL(file.type);
+
+          // Upload to Firebase Storage
+          try {
+            const storage = getStorage();
+            const storageRef = ref(storage, `profileImages/${user.uid}/${uuidv4()}`);
+            const snapshot = await uploadString(storageRef, dataUrl, 'data_url');
+            const downloadURL = await getDownloadURL(snapshot.ref);
+            
+            form.setValue('photoUrl', downloadURL, { shouldValidate: true });
+            toast({
+              title: "Image Uploaded",
+              description: "Your new profile picture has been saved.",
+            });
+          } catch (error) {
+            console.error("Error uploading image: ", error);
+            toast({
+              variant: "destructive",
+              title: "Upload Failed",
+              description: "Could not upload the image. Please try again.",
+            });
+          } finally {
+            setIsUploading(false);
+          }
         };
         img.src = e.target?.result as string;
       };
@@ -361,11 +373,11 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
             <div className="flex-grow">
                 <FormLabel>Profile Photo</FormLabel>
                 <div className="flex items-center gap-2 mt-2">
-                    <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()}>
-                        <Upload className="mr-2 h-4 w-4" />
-                        Upload Image
+                    <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()} disabled={isUploading}>
+                        {isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
+                        {isUploading ? 'Uploading...' : 'Upload Image'}
                     </Button>
-                    <p className="text-xs text-muted-foreground">Max 1MB.</p>
+                    <p className="text-xs text-muted-foreground">PNG, JPG, GIF.</p>
                     <FormControl>
                         <Input 
                             type="file"
