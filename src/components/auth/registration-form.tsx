@@ -304,7 +304,7 @@ export function RegistrationForm() {
             </FormItem>
           )}
         />
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <FormField
             control={form.control}
             name="phoneNumber"
@@ -343,31 +343,32 @@ export function RegistrationForm() {
               </FormItem>
             )}
           />
-           <FormField
-            control={form.control}
-            name="location"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Location</FormLabel>
-                <div className="flex items-center gap-2">
-                    <div className="relative flex-grow">
-                      <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                      <FormControl>
-                        <Input placeholder="e.g. San Francisco, CA" {...field} className="pl-10" />
-                      </FormControl>
-                    </div>
-                     <Button type="button" variant="outline" size="icon" onClick={handleDetectLocation} disabled={isDetecting}>
-                        {isDetecting ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                            <LocateIcon className="h-4 w-4" />
-                        )}
-                    </Button>
-                </div>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <div className="space-y-2">
+            <FormField
+              control={form.control}
+              name="location"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Location</FormLabel>
+                  <div className="relative">
+                    <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <FormControl>
+                      <Input placeholder="e.g. San Francisco, CA" {...field} className="pl-10" />
+                    </FormControl>
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <Button type="button" variant="outline" className="w-full" onClick={handleDetectLocation} disabled={isDetecting}>
+                {isDetecting ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                    <LocateIcon className="mr-2 h-4 w-4" />
+                )}
+                Detect My Location
+            </Button>
+          </div>
         </div>
         
         <FormField
