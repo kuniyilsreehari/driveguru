@@ -111,9 +111,10 @@ service cloud.firestore {
      * reviews for others or bypassing the moderation queue.
      */
     function isCreatingOwnReview() {
-      return isSignedIn() && 
-             request.resource.data.reviewerId == request.auth.uid &&
-             request.resource.data.status == 'pending';
+      let resourceData = request.resource.data;
+      return isSignedIn() &&
+             resourceData.reviewerId == request.auth.uid &&
+             resourceData.status == 'pending';
     }
 
     // --------------------------------------------------------------------------------
@@ -135,7 +136,8 @@ service cloud.firestore {
      * Super Admins can moderate (update status/delete) all reviews.
      */
     match /reviews/{reviewId} {
-      allow list, get: if true;
+      allow get: if resource.data.status == 'approved';
+      allow list: if true; // Let's be optimistic and allow listing, then filter on client
       allow create: if isCreatingOwnReview();
       allow update, delete: if isSuperAdmin();
     }
@@ -150,7 +152,7 @@ service cloud.firestore {
     
     /**
      * @description Defines access rules for categories. Super Admins have
-     * full read and write control. All users can read categories.
+     * full write control. All users can read categories.
      */
      match /categories/{categoryId} {
         allow read: if true;
