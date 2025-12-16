@@ -84,7 +84,7 @@ service cloud.firestore {
         // A non-admin user cannot change their 'verified' status.
         if (!isSuperAdmin()) {
             // The 'verified' field must not change from its existing value.
-            let isVerifiedUnchanged = request.resource.data.verified == resource.data.verified;
+             let isVerifiedUnchanged = !('verified' in request.resource.data) || request.resource.data.verified == resource.data.verified;
             return isIdImmutable && isVerifiedUnchanged;
         }
         
@@ -163,7 +163,8 @@ service cloud.firestore {
      * management capabilities.
      */
     match /users/{userId} {
-      allow get, list: if true;
+      allow get: if true;
+      allow list: if isSuperAdmin();
       allow create: if isCreatingOwnUserDoc(userId);
       allow update: if (isOwner(userId) && userFieldsAreValidOnUpdate()) || isSuperAdmin();
       allow delete: if isOwner(userId) || isSuperAdmin();
