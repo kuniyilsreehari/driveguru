@@ -37,6 +37,7 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 type ExpertUser = {
     id: string;
@@ -51,6 +52,83 @@ type ExpertUser = {
 type AppConfig = {
     featuredExpertsLimit?: number;
 };
+
+const UserTable = ({ users, onTierChange, onVerificationToggle, onDelete }: { users: ExpertUser[], onTierChange: (expert: ExpertUser, tier: ExpertUser['tier']) => void, onVerificationToggle: (expert: ExpertUser) => void, onDelete: (expert: ExpertUser) => void }) => {
+    const getInitials = (firstName?: string, lastName?: string) => {
+        if (firstName && lastName) {
+            return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
+        }
+        return 'U';
+    }
+
+    const renderTierBadge = (tier?: ExpertUser['tier']) => {
+        switch (tier) {
+            case 'Premier':
+                return <Badge variant="outline" className="border-purple-500 text-purple-500"><Crown className="mr-1 h-3 w-3" /> Premier</Badge>;
+            case 'Super Premier':
+                return <Badge variant="outline" className="border-blue-500 text-blue-500"><Sparkles className="mr-1 h-3 w-3" /> Super Premier</Badge>;
+            default:
+                return <Badge variant="secondary"><UserIcon className="mr-1 h-3 w-3" /> Standard</Badge>;
+        }
+    }
+    
+    const { toast } = useToast();
+
+    return (
+        <Table>
+            <TableHeader>
+                <TableRow>
+                <TableHead className="w-[80px]">Avatar</TableHead>
+                <TableHead>Full Name</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead className="text-center">Tier</TableHead>
+                <TableHead className="text-center">Verified</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+            </TableHeader>
+            <TableBody>
+                {users && users.length > 0 ? (
+                users.map((expert) => (
+                    <TableRow key={expert.id}>
+                    <TableCell>
+                        <Avatar>
+                            <AvatarFallback>{getInitials(expert.firstName, expert.lastName)}</AvatarFallback>
+                        </Avatar>
+                    </TableCell>
+                    <TableCell className="font-medium">{expert.firstName} {expert.lastName}</TableCell>
+                    <TableCell>{expert.email}</TableCell>
+                    <TableCell className="text-center">{renderTierBadge(expert.tier)}</TableCell>
+                    <TableCell className="text-center">
+                        <div className='flex items-center justify-center space-x-2'>
+                            <Switch id={`verified-switch-${expert.id}`} checked={expert.verified || false} onCheckedChange={() => onVerificationToggle(expert)} />
+                            {expert.verified ? <CheckCircle2 className="h-5 w-5 text-green-500" /> : <Ban className="h-5 w-5 text-destructive" />}
+                        </div>
+                    </TableCell>
+                    <TableCell className="text-right">
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild><Button variant="ghost" className="h-8 w-8 p-0"><span className="sr-only">Open menu</span><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuSub>
+                                    <DropdownMenuSubTrigger><Sparkles className="mr-2 h-4 w-4" /><span>Change Tier</span></DropdownMenuSubTrigger>
+                                    <DropdownMenuPortal><DropdownMenuSubContent>
+                                        <DropdownMenuItem onClick={() => onTierChange(expert, 'Standard')}><UserIcon className="mr-2 h-4 w-4" />Standard</DropdownMenuItem>
+                                        <DropdownMenuItem onClick={() => onTierChange(expert, 'Premier')}><Crown className="mr-2 h-4 w-4" />Premier</DropdownMenuItem>
+                                        <DropdownMenuItem onClick={() => onTierChange(expert, 'Super Premier')}><Sparkles className="mr-2 h-4 w-4" />Super Premier</DropdownMenuItem>
+                                    </DropdownMenuSubContent></DropdownMenuPortal>
+                                </DropdownMenuSub>
+                                <DropdownMenuItem onClick={() => toast({ title: "Edit clicked", description: "Edit functionality coming soon!"})}><Edit className="mr-2 h-4 w-4" />Edit</DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => onDelete(expert)} className="text-destructive focus:text-destructive"><Trash2 className="mr-2 h-4 w-4" />Delete</DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    </TableCell>
+                    </TableRow>
+                ))
+                ) : ( <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground h-24">No users found for this role.</TableCell></TableRow> )}
+            </TableBody>
+        </Table>
+    )
+}
+
 
 export default function AdminDashboardPage() {
   const { user, isUserLoading } = useUser();
@@ -87,13 +165,10 @@ export default function AdminDashboardPage() {
   const { data: appConfig, isLoading: isAppConfigLoading } = useDoc<AppConfig>(appConfigDocRef);
   
   useEffect(() => {
-    // When the component loads and we have the appConfig data
     if (!isAppConfigLoading) {
       if (appConfig?.featuredExpertsLimit) {
-        // If config exists, set the state from it
         setFeaturedExpertsLimit(appConfig.featuredExpertsLimit);
       } else if (appConfig === null && appConfigDocRef) {
-        // If document doesn't exist (appConfig is null), create it with a default
         setDocumentNonBlocking(appConfigDocRef, { featuredExpertsLimit: 3 }, { merge: true });
       }
     }
@@ -176,41 +251,13 @@ export default function AdminDashboardPage() {
     }
   }
 
-  const getInitials = (firstName?: string, lastName?: string) => {
-    if (firstName && lastName) {
-        return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
-    }
-    return 'U';
-  }
-  
-  const renderRoleBadge = (role?: ExpertUser['role']) => {
-    switch (role) {
-        case 'Freelancer':
-            return <Badge variant="secondary"><UserIcon className="mr-1 h-3 w-3" /> Freelancer</Badge>;
-        case 'Company':
-            return <Badge variant="secondary"><Building className="mr-1 h-3 w-3" /> Company</Badge>;
-        case 'Authorized Pro':
-            return <Badge variant="secondary"><Briefcase className="mr-1 h-3 w-3" /> Authorized Pro</Badge>;
-        case 'Super Admin':
-            return <Badge variant="outline" className="border-primary text-primary"><Shield className="mr-1 h-3 w-3" /> Super Admin</Badge>;
-        default:
-            return <Badge variant="secondary">{role || 'N/A'}</Badge>;
-    }
-  }
-
-  const renderTierBadge = (tier?: ExpertUser['tier']) => {
-    switch (tier) {
-        case 'Premier':
-            return <Badge variant="outline" className="border-purple-500 text-purple-500"><Crown className="mr-1 h-3 w-3" /> Premier</Badge>;
-        case 'Super Premier':
-            return <Badge variant="outline" className="border-blue-500 text-blue-500"><Sparkles className="mr-1 h-3 w-3" /> Super Premier</Badge>;
-        default:
-            return <Badge variant="secondary"><UserIcon className="mr-1 h-3 w-3" /> Standard</Badge>;
-    }
-  }
-
   const isLoading = isUserLoading || isRoleLoading;
   const areTablesLoading = isSuperAdmin && isUsersLoading;
+
+  const freelancers = users?.filter(user => user.role === 'Freelancer');
+  const companies = users?.filter(user => user.role === 'Company');
+  const authorizedPros = users?.filter(user => user.role === 'Authorized Pro');
+  const superAdmins = users?.filter(user => user.role === 'Super Admin');
 
 
   if (isLoading) {
@@ -267,7 +314,7 @@ export default function AdminDashboardPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">{users?.length || 0}</div>
-                  <p className="text-xs text-muted-foreground">Total registered experts</p>
+                  <p className="text-xs text-muted-foreground">Total registered users</p>
                 </CardContent>
               </Card>
               <Card>
@@ -361,7 +408,7 @@ export default function AdminDashboardPage() {
                   <Users className="h-6 w-6" />
                   <div>
                     <CardTitle>Expert Users</CardTitle>
-                    <CardDescription>A list of all registered experts in the system.</CardDescription>
+                    <CardDescription>Manage all registered users in the system.</CardDescription>
                   </div>
                 </div>
               </CardHeader>
@@ -369,62 +416,33 @@ export default function AdminDashboardPage() {
                 {areTablesLoading ? (
                   <div className="flex justify-center items-center p-8">
                     <Loader className="h-6 w-6 animate-spin text-primary" />
-                    <p className="ml-3 text-muted-foreground">Loading experts...</p>
+                    <p className="ml-3 text-muted-foreground">Loading users...</p>
                   </div>
                 ) : (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="w-[80px]">Avatar</TableHead>
-                        <TableHead>Full Name</TableHead>
-                        <TableHead>Email</TableHead>
-                        <TableHead className="text-center">Role</TableHead>
-                        <TableHead className="text-center">Tier</TableHead>
-                        <TableHead className="text-center">Verified</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {users && users.length > 0 ? (
-                        users.map((expert) => (
-                          <TableRow key={expert.id}>
-                            <TableCell>
-                              <Avatar>
-                                  <AvatarFallback>{getInitials(expert.firstName, expert.lastName)}</AvatarFallback>
-                              </Avatar>
-                            </TableCell>
-                            <TableCell className="font-medium">{expert.firstName} {expert.lastName}</TableCell>
-                            <TableCell>{expert.email}</TableCell>
-                            <TableCell className="text-center">{renderRoleBadge(expert.role)}</TableCell>
-                            <TableCell className="text-center">{renderTierBadge(expert.tier)}</TableCell>
-                            <TableCell className="text-center">
-                                <div className='flex items-center justify-center space-x-2'>
-                                    <Switch id={`verified-switch-${expert.id}`} checked={expert.verified || false} onCheckedChange={() => handleVerificationToggle(expert)} />
-                                    {expert.verified ? <CheckCircle2 className="h-5 w-5 text-green-500" /> : <Ban className="h-5 w-5 text-destructive" />}
-                                </div>
-                            </TableCell>
-                            <TableCell className="text-right">
-                                <DropdownMenu>
-                                    <DropdownMenuTrigger asChild><Button variant="ghost" className="h-8 w-8 p-0"><span className="sr-only">Open menu</span><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end">
-                                        <DropdownMenuSub>
-                                            <DropdownMenuSubTrigger><Sparkles className="mr-2 h-4 w-4" /><span>Change Tier</span></DropdownMenuSubTrigger>
-                                            <DropdownMenuPortal><DropdownMenuSubContent>
-                                                <DropdownMenuItem onClick={() => handleTierChange(expert, 'Standard')}><UserIcon className="mr-2 h-4 w-4" />Standard</DropdownMenuItem>
-                                                <DropdownMenuItem onClick={() => handleTierChange(expert, 'Premier')}><Crown className="mr-2 h-4 w-4" />Premier</DropdownMenuItem>
-                                                <DropdownMenuItem onClick={() => handleTierChange(expert, 'Super Premier')}><Sparkles className="mr-2 h-4 w-4" />Super Premier</DropdownMenuItem>
-                                            </DropdownMenuSubContent></DropdownMenuPortal>
-                                        </DropdownMenuSub>
-                                        <DropdownMenuItem onClick={() => toast({ title: "Edit clicked", description: "Edit functionality coming soon!"})}><Edit className="mr-2 h-4 w-4" />Edit</DropdownMenuItem>
-                                        <DropdownMenuItem onClick={() => openDeleteDialog(expert)} className="text-destructive focus:text-destructive"><Trash2 className="mr-2 h-4 w-4" />Delete</DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
-                            </TableCell>
-                          </TableRow>
-                        ))
-                      ) : ( <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground h-24">No experts found.</TableCell></TableRow> )}
-                    </TableBody>
-                  </Table>
+                    <Tabs defaultValue="all">
+                        <TabsList className="grid w-full grid-cols-5">
+                            <TabsTrigger value="all">All Users</TabsTrigger>
+                            <TabsTrigger value="freelancers">Freelancers</TabsTrigger>
+                            <TabsTrigger value="companies">Companies</TabsTrigger>
+                            <TabsTrigger value="authorizedPros">Authorized Pros</TabsTrigger>
+                            <TabsTrigger value="superAdmins">Super Admins</TabsTrigger>
+                        </TabsList>
+                        <TabsContent value="all" className="mt-4">
+                            <UserTable users={users || []} onTierChange={handleTierChange} onVerificationToggle={handleVerificationToggle} onDelete={openDeleteDialog} />
+                        </TabsContent>
+                        <TabsContent value="freelancers" className="mt-4">
+                            <UserTable users={freelancers || []} onTierChange={handleTierChange} onVerificationToggle={handleVerificationToggle} onDelete={openDeleteDialog} />
+                        </TabsContent>
+                         <TabsContent value="companies" className="mt-4">
+                            <UserTable users={companies || []} onTierChange={handleTierChange} onVerificationToggle={handleVerificationToggle} onDelete={openDeleteDialog} />
+                        </TabsContent>
+                         <TabsContent value="authorizedPros" className="mt-4">
+                            <UserTable users={authorizedPros || []} onTierChange={handleTierChange} onVerificationToggle={handleVerificationToggle} onDelete={openDeleteDialog} />
+                        </TabsContent>
+                         <TabsContent value="superAdmins" className="mt-4">
+                            <UserTable users={superAdmins || []} onTierChange={handleTierChange} onVerificationToggle={handleVerificationToggle} onDelete={openDeleteDialog} />
+                        </TabsContent>
+                    </Tabs>
                 )}
               </CardContent>
             </Card>
