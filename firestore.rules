@@ -62,7 +62,7 @@ service cloud.firestore {
      * This is a performant way to manage global roles.
      */
     function isSuperAdmin() {
-      return isSignedIn: && exists(/databases/$(database)/documents/roles_super_admin/$(request.auth.uid));
+      return isSignedIn() && exists(/databases/$(database)/documents/roles_super_admin/$(request.auth.uid));
     }
 
     /**
@@ -140,7 +140,7 @@ service cloud.firestore {
      * Public can read approved reviews. Super Admins can read, list, and modify all reviews.
      * @path /reviews/{reviewId}
      * @allow (create) Any authenticated user can submit a review.
-     * @allow (get, list) Anyone can read approved reviews. SuperAdmins can list all.
+     * @allow (get, list) Anyone can read reviews. SuperAdmins can list all.
      * @allow (update, delete) Only Super Admins can modify or delete reviews.
      */
     match /reviews/{reviewId} {
