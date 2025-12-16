@@ -104,13 +104,14 @@ export function RegistrationForm() {
                 const address = data.address;
                 const city = address.city || address.town || address.village || address.hamlet;
                 const state = address.state;
-                
-                let detectedLocation = '';
-                if (city && state) {
-                    detectedLocation = `${city}, ${state}`;
-                } else if (city) {
-                    detectedLocation = city;
-                }
+                const pincode = address.postcode;
+
+                let detectedLocationParts = [];
+                if (state) detectedLocationParts.push(state);
+                if (city) detectedLocationParts.push(city);
+                if (pincode) detectedLocationParts.push(pincode);
+
+                const detectedLocation = detectedLocationParts.join(', ');
 
                 if (detectedLocation) {
                     form.setValue('location', detectedLocation);
@@ -353,7 +354,7 @@ export function RegistrationForm() {
                   <div className="relative">
                     <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <FormControl>
-                      <Input placeholder="e.g. San Francisco, CA" {...field} className="pl-10" />
+                      <Input placeholder="State, City, Pincode" {...field} className="pl-10" />
                     </FormControl>
                   </div>
                   <FormMessage />
@@ -443,5 +444,7 @@ export function RegistrationForm() {
     </Form>
   );
 }
+
+    
 
     
