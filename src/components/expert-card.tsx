@@ -184,11 +184,11 @@ export function ExpertCard({ expert }: ExpertCardProps) {
                                     </CollapsibleTrigger>
                                 )}
                                 <div className="flex-grow"></div>
-                                <Button asChild variant="secondary" onClick={(e) => e.stopPropagation()}><Link href={`/expert/${expert.id}/book`}><Calendar className="mr-2 h-4 w-4" /> Book</Link></Button>
-                                <Button asChild className="bg-orange-500 hover:bg-orange-600" disabled={!formattedPhoneNumber} onClick={(e) => e.stopPropagation()}>
+                                <Button asChild variant="secondary" onClick={(e) => e.stopPropagation()} disabled={!expert.verified}><Link href={`/expert/${expert.id}/book`}><Calendar className="mr-2 h-4 w-4" /> Book</Link></Button>
+                                <Button asChild className="bg-orange-500 hover:bg-orange-600" disabled={!formattedPhoneNumber || !expert.verified} onClick={(e) => e.stopPropagation()}>
                                     <a href={`tel:${formattedPhoneNumber}`}><Phone className="mr-2 h-4 w-4" /> Call</a>
                                 </Button>
-                                <Button asChild className="bg-green-500 hover:bg-green-600" disabled={!formattedPhoneNumber} onClick={(e) => e.stopPropagation()}>
+                                <Button asChild className="bg-green-500 hover:bg-green-600" disabled={!formattedPhoneNumber || !expert.verified} onClick={(e) => e.stopPropagation()}>
                                     <a href={`https://wa.me/${formattedPhoneNumber}`} target="_blank" rel="noopener noreferrer"><MessageCircle className="mr-2 h-4 w-4" /> WhatsApp</a>
                                 </Button>
                             </div>
