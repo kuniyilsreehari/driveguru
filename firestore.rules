@@ -61,11 +61,16 @@ service cloud.firestore {
     }
 
     /**
-     * Validates that the user ID in a new user document matches the document ID.
-     * Enforces relational integrity on creation.
+     * Validates that a new user document is being created correctly.
+     * Enforces that the document ID matches the user's UID, the 'id' field matches,
+     * and key fields like 'verified' and 'isAvailable' are set to their proper initial values.
      */
     function isCreatingOwnUserDoc(userId) {
-      return isOwner(userId) && request.resource.data.id == userId;
+      let resourceData = request.resource.data;
+      return isOwner(userId) && 
+             resourceData.id == userId &&
+             resourceData.verified == false &&
+             resourceData.isAvailable == true;
     }
 
     /**
@@ -76,10 +81,12 @@ service cloud.firestore {
     function userFieldsAreValidOnUpdate() {
         let isIdImmutable = request.resource.data.id == resource.data.id;
         
-        // Non-admin users cannot change their 'verified' status. This rule is safer
-        // as it checks the existing value if it's present, and denies if it's being added.
+        // A non-admin user cannot change their 'verified' status.
         if (!isSuperAdmin()) {
-            let isVerifiedUnchanged = !('verified' in request.resource.data) || request.resource.data.verified == resource.data.verified;
+            // The 'verified' field must not change from its existing value.
+            // If resource.data does not have 'verified', it means it was not verified before,
+            // so the new resource must not try to set it to true.
+            let isVerifiedUnchanged = request.resource.data.verified == resource.data.verified;
             return isIdImmutable && isVerifiedUnchanged;
         }
         
@@ -102,7 +109,8 @@ service cloud.firestore {
 
     /**
      * Validates that a new review is being created by the authenticated user
-     * and that its initial status is 'pending'.
+     * and that its initial status is 'pending'. This prevents users from creating
+     * reviews for others or bypassing the moderation queue.
      */
     function isCreatingOwnReview() {
       return isSignedIn() && 
@@ -126,7 +134,7 @@ service cloud.firestore {
     /**
      * @description Controls access to reviews. Anyone can read approved reviews.
      * Authenticated users can create their own reviews (which start as 'pending').
-     * Super Admins can moderate (update/delete) all reviews.
+     * Super Admins can moderate (update status/delete) all reviews.
      */
     match /reviews/{reviewId} {
       allow list, get: if true;
