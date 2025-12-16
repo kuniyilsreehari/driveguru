@@ -24,7 +24,7 @@ function SearchResults() {
 
     const location = searchParams.get('location');
     const category = searchParams.get('category');
-    const locationName = search_params.get('locationName');
+    const locationName = searchParams.get('locationName');
 
     const usersCollectionRef = useMemoFirebase(() => {
         if (!firestore) return null;
@@ -79,13 +79,11 @@ function SearchResults() {
         
         if (location && !locationName) {
             titleParts.push(<span key="location"> near <span className="text-primary">{location}</span></span>);
-        } else if (location && locationName) {
-            titleParts.push(<span key="separator">,</span>);
         }
 
         if (category && (location || locationName)) {
             titleParts.push(<span key="all_locations">. Results visible for all locations.</span>);
-        } else {
+        } else if (!category && (location || locationName)) {
              titleParts.push(<span key="all_locations_else">. Results visible for all locations.</span>);
         }
 
