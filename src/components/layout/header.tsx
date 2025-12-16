@@ -15,8 +15,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { User as UserIcon, LogOut, LayoutDashboard, MessageSquare, Home, Award, Briefcase, Moon, Sun } from 'lucide-react';
+import { User as UserIcon, LogOut, LayoutDashboard, MessageSquare, Home, Award, Briefcase, Moon, Sun, Menu } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useTheme } from 'next-themes';
@@ -31,6 +32,7 @@ export function Header() {
   const [isCheckingAdmin, setIsCheckingAdmin] = useState(true);
   const [mounted, setMounted] = useState(false);
   const { setTheme, theme } = useTheme();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -112,6 +114,44 @@ export function Header() {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-14 max-w-screen-2xl items-center">
+        
+        <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+            <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className="sm:hidden mr-2">
+                    <Menu className="h-5 w-5" />
+                    <span className="sr-only">Open Menu</span>
+                </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="pr-0">
+                <Link href="/" className="flex items-center space-x-2 mb-6" onClick={() => setIsMobileMenuOpen(false)}>
+                    <Icons.logo className="h-6 w-6" />
+                    <span className="font-bold">Find Local Talent</span>
+                </Link>
+                <div className="flex flex-col space-y-2">
+                    <Button asChild variant="ghost" className="justify-start" onClick={() => setIsMobileMenuOpen(false)}>
+                        <Link href="/">
+                            <Home className="mr-2 h-4 w-4" /> Home
+                        </Link>
+                    </Button>
+                    <Button asChild variant="ghost" className="justify-start" onClick={() => setIsMobileMenuOpen(false)}>
+                        <Link href="/vacancies">
+                            <Briefcase className="mr-2 h-4 w-4" /> Vacancies
+                        </Link>
+                    </Button>
+                    <Button asChild variant="ghost" className="justify-start" onClick={() => setIsMobileMenuOpen(false)}>
+                        <Link href="/featured-experts">
+                            <Award className="mr-2 h-4 w-4" /> Featured
+                        </Link>
+                    </Button>
+                    <Button asChild variant="ghost" className="justify-start" onClick={() => setIsMobileMenuOpen(false)}>
+                        <Link href="/reviews">
+                            <MessageSquare className="mr-2 h-4 w-4" /> Reviews
+                        </Link>
+                    </Button>
+                </div>
+            </SheetContent>
+        </Sheet>
+        
         <Link href="/" className="mr-auto flex items-center space-x-2">
           <Icons.logo className="h-6 w-6" />
           <span className="hidden font-bold sm:inline-block">Find Local Talent</span>
@@ -168,19 +208,6 @@ export function Header() {
                     <LayoutDashboard className="mr-2 h-4 w-4" />
                     <span>Dashboard</span>
                   </DropdownMenuItem>
-                   <DropdownMenuSeparator className="sm:hidden" />
-                    <DropdownMenuItem className="sm:hidden" onClick={() => router.push('/')}>
-                      <Home className="mr-2 h-4 w-4" /> Home
-                    </DropdownMenuItem>
-                     <DropdownMenuItem className="sm:hidden" onClick={() => router.push('/vacancies')}>
-                      <Briefcase className="mr-2 h-4 w-4" /> Vacancies
-                    </DropdownMenuItem>
-                     <DropdownMenuItem className="sm:hidden" onClick={() => router.push('/featured-experts')}>
-                      <Award className="mr-2 h-4 w-4" /> Featured
-                    </DropdownMenuItem>
-                     <DropdownMenuItem className="sm:hidden" onClick={() => router.push('/reviews')}>
-                      <MessageSquare className="mr-2 h-4 w-4" /> Reviews
-                    </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleSignOut}>
                     <LogOut className="mr-2 h-4 w-4" />
