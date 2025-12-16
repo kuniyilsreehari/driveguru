@@ -118,16 +118,18 @@ export function ExpertCard({ expert }: ExpertCardProps) {
     return (
         <Collapsible open={isReviewOpen} onOpenChange={setIsReviewOpen}>
              <Card key={expert.id} className="overflow-hidden transition-all hover:shadow-lg hover:border-primary/50">
-                <Link href={`/expert/${expert.id}`} className="block cursor-pointer">
-                    <CardContent className="p-4 md:p-6">
-                        <div className="grid grid-cols-1 md:grid-cols-[auto_1fr] gap-6">
+                <CardContent className="p-4 md:p-6">
+                    <div className="grid grid-cols-1 md:grid-cols-[auto_1fr] gap-6">
+                        <Link href={`/expert/${expert.id}`} className="block cursor-pointer">
                             <div className="flex flex-col items-center space-y-4">
                                 <Avatar className="h-24 w-24 text-4xl">
                                     <AvatarImage src={expert.photoUrl} alt={getDisplayName(expert)} />
                                     <AvatarFallback>{getInitials(expert)}</AvatarFallback>
                                 </Avatar>
                             </div>
-                            <div className="w-full">
+                        </Link>
+                        <div className="w-full">
+                            <Link href={`/expert/${expert.id}`} className="block cursor-pointer">
                                 <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between">
                                     <div>
                                         <div className="flex items-center gap-2 mb-1">
@@ -169,28 +171,28 @@ export function ExpertCard({ expert }: ExpertCardProps) {
                                         <Badge variant="secondary">{expert.role}</Badge>
                                     </div>
                                 </div>
-                                
-                                <Separator className="my-4" />
+                            </Link>
+                            
+                            <Separator className="my-4" />
 
-                                <div className="flex flex-wrap items-center gap-2" onClick={(e) => e.stopPropagation()}>
-                                    {user && (
-                                        <CollapsibleTrigger asChild>
-                                            <Button variant="outline"><Edit2 className="mr-2 h-4 w-4" />Leave a Review</Button>
-                                        </CollapsibleTrigger>
-                                    )}
-                                    <div className="flex-grow"></div>
-                                    <Button asChild variant="secondary"><Link href={`/expert/${expert.id}/book`}><Calendar className="mr-2 h-4 w-4" /> Book</Link></Button>
-                                    <Button asChild className="bg-orange-500 hover:bg-orange-600" disabled={!formattedPhoneNumber}>
-                                        <a href={`tel:${formattedPhoneNumber}`} onClick={(e) => e.stopPropagation()}><Phone className="mr-2 h-4 w-4" /> Call</a>
-                                    </Button>
-                                    <Button asChild className="bg-green-500 hover:bg-green-600" disabled={!formattedPhoneNumber}>
-                                        <a href={`https://wa.me/${formattedPhoneNumber}`} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}><MessageCircle className="mr-2 h-4 w-4" /> WhatsApp</a>
-                                    </Button>
-                                </div>
+                            <div className="flex flex-wrap items-center gap-2">
+                                {user && (
+                                     <CollapsibleTrigger asChild>
+                                        <Button variant="outline" onClick={(e) => e.stopPropagation()}><Edit2 className="mr-2 h-4 w-4" />Leave a Review</Button>
+                                    </CollapsibleTrigger>
+                                )}
+                                <div className="flex-grow"></div>
+                                <Button asChild variant="secondary"><Link href={`/expert/${expert.id}/book`}><Calendar className="mr-2 h-4 w-4" /> Book</Link></Button>
+                                <Button asChild className="bg-orange-500 hover:bg-orange-600" disabled={!formattedPhoneNumber}>
+                                    <a href={`tel:${formattedPhoneNumber}`}><Phone className="mr-2 h-4 w-4" /> Call</a>
+                                </Button>
+                                <Button asChild className="bg-green-500 hover:bg-green-600" disabled={!formattedPhoneNumber}>
+                                    <a href={`https://wa.me/${formattedPhoneNumber}`} target="_blank" rel="noopener noreferrer"><MessageCircle className="mr-2 h-4 w-4" /> WhatsApp</a>
+                                </Button>
                             </div>
                         </div>
-                    </CardContent>
-                </Link>
+                    </div>
+                </CardContent>
                 <CollapsibleContent>
                     <div className="p-6 bg-card-foreground/5 dark:bg-card-foreground/10 border-t" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center gap-3 mb-4">
