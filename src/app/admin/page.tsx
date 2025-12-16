@@ -194,6 +194,8 @@ export default function AdminDashboardPage() {
   }
 
   const isLoading = isUserLoading || isRoleLoading;
+  const areTablesLoading = (isSuperAdmin && isUsersLoading) || areCategoriesLoading;
+
 
   if (isLoading) {
     return (
@@ -296,7 +298,7 @@ export default function AdminDashboardPage() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  {isUsersLoading ? (
+                  {areTablesLoading ? (
                     <div className="flex justify-center items-center p-8">
                       <Loader className="h-6 w-6 animate-spin text-primary" />
                       <p className="ml-3 text-muted-foreground">Loading experts...</p>
@@ -385,7 +387,7 @@ export default function AdminDashboardPage() {
 
                     <div className="mt-6">
                         <h4 className="font-semibold text-sm mb-2 text-muted-foreground">Existing Categories</h4>
-                        {areCategoriesLoading ? (
+                        {areTablesLoading ? (
                            <div className="flex justify-center items-center p-4">
                               <Loader className="h-5 w-5 animate-spin text-primary" />
                             </div>
@@ -456,5 +458,3 @@ export default function AdminDashboardPage() {
     </>
   );
 }
-
-    
