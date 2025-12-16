@@ -81,6 +81,7 @@ const UserTable = ({ users, onTierChange, onVerificationToggle, onDelete }: { us
                 <TableHead className="w-[80px]">Avatar</TableHead>
                 <TableHead>Full Name</TableHead>
                 <TableHead>Email</TableHead>
+                <TableHead>Role</TableHead>
                 <TableHead className="text-center">Tier</TableHead>
                 <TableHead className="text-center">Verified</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
@@ -97,6 +98,7 @@ const UserTable = ({ users, onTierChange, onVerificationToggle, onDelete }: { us
                     </TableCell>
                     <TableCell className="font-medium">{expert.firstName} {expert.lastName}</TableCell>
                     <TableCell>{expert.email}</TableCell>
+                    <TableCell><Badge variant="secondary">{expert.role}</Badge></TableCell>
                     <TableCell className="text-center">{renderTierBadge(expert.tier)}</TableCell>
                     <TableCell className="text-center">
                         <div className='flex items-center justify-center space-x-2'>
@@ -123,7 +125,7 @@ const UserTable = ({ users, onTierChange, onVerificationToggle, onDelete }: { us
                     </TableCell>
                     </TableRow>
                 ))
-                ) : ( <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground h-24">No users found for this role.</TableCell></TableRow> )}
+                ) : ( <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground h-24">No users found for this role.</TableCell></TableRow> )}
             </TableBody>
         </Table>
     )
@@ -420,7 +422,7 @@ export default function AdminDashboardPage() {
                   </div>
                 ) : (
                     <Tabs defaultValue="all">
-                        <TabsList className="grid w-full grid-cols-5">
+                        <TabsList className="grid w-full grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
                             <TabsTrigger value="all">All Users</TabsTrigger>
                             <TabsTrigger value="freelancers">Freelancers</TabsTrigger>
                             <TabsTrigger value="companies">Companies</TabsTrigger>
