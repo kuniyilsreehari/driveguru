@@ -7,7 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { Star, IndianRupee, Briefcase, Calendar, Phone, MessageCircle, ChevronDown, UserCheck, Crown, Sparkles, MapPin, Send, MessageSquare as MessageSquareIcon, Edit2 } from 'lucide-react';
+import { Star, IndianRupee, Briefcase, Calendar, Phone, MessageCircle, ChevronDown, UserCheck, Crown, Sparkles, MapPin, Send, MessageSquare as MessageSquareIcon, Edit2, XCircle } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -120,7 +120,17 @@ export function ExpertCard({ expert }: ExpertCardProps) {
                                 <div>
                                     <div className="flex items-center gap-2 mb-1">
                                         <h3 className="text-2xl font-bold">{getDisplayName(expert)}</h3>
-                                        {expert.verified && <UserCheck className="h-5 w-5 text-green-500" />}
+                                        {expert.verified ? (
+                                            <Badge variant="outline" className="border-green-500 text-green-500">
+                                                <UserCheck className="mr-1 h-3 w-3" />
+                                                Verified
+                                            </Badge>
+                                        ) : (
+                                            <Badge variant="destructive">
+                                                <XCircle className="mr-1 h-3 w-3" />
+                                                Not Verified
+                                            </Badge>
+                                        )}
                                         {expert.tier === 'Premier' && <Badge variant="outline" className="border-purple-500 text-purple-500"><Crown className="mr-1 h-3 w-3" /> Premier</Badge>}
                                         {expert.tier === 'Super Premier' && <Badge variant="outline" className="border-blue-500 text-blue-500"><Sparkles className="mr-1 h-3 w-3" /> Super Premier</Badge>}
                                     </div>

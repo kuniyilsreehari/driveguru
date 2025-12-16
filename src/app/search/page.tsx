@@ -31,8 +31,8 @@ function SearchResults() {
         
         let q = query(collection(firestore, 'users'));
 
-        // Always filter for verified users on the public search page
-        q = query(q, where('verified', '==', true));
+        // No longer filtering for only verified users
+        // q = query(q, where('verified', '==', true));
 
         if (category) {
             q = query(q, where('category', '==', category));
@@ -51,7 +51,7 @@ function SearchResults() {
         return (
             <div className="flex h-64 w-full items-center justify-center">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                <p className="ml-4 text-muted-foreground">Searching for verified experts...</p>
+                <p className="ml-4 text-muted-foreground">Searching for experts...</p>
             </div>
         );
     }
@@ -59,7 +59,7 @@ function SearchResults() {
     if (!experts || experts.length === 0) {
         return (
             <div className="text-center py-16">
-                <h2 className="text-2xl font-semibold">No Verified Experts Found</h2>
+                <h2 className="text-2xl font-semibold">No Experts Found</h2>
                 <p className="text-muted-foreground mt-2">Try adjusting your search filters or check back later.</p>
             </div>
         );
