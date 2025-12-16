@@ -66,15 +66,14 @@ export default function TalentSearchPage() {
                     const address = data.address;
                     const city = address.city || address.town || address.village || address.hamlet;
                     const state = address.state;
+                    const pincode = address.postcode;
 
-                    let detectedLocation = '';
-                    if (state && city) {
-                        detectedLocation = `${state}, ${city}`;
-                    } else if (state) {
-                        detectedLocation = state;
-                    } else if (city) {
-                        detectedLocation = city;
-                    }
+                    let detectedLocationParts = [];
+                    if (state) detectedLocationParts.push(state);
+                    if (city) detectedLocationParts.push(city);
+                    if (pincode) detectedLocationParts.push(pincode);
+
+                    const detectedLocation = detectedLocationParts.join(', ');
 
                     if (detectedLocation) {
                         setLocation(detectedLocation);
@@ -87,7 +86,7 @@ export default function TalentSearchPage() {
                         setLocation(coords);
                          toast({
                             title: 'Coordinates Set',
-                            description: `We could not find a city or state for your coordinates. Using lat/lon instead.`,
+                            description: `We could not find address details. Using lat/lon.`,
                         });
                     }
                 } catch (apiError) {
@@ -145,7 +144,7 @@ export default function TalentSearchPage() {
                                             <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                             <Input 
                                                 id="location" 
-                                                placeholder="state, place, pin" 
+                                                placeholder="state, city, pincode" 
                                                 className="pl-10"
                                                 value={location}
                                                 onChange={(e) => setLocation(e.target.value)}
