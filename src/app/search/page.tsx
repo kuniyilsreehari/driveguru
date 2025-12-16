@@ -141,9 +141,11 @@ function SearchResults() {
                 </h2>
                 <p className="text-muted-foreground">{experts.length} result{experts.length === 1 ? '' : 's'} found.</p>
             </div>
-            {experts.map(expert => (
-                <ExpertCard key={expert.id} expert={expert} />
-            ))}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {experts.map(expert => (
+                    <ExpertCard key={expert.id} expert={expert} />
+                ))}
+            </div>
         </div>
     );
 }
