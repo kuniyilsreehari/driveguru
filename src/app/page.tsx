@@ -192,7 +192,7 @@ function HomePageContent() {
                 </header>
 
                 <main>
-                    <Card>
+                    <Card className="transition-all hover:border-orange-500/50 hover:shadow-orange-500/10 focus-within:border-orange-500/50 focus-within:shadow-orange-500/10">
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2 text-2xl">
                                 <Bot /> AI-Powered Search
@@ -349,3 +349,5 @@ export default function TalentSearchPage() {
         </Suspense>
     );
 }
+
+    
