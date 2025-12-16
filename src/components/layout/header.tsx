@@ -28,6 +28,12 @@ export function Header() {
   const router = useRouter();
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [isCheckingAdmin, setIsCheckingAdmin] = useState(true);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    // This effect runs once on the client after the component mounts
+    setMounted(true); 
+  }, []);
 
   useEffect(() => {
     if (user && firestore) {
@@ -58,6 +64,8 @@ export function Header() {
 
   const dashboardPath = isSuperAdmin ? '/admin' : '/dashboard';
 
+  const isLoading = isUserLoading || isCheckingAdmin;
+
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-14 max-w-screen-2xl items-center">
@@ -79,8 +87,14 @@ export function Header() {
                 Reviews
               </Link>
             </Button>
-            {isUserLoading || isCheckingAdmin ? (
-                <div className="h-8 w-20 animate-pulse rounded-md bg-muted" />
+            
+            {/* We only render the dynamic part of the UI on the client after mounting */}
+            {!mounted ? (
+              // On the server and initial client render, render a placeholder or nothing
+              // to prevent mismatch. A simple div that matches the loader's size is good.
+              <div className="h-8 w-20" />
+            ) : isLoading ? (
+              <div className="h-8 w-20 animate-pulse rounded-md bg-muted" />
             ) : user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
