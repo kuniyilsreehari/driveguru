@@ -27,6 +27,7 @@ import { setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Icons } from "@/components/icons";
 import { cn } from "@/lib/utils";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 const categories = [
     { name: "MEDICAL HELP", icon: <Icons.medical className="w-8 h-8" /> },
@@ -378,25 +379,27 @@ export function RegistrationForm() {
           render={({ field }) => (
             <FormItem>
                 <FormLabel>Category</FormLabel>
-                <FormControl>
-                    <div className="grid grid-cols-3 gap-2 text-center">
-                        {categories.map((category) => (
-                            <div 
-                                key={category.name} 
-                                className={cn(
-                                    "p-2 border rounded-lg flex flex-col items-center justify-center space-y-1 cursor-pointer transition-colors",
-                                    field.value === category.name 
-                                        ? "bg-accent/20 border-primary" 
-                                        : "hover:bg-accent/10 hover:border-accent"
-                                )}
-                                onClick={() => form.setValue('category', category.name, { shouldValidate: true })}
-                            >
-                                {category.icon}
-                                <span className="text-xs font-semibold">{category.name}</span>
-                            </div>
-                        ))}
-                    </div>
-                </FormControl>
+                <ScrollArea className="h-40 w-full rounded-md border p-2">
+                    <FormControl>
+                        <div className="grid grid-cols-2 gap-2 text-center">
+                            {categories.map((category) => (
+                                <div 
+                                    key={category.name} 
+                                    className={cn(
+                                        "p-2 border rounded-lg flex flex-col items-center justify-center space-y-1 cursor-pointer transition-colors h-24",
+                                        field.value === category.name 
+                                            ? "bg-accent/20 border-primary" 
+                                            : "hover:bg-accent/10 hover:border-accent"
+                                    )}
+                                    onClick={() => form.setValue('category', category.name, { shouldValidate: true })}
+                                >
+                                    {category.icon}
+                                    <span className="text-xs font-semibold">{category.name}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </FormControl>
+                </ScrollArea>
                 <FormMessage />
             </FormItem>
           )}
@@ -444,7 +447,3 @@ export function RegistrationForm() {
     </Form>
   );
 }
-
-    
-
-    
