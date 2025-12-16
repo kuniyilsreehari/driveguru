@@ -11,7 +11,7 @@
  * - /companies/{companyId}: A top-level collection for company data.
  * - /roles_super_admin/{userId}: An authorization-specific collection. The existence of a
  *   document here grants a user Super Admin privileges across the application.
- * - /reviews/{reviewId}: A collection for expert reviews, moderated by Super Admins.
+ * - /reviews/{reviewId}: A collection for expert reviews, moderated by Super Admains.
  *
  * Key Security Decisions:
  * - Super Admin Role: A user is considered a Super Admin if a document with their UID exists
@@ -137,14 +137,16 @@ service cloud.firestore {
     
     /**
      * @description Controls access to reviews. Any signed-in user can create a review. 
-     * Public can read approved reviews. Super Admins can read, list, and modify all reviews.
+     * Super Admins can list and moderate all reviews. Anyone can read approved reviews.
      * @path /reviews/{reviewId}
+     * @allow (list) Only Super Admins can list all reviews for moderation.
+     * @allow (get) Anyone can read an individual review if it is approved. Super Admins can read any review.
      * @allow (create) Any authenticated user can submit a review.
-     * @allow (get, list) Anyone can read reviews if they are approved, or if the requester is a Super Admin.
      * @allow (update, delete) Only Super Admins can modify or delete reviews.
      */
     match /reviews/{reviewId} {
-      allow get, list: if isSuperAdmin() || resource.data.status == 'approved';
+      allow get: if isSuperAdmin() || resource.data.status == 'approved';
+      allow list: if isSuperAdmin();
       allow create: if isSignedIn();
       allow update, delete: if isSuperAdmin();
     }
