@@ -1,17 +1,26 @@
 
 'use client';
 
+import { useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { doc, collection, query, where } from 'firebase/firestore';
+import { doc, collection, query, where, addDoc } from 'firebase/firestore';
 import { useFirestore, useDoc, useCollection, useMemoFirebase, useUser } from '@/firebase';
-import { Loader2, Star, ChevronLeft, MapPin, IndianRupee, Briefcase, Calendar, Info, Book, GraduationCap, School, User as UserIcon, UserCheck, XCircle, Crown, Sparkles, MessageSquare, LogIn } from 'lucide-react';
+import { Loader2, Star, ChevronLeft, MapPin, IndianRupee, Briefcase, Calendar, Info, Book, GraduationCap, School, User as UserIcon, UserCheck, XCircle, Crown, Sparkles, MessageSquare, LogIn, Edit2, Send } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
 import { formatDistanceToNow } from 'date-fns';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
+import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+
 
 type ExpertUserProfile = {
     id: string;
@@ -52,6 +61,13 @@ function ExpertProfileContent() {
     const expertId = params.expertId as string;
     const firestore = useFirestore();
     const { user, isUserLoading } = useUser();
+    const { toast } = useToast();
+
+    const [isReviewOpen, setIsReviewOpen] = useState(false);
+    const [rating, setRating] = useState(0);
+    const [hoverRating, setHoverRating] = useState(0);
+    const [reviewerName, setReviewerName] = useState('');
+    const [comment, setComment] = useState('');
 
     const expertDocRef = useMemoFirebase(() => {
         if (!firestore || !expertId) return null;
@@ -76,6 +92,48 @@ function ExpertProfileContent() {
         }
         return 'U';
     };
+    
+    const displayName = expert?.companyName || `${expert?.firstName} ${expert?.lastName}`;
+    
+    const handleSubmitReview = async () => {
+        if (!firestore) {
+            toast({ variant: 'destructive', title: "Error", description: "Database connection not found." });
+            return;
+        }
+
+        if (!user) {
+            toast({ variant: 'destructive', title: "Not logged in", description: "You must be logged in to leave a review." });
+            return;
+        }
+
+        if (reviewerName.trim() === '' || comment.trim() === '' || rating === 0) {
+            toast({ variant: 'destructive', title: "Missing Information", description: "Please fill out all fields to submit a review." });
+            return;
+        }
+        
+        const reviewsCollectionRef = collection(firestore, 'reviews');
+        
+        const reviewData = {
+            expertId: expertId,
+            expertName: displayName,
+            reviewerId: user.uid,
+            reviewerName: reviewerName,
+            rating: rating,
+            comment: comment,
+            createdAt: new Date(),
+            status: 'pending'
+        };
+        
+        await addDocumentNonBlocking(reviewsCollectionRef, reviewData);
+
+        toast({ title: "Review Submitted", description: "Your review is pending approval. Thank you!" });
+        // Reset form
+        setRating(0);
+        setReviewerName('');
+        setComment('');
+        setIsReviewOpen(false);
+    }
+
 
     if (isLoadingExpert || isUserLoading) {
         return (
@@ -98,8 +156,6 @@ function ExpertProfileContent() {
             </div>
         );
     }
-    
-    const displayName = expert.companyName || `${expert.firstName} ${expert.lastName}`;
 
     return (
         <div className="min-h-screen bg-background p-4 sm:p-8">
@@ -206,15 +262,70 @@ function ExpertProfileContent() {
                             </div>
                         </div>
                         <Separator className="my-6" />
-                        <div>
-                             <h4 className="font-semibold flex items-center gap-2 mb-4 text-lg"><MessageSquare className="h-5 w-5" /> Customer Reviews</h4>
+                        <Collapsible open={isReviewOpen} onOpenChange={setIsReviewOpen}>
+                            <h4 className="font-semibold flex items-center gap-2 mb-4 text-lg"><MessageSquare className="h-5 w-5" /> Customer Reviews</h4>
+                            {user && (
+                                <CollapsibleTrigger asChild>
+                                     <Button variant="outline"><Edit2 className="mr-2 h-4 w-4" />Leave a Review</Button>
+                                </CollapsibleTrigger>
+                            )}
+                            <CollapsibleContent>
+                                <div className="p-6 bg-card-foreground/5 dark:bg-card-foreground/10 border-t mt-4 rounded-lg">
+                                    <div className="flex items-center gap-3 mb-4">
+                                        <h4 className="text-xl font-bold">Leave a Review for {displayName}</h4>
+                                    </div>
+                                    <div className="space-y-4">
+                                        <div>
+                                            <Label htmlFor={`reviewerName-${expert.id}`}>Your Name</Label>
+                                            <Input 
+                                                id={`reviewerName-${expert.id}`}
+                                                placeholder="e.g. Jane Doe" 
+                                                value={reviewerName}
+                                                onChange={(e) => setReviewerName(e.target.value)}
+                                            />
+                                        </div>
+                                        <div>
+                                            <Label>Rating</Label>
+                                            <div className="flex items-center gap-1 mt-1">
+                                                {[1, 2, 3, 4, 5].map(star => (
+                                                    <Star
+                                                        key={star}
+                                                        className={cn(
+                                                            "h-6 w-6 cursor-pointer",
+                                                            (hoverRating >= star || rating >= star)
+                                                                ? "text-yellow-400 fill-yellow-400"
+                                                                : "text-gray-400"
+                                                        )}
+                                                        onMouseEnter={() => setHoverRating(star)}
+                                                        onMouseLeave={() => setHoverRating(0)}
+                                                        onClick={() => setRating(star)}
+                                                    />
+                                                ))}
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <Label htmlFor={`comment-${expert.id}`}>Comment</Label>
+                                            <Textarea
+                                                id={`comment-${expert.id}`}
+                                                placeholder="Share your experience..."
+                                                value={comment}
+                                                onChange={(e) => setComment(e.target.value)}
+                                            />
+                                        </div>
+                                        <Button className="w-full" onClick={handleSubmitReview}>
+                                            <Send className="mr-2 h-4 w-4" /> Submit Review
+                                        </Button>
+                                    </div>
+                                </div>
+                            </CollapsibleContent>
+                            
                             {isLoadingReviews ? (
                                 <div className="flex justify-center items-center p-8">
                                     <Loader2 className="h-6 w-6 animate-spin text-primary" />
                                     <p className="ml-3 text-muted-foreground">Loading reviews...</p>
                                 </div>
                             ) : reviews && reviews.length > 0 ? (
-                                <div className="space-y-4">
+                                <div className="space-y-4 mt-6">
                                     {reviews.map(review => (
                                         <Card key={review.id} className="bg-background/50">
                                             <CardContent className="p-4">
@@ -244,7 +355,7 @@ function ExpertProfileContent() {
                                     <p>No approved reviews for this expert yet.</p>
                                 </div>
                             )}
-                        </div>
+                        </Collapsible>
                     </CardContent>
                 </Card>
             </div>

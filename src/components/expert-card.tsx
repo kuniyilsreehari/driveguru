@@ -89,6 +89,7 @@ export function ExpertCard({ expert }: ExpertCardProps) {
         const reviewData = {
             expertId: expert.id,
             expertName: getDisplayName(expert),
+            reviewerId: user.uid,
             reviewerName: reviewerName,
             rating: rating,
             comment: comment,
@@ -109,8 +110,8 @@ export function ExpertCard({ expert }: ExpertCardProps) {
     return (
         <Collapsible open={isReviewOpen} onOpenChange={setIsReviewOpen}>
              <Card key={expert.id} className="overflow-hidden transition-all hover:shadow-lg hover:border-primary/50">
-                <Link href={`/expert/${expert.id}`} className="block">
-                    <CardContent className="p-4 md:p-6">
+                <div className="block cursor-pointer">
+                    <CardContent className="p-4 md:p-6" onClick={() => { if(!isReviewOpen) { window.location.href = `/expert/${expert.id}`; } }}>
                         <div className="grid grid-cols-1 md:grid-cols-[auto_1fr] gap-6">
                             <div className="flex flex-col items-center space-y-4">
                                 <Avatar className="h-24 w-24 text-4xl">
@@ -177,7 +178,7 @@ export function ExpertCard({ expert }: ExpertCardProps) {
                             </div>
                         </div>
                     </CardContent>
-                </Link>
+                </div>
                 <CollapsibleContent>
                     <div className="p-6 bg-card-foreground/5 dark:bg-card-foreground/10 border-t" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center gap-3 mb-4">

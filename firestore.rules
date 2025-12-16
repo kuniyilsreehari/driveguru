@@ -116,6 +116,13 @@ service cloud.firestore {
     function isMemberOfCompany(companyId) {
       return isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.companyId == companyId;
     }
+    
+    /**
+     * Validates that the reviewer ID on a new review matches the authenticated user's ID.
+     */
+    function isCreatingOwnReview() {
+      return isSignedIn() && request.resource.data.reviewerId == request.auth.uid;
+    }
 
     // --------------------------------------------------------------------------------
     // Collection Rules
@@ -139,15 +146,13 @@ service cloud.firestore {
      * @description Controls access to reviews. Any signed-in user can create a review. 
      * Super Admins can moderate all reviews. Anyone can read approved reviews.
      * @path /reviews/{reviewId}
-     * @allow (list) Any user (authenticated or not) can list reviews if they are approved.
-     * @allow (get) Anyone can read an individual review if it is approved. Super Admins can read any review.
-     * @allow (create) Any authenticated user can submit a review.
+     * @allow (list, get) Anyone can read reviews for public display.
+     * @allow (create) Any authenticated user can submit a review, as long as they own it.
      * @allow (update, delete) Only Super Admins can modify or delete reviews.
      */
     match /reviews/{reviewId} {
-      allow get: if resource.data.status == 'approved' || isSuperAdmin();
-      allow list: if true;
-      allow create: if isSignedIn();
+      allow list, get: if true;
+      allow create: if isCreatingOwnReview();
       allow update, delete: if isSuperAdmin();
     }
 
