@@ -4,14 +4,14 @@
 
 import { Suspense, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Briefcase, Building, ChevronDown, Laptop, LocateIcon, MapPin, Search, Smartphone, Wrench, Loader2, Star, UserCheck, Crown, Sparkles, HelpCircle } from "lucide-react"
+import { Briefcase, Building, ChevronDown, Laptop, LocateIcon, MapPin, Search, Smartphone, Wrench, Loader2, Star, UserCheck, Crown, Sparkles, HelpCircle, Bot } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Slider } from "@/components/ui/slider"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Card, CardContent } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Icons } from "@/components/icons"
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -21,6 +21,7 @@ import { ExpertCard } from '@/components/expert-card';
 import type { ExpertUser } from '@/components/expert-card';
 import * as LucideIcons from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { parseSearchQuery } from '@/ai/flows/ai-search-flow';
 
 function HomePageContent() {
     const [searchQuery, setSearchQuery] = useState('');
@@ -33,6 +34,9 @@ function HomePageContent() {
     const { toast } = useToast();
     const router = useRouter();
     const firestore = useFirestore();
+
+    const [aiSearchQuery, setAiSearchQuery] = useState('');
+    const [isParsingQuery, setIsParsingQuery] = useState(false);
 
     const expertsQuery = useMemoFirebase(() => {
         if (!firestore) return null;
@@ -138,6 +142,36 @@ function HomePageContent() {
         }
         router.push(`/search?${queryParams.toString()}`);
     };
+    
+    const handleAiSearch = async () => {
+        if (!aiSearchQuery.trim()) {
+            toast({ variant: 'destructive', title: "Empty Query", description: "Please enter what you're looking for."});
+            return;
+        }
+
+        setIsParsingQuery(true);
+        try {
+            const result = await parseSearchQuery({ query: aiSearchQuery });
+            
+            if (result.searchQuery) setSearchQuery(result.searchQuery);
+            if (result.location) setLocation(result.location);
+            if (result.maxRate) setMaxRate(result.maxRate);
+
+            toast({
+                title: "AI Search Parsed",
+                description: "Your search filters have been updated. Review and click Search.",
+            });
+        } catch (error) {
+            console.error("AI search parsing failed:", error);
+            toast({
+                variant: 'destructive',
+                title: 'AI Search Failed',
+                description: 'Could not understand the query. Please try rephrasing it or use the manual filters.'
+            });
+        } finally {
+            setIsParsingQuery(false);
+        }
+    };
 
     return (
         <div className="dark min-h-screen bg-background text-foreground p-4 sm:p-8">
@@ -150,7 +184,46 @@ function HomePageContent() {
                 </header>
 
                 <main>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2 text-2xl">
+                                <Bot /> AI-Powered Search
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <p className="text-muted-foreground mb-4 text-sm">
+                                Describe the expert you need in plain English. For example: &quot;a verified plumber in Mumbai available now&quot; or &quot;an affordable React developer&quot;.
+                            </p>
+                            <div className="flex items-center gap-2">
+                                <div className="relative flex-grow">
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                    <Input
+                                        id="ai-search"
+                                        placeholder="I'm looking for..."
+                                        className="pl-10 text-base"
+                                        value={aiSearchQuery}
+                                        onChange={(e) => setAiSearchQuery(e.target.value)}
+                                        onKeyDown={(e) => e.key === 'Enter' && handleAiSearch()}
+                                    />
+                                </div>
+                                <Button onClick={handleAiSearch} disabled={isParsingQuery}>
+                                    {isParsingQuery ? (
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    ) : (
+                                        <Sparkles className="mr-2 h-4 w-4" />
+                                    )}
+                                    Parse with AI
+                                </Button>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    <div className="text-center my-4 font-semibold text-muted-foreground">OR</div>
+
                     <Card className="p-6 sm:p-8">
+                        <CardHeader className="p-0 mb-6">
+                            <CardTitle className="text-2xl">Manual Search</CardTitle>
+                        </CardHeader>
                         <CardContent className="p-0">
                              <div className="mb-4">
                                 <Label htmlFor="search">I&apos;m looking for...</Label>
@@ -219,11 +292,12 @@ function HomePageContent() {
                                     Max Hourly Rate: {maxRate ? <span className="text-primary font-bold">up to ₹{maxRate}/hr</span> : <span className="text-primary font-bold">Any</span>}
                                 </Label>
                                 <Slider 
-                                    defaultValue={[1000]} 
+                                    defaultValue={[maxRate || 5000]}
+                                    value={[maxRate || 5000]}
                                     max={5000} 
                                     step={100} 
                                     className="mt-3" 
-                                    onValueChange={(value) => setMaxRate(value[0])}
+                                    onValueChange={(value) => setMaxRate(value[0] === 5000 ? null : value[0])}
                                 />
                             </div>
 
