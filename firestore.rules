@@ -151,7 +151,8 @@ service cloud.firestore {
      * management capabilities.
      */
     match /users/{userId} {
-      allow read: if isSignedIn();
+      allow get: if isSignedIn();
+      allow list: if isSignedIn() && (request.query.keys().hasAny(['tier']) || isSuperAdmin());
       allow create: if isCreatingOwnUserDoc(userId);
       allow update: if (isOwner(userId) && userFieldsAreValidOnUpdate()) || isSuperAdmin();
       allow delete: if isOwner(userId) || isSuperAdmin();
