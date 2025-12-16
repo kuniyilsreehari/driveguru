@@ -7,7 +7,7 @@ import { signOut } from 'firebase/auth';
 import { doc, collection, query, where } from 'firebase/firestore';
 import { useUser, useAuth, useFirestore, useDoc, useCollection, useMemoFirebase, updateDocumentNonBlocking } from '@/firebase';
 import { Button } from '@/components/ui/button';
-import { LogOut, Briefcase, Loader, Edit, UserCheck, XCircle, MapPin, IndianRupee, Calendar, Book, GraduationCap, School, Info, User as UserIcon, Check, Power, Building, PlusCircle } from 'lucide-react';
+import { LogOut, Briefcase, Loader, Edit, UserCheck, XCircle, MapPin, IndianRupee, Calendar, Book, GraduationCap, School, Info, User as UserIcon, Check, Power, Building, PlusCircle, Crown, Sparkles } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import {
   Dialog,
@@ -52,6 +52,7 @@ type ExpertUserProfile = {
     department?: string;
     isAvailable?: boolean;
     companyId?: string;
+    tier?: 'Standard' | 'Premier' | 'Super Premier';
 };
 
 function CompanyVacancies({ userProfile }: { userProfile: ExpertUserProfile }) {
@@ -240,6 +241,8 @@ export default function ExpertDashboardPage() {
                                 )}
                                 <Badge variant="secondary">{userProfile.role}</Badge>
                                 {userProfile.companyName && <Badge variant="secondary">{userProfile.companyName}</Badge>}
+                                {userProfile.tier === 'Premier' && <Badge variant="outline" className="border-purple-500 text-purple-500"><Crown className="mr-1 h-3 w-3" /> Premier</Badge>}
+                                {userProfile.tier === 'Super Premier' && <Badge variant="outline" className="border-blue-500 text-blue-500"><Sparkles className="mr-1 h-3 w-3" /> Super Premier</Badge>}
                             </div>
                             <div className="flex items-center space-x-2 mt-4">
                                 <Switch 
