@@ -35,6 +35,7 @@ export type ExpertUser = {
     tier?: 'Standard' | 'Premier' | 'Super Premier';
     photoUrl?: string;
     isAvailable?: boolean;
+    phoneNumber?: string;
 };
 
 interface ExpertCardProps {
@@ -67,6 +68,13 @@ export function ExpertCard({ expert }: ExpertCardProps) {
     const getDisplayName = (expert: ExpertUser) => {
         return expert.companyName || `${expert.firstName} ${expert.lastName}`;
     }
+
+    const cleanPhoneNumber = (phoneNumber?: string) => {
+        if (!phoneNumber) return '';
+        return phoneNumber.replace(/\s+/g, '');
+    }
+
+    const formattedPhoneNumber = cleanPhoneNumber(expert.phoneNumber);
 
     const handleSubmitReview = async () => {
         if (!firestore) {
@@ -172,8 +180,12 @@ export function ExpertCard({ expert }: ExpertCardProps) {
                                     )}
                                     <div className="flex-grow"></div>
                                     <Button variant="secondary"><Calendar className="mr-2 h-4 w-4" /> Book</Button>
-                                    <Button className="bg-orange-500 hover:bg-orange-600"><Phone className="mr-2 h-4 w-4" /> Call</Button>
-                                    <Button className="bg-green-500 hover:bg-green-600"><MessageCircle className="mr-2 h-4 w-4" /> WhatsApp</Button>
+                                    <Button asChild className="bg-orange-500 hover:bg-orange-600" disabled={!formattedPhoneNumber}>
+                                        <a href={`tel:${formattedPhoneNumber}`}><Phone className="mr-2 h-4 w-4" /> Call</a>
+                                    </Button>
+                                    <Button asChild className="bg-green-500 hover:bg-green-600" disabled={!formattedPhoneNumber}>
+                                        <a href={`https://wa.me/${formattedPhoneNumber}`} target="_blank" rel="noopener noreferrer"><MessageCircle className="mr-2 h-4 w-4" /> WhatsApp</a>
+                                    </Button>
                                 </div>
                             </div>
                         </div>
