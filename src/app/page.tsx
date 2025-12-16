@@ -26,7 +26,6 @@ import { parseSearchQuery } from '@/ai/flows/ai-search-flow';
 function HomePageContent() {
     const [searchQuery, setSearchQuery] = useState('');
     const [location, setLocation] = useState('');
-    const [locationName, setLocationName] = useState('');
     const [maxRate, setMaxRate] = useState<number | null>(null);
     const [isDetecting, setIsDetecting] = useState(false);
     const [showVerifiedOnly, setShowVerifiedOnly] = useState(false);
@@ -70,21 +69,16 @@ function HomePageContent() {
                     const city = address.city || address.town || address.village || address.hamlet;
                     const state = address.state;
                     const pincode = address.postcode;
-                    const specificPlace = address.neighbourhood || address.road || data.display_name.split(',')[0];
-
 
                     let detectedLocationParts = [];
-                    if (state) detectedLocationParts.push(state);
                     if (city) detectedLocationParts.push(city);
+                    if (state) detectedLocationParts.push(state);
                     if (pincode) detectedLocationParts.push(pincode);
 
                     const detectedLocation = detectedLocationParts.join(', ');
 
                     if (detectedLocation) {
                         setLocation(detectedLocation);
-                        if (specificPlace) {
-                            setLocationName(specificPlace);
-                        }
                         toast({
                             title: 'Location Detected',
                             description: `Your location has been set to ${detectedLocation}.`,
@@ -128,9 +122,6 @@ function HomePageContent() {
         if (location) {
             queryParams.set('location', location);
         }
-        if (locationName) {
-            queryParams.set('locationName', locationName);
-        }
         if (showVerifiedOnly) {
             queryParams.set('verified', 'true');
         }
@@ -156,6 +147,8 @@ function HomePageContent() {
             if (result.searchQuery) setSearchQuery(result.searchQuery);
             if (result.location) setLocation(result.location);
             if (result.maxRate) setMaxRate(result.maxRate);
+            if (result.isVerified) setShowVerifiedOnly(result.isVerified);
+            if (result.isAvailable) setShowAvailableOnly(result.isAvailable);
 
             toast({
                 title: "AI Search Parsed",
@@ -246,7 +239,7 @@ function HomePageContent() {
                                             <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                             <Input 
                                                 id="location" 
-                                                placeholder="state, city, pincode" 
+                                                placeholder="Enter a location" 
                                                 className="pl-10"
                                                 value={location}
                                                 onChange={(e) => setLocation(e.target.value)}
@@ -273,20 +266,6 @@ function HomePageContent() {
                                 </div>
                             </div>
                             
-                            <div className="mt-4">
-                                <Label htmlFor="locationName">Name of the location</Label>
-                                <div className="relative mt-2">
-                                    <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                    <Input 
-                                        id="locationName" 
-                                        placeholder="Enter a specific place or area" 
-                                        className="pl-10"
-                                        value={locationName}
-                                        onChange={(e) => setLocationName(e.target.value)}
-                                    />
-                                </div>
-                            </div>
-
                             <div className="mt-6">
                                 <Label htmlFor="hourly-rate">
                                     Max Hourly Rate: {maxRate ? <span className="text-primary font-bold">up to ₹{maxRate}/hr</span> : <span className="text-primary font-bold">Any</span>}
