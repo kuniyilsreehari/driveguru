@@ -146,7 +146,7 @@ service cloud.firestore {
      */
     match /reviews/{reviewId} {
       allow get: if resource.data.status == 'approved' || isSuperAdmin();
-      allow list: if isSignedIn() || isSuperAdmin();
+      allow list: if true;
       allow create: if isSignedIn();
       allow update, delete: if isSuperAdmin();
     }
@@ -155,17 +155,11 @@ service cloud.firestore {
      * @description Defines access rules for company profiles. Super Admins have full control,
      * while regular signed-in users can only read the details of their own company.
      * @path /companies/{companyId}
-     * @allow (get) An authenticated user reading the document for the company they belong to.
-     * @deny (list) A regular user attempting to list all companies in the system.
-     * @deny (update) A regular user trying to change their company's address.
-     * @principle Combines role-based admin access with lookup-based access for members.
-     */
-    match /companies/{companyId} {
-      allow get: if isSuperAdmin() || isMemberOfCompany(companyId);
-      allow list: if isSuperAdmin();
-      allow create: if isSuperAdmin();
-      allow update: if isSuperAdmin() && isExistingDoc();
-      allow delete: if isSuperAdmin() && isExistingDoc();
+     * @allow (get) if isSuperAdmin() || isMemberOfCompany(companyId);
+     * @allow list: if isSuperAdmin();
+     * @allow create: if isSuperAdmin();
+     * @allow update: if isSuperAdmin() && isExistingDoc();
+     * @allow delete: if isSuperAdmin() && isExistingDoc();
     }
 
     /**
