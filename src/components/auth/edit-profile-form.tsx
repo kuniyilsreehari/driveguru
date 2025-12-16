@@ -210,7 +210,7 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
             firstName: formData.firstName,
             role: formData.role,
             skills: formData.skills || '',
-            yearsOfExperience: formData.yearsOfExperience || 0,
+            yearsOfExperience: Number(formData.yearsOfExperience) || 0,
             qualification: formData.qualification || '',
         });
         if (result.aboutMe) {
