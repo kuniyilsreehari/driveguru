@@ -140,11 +140,11 @@ service cloud.firestore {
      * Public can read approved reviews. Super Admins can read, list, and modify all reviews.
      * @path /reviews/{reviewId}
      * @allow (create) Any authenticated user can submit a review.
-     * @allow (get, list) Anyone can read reviews. SuperAdmins can list all.
+     * @allow (get, list) Anyone can read reviews if they are approved, or if the requester is a Super Admin.
      * @allow (update, delete) Only Super Admins can modify or delete reviews.
      */
     match /reviews/{reviewId} {
-      allow get, list: if true;
+      allow get, list: if isSuperAdmin() || resource.data.status == 'approved';
       allow create: if isSignedIn();
       allow update, delete: if isSuperAdmin();
     }
