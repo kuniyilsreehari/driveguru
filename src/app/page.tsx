@@ -86,7 +86,7 @@ export default function TalentSearchPage() {
                         setLocation(coords);
                          toast({
                             title: 'Coordinates Set',
-                            description: `We could not find a city, state, or postcode for your coordinates. Using lat/lon instead.`,
+                            description: `We could not find a place, state, or postcode for your coordinates. Using lat/lon instead.`,
                         });
                     }
                 } catch (apiError) {
@@ -144,7 +144,7 @@ export default function TalentSearchPage() {
                                             <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                             <Input 
                                                 id="location" 
-                                                placeholder="Enter a city to search..." 
+                                                placeholder="state,place,pin" 
                                                 className="pl-10"
                                                 value={location}
                                                 onChange={(e) => setLocation(e.target.value)}
