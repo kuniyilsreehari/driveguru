@@ -215,6 +215,9 @@ function ExpertProfileContent() {
                                     {expert.tier === 'Premier' && <Badge variant="outline" className="border-purple-500 text-purple-500"><Crown className="mr-1 h-3 w-3" /> Premier</Badge>}
                                     {expert.tier === 'Super Premier' && <Badge variant="outline" className="border-blue-500 text-blue-500"><Sparkles className="mr-1 h-3 w-3" /> Super Premier</Badge>}
                                 </div>
+                                 <div className="mt-4">
+                                     <Button asChild variant="secondary"><Link href={`/expert/${expert.id}/book`}><Calendar className="mr-2 h-4 w-4" /> Book Appointment</Link></Button>
+                                </div>
                             </div>
                         </div>
                     </CardHeader>

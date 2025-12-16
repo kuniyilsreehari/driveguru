@@ -179,7 +179,7 @@ export function ExpertCard({ expert }: ExpertCardProps) {
                                         </CollapsibleTrigger>
                                     )}
                                     <div className="flex-grow"></div>
-                                    <Button variant="secondary" onClick={(e) => { e.preventDefault(); toast({ title: 'Booking coming soon!' }); }}><Calendar className="mr-2 h-4 w-4" /> Book</Button>
+                                    <Button asChild variant="secondary"><Link href={`/expert/${expert.id}/book`}><Calendar className="mr-2 h-4 w-4" /> Book</Link></Button>
                                     <Button asChild className="bg-orange-500 hover:bg-orange-600" disabled={!formattedPhoneNumber}>
                                         <a href={`tel:${formattedPhoneNumber}`} onClick={(e) => e.stopPropagation()}><Phone className="mr-2 h-4 w-4" /> Call</a>
                                     </Button>
