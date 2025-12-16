@@ -165,6 +165,10 @@ service cloud.firestore {
      * @allow create: if isSuperAdmin();
      * @allow update: if isSuperAdmin() && isExistingDoc();
      * @allow delete: if isSuperAdmin() && isExistingDoc();
+     */
+     match /companies/{companyId} {
+      allow get, list: if isSuperAdmin();
+      allow create, update, delete: if isSuperAdmin();
     }
 
     /**
