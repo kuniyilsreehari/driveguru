@@ -111,7 +111,8 @@ service cloud.firestore {
      * can read or write these settings. This is a highly sensitive collection.
      */
     match /app_config/{configId} {
-      allow read, write: if isSuperAdmin();
+      allow read: if isSignedIn();
+      allow write: if isSuperAdmin();
     }
 
     /**
