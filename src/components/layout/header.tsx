@@ -4,7 +4,7 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Icons } from '@/components/icons';
-import { useUser, useAuth, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
+import { useUser, useAuth, useFirestore } from '@/firebase';
 import { signOut, onAuthStateChanged } from 'firebase/auth';
 import { doc, onSnapshot } from 'firebase/firestore';
 import {
@@ -30,7 +30,7 @@ export function Header() {
   const [isCheckingAdmin, setIsCheckingAdmin] = useState(true);
 
   useEffect(() => {
-    if (user) {
+    if (user && firestore) {
       setIsCheckingAdmin(true);
       const superAdminDocRef = doc(firestore, 'roles_super_admin', user.uid);
       const unsub = onSnapshot(superAdminDocRef, (doc) => {
@@ -45,7 +45,9 @@ export function Header() {
   }, [user, isUserLoading, firestore]);
 
   const handleSignOut = async () => {
-    await signOut(auth);
+    if (auth) {
+        await signOut(auth);
+    }
     router.push('/');
   };
 
@@ -77,7 +79,9 @@ export function Header() {
                 Reviews
               </Link>
             </Button>
-            {isUserLoading || isCheckingAdmin ? null : user ? (
+            {isUserLoading || isCheckingAdmin ? (
+                <div className="h-8 w-20 animate-pulse rounded-md bg-muted" />
+            ) : user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="relative h-8 w-8 rounded-full">

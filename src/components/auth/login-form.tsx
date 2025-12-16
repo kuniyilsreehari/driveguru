@@ -48,15 +48,19 @@ export function LoginForm() {
   });
 
   useEffect(() => {
-    if (!isUserLoading && user) {
+    if (!isUserLoading && user && firestore) {
       const checkAdminAndRedirect = async () => {
-        if (!firestore) return;
         const superAdminDocRef = doc(firestore, 'roles_super_admin', user.uid);
-        const superAdminDoc = await getDoc(superAdminDocRef);
-        if (superAdminDoc.exists()) {
-          router.push('/admin');
-        } else {
-          router.push('/dashboard');
+        try {
+            const superAdminDoc = await getDoc(superAdminDocRef);
+            if (superAdminDoc.exists()) {
+              router.push('/admin');
+            } else {
+              router.push('/dashboard');
+            }
+        } catch (e) {
+            console.error("Error checking for admin role, redirecting to default dashboard", e);
+            router.push('/dashboard');
         }
       };
 
@@ -65,10 +69,10 @@ export function LoginForm() {
   }, [user, isUserLoading, router, firestore]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
+    if(!auth) return;
     try {
       await signInWithEmailAndPassword(auth, values.email, values.password);
-      // The onAuthStateChanged listener in the provider and the useEffect above
-      // will handle the redirect.
+      // The useEffect above will handle the redirect after the user state is updated.
     } catch (error: any) {
       console.error("Login failed:", error);
       let errorMessage = "An unexpected error occurred. Please try again.";
