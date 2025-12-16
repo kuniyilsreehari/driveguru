@@ -147,8 +147,8 @@ service cloud.firestore {
      * full read and write control. All users can read categories.
      */
      match /categories/{categoryId} {
-        allow get, list: if true;
-        allow create, update, delete: if isSuperAdmin();
+        allow read: if true;
+        allow write: if isSuperAdmin();
      }
 
     /**
@@ -172,5 +172,3 @@ service cloud.firestore {
     }
   }
 }
-
-    
