@@ -72,7 +72,7 @@ function CompanyVacancies({ userProfile }: { userProfile: ExpertUserProfile }) {
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
             <CardTitle>Manage Vacancies</CardTitle>
             <CardDescription>Post and view job openings for your company.</CardDescription>
@@ -80,7 +80,7 @@ function CompanyVacancies({ userProfile }: { userProfile: ExpertUserProfile }) {
            {isPremiumWithCompanyId ? (
               <Dialog open={isPostDialogOpen} onOpenChange={setIsPostDialogOpen}>
                 <DialogTrigger asChild>
-                  <Button>
+                  <Button className="w-full sm:w-auto">
                     <PlusCircle className="mr-2 h-4 w-4" />
                     Post New Vacancy
                   </Button>
@@ -101,7 +101,7 @@ function CompanyVacancies({ userProfile }: { userProfile: ExpertUserProfile }) {
                 <TooltipProvider>
                     <Tooltip>
                         <TooltipTrigger asChild>
-                            <Button disabled>
+                            <Button disabled className="w-full sm:w-auto">
                                 <Lock className="mr-2 h-4 w-4" />
                                 Post New Vacancy
                             </Button>
@@ -122,7 +122,7 @@ function CompanyVacancies({ userProfile }: { userProfile: ExpertUserProfile }) {
         ) : vacancies && vacancies.length > 0 ? (
           <div className="space-y-4">
             {vacancies.map((vacancy) => (
-              <div key={vacancy.id} className="p-4 border rounded-lg flex justify-between items-center">
+              <div key={vacancy.id} className="p-4 border rounded-lg flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
                   <h4 className="font-semibold">{vacancy.title}</h4>
                   <p className="text-sm text-muted-foreground">{vacancy.location} &middot; {vacancy.employmentType}</p>
@@ -238,16 +238,16 @@ export default function ExpertDashboardPage() {
       <div className="mx-auto max-w-4xl space-y-8">
         <Card>
             <CardHeader>
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                     <div className="flex items-start gap-4">
-                        <Avatar className="h-24 w-24 text-3xl">
+                        <Avatar className="h-16 w-16 sm:h-24 sm:w-24 text-3xl">
                           <AvatarImage src={userProfile.photoUrl} alt={`${userProfile.firstName} ${userProfile.lastName}`} />
                           <AvatarFallback>{getInitials(userProfile.firstName, userProfile.lastName)}</AvatarFallback>
                         </Avatar>
                         <div>
-                            <CardTitle className="text-4xl font-bold">Expert Dashboard</CardTitle>
+                            <CardTitle className="text-2xl sm:text-4xl font-bold">Expert Dashboard</CardTitle>
                             <CardDescription>Welcome, {userProfile.firstName} {userProfile.lastName}.</CardDescription>
-                            <div className="flex items-center gap-2 mt-2">
+                            <div className="flex items-center gap-2 mt-2 flex-wrap">
                                 {userProfile.verified ? (
                                     <Badge variant="outline" className="border-green-500 text-green-500">
                                         <UserCheck className="mr-1 h-3 w-3" />
@@ -273,15 +273,15 @@ export default function ExpertDashboardPage() {
                                 />
                                 <Label htmlFor="availability-mode" className="flex items-center gap-2 text-sm">
                                     {userProfile.isAvailable ? (
-                                        <><Check className="h-4 w-4 text-green-500"/> I am currently available for new projects.</>
+                                        <><Check className="h-4 w-4 text-green-500"/> I am currently available.</>
                                     ) : (
-                                        <><Power className="h-4 w-4 text-red-500"/> I am not available for new projects.</>
+                                        <><Power className="h-4 w-4 text-red-500"/> I am not available.</>
                                     )}
                                 </Label>
                             </div>
                         </div>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 self-start sm:self-auto">
                         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
                             <DialogTrigger asChild>
                                 <Button variant="outline">

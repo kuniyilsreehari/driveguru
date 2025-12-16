@@ -76,7 +76,7 @@ export function Header() {
             <span className="hidden font-bold sm:inline-block">Find Local Talent</span>
           </Link>
           <div className="flex flex-1 items-center justify-end space-x-4">
-            <nav className="flex items-center space-x-2">
+            <nav className="hidden sm:flex items-center space-x-2">
                <Button asChild variant="ghost">
                 <Link href="/">
                   <Home className="mr-2 h-4 w-4" />
@@ -112,12 +112,12 @@ export function Header() {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-14 max-w-screen-2xl items-center">
-        <Link href="/" className="mr-6 flex items-center space-x-2">
+        <Link href="/" className="mr-auto flex items-center space-x-2">
           <Icons.logo className="h-6 w-6" />
           <span className="hidden font-bold sm:inline-block">Find Local Talent</span>
         </Link>
-        <div className="flex flex-1 items-center justify-end space-x-2">
-          <nav className="flex items-center space-x-2">
+        <div className="flex items-center justify-end space-x-1 sm:space-x-2">
+          <nav className="hidden sm:flex items-center space-x-1">
             <Button asChild variant="ghost">
               <Link href="/">
                 <Home className="mr-2 h-4 w-4" />
@@ -142,6 +142,7 @@ export function Header() {
                 Reviews
               </Link>
             </Button>
+          </nav>
             
             {isLoading ? (
               <div className="h-8 w-20 animate-pulse rounded-md bg-muted" />
@@ -167,6 +168,19 @@ export function Header() {
                     <LayoutDashboard className="mr-2 h-4 w-4" />
                     <span>Dashboard</span>
                   </DropdownMenuItem>
+                   <DropdownMenuSeparator className="sm:hidden" />
+                    <DropdownMenuItem className="sm:hidden" onClick={() => router.push('/')}>
+                      <Home className="mr-2 h-4 w-4" /> Home
+                    </DropdownMenuItem>
+                     <DropdownMenuItem className="sm:hidden" onClick={() => router.push('/vacancies')}>
+                      <Briefcase className="mr-2 h-4 w-4" /> Vacancies
+                    </DropdownMenuItem>
+                     <DropdownMenuItem className="sm:hidden" onClick={() => router.push('/featured-experts')}>
+                      <Award className="mr-2 h-4 w-4" /> Featured
+                    </DropdownMenuItem>
+                     <DropdownMenuItem className="sm:hidden" onClick={() => router.push('/reviews')}>
+                      <MessageSquare className="mr-2 h-4 w-4" /> Reviews
+                    </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleSignOut}>
                     <LogOut className="mr-2 h-4 w-4" />
@@ -175,16 +189,15 @@ export function Header() {
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <>
+              <nav className='flex items-center'>
                 <Button asChild variant="ghost">
                   <Link href="/login">Login</Link>
                 </Button>
                 <Button asChild>
                   <Link href="/signup">Sign Up</Link>
                 </Button>
-              </>
+              </nav>
             )}
-          </nav>
            <Button
               variant="ghost"
               size="icon"

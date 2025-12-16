@@ -7,9 +7,9 @@ export default function SignupPage() {
   const backgroundImage = PlaceHolderImages.find(img => img.id === 'login-background');
 
   return (
-    <div className="w-full h-screen lg:grid lg:min-h-[600px] lg:grid-cols-2 xl:min-h-[800px]">
-      <div className="flex items-center justify-center py-12">
-        <div className="mx-auto grid w-[400px] gap-6">
+    <div className="w-full lg:grid lg:min-h-screen lg:grid-cols-2">
+      <div className="flex items-center justify-center py-12 px-4">
+        <div className="mx-auto grid w-full max-w-[400px] gap-6">
             <Card>
                 <CardHeader className="text-center">
                     <CardTitle className="text-3xl font-bold">Expert Sign Up</CardTitle>
@@ -23,7 +23,7 @@ export default function SignupPage() {
             </Card>
         </div>
       </div>
-      <div className="hidden bg-muted lg:block">
+      <div className="hidden bg-muted lg:block h-screen">
         {backgroundImage && (
           <Image
             src={backgroundImage.imageUrl}

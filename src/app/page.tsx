@@ -202,7 +202,7 @@ function HomePageContent() {
                             <p className="text-muted-foreground mb-4 text-sm">
                                 Describe the expert you need in plain English. For example: &quot;a verified plumber in Mumbai available now&quot; or &quot;an affordable React developer&quot;.
                             </p>
-                            <div className="flex items-center gap-2">
+                            <div className="flex flex-col sm:flex-row items-stretch gap-2">
                                 <div className="relative flex-grow">
                                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                     <Input
@@ -214,7 +214,7 @@ function HomePageContent() {
                                         onKeyDown={(e) => e.key === 'Enter' && handleAiSearch()}
                                     />
                                 </div>
-                                <Button onClick={handleAiSearch} disabled={isParsingQuery}>
+                                <Button onClick={handleAiSearch} disabled={isParsingQuery} className="w-full sm:w-auto">
                                     {isParsingQuery ? (
                                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                                     ) : (
@@ -249,7 +249,7 @@ function HomePageContent() {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
                                     <Label htmlFor="location">Location</Label>
-                                    <div className="flex items-center gap-2 mt-2">
+                                    <div className="flex flex-col sm:flex-row items-stretch gap-2 mt-2">
                                         <div className="relative flex-grow">
                                             <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                             <Input 
@@ -295,7 +295,7 @@ function HomePageContent() {
                                 />
                             </div>
 
-                            <div className="flex items-center space-x-4 mt-6">
+                            <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-4 sm:space-y-0 sm:space-x-4 mt-6">
                                 <div className="flex items-center space-x-2">
                                     <Checkbox id="verified" checked={showVerifiedOnly} onCheckedChange={(checked) => setShowVerifiedOnly(!!checked)} />
                                     <Label htmlFor="verified">Show verified only</Label>

@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -379,7 +380,7 @@ export default function AdminDashboardPage() {
 
   if (!isSuperAdmin) {
     return (
-      <div className="flex h-screen w-full items-center justify-center bg-background">
+      <div className="flex h-screen w-full items-center justify-center bg-background p-4">
         <Card className="w-full max-w-md border-destructive">
           <CardHeader className="text-center">
             <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-destructive/20">
@@ -399,7 +400,7 @@ export default function AdminDashboardPage() {
     <>
       <div className="min-h-screen bg-background p-4 sm:p-8">
         <div className="mx-auto max-w-7xl">
-          <header className="flex items-center justify-between pb-8">
+          <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-8 gap-4">
             <div className="flex items-center gap-4">
               <Shield className="h-10 w-10 text-primary" />
               <div>
@@ -414,7 +415,7 @@ export default function AdminDashboardPage() {
           </header>
 
           <main>
-            <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-5 mb-8">
+            <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-5 mb-8">
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Total Experts</CardTitle>
@@ -432,7 +433,7 @@ export default function AdminDashboardPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">{verifiedCount}</div>
-                  <p className="text-xs text-muted-foreground">Total number of verified experts</p>
+                  <p className="text-xs text-muted-foreground">Total verified experts</p>
                 </CardContent>
               </Card>
                <Card>
@@ -442,7 +443,7 @@ export default function AdminDashboardPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">{unverifiedCount}</div>
-                  <p className="text-xs text-muted-foreground">Experts pending verification</p>
+                  <p className="text-xs text-muted-foreground">Pending verification</p>
                 </CardContent>
               </Card>
               <Card>
@@ -452,7 +453,7 @@ export default function AdminDashboardPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">{premierCount}</div>
-                  <p className="text-xs text-muted-foreground">Total Premier tier experts</p>
+                  <p className="text-xs text-muted-foreground">Total Premier experts</p>
                 </CardContent>
               </Card>
               <Card>
@@ -462,7 +463,7 @@ export default function AdminDashboardPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">{superPremierCount}</div>
-                  <p className="text-xs text-muted-foreground">Total Super Premier experts</p>
+                  <p className="text-xs text-muted-foreground">Total Super Premier</p>
                 </CardContent>
               </Card>
             </div>
@@ -484,7 +485,7 @@ export default function AdminDashboardPage() {
                           <p className="text-sm text-muted-foreground">Loading settings...</p>
                       </div>
                   ) : (
-                    <div className="flex items-end gap-4">
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-end gap-4">
                       <div className="flex-grow">
                           <Label htmlFor="featured-limit">Featured Experts Limit</Label>
                           <Input 
@@ -497,7 +498,7 @@ export default function AdminDashboardPage() {
                               className="mt-1"
                           />
                       </div>
-                      <Button onClick={handleSaveSettings} disabled={isSavingSettings}>
+                      <Button onClick={handleSaveSettings} disabled={isSavingSettings} className="w-full sm:w-auto">
                           {isSavingSettings ? (
                               <Loader className="mr-2 h-4 w-4 animate-spin" />
                           ) : (
@@ -635,5 +636,3 @@ export default function AdminDashboardPage() {
     </>
   );
 }
-
-    
