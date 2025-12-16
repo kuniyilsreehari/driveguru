@@ -87,16 +87,17 @@ export function useCollection<T = any>(
       },
       (error: FirestoreError) => {
         let path: string = 'unknown';
-
         try {
-            if (memoizedTargetRefOrQuery.type === 'collection') {
-                path = (memoizedTargetRefOrQuery as CollectionReference).path;
-            } else if (memoizedTargetRefOrQuery.type === 'query') {
-                const internalQuery = memoizedTargetRefOrQuery as InternalQuery;
-                if (internalQuery._query?.path) {
-                    path = internalQuery._query.path.canonicalString();
-                } else if ((memoizedTargetRefOrQuery as Query).ref) {
-                    path = (memoizedTargetRefOrQuery as Query).ref.path;
+            if (memoizedTargetRefOrQuery) {
+                if (memoizedTargetRefOrQuery.type === 'collection') {
+                    path = (memoizedTargetRefOrQuery as CollectionReference).path;
+                } else if (memoizedTargetRefOrQuery.type === 'query') {
+                    const q = memoizedTargetRefOrQuery as Query;
+                    // @ts-ignore The `_query` property is not in the public API but is a reliable fallback.
+                    if (q._query?.path?.canonicalString) {
+                         // @ts-ignore
+                        path = q._query.path.canonicalString();
+                    }
                 }
             }
         } catch (e) {
