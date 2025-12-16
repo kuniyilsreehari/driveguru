@@ -235,14 +235,14 @@ export default function AdminDashboardPage() {
     return collection(firestore, 'users');
   }, [firestore, isSuperAdmin]);
 
-  const reviewsCollectionRef = useMemoFirebase(() => {
+  const reviewsCollectionQuery = useMemoFirebase(() => {
     if (!firestore || !isSuperAdmin) return null;
     return query(collection(firestore, 'reviews'), orderBy('createdAt', 'desc'));
 }, [firestore, isSuperAdmin]);
 
 
   const { data: users, isLoading: isUsersLoading } = useCollection<ExpertUser>(usersCollectionRef);
-  const { data: reviews, isLoading: isReviewsLoading } = useCollection<Review>(reviewsCollectionRef);
+  const { data: reviews, isLoading: isReviewsLoading } = useCollection<Review>(reviewsCollectionQuery);
   
   const appConfigDocRef = useMemoFirebase(() => {
       if (!firestore) return null;
@@ -649,7 +649,7 @@ export default function AdminDashboardPage() {
                                 </TabsContent>
                                  <TabsContent value="rejected" className="mt-4">
                                     <ReviewTable reviews={rejectedReviews || []} onApprove={handleApproveReview} onReject={openReviewRejectDialog} />
-                                </TabsContent>
+                                 </TabsContent>
                             </Tabs>
                         )}
                     </CardContent>
@@ -695,6 +695,3 @@ export default function AdminDashboardPage() {
     </>
   );
 }
-
-    
-    
