@@ -440,27 +440,6 @@ function ExpertProfileContent() {
                         </div>
                     </CardContent>
                 </Card>
-
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-3">
-                            <MessageSquare />
-                            Customer Reviews
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-6">
-                        <ReviewsList expertId={expert.id} />
-                        <Separator />
-                        {user && user.uid !== expert.id ? (
-                            <ReviewForm expertId={expert.id} expertName={displayName} />
-                        ) : (
-                            <p className="text-sm text-muted-foreground text-center">
-                                {user ? "You cannot review your own profile." : "Please log in to leave a review."}
-                            </p>
-                        )}
-                    </CardContent>
-                </Card>
-
             </div>
         </div>
     );
