@@ -8,7 +8,7 @@ import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Loader2, Briefcase, ChevronLeft, MapPin, Building, Book, Calendar, Phone, Share2, UserCheck, Crown, Sparkles, AlertTriangle, Users, Copy, Mail } from 'lucide-react';
+import { Loader2, Briefcase, ChevronLeft, MapPin, Building, Book, Calendar, Phone, Share2, UserCheck, Crown, Sparkles, AlertTriangle, Users, Copy, Mail, UserX } from 'lucide-react';
 import { format } from 'date-fns';
 import {
   Dialog,
@@ -141,8 +141,10 @@ function VacanciesList() {
                                     {vacancy.isImmediate && (
                                         <Badge variant="destructive"><AlertTriangle className="mr-1 h-3 w-3" />Immediate</Badge>
                                     )}
-                                    {vacancy.isCompanyVerified && (
+                                    {vacancy.isCompanyVerified ? (
                                         <Badge variant="outline" className="border-green-500 text-green-500"><UserCheck className="mr-1 h-3 w-3" />Verified</Badge>
+                                    ) : (
+                                        <Badge variant="destructive"><UserX className="mr-1 h-3 w-3" />Unverified</Badge>
                                     )}
                                     {vacancy.companyTier === 'Premier' && (
                                         <Badge variant="outline" className="border-purple-500 text-purple-500"><Crown className="mr-1 h-3 w-3" />Premier</Badge>
