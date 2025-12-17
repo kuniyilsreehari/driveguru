@@ -97,12 +97,6 @@ export function Header() {
                   Featured
                 </Link>
               </Button>
-              <Button asChild variant="ghost">
-                <Link href="/reviews">
-                  <MessageSquare className="mr-2 h-4 w-4" />
-                  Reviews
-                </Link>
-              </Button>
               <div className="h-8 w-20" />
             </nav>
           </div>
@@ -143,11 +137,6 @@ export function Header() {
                             <Award className="mr-2 h-4 w-4" /> Featured
                         </Link>
                     </Button>
-                    <Button asChild variant="ghost" className="justify-start" onClick={() => setIsMobileMenuOpen(false)}>
-                        <Link href="/reviews">
-                            <MessageSquare className="mr-2 h-4 w-4" /> Reviews
-                        </Link>
-                    </Button>
                 </div>
             </SheetContent>
         </Sheet>
@@ -175,12 +164,6 @@ export function Header() {
                   <Award className="mr-2 h-4 w-4" />
                   Featured
                 </Link>
-            </Button>
-            <Button asChild variant="ghost">
-              <Link href="/reviews">
-                <MessageSquare className="mr-2 h-4 w-4" />
-                Reviews
-              </Link>
             </Button>
           </nav>
             
