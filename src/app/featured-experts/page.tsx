@@ -27,6 +27,16 @@ function FeaturedExpertsContent() {
 
     const { data: experts, isLoading } = useCollection<ExpertUser>(expertsQuery);
 
+    const sortedExperts = useMemo(() => {
+        if (!experts) return [];
+        return [...experts].sort((a, b) => {
+            const tierOrder = { 'Super Premier': 0, 'Premier': 1, 'Standard': 2 };
+            const aTier = a.tier || 'Standard';
+            const bTier = b.tier || 'Standard';
+            return tierOrder[aTier] - tierOrder[bTier];
+        });
+    }, [experts]);
+
     if (isLoading) {
         return (
             <div className="flex h-64 w-full items-center justify-center">
@@ -36,7 +46,7 @@ function FeaturedExpertsContent() {
         );
     }
     
-    if (!experts || experts.length === 0) {
+    if (!sortedExperts || sortedExperts.length === 0) {
         return (
             <div className="text-center py-16">
                 <h2 className="text-2xl font-semibold">No Featured Experts Found</h2>
@@ -47,7 +57,7 @@ function FeaturedExpertsContent() {
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {experts.map(expert => (
+            {sortedExperts.map(expert => (
                 <ExpertCard key={expert.id} expert={expert} />
             ))}
         </div>
