@@ -7,7 +7,7 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { User as UserIcon, Mail, Lock, Eye, EyeOff, Briefcase, MapPin, Phone, LocateIcon, Loader2, Building, Home, GraduationCap, Book } from "lucide-react";
+import { User as UserIcon, Mail, Lock, Eye, EyeOff, Briefcase, MapPin, Phone, LocateIcon, Loader2, Building, Home, GraduationCap, Book, ArrowRight } from "lucide-react";
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc, serverTimestamp } from 'firebase/firestore';
 
@@ -27,11 +27,12 @@ import { setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { Textarea } from "../ui/textarea";
+import { Card, CardDescription, CardHeader, CardTitle } from "../ui/card";
 
 const expertTypes = [
-    { name: "Freelancer", icon: <UserIcon className="w-8 h-8" /> },
-    { name: "Company", icon: <Building className="w-8 h-8" /> },
-    { name: "Authorized Pro", icon: <Briefcase className="w-8 h-8" /> },
+    { name: "Freelancer", icon: <UserIcon className="w-8 h-8" />, description: "Offer your individual skills and services directly to clients." },
+    { name: "Company", icon: <Building className="w-8 h-8" />, description: "Represent your business and manage company-wide talent." },
+    { name: "Authorized Pro", icon: <Briefcase className="w-8 h-8" />, description: "A professional authorized to represent or work for a company." },
 ]
 
 const formSchema = z.object({
@@ -296,128 +297,41 @@ export function RegistrationForm() {
           name="role"
           render={({ field }) => (
             <FormItem>
-                <FormLabel>Are you an Individual or representing a company?</FormLabel>
-                <FormControl>
-                    <div className="grid grid-cols-3 gap-2 text-center">
-                        {expertTypes.map((type) => (
-                            <div 
-                                key={type.name} 
-                                className={cn(
-                                    "p-2 border rounded-lg flex flex-col items-center justify-center space-y-1 cursor-pointer transition-colors h-24",
-                                    field.value === type.name 
-                                        ? "bg-accent/20 border-primary" 
-                                        : "hover:bg-accent/10 hover:border-accent"
-                                )}
-                                onClick={() => form.setValue('role', type.name, { shouldValidate: true })}
-                            >
-                                {type.icon}
-                                <span className="text-xs font-semibold">{type.name}</span>
-                            </div>
-                        ))}
-                    </div>
-                </FormControl>
-                <FormMessage />
+              <FormLabel>First, select your role</FormLabel>
+              <FormControl>
+                  <div className="grid grid-cols-1 gap-4">
+                      {expertTypes.map((type) => (
+                          <Card 
+                              key={type.name} 
+                              className={cn(
+                                  "cursor-pointer transition-all duration-300 transform hover:-translate-y-1",
+                                  field.value === type.name 
+                                      ? "border-primary ring-2 ring-primary" 
+                                      : "hover:border-primary/50"
+                              )}
+                              onClick={() => form.setValue('role', type.name, { shouldValidate: true })}
+                          >
+                              <CardHeader className="flex flex-row items-center gap-4 p-4">
+                                  <div className={cn("p-3 rounded-full", field.value === type.name ? "bg-primary/10 text-primary" : "bg-secondary text-secondary-foreground")}>
+                                      {type.icon}
+                                  </div>
+                                  <div>
+                                      <CardTitle className="text-lg">{type.name}</CardTitle>
+                                      <CardDescription className="text-xs">{type.description}</CardDescription>
+                                  </div>
+                                  <ArrowRight className={cn("ml-auto h-5 w-5 text-muted-foreground transition-transform", field.value === type.name && "translate-x-1")}/>
+                              </CardHeader>
+                          </Card>
+                      ))}
+                  </div>
+              </FormControl>
+              <FormMessage />
             </FormItem>
           )}
         />
-        {(selectedRole === 'Company' || selectedRole === 'Authorized Pro') && (
-          <>
-            <FormField
-              control={form.control}
-              name="companyName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Company Name</FormLabel>
-                  <div className="relative">
-                    <Building className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <FormControl>
-                      <Input placeholder="Your Company Inc." {...field} className="pl-10" />
-                    </FormControl>
-                  </div>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-             <div className="grid grid-cols-2 gap-4">
-                <FormField
-                control={form.control}
-                name="firstName"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Contact First Name</FormLabel>
-                    <div className="relative">
-                        <UserIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                        <FormControl>
-                        <Input placeholder="John" {...field} className="pl-10" />
-                        </FormControl>
-                    </div>
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
-                <FormField
-                control={form.control}
-                name="lastName"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Contact Last Name</FormLabel>
-                    <div className="relative">
-                        <UserIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                        <FormControl>
-                        <Input placeholder="Doe" {...field} className="pl-10" />
-                        </FormControl>
-                    </div>
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
-            </div>
-             <FormField
-              control={form.control}
-              name="department"
-              render={({ field }) => (
-                <FormItem>
-                    <FormLabel>Department</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select a department" />
-                            </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                            <SelectItem value="Engineering">Engineering</SelectItem>
-                            <SelectItem value="Sales">Sales</SelectItem>
-                            <SelectItem value="Marketing">Marketing</SelectItem>
-                            <SelectItem value="HR">Human Resources</SelectItem>
-                            <SelectItem value="Support">Support</SelectItem>
-                            <SelectItem value="Other">Other</SelectItem>
-                        </SelectContent>
-                    </Select>
-                    <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="address"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Address & Building Details</FormLabel>
-                   <div className="relative">
-                    <Home className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <FormControl>
-                      <Textarea placeholder="Enter the full company address" {...field} className="pl-10" />
-                    </FormControl>
-                  </div>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </>
-        )}
         
-        {selectedRole && (
-          <>
+        {selectedRole === 'Freelancer' && (
+          <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
                 <FormField
                 control={form.control}
@@ -581,6 +495,280 @@ export function RegistrationForm() {
                     name="pincode"
                     render={({ field }) => (
                         <FormItem className="mt-2 text-center">
+                          <FormControl><Input placeholder="Pincode" {...field} /></FormControl>
+                           <FormLabel className="text-xs text-muted-foreground">Pincode</FormLabel>
+                           {isFetchingPincode && <Loader2 className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin" />}
+                           <FormMessage />
+                        </FormItem>
+                    )}
+                    />
+                </div>
+            </div>
+          </div>
+        )}
+        
+        {(selectedRole === 'Company' || selectedRole === 'Authorized Pro') && (
+          <div className="space-y-4">
+            <FormField
+              control={form.control}
+              name="companyName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Company Name</FormLabel>
+                  <div className="relative">
+                    <Building className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <FormControl>
+                      <Input placeholder="Your Company Inc." {...field} className="pl-10" />
+                    </FormControl>
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+             <div className="grid grid-cols-2 gap-4">
+                <FormField
+                control={form.control}
+                name="firstName"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Contact First Name</FormLabel>
+                    <div className="relative">
+                        <UserIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                        <FormControl>
+                        <Input placeholder="John" {...field} className="pl-10" />
+                        </FormControl>
+                    </div>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+                <FormField
+                control={form.control}
+                name="lastName"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Contact Last Name</FormLabel>
+                    <div className="relative">
+                        <UserIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                        <FormControl>
+                        <Input placeholder="Doe" {...field} className="pl-10" />
+                        </FormControl>
+                    </div>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+            </div>
+             <FormField
+              control={form.control}
+              name="department"
+              render={({ field }) => (
+                <FormItem>
+                    <FormLabel>Department</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select a department" />
+                            </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                            <SelectItem value="Engineering">Engineering</SelectItem>
+                            <SelectItem value="Sales">Sales</SelectItem>
+                            <SelectItem value="Marketing">Marketing</SelectItem>
+                            <SelectItem value="HR">Human Resources</SelectItem>
+                            <SelectItem value="Support">Support</SelectItem>
+                            <SelectItem value="Other">Other</SelectItem>
+                        </SelectContent>
+                    </Select>
+                    <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="address"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Address & Building Details</FormLabel>
+                   <div className="relative">
+                    <Home className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <FormControl>
+                      <Textarea placeholder="Enter the full company address" {...field} className="pl-10" />
+                    </FormControl>
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        )}
+        
+        {selectedRole && (selectedRole === 'Freelancer' ? (
+          <>
+            <FormField
+                control={form.control}
+                name="qualification"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Highest Qualification</FormLabel>
+                    <div className="relative">
+                        <GraduationCap className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                        <FormControl>
+                        <Input placeholder="e.g. B.Tech in Computer Science" {...field} className="pl-10" />
+                        </FormControl>
+                    </div>
+                    <FormMessage />
+                    </FormItem>
+                )}
+            />
+
+            <FormField
+                control={form.control}
+                name="skills"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Skills (comma-separated)</FormLabel>
+                    <div className="relative">
+                        <Book className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                        <FormControl>
+                        <Input placeholder="e.g. React, Node.js, Plumbing" {...field} className="pl-10" />
+                        </FormControl>
+                    </div>
+                    <FormMessage />
+                    </FormItem>
+                )}
+            />
+          </>
+        ) : (
+          <div className="space-y-4">
+             <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Email</FormLabel>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <FormControl>
+                      <Input
+                        type="email"
+                        placeholder="name@example.com"
+                        {...field}
+                        className="pl-10"
+                      />
+                    </FormControl>
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="password"
+              render={({ field }) => (
+                <FormItem>
+                    <div className="flex items-center">
+                        <FormLabel>Password</FormLabel>
+                    </div>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <FormControl>
+                      <Input type={showPassword ? "text" : "password"} placeholder="••••••••" {...field} className="pl-10 pr-10" />
+                    </FormControl>
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+                    >
+                      {showPassword ? <EyeOff /> : <Eye />}
+                    </button>
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-start">
+                <FormItem>
+                    <FormLabel>Phone Number</FormLabel>
+                    <div className="flex items-center gap-2">
+                        <FormField
+                            control={form.control}
+                            name="countryCode"
+                            render={({ field: countryCodeField }) => (
+                            <Select
+                                onValueChange={countryCodeField.onChange}
+                                defaultValue={countryCodeField.value}
+                            >
+                                <FormControl>
+                                <SelectTrigger className="w-[80px]">
+                                    <SelectValue placeholder="Code" />
+                                </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                <SelectItem value="+91">IN</SelectItem>
+                                <SelectItem value="+1">USA</SelectItem>
+                                <SelectItem value="+44">UK</SelectItem>
+                                </SelectContent>
+                            </Select>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="phoneNumber"
+                            render={({ field }) => (
+                            <div className="relative flex-grow">
+                                <FormControl>
+                                <Input placeholder="555 123 4567" {...field} />
+                                </FormControl>
+                            </div>
+                            )}
+                        />
+                    </div>
+                    <FormMessage />
+                </FormItem>
+                <div className="space-y-2">
+                    <div className="flex items-center justify-between mb-2">
+                        <FormLabel>Location</FormLabel>
+                        <Button type="button" variant="outline" size="sm" onClick={handleDetectLocation} disabled={isDetectingLocation}>
+                        {isDetectingLocation ? (
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        ) : (
+                            <LocateIcon className="mr-2 h-4 w-4" />
+                        )}
+                        Detect
+                        </Button>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                        <FormField
+                            control={form.control}
+                            name="city"
+                            render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>District / City</FormLabel>
+                                <FormControl><Input placeholder="e.g., Kozhikode" {...field} /></FormControl>
+                                <FormMessage />
+                            </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="state"
+                            render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>State</FormLabel>
+                                <FormControl><Input placeholder="e.g. Kerala" {...field} /></FormControl>
+                                <FormMessage />
+                            </FormItem>
+                            )}
+                        />
+                    </div>
+                     <FormField
+                    control={form.control}
+                    name="pincode"
+                    render={({ field }) => (
+                        <FormItem className="mt-2 text-center">
                         <div className="relative">
                             <FormControl><Input placeholder="Pincode" {...field} /></FormControl>
                             {isFetchingPincode && <Loader2 className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin" />}
@@ -592,53 +780,16 @@ export function RegistrationForm() {
                     />
                 </div>
             </div>
-            
-            {selectedRole === 'Freelancer' && (
-                <>
-                <FormField
-                    control={form.control}
-                    name="qualification"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Highest Qualification</FormLabel>
-                        <div className="relative">
-                            <GraduationCap className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                            <FormControl>
-                            <Input placeholder="e.g. B.Tech in Computer Science" {...field} className="pl-10" />
-                            </FormControl>
-                        </div>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />
+          </div>
+        ))}
 
-                <FormField
-                    control={form.control}
-                    name="skills"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Skills (comma-separated)</FormLabel>
-                        <div className="relative">
-                            <Book className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                            <FormControl>
-                            <Input placeholder="e.g. React, Node.js, Plumbing" {...field} className="pl-10" />
-                            </FormControl>
-                        </div>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />
-              </>
-            )}
-
-
-            <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
-              {form.formState.isSubmitting ? 'Creating Account...' : <>
-                <Briefcase className="mr-2 h-4 w-4" /> Sign Up as Expert
-              </>}
-            </Button>
-          </>
-        )}
+        {selectedRole &&
+          <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
+            {form.formState.isSubmitting ? 'Creating Account...' : <>
+              <Briefcase className="mr-2 h-4 w-4" /> Sign Up as Expert
+            </>}
+          </Button>
+        }
 
         <div className="mt-4 text-center text-sm">
             Already have an account?{" "}
