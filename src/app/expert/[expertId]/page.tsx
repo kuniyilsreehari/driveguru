@@ -48,6 +48,153 @@ type ExpertUserProfile = {
     tier?: 'Standard' | 'Premier' | 'Super Premier';
 };
 
+type Review = {
+    id: string;
+    reviewerName: string;
+    rating: number;
+    comment: string;
+    createdAt: { seconds: number, nanoseconds: number };
+};
+
+function ReviewForm({ expertId, expertName }: { expertId: string, expertName: string }) {
+    const { user } = useUser();
+    const firestore = useFirestore();
+    const { toast } = useToast();
+    const [rating, setRating] = useState(0);
+    const [comment, setComment] = useState('');
+    const [reviewerName, setReviewerName] = useState(user?.displayName || '');
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    if (!user) return null;
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!firestore) return;
+        if (comment.length < 10) {
+            toast({ variant: 'destructive', title: 'Comment too short', description: 'Please provide more details in your review.' });
+            return;
+        }
+        if (rating === 0) {
+            toast({ variant: 'destructive', title: 'No rating selected', description: 'Please select a star rating.' });
+            return;
+        }
+
+        setIsSubmitting(true);
+        const reviewsCollectionRef = collection(firestore, 'reviews');
+        const newReviewData = {
+            expertId,
+            expertName,
+            reviewerName: reviewerName || 'Anonymous',
+            rating,
+            comment,
+            status: 'pending',
+            createdAt: serverTimestamp(),
+            userId: user.uid,
+        };
+
+        try {
+            await addDocumentNonBlocking(reviewsCollectionRef, newReviewData);
+            toast({ title: 'Review Submitted', description: 'Your review is pending approval. Thank you!' });
+            setComment('');
+            setRating(0);
+            setReviewerName(user.displayName || '');
+        } catch (error) {
+            console.error("Error submitting review:", error);
+            toast({ variant: 'destructive', title: 'Submission Failed', description: 'An unexpected error occurred.' });
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    return (
+        <form onSubmit={handleSubmit} className="space-y-4 rounded-lg border bg-card text-card-foreground shadow-sm p-6">
+            <h4 className="font-semibold text-lg">Leave a Review</h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                 <div className="space-y-2">
+                    <Label htmlFor="reviewerName">Your Name</Label>
+                    <Input id="reviewerName" value={reviewerName} onChange={(e) => setReviewerName(e.target.value)} placeholder="Your name" />
+                </div>
+                <div className="space-y-2">
+                    <Label>Your Rating</Label>
+                    <div className="flex items-center gap-1">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                            <Star
+                                key={star}
+                                className={cn("h-6 w-6 cursor-pointer transition-colors", star <= rating ? "text-yellow-400 fill-yellow-400" : "text-gray-400")}
+                                onClick={() => setRating(star)}
+                            />
+                        ))}
+                    </div>
+                </div>
+            </div>
+            <div className="space-y-2">
+                <Label htmlFor="comment">Your Comment</Label>
+                <Textarea id="comment" value={comment} onChange={(e) => setComment(e.target.value)} placeholder={`Share your experience with ${expertName}...`} />
+            </div>
+            <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {isSubmitting ? 'Submitting...' : <><Send className="mr-2 h-4 w-4" /> Submit Review</>}
+            </Button>
+        </form>
+    );
+}
+
+function ReviewsList({ expertId }: { expertId: string }) {
+    const firestore = useFirestore();
+
+    const reviewsQuery = useMemoFirebase(() => {
+        if (!firestore || !expertId) return null;
+        return query(
+            collection(firestore, 'reviews'),
+            where('expertId', '==', expertId),
+            where('status', '==', 'approved'),
+            orderBy('createdAt', 'desc')
+        );
+    }, [firestore, expertId]);
+
+    const { data: reviews, isLoading } = useCollection<Review>(reviewsQuery);
+
+    if (isLoading) {
+        return (
+            <div className="flex items-center gap-2 text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span>Loading reviews...</span>
+            </div>
+        );
+    }
+
+    if (!reviews || reviews.length === 0) {
+        return <p className="text-muted-foreground text-sm">No approved reviews yet for this expert.</p>;
+    }
+
+    return (
+        <div className="space-y-6">
+            {reviews.map((review) => (
+                <div key={review.id} className="flex items-start gap-4">
+                    <Avatar className="h-10 w-10">
+                        <AvatarFallback>{review.reviewerName.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1">
+                        <div className="flex items-center justify-between">
+                            <p className="font-semibold">{review.reviewerName}</p>
+                            <span className="text-xs text-muted-foreground">
+                                {formatDistanceToNow(new Date(review.createdAt.seconds * 1000), { addSuffix: true })}
+                            </span>
+                        </div>
+                         <div className="flex items-center gap-1 mt-1">
+                            {[...Array(5)].map((_, i) => (
+                                <Star key={i} className={`h-4 w-4 ${i < review.rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`} />
+                            ))}
+                        </div>
+                        <p className="text-sm text-muted-foreground mt-2">{review.comment}</p>
+                    </div>
+                </div>
+            ))}
+        </div>
+    );
+}
+
+
 function ExpertProfileContent() {
     const params = useParams();
     const expertId = params.expertId as string;
@@ -291,6 +438,26 @@ function ExpertProfileContent() {
                                 </div>
                             </div>
                         </div>
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-3">
+                            <MessageSquare />
+                            Customer Reviews
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                        <ReviewsList expertId={expert.id} />
+                        <Separator />
+                        {user && user.uid !== expert.id ? (
+                            <ReviewForm expertId={expert.id} expertName={displayName} />
+                        ) : (
+                            <p className="text-sm text-muted-foreground text-center">
+                                {user ? "You cannot review your own profile." : "Please log in to leave a review."}
+                            </p>
+                        )}
                     </CardContent>
                 </Card>
 
