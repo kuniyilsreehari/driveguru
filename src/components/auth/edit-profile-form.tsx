@@ -8,8 +8,6 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { User as UserIcon, Mail, MapPin, Phone, LocateIcon, Loader2, Building, Briefcase, IndianRupee, Calendar, Book, School, GraduationCap, Info, Sparkles, Upload, Home } from "lucide-react";
 import { doc } from 'firebase/firestore';
-import { getStorage, ref, uploadString, getDownloadURL } from 'firebase/storage';
-import { v4 as uuidv4 } from 'uuid';
 
 import { Button } from "@/components/ui/button";
 import {
@@ -298,31 +296,24 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
           const ctx = canvas.getContext('2d');
           ctx?.drawImage(img, 0, 0, width, height);
           dataUrl = canvas.toDataURL(file.type);
+          
+          form.setValue('photoUrl', dataUrl, { shouldValidate: true });
 
-          // Upload to Firebase Storage
-          try {
-            const storage = getStorage();
-            const storageRef = ref(storage, `profileImages/${user.uid}/${uuidv4()}`);
-            const snapshot = await uploadString(storageRef, dataUrl, 'data_url');
-            const downloadURL = await getDownloadURL(snapshot.ref);
-            
-            form.setValue('photoUrl', downloadURL, { shouldValidate: true });
-            toast({
-              title: "Image Uploaded",
-              description: "Your new profile picture has been saved.",
-            });
-          } catch (error) {
-            console.error("Error uploading image: ", error);
-            toast({
-              variant: "destructive",
-              title: "Upload Failed",
-              description: "Could not upload the image. Please try again.",
-            });
-          } finally {
-            setIsUploading(false);
-          }
+          toast({
+            title: "Image Ready",
+            description: "Your new profile picture is ready. Click 'Save Changes' to apply it.",
+          });
+          setIsUploading(false);
         };
         img.src = e.target?.result as string;
+      };
+      reader.onerror = () => {
+        setIsUploading(false);
+        toast({
+          variant: "destructive",
+          title: "Upload Failed",
+          description: "Could not read the image file.",
+        });
       };
       reader.readAsDataURL(file);
     }
@@ -369,7 +360,7 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
                 <div className="flex items-center gap-2 mt-2">
                     <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()} disabled={isUploading}>
                         {isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
-                        {isUploading ? 'Uploading...' : 'Upload Image'}
+                        {isUploading ? 'Processing...' : 'Upload Image'}
                     </Button>
                     <p className="text-xs text-muted-foreground">PNG, JPG, GIF.</p>
                     <FormControl>
@@ -755,3 +746,5 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
     </Form>
   );
 }
+
+    
