@@ -32,6 +32,7 @@ type AppConfig = {
 function HomePageContent() {
     const [searchQuery, setSearchQuery] = useState('');
     const [location, setLocation] = useState('');
+    const [locationName, setLocationName] = useState('');
     const [maxRate, setMaxRate] = useState<number | null>(null);
     const [isDetecting, setIsDetecting] = useState(false);
     const [showVerifiedOnly, setShowVerifiedOnly] = useState(false);
@@ -83,24 +84,21 @@ function HomePageContent() {
                     const address = data.address;
                     const city = address.city || address.town || address.village || address.hamlet;
                     const state = address.state;
-                    const pincode = address.postcode;
 
-                    let detectedLocationParts = [];
-                    if (city) detectedLocationParts.push(city);
-                    if (state) detectedLocationParts.push(state);
-                    if (pincode) detectedLocationParts.push(pincode);
-
-                    const detectedLocation = detectedLocationParts.join(', ');
+                    let detectedLocation = city || state;
+                    let displayName = [city, state].filter(Boolean).join(', ');
 
                     if (detectedLocation) {
                         setLocation(detectedLocation);
+                        setLocationName(displayName);
                         toast({
                             title: 'Location Detected',
-                            description: `Your location has been set to ${detectedLocation}.`,
+                            description: `Your location has been set to ${displayName}.`,
                         });
                     } else {
                         const coords = `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
                         setLocation(coords);
+                        setLocationName(coords);
                          toast({
                             title: 'Coordinates Set',
                             description: `We could not find address details. Using lat/lon.`,
@@ -109,6 +107,7 @@ function HomePageContent() {
                 } catch (apiError) {
                     const coords = `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
                     setLocation(coords);
+                    setLocationName(coords);
                     toast({
                         variant: 'destructive',
                         title: 'Could not fetch location name.',
@@ -136,6 +135,9 @@ function HomePageContent() {
         }
         if (location) {
             queryParams.set('location', location);
+        }
+        if (locationName) {
+            queryParams.set('locationName', locationName);
         }
         if (showVerifiedOnly) {
             queryParams.set('verified', 'true');
@@ -165,6 +167,7 @@ function HomePageContent() {
             }
             if (result.location) {
                 queryParams.set('location', result.location);
+                queryParams.set('locationName', result.location);
             }
             if (result.isVerified) {
                 queryParams.set('verified', 'true');
@@ -265,7 +268,10 @@ function HomePageContent() {
                                                 placeholder="Enter a location" 
                                                 className="pl-10"
                                                 value={location}
-                                                onChange={(e) => setLocation(e.target.value)}
+                                                onChange={(e) => {
+                                                    setLocation(e.target.value);
+                                                    setLocationName(e.target.value);
+                                                }}
                                             />
                                         </div>
                                         <Button variant="outline" onClick={handleDetectLocation} disabled={isDetecting}>
