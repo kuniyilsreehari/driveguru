@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { User as UserIcon, LogOut, LayoutDashboard, MessageSquare, Home, Award, Briefcase, Moon, Sun, Menu } from 'lucide-react';
+import { User as UserIcon, LogOut, LayoutDashboard, MessageSquare, Home, Award, Briefcase, Moon, Sun, Menu, Download } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useTheme } from 'next-themes';
@@ -33,6 +33,35 @@ export function Header() {
   const [mounted, setMounted] = useState(false);
   const { setTheme, theme } = useTheme();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [installPrompt, setInstallPrompt] = useState<Event | null>(null);
+
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault();
+      setInstallPrompt(e);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
+  }, []);
+
+  const handleInstallClick = () => {
+    if (!installPrompt) {
+      return;
+    }
+    (installPrompt as any).prompt();
+    (installPrompt as any).userChoice.then((choiceResult: { outcome: 'accepted' | 'dismissed' }) => {
+      if (choiceResult.outcome === 'accepted') {
+        console.log('User accepted the install prompt');
+      } else {
+        console.log('User dismissed the install prompt');
+      }
+      setInstallPrompt(null);
+    });
+  };
 
   useEffect(() => {
     setMounted(true);
@@ -200,6 +229,12 @@ export function Header() {
               </DropdownMenu>
             ) : (
               <nav className='flex items-center'>
+                {installPrompt && (
+                  <Button onClick={handleInstallClick} variant="outline" size="sm" className="mr-2">
+                    <Download className="mr-2 h-4 w-4" />
+                    Install
+                  </Button>
+                )}
                 <Button asChild variant="ghost">
                   <Link href="/login">Login</Link>
                 </Button>
