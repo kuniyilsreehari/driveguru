@@ -305,12 +305,12 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file && firestore) {
+    if (file) {
       setIsUploading(true);
       const reader = new FileReader();
-      reader.onload = async (e) => {
+      reader.onload = (e) => {
         const img = document.createElement('img');
-        img.onload = async () => {
+        img.onload = () => {
           let dataUrl: string;
           // Resize image if it's large
           const canvas = document.createElement('canvas');
@@ -532,7 +532,7 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
             />
         </div>
         
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <FormItem>
                 <FormLabel>Phone Number</FormLabel>
                 <div className="flex items-center gap-2">
@@ -800,3 +800,5 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
     </Form>
   );
 }
+
+    
