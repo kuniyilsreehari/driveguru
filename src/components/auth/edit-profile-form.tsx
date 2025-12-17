@@ -309,34 +309,13 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
       setIsUploading(true);
       const reader = new FileReader();
       reader.onload = (e) => {
-        const img = document.createElement('img');
-        img.onload = () => {
-          let dataUrl: string;
-          // Resize image if it's large
-          const canvas = document.createElement('canvas');
-          const MAX_WIDTH = 400;
-          let width = img.width;
-          let height = img.height;
-
-          if (width > MAX_WIDTH) {
-            height *= MAX_WIDTH / width;
-            width = MAX_WIDTH;
-          }
-          canvas.width = width;
-          canvas.height = height;
-          const ctx = canvas.getContext('2d');
-          ctx?.drawImage(img, 0, 0, width, height);
-          dataUrl = canvas.toDataURL(file.type);
-          
-          form.setValue('photoUrl', dataUrl, { shouldValidate: true });
-
-          toast({
+        const dataUrl = e.target?.result as string;
+        form.setValue('photoUrl', dataUrl, { shouldValidate: true });
+        toast({
             title: "Image Ready",
             description: "Your new profile picture is ready. Click 'Save Changes' to apply it.",
-          });
-          setIsUploading(false);
-        };
-        img.src = e.target?.result as string;
+        });
+        setIsUploading(false);
       };
       reader.onerror = () => {
         setIsUploading(false);
@@ -586,8 +565,8 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
                     name="city"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>City</FormLabel>
-                        <FormControl><Input placeholder="City" {...field} /></FormControl>
+                        <FormLabel>District / City</FormLabel>
+                        <FormControl><Input placeholder="e.g., Kozhikode / Mumbai" {...field} /></FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -803,5 +782,3 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
     </Form>
   );
 }
-
-    
