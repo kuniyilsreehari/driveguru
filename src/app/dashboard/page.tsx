@@ -7,7 +7,7 @@ import { signOut } from 'firebase/auth';
 import { doc, collection, query, where } from 'firebase/firestore';
 import { useUser, useAuth, useFirestore, useDoc, useCollection, useMemoFirebase, updateDocumentNonBlocking } from '@/firebase';
 import { Button } from '@/components/ui/button';
-import { LogOut, Briefcase, Loader, Edit, UserCheck, XCircle, MapPin, IndianRupee, Calendar, Book, GraduationCap, School, Info, User as UserIcon, Check, Power, Building, PlusCircle, Crown, Sparkles, Lock, Home, ArrowUpCircle, ShieldCheck } from 'lucide-react';
+import { LogOut, Briefcase, Loader, Edit, UserCheck, XCircle, MapPin, IndianRupee, Calendar, Book, GraduationCap, School, Info, User as UserIcon, Check, Power, Building, PlusCircle, Crown, Sparkles, Lock, Home, ArrowUpCircle, ShieldCheck, ExternalLink } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import {
   Dialog,
@@ -57,6 +57,10 @@ type ExpertUserProfile = {
     isAvailable?: boolean;
     companyId?: string;
     tier?: 'Standard' | 'Premier' | 'Super Premier';
+};
+
+type AppConfig = {
+    superPremierPaymentLink?: string;
 };
 
 function CompanyVacancies({ userProfile }: { userProfile: ExpertUserProfile }) {
@@ -147,7 +151,9 @@ function CompanyVacancies({ userProfile }: { userProfile: ExpertUserProfile }) {
 }
 
 
-function UpgradeDialog({ tier }: { tier: 'Premier' | 'Super Premier' }) {
+function UpgradeDialog({ tier, paymentLink }: { tier: 'Premier' | 'Super Premier', paymentLink: string | undefined }) {
+    const hasLink = paymentLink && paymentLink.trim() !== '';
+
     return (
         <Dialog>
             <DialogTrigger asChild>
@@ -160,11 +166,22 @@ function UpgradeDialog({ tier }: { tier: 'Premier' | 'Super Premier' }) {
                 <DialogHeader>
                     <DialogTitle>Upgrade to {tier}</DialogTitle>
                     <DialogDescription>
-                        To upgrade your plan, please contact our support team. We&apos;ll get you set up right away!
+                        {hasLink 
+                            ? "You will be redirected to our secure payment gateway to complete your purchase. Your account will be upgraded automatically upon successful payment."
+                            : "To upgrade your plan, please contact our support team. We'll get you set up right away!"
+                        }
                     </DialogDescription>
                 </DialogHeader>
                 <div className="py-4">
-                    <p className="font-semibold">Contact Email: <a href="mailto:support@geotrack.pro" className="text-primary underline">support@geotrack.pro</a></p>
+                    {hasLink ? (
+                        <Button asChild className="w-full">
+                            <a href={paymentLink} target="_blank" rel="noopener noreferrer">
+                                Proceed to Payment <ExternalLink className="ml-2 h-4 w-4" />
+                            </a>
+                        </Button>
+                    ) : (
+                        <p className="font-semibold">Contact Email: <a href="mailto:support@geotrack.pro" className="text-primary underline">support@geotrack.pro</a></p>
+                    )}
                 </div>
                 <DialogFooter>
                     <DialogTrigger asChild>
@@ -177,6 +194,17 @@ function UpgradeDialog({ tier }: { tier: 'Premier' | 'Super Premier' }) {
 }
 
 function PlanManagement({ userProfile }: { userProfile: ExpertUserProfile }) {
+    const firestore = useFirestore();
+
+    const appConfigDocRef = useMemoFirebase(() => {
+        if (!firestore) return null;
+        return doc(firestore, 'app_config', 'homepage');
+    }, [firestore]);
+
+    const { data: appConfig, isLoading: isAppConfigLoading } = useDoc<AppConfig>(appConfigDocRef);
+    
+    // For now, let's assume one payment link. A real app might have different links per plan.
+    const paymentLink = appConfig?.superPremierPaymentLink;
 
     const PlanCard = ({ title, icon, description, features, current, children, tier }: { title: string; icon: React.ReactNode; description: string; features: string[]; current?: boolean; children?: React.ReactNode; tier?: 'Premier' | 'Super Premier' }) => (
         <Card className={cn("flex flex-col", current && "border-primary ring-2 ring-primary")}>
@@ -230,7 +258,7 @@ function PlanManagement({ userProfile }: { userProfile: ExpertUserProfile }) {
                         current={userProfile.tier === 'Premier'}
                         tier="Premier"
                      >
-                        {userProfile.tier === 'Standard' && <UpgradeDialog tier="Premier" />}
+                        {userProfile.tier === 'Standard' && <UpgradeDialog tier="Premier" paymentLink={paymentLink} />}
                      </PlanCard>
                      <PlanCard
                         title="Super Premier"
@@ -240,7 +268,7 @@ function PlanManagement({ userProfile }: { userProfile: ExpertUserProfile }) {
                         current={userProfile.tier === 'Super Premier'}
                         tier="Super Premier"
                      >
-                        {userProfile.tier !== 'Super Premier' && <UpgradeDialog tier="Super Premier" />}
+                        {userProfile.tier !== 'Super Premier' && <UpgradeDialog tier="Super Premier" paymentLink={paymentLink} />}
                     </PlanCard>
                 </div>
             </CardContent>
@@ -497,5 +525,3 @@ export default function ExpertDashboardPage() {
     </div>
   );
 }
-
-    
