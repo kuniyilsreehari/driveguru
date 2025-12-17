@@ -2,7 +2,7 @@
 "use client";
 
 import * as React from "react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -93,6 +93,8 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [isDetectingLocation, setIsDetectingLocation] = useState(false);
+  const [isFetchingPincode, setIsFetchingPincode] = useState(false);
+
 
   const extractPhoneNumberParts = (fullNumber?: string) => {
     if (!fullNumber) return { countryCode: "+91", phoneNumber: "" };
@@ -139,6 +141,44 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
 
   const selectedRole = form.watch("role");
   const photoUrl = form.watch("photoUrl");
+  const pincodeValue = form.watch("pincode");
+
+  useEffect(() => {
+    if (pincodeValue && pincodeValue.length === 6) {
+      const fetchPincodeData = async () => {
+        setIsFetchingPincode(true);
+        try {
+          const response = await fetch(`https://api.postalpincode.in/pincode/${pincodeValue}`);
+          const data = await response.json();
+          if (data && data[0] && data[0].Status === 'Success') {
+            const postOffice = data[0].PostOffice[0];
+            form.setValue('city', postOffice.District, { shouldValidate: true });
+            form.setValue('state', postOffice.State, { shouldValidate: true });
+            toast({
+              title: "Location Fetched",
+              description: "City and State have been auto-filled from your pincode.",
+            });
+          } else {
+            toast({
+              variant: "destructive",
+              title: "Invalid Pincode",
+              description: "Could not find location details for this pincode.",
+            });
+          }
+        } catch (error) {
+          toast({
+            variant: "destructive",
+            title: "Pincode Lookup Failed",
+            description: "Could not fetch location details. Please enter manually.",
+          });
+        } finally {
+          setIsFetchingPincode(false);
+        }
+      };
+      fetchPincodeData();
+    }
+  }, [pincodeValue, form, toast]);
+
   
   const handleDetectLocation = () => {
     if (!navigator.geolocation) {
@@ -566,7 +606,10 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
                     name="pincode"
                     render={({ field }) => (
                       <FormItem>
-                        <FormControl><Input placeholder="Pincode" {...field} /></FormControl>
+                        <div className="relative">
+                          <FormControl><Input placeholder="Pincode" {...field} /></FormControl>
+                          {isFetchingPincode && <Loader2 className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin" />}
+                        </div>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -757,7 +800,3 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
     </Form>
   );
 }
-
-    
-
-    
