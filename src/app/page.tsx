@@ -81,7 +81,7 @@ function HomePageContent() {
                 const data = await response.json();
                 
                 const address = data.address;
-                const detectedCity = address.city || address.town || address.village || '';
+                const detectedCity = address.city || address.town || address.village || address.city_district || '';
                 const detectedState = address.state || '';
                 const detectedPincode = address.postcode || '';
 
