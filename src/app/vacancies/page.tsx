@@ -131,7 +131,7 @@ function VacanciesList() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {vacancies.map(vacancy => {
                 const callLink = `tel:${vacancy.contactPhone}`;
-                const canShowCallButton = vacancy.contactPhone && vacancy.isCompanyVerified && (vacancy.companyTier === 'Premier' || vacancy.companyTier === 'Super Premier');
+                const canShowCallButton = vacancy.contactPhone && (vacancy.companyTier === 'Premier' || vacancy.companyTier === 'Super Premier');
 
                 return (
                     <Card key={vacancy.id} id={vacancy.id} className="flex flex-col">
