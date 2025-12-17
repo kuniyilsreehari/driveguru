@@ -83,13 +83,17 @@ function HomePageContent() {
                     const data = await response.json();
                     
                     const address = data.address;
-                    setCity(address.city || address.town || address.village || '');
-                    setState(address.state || '');
-                    setPincode(address.postcode || '');
+                    const detectedCity = address.city || address.town || address.village || '';
+                    const detectedState = address.state || '';
+                    const detectedPincode = address.postcode || '';
+
+                    setCity(detectedCity);
+                    setState(detectedState);
+                    setPincode(detectedPincode);
 
                     toast({
                         title: 'Location Detected',
-                        description: `Your location has been set to ${[address.city, address.state].filter(Boolean).join(', ')}.`,
+                        description: `Your location has been set to ${[detectedCity, detectedState].filter(Boolean).join(', ')}.`,
                     });
 
                 } catch (apiError) {
@@ -141,7 +145,8 @@ function HomePageContent() {
                 queryParams.set('q', result.searchQuery);
             }
             if (result.location) {
-                // For now, AI location search will populate the city field.
+                // AI location search will populate the city field.
+                // This could be enhanced to parse city/state/pincode.
                 queryParams.set('city', result.location);
             }
             if (result.isVerified) {
@@ -233,8 +238,8 @@ function HomePageContent() {
                                 </div>
                             </div>
                             
-                            <div>
-                                <div className="flex items-center justify-between mb-2">
+                            <div className="space-y-4">
+                                <div className="flex items-center justify-between">
                                     <Label>Location</Label>
                                     <Button variant="outline" size="sm" onClick={handleDetectLocation} disabled={isDetecting}>
                                         {isDetecting ? (
@@ -247,15 +252,15 @@ function HomePageContent() {
                                 </div>
                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                     <div>
-                                        <Label htmlFor="city">City</Label>
+                                        <Label htmlFor="city" className="text-xs text-muted-foreground">City</Label>
                                         <Input id="city" placeholder="e.g., Mumbai" value={city} onChange={(e) => setCity(e.target.value)} />
                                     </div>
                                     <div>
-                                        <Label htmlFor="state">State</Label>
+                                        <Label htmlFor="state" className="text-xs text-muted-foreground">State</Label>
                                         <Input id="state" placeholder="e.g., Maharashtra" value={state} onChange={(e) => setState(e.target.value)} />
                                     </div>
                                     <div>
-                                        <Label htmlFor="pincode">Pincode</Label>
+                                        <Label htmlFor="pincode" className="text-xs text-muted-foreground">Pincode</Label>
                                         <Input id="pincode" placeholder="e.g., 400001" value={pincode} onChange={(e) => setPincode(e.target.value)} />
                                     </div>
                                 </div>
