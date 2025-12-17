@@ -190,7 +190,7 @@ const ReviewTable = ({ reviews, onApprove, onReject }: { reviews: Review[], onAp
                                 </div>
                             </TableCell>
                             <TableCell className="max-w-xs truncate">{review.comment}</TableCell>
-                            <TableCell>{formatDistanceToNow(review.createdAt.toDate(), { addSuffix: true })}</TableCell>
+                            <TableCell>{review.createdAt ? formatDistanceToNow(review.createdAt.toDate(), { addSuffix: true }) : 'pending...'}</TableCell>
                             <TableCell className="text-right">
                                 {review.status === 'pending' ? (
                                     <div className="flex gap-2 justify-end">
@@ -234,7 +234,7 @@ const VacancyTable = ({ vacancies, onDelete }: { vacancies: Vacancy[], onDelete:
                           <TableCell>{vacancy.companyName}</TableCell>
                           <TableCell>{vacancy.location}</TableCell>
                           <TableCell><Badge variant="secondary">{vacancy.employmentType}</Badge></TableCell>
-                          <TableCell>{formatDistanceToNow(vacancy.postedAt.toDate(), { addSuffix: true })}</TableCell>
+                          <TableCell>{vacancy.postedAt ? formatDistanceToNow(vacancy.postedAt.toDate(), { addSuffix: true }) : 'pending...'}</TableCell>
                           <TableCell className="text-right">
                               <Button variant="destructive" size="sm" onClick={() => onDelete(vacancy)}>
                                   <Trash2 className="mr-2 h-4 w-4" />Delete
