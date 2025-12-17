@@ -9,7 +9,7 @@ import { useUser, useFirestore, useDoc, useMemoFirebase, useAuth, useCollection 
 import { deleteDocumentNonBlocking, updateDocumentNonBlocking, setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, CheckCircle2, UserCheck, UserX, Crown, Sparkles, User as UserIcon, Settings, Save, Briefcase, Building, MessageSquare, ThumbsUp, ThumbsDown, Star, Search, PlusCircle, Mail, Edit3, Link as LinkIcon } from 'lucide-react';
+import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, CheckCircle2, UserCheck, UserX, Crown, Sparkles, User as UserIcon, Settings, Save, Briefcase, Building, MessageSquare, ThumbsUp, ThumbsDown, Star, Search, PlusCircle, Mail, Edit3, Link as LinkIcon, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -385,17 +385,18 @@ export default function AdminDashboardPage() {
   
   useEffect(() => {
     if (!isAppConfigLoading) {
-      if (appConfig?.featuredExpertsLimit) {
-        setFeaturedExpertsLimit(appConfig.featuredExpertsLimit);
-      }
-      if (appConfig?.superPremierPaymentLink) {
-        setPaymentLink(appConfig.superPremierPaymentLink);
-      }
-      if (appConfig === null && appConfigDocRef) {
-        setDocumentNonBlocking(appConfigDocRef, { featuredExpertsLimit: 3, superPremierPaymentLink: '' }, { merge: true });
+      if (appConfig) {
+        setFeaturedExpertsLimit(appConfig.featuredExpertsLimit || 3);
+        setPaymentLink(appConfig.superPremierPaymentLink || '');
+      } else if (appConfigDocRef) {
+        // Document doesn't exist, create it with defaults but don't overwrite local state if user is typing
+        setDocumentNonBlocking(appConfigDocRef, { 
+            featuredExpertsLimit: featuredExpertsLimit, 
+            superPremierPaymentLink: paymentLink 
+        }, { merge: true });
       }
     }
-  }, [appConfig, isAppConfigLoading, appConfigDocRef]);
+  }, [appConfig, isAppConfigLoading, appConfigDocRef, featuredExpertsLimit, paymentLink]);
 
   const verifiedCount = usersData?.filter(u => u.verified).length || 0;
   const unverifiedCount = usersData?.filter(u => !u.verified).length || 0;
