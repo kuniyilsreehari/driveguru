@@ -345,6 +345,8 @@ export default function AdminDashboardPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<string | null>(null);
 
+  const [localUsers, setLocalUsers] = useState<ExpertUser[] | null>(null);
+
 
   const superAdminDocRef = useMemoFirebase(() => {
     if (!user) return null;
@@ -380,6 +382,12 @@ export default function AdminDashboardPage() {
   }, [firestore]);
   
   const { data: appConfig, isLoading: isAppConfigLoading } = useDoc<AppConfig>(appConfigDocRef);
+
+  useEffect(() => {
+    if (users) {
+      setLocalUsers(users);
+    }
+  }, [users]);
   
   useEffect(() => {
     if (!isAppConfigLoading) {
@@ -392,10 +400,10 @@ export default function AdminDashboardPage() {
   }, [appConfig, isAppConfigLoading, appConfigDocRef]);
 
 
-  const verifiedCount = users?.filter(u => u.verified).length || 0;
-  const unverifiedCount = users?.filter(u => !u.verified).length || 0;
-  const premierCount = users?.filter(u => u.tier === 'Premier').length || 0;
-  const superPremierCount = users?.filter(u => u.tier === 'Super Premier').length || 0;
+  const verifiedCount = localUsers?.filter(u => u.verified).length || 0;
+  const unverifiedCount = localUsers?.filter(u => !u.verified).length || 0;
+  const premierCount = localUsers?.filter(u => u.tier === 'Premier').length || 0;
+  const superPremierCount = localUsers?.filter(u => u.tier === 'Super Premier').length || 0;
 
 
   useEffect(() => {
@@ -424,6 +432,10 @@ export default function AdminDashboardPage() {
     if (!selectedUser || !firestore) return;
     const userDocRef = doc(firestore, 'users', selectedUser.id);
     deleteDocumentNonBlocking(userDocRef);
+    
+    // Optimistic UI update
+    setLocalUsers(prevUsers => prevUsers ? prevUsers.filter(u => u.id !== selectedUser.id) : null);
+    
     toast({
         title: "User Deleted",
         description: `${selectedUser.firstName} ${selectedUser.lastName} has been removed.`,
@@ -573,9 +585,10 @@ export default function AdminDashboardPage() {
   const isLoading = isUserLoading || isRoleLoading;
   const areTablesLoading = isSuperAdmin && (isUsersLoading || isReviewsLoading || isVacanciesLoading);
   
-  const sortedUsers = users ? [...users].sort((a, b) => (a.firstName || '').localeCompare(b.firstName || '')) : [];
+  const sortedUsers = localUsers ? [...localUsers].sort((a, b) => (a.firstName || '').localeCompare(b.firstName || '')) : [];
 
   const filteredUsers = sortedUsers.filter(user => {
+      if (!user) return false;
       const searchMatch = searchQuery.length > 0 ? 
             (user.firstName?.toLowerCase().includes(searchQuery.toLowerCase()) || 
              user.lastName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -655,7 +668,7 @@ export default function AdminDashboardPage() {
                   <Users className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{users?.length || 0}</div>
+                  <div className="text-2xl font-bold">{localUsers?.length || 0}</div>
                   <p className="text-xs text-muted-foreground">Total registered users</p>
                 </CardContent>
               </Card>
@@ -838,7 +851,7 @@ export default function AdminDashboardPage() {
                                 <DialogDescription>Manually add a review for any expert in the system.</DialogDescription>
                               </DialogHeader>
                               <AddReviewForm
-                                experts={users || []}
+                                experts={localUsers || []}
                                 onSuccess={() => setIsAddReviewDialogOpen(false)}
                               />
                             </DialogContent>
