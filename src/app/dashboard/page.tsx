@@ -7,7 +7,7 @@ import { signOut } from 'firebase/auth';
 import { doc, collection, query, where } from 'firebase/firestore';
 import { useUser, useAuth, useFirestore, useDoc, useCollection, useMemoFirebase, updateDocumentNonBlocking } from '@/firebase';
 import { Button } from '@/components/ui/button';
-import { LogOut, Briefcase, Loader, Edit, UserCheck, XCircle, MapPin, IndianRupee, Calendar, Book, GraduationCap, School, Info, User as UserIcon, Check, Power, Building, PlusCircle, Crown, Sparkles, Lock, Home } from 'lucide-react';
+import { LogOut, Briefcase, Loader, Edit, UserCheck, XCircle, MapPin, IndianRupee, Calendar, Book, GraduationCap, School, Info, User as UserIcon, Check, Power, Building, PlusCircle, Crown, Sparkles, Lock, Home, ArrowUpCircle, ShieldCheck } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import {
   Dialog,
@@ -146,6 +146,107 @@ function CompanyVacancies({ userProfile }: { userProfile: ExpertUserProfile }) {
   );
 }
 
+
+function UpgradeDialog({ tier }: { tier: 'Premier' | 'Super Premier' }) {
+    return (
+        <Dialog>
+            <DialogTrigger asChild>
+                <Button size="sm" className="mt-auto w-full">
+                    <ArrowUpCircle className="mr-2 h-4 w-4" />
+                    Upgrade to {tier}
+                </Button>
+            </DialogTrigger>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Upgrade to {tier}</DialogTitle>
+                    <DialogDescription>
+                        To upgrade your plan, please contact our support team. We&apos;ll get you set up right away!
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="py-4">
+                    <p className="font-semibold">Contact Email: <a href="mailto:support@geotrack.pro" className="text-primary underline">support@geotrack.pro</a></p>
+                </div>
+                <DialogFooter>
+                    <DialogTrigger asChild>
+                        <Button variant="outline">Close</Button>
+                    </DialogTrigger>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    )
+}
+
+function PlanManagement({ userProfile }: { userProfile: ExpertUserProfile }) {
+
+    const PlanCard = ({ title, icon, description, features, current, children, tier }: { title: string; icon: React.ReactNode; description: string; features: string[]; current?: boolean; children?: React.ReactNode; tier?: 'Premier' | 'Super Premier' }) => (
+        <Card className={cn("flex flex-col", current && "border-primary ring-2 ring-primary")}>
+            <CardHeader className="text-center">
+                <div className={cn("mx-auto w-fit rounded-full p-3 mb-2", current ? "bg-primary/10" : "bg-secondary")}>
+                    {icon}
+                </div>
+                <CardTitle>{title}</CardTitle>
+                <CardDescription>{description}</CardDescription>
+            </CardHeader>
+            <CardContent className="flex-grow space-y-3 text-sm">
+                <ul className="space-y-2">
+                    {features.map((feature, i) => (
+                        <li key={i} className="flex items-start gap-2">
+                            <Check className="h-4 w-4 mt-0.5 text-green-500 flex-shrink-0" />
+                            <span>{feature}</span>
+                        </li>
+                    ))}
+                </ul>
+            </CardContent>
+            <CardFooter>
+                {current ? (
+                    <Button variant="outline" disabled className="w-full"><ShieldCheck className="mr-2 h-4 w-4" /> Current Plan</Button>
+                ) : (
+                    children
+                )}
+            </CardFooter>
+        </Card>
+    )
+
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle>Manage Your Plan</CardTitle>
+                <CardDescription>Upgrade your plan to unlock powerful new features and increase your visibility.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <PlanCard
+                        title="Standard"
+                        icon={<UserIcon className="h-6 w-6" />}
+                        description="Your current free plan."
+                        features={["Public profile listing", "Receive contact from users", "Basic search visibility"]}
+                        current={userProfile.tier === 'Standard'}
+                    />
+                     <PlanCard
+                        title="Premier"
+                        icon={<Crown className="h-6 w-6" />}
+                        description="Get noticed and build trust."
+                        features={["All Standard features", "AI-Powered Search access", "Post job vacancies", "Downloadable PDF profile"]}
+                        current={userProfile.tier === 'Premier'}
+                        tier="Premier"
+                     >
+                        {userProfile.tier === 'Standard' && <UpgradeDialog tier="Premier" />}
+                     </PlanCard>
+                     <PlanCard
+                        title="Super Premier"
+                        icon={<Sparkles className="h-6 w-6" />}
+                        description="Maximum visibility and tools."
+                        features={["All Premier features", "Top placement in search results", "Featured expert listing"]}
+                        current={userProfile.tier === 'Super Premier'}
+                        tier="Super Premier"
+                     >
+                        {userProfile.tier !== 'Super Premier' && <UpgradeDialog tier="Super Premier" />}
+                    </PlanCard>
+                </div>
+            </CardContent>
+        </Card>
+    )
+}
 
 export default function ExpertDashboardPage() {
   const { user, isUserLoading } = useUser();
@@ -387,6 +488,8 @@ export default function ExpertDashboardPage() {
                 </p>
             </CardFooter>
         </Card>
+
+        <PlanManagement userProfile={userProfile} />
         
         {userProfile.role === 'Company' && <CompanyVacancies userProfile={userProfile} />}
 
