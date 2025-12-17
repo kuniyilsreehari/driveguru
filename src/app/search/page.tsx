@@ -44,6 +44,7 @@ function SearchResults() {
     const state = searchParams.get('state');
     const pincode = searchParams.get('pincode');
     const locationQuery = searchParams.get('location');
+    const roleQuery = searchParams.get('role');
     const verified = searchParams.get('verified') === 'true';
     const available = searchParams.get('available') === 'true';
     const maxRateParam = searchParams.get('maxRate');
@@ -99,6 +100,10 @@ function SearchResults() {
             constraints.push(where('isAvailable', '==', true));
         }
         
+        if (roleQuery) {
+            constraints.push(where('role', '==', roleQuery));
+        }
+
         // We will query with basic filters first, then apply text and location search on the client.
         if (constraints.length > 0) {
             return query(collection(firestore, 'users'), ...constraints);
@@ -106,7 +111,7 @@ function SearchResults() {
 
         return query(collection(firestore, 'users'));
 
-    }, [firestore, verified, available]);
+    }, [firestore, verified, available, roleQuery]);
 
     const { data: allExperts, isLoading } = useCollection<ExpertUser>(expertsQuery);
     
@@ -231,10 +236,12 @@ function SearchResults() {
             if (pincode) locationParts.push(pincode);
         }
         
-        if (searchQueryParam) {
+        if (roleQuery) {
+            titleParts.push(<span key="role" className="text-primary">{roleQuery}s</span>);
+        } else if (searchQueryParam) {
              titleParts.push(<span key="query">Results for &quot;<span className="text-primary">{searchQueryParam}</span>&quot;</span>);
         } else {
-             titleParts.push(<span key="all">Showing experts</span>);
+             titleParts.push(<span key="all">Showing all experts</span>);
         }
 
         if (radius) {
@@ -291,5 +298,3 @@ export default function SearchPage() {
         </div>
     )
 }
-
-    

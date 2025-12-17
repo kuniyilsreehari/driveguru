@@ -163,6 +163,9 @@ function HomePageContent() {
             if (result.location) {
                 queryParams.set('location', result.location);
             }
+            if (result.role) {
+                queryParams.set('role', result.role);
+            }
             if (result.isVerified) {
                 queryParams.set('verified', 'true');
             }
@@ -262,7 +265,7 @@ function HomePageContent() {
                                 </div>
                             </div>
                             
-                            <div className="space-y-4">
+                            <div className="space-y-2">
                                 <div className="flex items-center justify-between">
                                     <Label>Location</Label>
                                     <Button variant="outline" size="sm" onClick={handleDetectLocation} disabled={isDetecting}>
@@ -368,5 +371,3 @@ export default function TalentSearchPage() {
         </Suspense>
     );
 }
-
-    
