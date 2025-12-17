@@ -48,17 +48,6 @@ type ExpertUserProfile = {
     tier?: 'Standard' | 'Premier' | 'Super Premier';
 };
 
-type Review = {
-    id: string;
-    expertId: string;
-    expertName: string;
-    reviewerName: string;
-    rating: number;
-    comment: string;
-    createdAt: { seconds: number; nanoseconds: number; };
-    status: 'pending' | 'approved' | 'rejected';
-};
-
 function ExpertProfileContent() {
     const params = useParams();
     const expertId = params.expertId as string;
@@ -68,36 +57,13 @@ function ExpertProfileContent() {
     const profileCardRef = useRef<HTMLDivElement>(null);
     const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
 
-    const [isReviewOpen, setIsReviewOpen] = useState(false);
-    const [rating, setRating] = useState(0);
-    const [hoverRating, setHoverRating] = useState(0);
-    const [reviewerName, setReviewerName] = useState('');
-    const [comment, setComment] = useState('');
-
     const expertDocRef = useMemoFirebase(() => {
         if (!firestore || !expertId) return null;
         return doc(firestore, 'users', expertId);
     }, [firestore, expertId]);
 
-    const reviewsQuery = useMemoFirebase(() => {
-        if (!firestore || !expertId) return null;
-        return query(
-            collection(firestore, 'reviews'), 
-            where('expertId', '==', expertId), 
-            where('status', '==', 'approved'),
-            orderBy('createdAt', 'desc')
-        );
-    }, [firestore, expertId]);
 
     const { data: expert, isLoading: isLoadingExpert } = useDoc<ExpertUserProfile>(expertDocRef);
-    const { data: reviews, isLoading: isLoadingReviews } = useCollection<Review>(reviewsQuery);
-
-    const averageRating = useMemo(() => {
-        if (!reviews || reviews.length === 0) return 0;
-        const total = reviews.reduce((acc, review) => acc + review.rating, 0);
-        return total / reviews.length;
-    }, [reviews]);
-
 
     const getInitials = (firstName?: string, lastName?: string) => {
         if (firstName && lastName) {
@@ -154,47 +120,6 @@ function ExpertProfileContent() {
             setIsGeneratingPdf(false);
         }
     };
-
-
-    const handleSubmitReview = async () => {
-        if (!firestore) {
-            toast({ variant: 'destructive', title: "Error", description: "Database connection not found." });
-            return;
-        }
-
-        if (!user) {
-            toast({ variant: 'destructive', title: "Not logged in", description: "You must be logged in to leave a review." });
-            return;
-        }
-
-        if (reviewerName.trim() === '' || comment.trim() === '' || rating === 0) {
-            toast({ variant: 'destructive', title: "Missing Information", description: "Please fill out all fields to submit a review." });
-            return;
-        }
-        
-        const reviewsCollectionRef = collection(firestore, 'reviews');
-        
-        const reviewData = {
-            expertId: expertId,
-            expertName: displayName,
-            reviewerId: user.uid,
-            reviewerName: reviewerName,
-            rating: rating,
-            comment: comment,
-            createdAt: serverTimestamp(),
-            status: 'pending'
-        };
-        
-        await addDocumentNonBlocking(reviewsCollectionRef, reviewData);
-
-        toast({ title: "Review Submitted", description: "Your review is pending approval. Thank you!" });
-        // Reset form
-        setRating(0);
-        setReviewerName('');
-        setComment('');
-        setIsReviewOpen(false);
-    }
-
 
     if (isLoadingExpert || isUserLoading) {
         return (
@@ -295,12 +220,6 @@ function ExpertProfileContent() {
                                     {expert.tier === 'Premier' && <Badge variant="outline" className="border-purple-500 text-purple-500"><Crown className="mr-1 h-3 w-3" /> Premier</Badge>}
                                     {expert.tier === 'Super Premier' && <Badge variant="outline" className="border-blue-500 text-blue-500"><Sparkles className="mr-1 h-3 w-3" /> Super Premier</Badge>}
                                 </div>
-                                <div className="flex items-center gap-1 mt-2">
-                                    {[...Array(5)].map((_, i) => (
-                                        <Star key={i} className={cn("h-4 w-4", i < Math.round(averageRating) ? "text-yellow-400 fill-yellow-400" : "text-gray-400")} />
-                                    ))}
-                                    <span className="text-xs text-muted-foreground ml-1">({reviews?.length || 0} review{reviews?.length === 1 ? '' : 's'})</span>
-                                </div>
                                  <div className="mt-4">
                                      {expert.verified ? (
                                         <Button asChild variant="secondary"><Link href={`/expert/${expert.id}/book`}><Calendar className="mr-2 h-4 w-4" /> Book Appointment</Link></Button>
@@ -375,112 +294,6 @@ function ExpertProfileContent() {
                     </CardContent>
                 </Card>
 
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2 text-xl"><MessageSquare className="h-5 w-5" /> Customer Reviews</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <Collapsible open={isReviewOpen} onOpenChange={setIsReviewOpen} className="space-y-6">
-                            <div className="p-6 bg-card-foreground/5 dark:bg-card-foreground/10 border rounded-lg">
-                                <CollapsibleTrigger asChild>
-                                    <div className="flex justify-between items-center cursor-pointer">
-                                        <h4 className="text-lg font-bold">Write your review for {displayName}</h4>
-                                        <Button variant="outline"><Edit2 className="mr-2 h-4 w-4" /> {isReviewOpen ? 'Cancel' : 'Leave a Review'}</Button>
-                                    </div>
-                                </CollapsibleTrigger>
-                                <CollapsibleContent className="pt-6">
-                                    {user && expert.verified ? (
-                                        <div className="space-y-4">
-                                            <div>
-                                                <Label htmlFor={`reviewerName-${expert.id}`}>Your Name</Label>
-                                                <Input 
-                                                    id={`reviewerName-${expert.id}`}
-                                                    placeholder="e.g. Jane Doe" 
-                                                    value={reviewerName}
-                                                    onChange={(e) => setReviewerName(e.target.value)}
-                                                />
-                                            </div>
-                                            <div>
-                                                <Label>Rating</Label>
-                                                <div className="flex items-center gap-1 mt-1">
-                                                    {[1, 2, 3, 4, 5].map(star => (
-                                                        <Star
-                                                            key={star}
-                                                            className={cn(
-                                                                "h-6 w-6 cursor-pointer",
-                                                                (hoverRating >= star || rating >= star)
-                                                                    ? "text-yellow-400 fill-yellow-400"
-                                                                    : "text-gray-400"
-                                                            )}
-                                                            onMouseEnter={() => setHoverRating(star)}
-                                                            onMouseLeave={() => setHoverRating(0)}
-                                                            onClick={() => setRating(star)}
-                                                        />
-                                                    ))}
-                                                </div>
-                                            </div>
-                                            <div>
-                                                <Label htmlFor={`comment-${expert.id}`}>Comment</Label>
-                                                <Textarea
-                                                    id={`comment-${expert.id}`}
-                                                    placeholder="Share your experience..."
-                                                    value={comment}
-                                                    onChange={(e) => setComment(e.target.value)}
-                                                />
-                                            </div>
-                                            <Button className="w-full" onClick={handleSubmitReview}>
-                                                <Send className="mr-2 h-4 w-4" /> Submit Review
-                                            </Button>
-                                        </div>
-                                    ) : (
-                                        <div className="text-center text-muted-foreground p-4 border-2 border-dashed rounded-lg">
-                                            <Lock className="h-6 w-6 mx-auto mb-2"/>
-                                            <p>{!user ? "You must be logged in to leave a review." : "Reviewing is locked until this expert is verified."}</p>
-                                            {!user && <Button asChild variant="secondary" className="mt-4"><Link href="/login">Login to Review</Link></Button>}
-                                        </div>
-                                    )}
-                                </CollapsibleContent>
-                            </div>
-                            
-                            {isLoadingReviews ? (
-                                <div className="flex justify-center items-center p-8">
-                                    <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                                    <p className="ml-3 text-muted-foreground">Loading reviews...</p>
-                                </div>
-                            ) : reviews && reviews.length > 0 ? (
-                                <div className="space-y-4">
-                                    {reviews.map(review => (
-                                        <Card key={review.id} className="bg-background/50">
-                                            <CardContent className="p-4">
-                                                <div className="flex justify-between items-start">
-                                                    <div>
-                                                        <p className="font-semibold">{review.reviewerName}</p>
-                                                        <p className="text-xs text-muted-foreground">
-                                                            {formatDistanceToNow(new Date(review.createdAt.seconds * 1000), { addSuffix: true })}
-                                                        </p>
-                                                    </div>
-                                                    <div className="flex items-center gap-1">
-                                                        {[...Array(5)].map((_, i) => (
-                                                            <Star
-                                                                key={i}
-                                                                className={`h-4 w-4 ${i < review.rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-400'}`}
-                                                            />
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                                <p className="text-sm text-muted-foreground mt-2">&quot;{review.comment}&quot;</p>
-                                            </CardContent>
-                                        </Card>
-                                    ))}
-                                </div>
-                            ) : (
-                                <div className="text-center py-8 text-muted-foreground">
-                                    <p>No approved reviews for this expert yet. Be the first!</p>
-                                </div>
-                            )}
-                        </Collapsible>
-                    </CardContent>
-                </Card>
             </div>
         </div>
     );

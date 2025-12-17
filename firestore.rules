@@ -128,7 +128,7 @@ service cloud.firestore {
      * Reviews
      * ===================================================== */
     match /reviews/{reviewId} {
-        allow get, list: if true;
+        allow get, list: if isSuperAdmin();
         allow create: if request.auth != null
             && request.resource.data.status == 'pending';
         allow update: if isSuperAdmin()
