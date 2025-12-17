@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 type Review = {
   id: string;
   comment: string;
+  reviewerName: string;
   // Add other review fields as needed for display
   [key: string]: any;
 };
