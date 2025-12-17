@@ -54,7 +54,7 @@ function HomePageContent() {
 
     const expertsQuery = useMemoFirebase(() => {
         if (!firestore || isAppConfigLoading) return null;
-        return query(collection(firestore, 'users'), where('verified', '==', true), limit(featuredExpertsLimit));
+        return query(collection(firestore, 'users'), where('tier', '==', 'Super Premier'), limit(featuredExpertsLimit));
     }, [firestore, isAppConfigLoading, featuredExpertsLimit]);
     
 
