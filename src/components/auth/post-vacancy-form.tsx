@@ -1,6 +1,7 @@
 
 "use client";
 
+import { useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -19,11 +20,12 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useFirestore, useUser, useDoc, useMemoFirebase } from "@/firebase";
-import { addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
+import { addDocumentNonBlocking, updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Briefcase, Book, MapPin, FileText, Send, Building, Mail, Phone, Users, CheckSquare } from "lucide-react";
 import { v4 as uuidv4 } from 'uuid';
 import { Checkbox } from "../ui/checkbox";
+import type { Vacancy } from "@/app/vacancies/page";
 
 const formSchema = z.object({
   title: z.string().min(5, { message: "Title must be at least 5 characters." }),
@@ -46,18 +48,24 @@ interface PostVacancyFormProps {
     companyName?: string;
     companyEmail?: string;
     contactPhone?: string;
+    vacancy?: Vacancy;
 }
 
-export function PostVacancyForm({ onSuccess, isAdmin = false, companyId: propCompanyId, companyName: propCompanyName, companyEmail: propCompanyEmail, contactPhone: propContactPhone }: PostVacancyFormProps) {
+export function PostVacancyForm({ 
+    onSuccess, 
+    isAdmin = false, 
+    companyId: propCompanyId, 
+    companyName: propCompanyName, 
+    companyEmail: propCompanyEmail, 
+    contactPhone: propContactPhone,
+    vacancy 
+}: PostVacancyFormProps) {
   const { toast } = useToast();
   const firestore = useFirestore();
   const { user } = useUser();
   
-  // Get user profile to check tier and verification status
   const userDocRef = useMemoFirebase(() => {
     if(!user || !propCompanyId) return null;
-    // Assuming the user posting is the one associated with the companyId
-    const posterUser = Object.values(user).find(u => u.companyId === propCompanyId);
     return doc(firestore, 'users', user.uid);
   }, [user, firestore, propCompanyId]);
 
@@ -66,55 +74,110 @@ export function PostVacancyForm({ onSuccess, isAdmin = false, companyId: propCom
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      title: "",
-      description: "",
-      location: "",
-      employmentType: "Full-time",
-      skillsRequired: "",
-      companyName: propCompanyName || "",
-      companyEmail: propCompanyEmail || "",
-      contactPhone: propContactPhone || "",
-      positionsAvailable: 1,
-      isImmediate: false,
+      title: vacancy?.title || "",
+      description: vacancy?.description || "",
+      location: vacancy?.location || "",
+      employmentType: vacancy?.employmentType || "Full-time",
+      skillsRequired: vacancy?.skillsRequired || "",
+      companyName: vacancy?.companyName || propCompanyName || "",
+      companyEmail: vacancy?.companyEmail || propCompanyEmail || "",
+      contactPhone: vacancy?.contactPhone || propContactPhone || "",
+      positionsAvailable: vacancy?.positionsAvailable || 1,
+      isImmediate: vacancy?.isImmediate || false,
+      companyId: vacancy?.companyId || propCompanyId || "",
     },
   });
+
+  useEffect(() => {
+    if (vacancy) {
+        form.reset({
+            title: vacancy.title,
+            description: vacancy.description,
+            location: vacancy.location,
+            employmentType: vacancy.employmentType,
+            skillsRequired: vacancy.skillsRequired,
+            companyName: vacancy.companyName,
+            companyEmail: vacancy.companyEmail,
+            contactPhone: vacancy.contactPhone,
+            positionsAvailable: vacancy.positionsAvailable,
+            isImmediate: vacancy.isImmediate,
+            companyId: vacancy.companyId
+        });
+    }
+  }, [vacancy, form]);
+
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     if (!firestore) return;
     
-    const vacanciesCollectionRef = collection(firestore, 'vacancies');
-    
-    const vacancyData = {
-      ...values,
-      companyId: isAdmin ? values.companyId || uuidv4() : propCompanyId,
-      companyName: values.companyName,
-      companyEmail: values.companyEmail,
-      contactPhone: values.contactPhone,
-      isCompanyVerified: userProfile?.verified || false,
-      companyTier: userProfile?.tier || 'Standard',
-      postedAt: serverTimestamp(),
-    };
+    if (vacancy) {
+      // Update existing vacancy
+      const vacancyDocRef = doc(firestore, 'vacancies', vacancy.id);
+      try {
+        await updateDocumentNonBlocking(vacancyDocRef, values);
+        toast({
+          title: "Vacancy Updated",
+          description: "The job opening has been successfully updated.",
+        });
+        onSuccess();
+      } catch (error) {
+        console.error("Error updating vacancy:", error);
+        toast({
+          variant: "destructive",
+          title: "Update Failed",
+          description: "An unexpected error occurred. Please try again.",
+        });
+      }
 
-    try {
-      await addDocumentNonBlocking(vacanciesCollectionRef, vacancyData);
-      toast({
-        title: "Vacancy Posted",
-        description: "The new job opening has been successfully posted.",
-      });
-      onSuccess();
-    } catch (error) {
-      console.error("Error posting vacancy:", error);
-      toast({
-        variant: "destructive",
-        title: "Posting Failed",
-        description: "An unexpected error occurred. Please try again.",
-      });
+    } else {
+      // Create new vacancy
+      const vacanciesCollectionRef = collection(firestore, 'vacancies');
+      
+      const newVacancyData = {
+        ...values,
+        companyId: isAdmin ? values.companyId || uuidv4() : propCompanyId,
+        companyName: values.companyName,
+        companyEmail: values.companyEmail,
+        contactPhone: values.contactPhone,
+        isCompanyVerified: userProfile?.verified || false,
+        companyTier: userProfile?.tier || 'Standard',
+        postedAt: serverTimestamp(),
+      };
+
+      try {
+        await addDocumentNonBlocking(vacanciesCollectionRef, newVacancyData);
+        toast({
+          title: "Vacancy Posted",
+          description: "The new job opening has been successfully posted.",
+        });
+        onSuccess();
+      } catch (error) {
+        console.error("Error posting vacancy:", error);
+        toast({
+          variant: "destructive",
+          title: "Posting Failed",
+          description: "An unexpected error occurred. Please try again.",
+        });
+      }
     }
   }
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        {isAdmin && (
+            <FormField
+              control={form.control}
+              name="companyId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Company ID (for admin use)</FormLabel>
+                   <Input placeholder="Enter Company ID if it exists" {...field} />
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+        )}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <FormField
               control={form.control}
@@ -301,11 +364,11 @@ export function PostVacancyForm({ onSuccess, isAdmin = false, companyId: propCom
 
         <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
           {form.formState.isSubmitting ? (
-            'Posting...'
+            'Saving...'
           ) : (
             <>
               <Send className="mr-2 h-4 w-4" />
-              Post Vacancy
+              {vacancy ? 'Save Changes' : 'Post Vacancy'}
             </>
           )}
         </Button>

@@ -213,7 +213,7 @@ const ReviewTable = ({ reviews, onApprove, onReject }: { reviews: Review[], onAp
     )
 }
 
-const VacancyTable = ({ vacancies, onDelete }: { vacancies: Vacancy[], onDelete: (vacancy: Vacancy) => void }) => {
+const VacancyTable = ({ vacancies, onEdit, onDelete }: { vacancies: Vacancy[], onEdit: (vacancy: Vacancy) => void, onDelete: (vacancy: Vacancy) => void }) => {
   return (
       <Table>
           <TableHeader>
@@ -236,9 +236,14 @@ const VacancyTable = ({ vacancies, onDelete }: { vacancies: Vacancy[], onDelete:
                           <TableCell><Badge variant="secondary">{vacancy.employmentType}</Badge></TableCell>
                           <TableCell>{vacancy.postedAt ? formatDistanceToNow(vacancy.postedAt.toDate(), { addSuffix: true }) : 'pending...'}</TableCell>
                           <TableCell className="text-right">
-                              <Button variant="destructive" size="sm" onClick={() => onDelete(vacancy)}>
-                                  <Trash2 className="mr-2 h-4 w-4" />Delete
-                              </Button>
+                              <div className="flex gap-2 justify-end">
+                                  <Button variant="outline" size="sm" onClick={() => onEdit(vacancy)}>
+                                    <Edit className="mr-2 h-4 w-4" />Edit
+                                  </Button>
+                                  <Button variant="destructive" size="sm" onClick={() => onDelete(vacancy)}>
+                                      <Trash2 className="mr-2 h-4 w-4" />Delete
+                                  </Button>
+                              </div>
                           </TableCell>
                       </TableRow>
                   ))
@@ -262,9 +267,12 @@ export default function AdminDashboardPage() {
   const [isReviewRejectDialogOpen, setIsReviewRejectDialogOpen] = useState(false);
   const [isVacancyDeleteDialogOpen, setIsVacancyDeleteDialogOpen] = useState(false);
   const [isVacancyPostDialogOpen, setIsVacancyPostDialogOpen] = useState(false);
+  const [isVacancyEditDialogOpen, setIsVacancyEditDialogOpen] = useState(false);
+
   const [selectedUser, setSelectedUser] = useState<ExpertUser | null>(null);
   const [selectedReview, setSelectedReview] = useState<Review | null>(null);
   const [selectedVacancy, setSelectedVacancy] = useState<Vacancy | null>(null);
+
   const [featuredExpertsLimit, setFeaturedExpertsLimit] = useState(3);
   const [isSavingSettings, setIsSavingSettings] = useState(false);
 
@@ -421,6 +429,11 @@ export default function AdminDashboardPage() {
     setIsReviewRejectDialogOpen(false);
     setSelectedReview(null);
   };
+  
+  const openVacancyEditDialog = (vacancy: Vacancy) => {
+      setSelectedVacancy(vacancy);
+      setIsVacancyEditDialogOpen(true);
+  }
 
   const openVacancyDeleteDialog = (vacancy: Vacancy) => {
       setSelectedVacancy(vacancy);
@@ -767,7 +780,7 @@ export default function AdminDashboardPage() {
                                 <p className="ml-3 text-muted-foreground">Loading vacancies...</p>
                               </div>
                         ) : (
-                            <VacancyTable vacancies={vacancies || []} onDelete={openVacancyDeleteDialog} />
+                            <VacancyTable vacancies={vacancies || []} onEdit={openVacancyEditDialog} onDelete={openVacancyDeleteDialog} />
                         )}
                     </CardContent>
                   </Card>
@@ -825,6 +838,25 @@ export default function AdminDashboardPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={isVacancyEditDialogOpen} onOpenChange={setIsVacancyEditDialogOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>Edit Vacancy</DialogTitle>
+            <DialogDescription>Update the details for this job opening.</DialogDescription>
+          </DialogHeader>
+          {selectedVacancy && (
+            <PostVacancyForm
+              vacancy={selectedVacancy}
+              onSuccess={() => {
+                setIsVacancyEditDialogOpen(false);
+                setSelectedVacancy(null);
+              }}
+              isAdmin={true}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
