@@ -129,8 +129,7 @@ service cloud.firestore {
      * ===================================================== */
     match /reviews/{reviewId} {
         allow get, list: if isSuperAdmin();
-        allow create: if request.auth != null
-            && request.resource.data.status == 'pending';
+        allow create: if (isSuperAdmin()) || (isSignedIn() && request.resource.data.status == 'pending');
         allow update: if isSuperAdmin()
             && request.resource.data.diff(resource.data).changedKeys().hasOnly(['status'])
             && request.resource.data.status in ['approved', 'rejected'];
