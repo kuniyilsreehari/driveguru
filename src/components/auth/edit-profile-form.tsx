@@ -92,6 +92,7 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
   const [isSuggestingSkills, setIsSuggestingSkills] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const [isDetectingLocation, setIsDetectingLocation] = useState(false);
 
   const extractPhoneNumberParts = (fullNumber?: string) => {
     if (!fullNumber) return { countryCode: "+91", phoneNumber: "" };
@@ -138,6 +139,60 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
 
   const selectedRole = form.watch("role");
   const photoUrl = form.watch("photoUrl");
+  
+  const handleDetectLocation = () => {
+    if (!navigator.geolocation) {
+      toast({
+        variant: 'destructive',
+        title: 'Geolocation Not Supported',
+        description: 'Your browser does not support geolocation.',
+      });
+      return;
+    }
+
+    setIsDetectingLocation(true);
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        try {
+          const { latitude, longitude } = position.coords;
+          const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
+          const data = await response.json();
+          const address = data.address;
+
+          if (address.city || address.town || address.village) {
+            form.setValue('city', address.city || address.town || address.village, { shouldValidate: true });
+          }
+          if (address.state) {
+            form.setValue('state', address.state, { shouldValidate: true });
+          }
+          if (address.postcode) {
+            form.setValue('pincode', address.postcode, { shouldValidate: true });
+          }
+          
+          toast({
+            title: 'Location Detected',
+            description: 'Your city, state, and pincode have been filled.',
+          });
+        } catch (error) {
+          toast({
+            variant: 'destructive',
+            title: 'Detection Failed',
+            description: 'Could not fetch address details. Please enter manually.',
+          });
+        } finally {
+          setIsDetectingLocation(false);
+        }
+      },
+      (error) => {
+        setIsDetectingLocation(false);
+        toast({
+          variant: 'destructive',
+          title: 'Location Access Denied',
+          description: error.message,
+        });
+      }
+    );
+  };
 
   const handleGenerateAboutMe = async () => {
     setIsGeneratingAboutMe(true);
@@ -473,40 +528,50 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
                 </div>
                 <FormMessage />
             </FormItem>
-            <div className="grid grid-cols-3 gap-2">
-                <FormField
-                  control={form.control}
-                  name="city"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>City</FormLabel>
-                      <FormControl><Input placeholder="Mumbai" {...field} /></FormControl>
-                      <FormMessage />
-                    </FormItem>
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <FormLabel>Location</FormLabel>
+                <Button type="button" variant="outline" size="sm" onClick={handleDetectLocation} disabled={isDetectingLocation}>
+                  {isDetectingLocation ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <LocateIcon className="mr-2 h-4 w-4" />
                   )}
-                />
-                 <FormField
-                  control={form.control}
-                  name="state"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>State</FormLabel>
-                      <FormControl><Input placeholder="Maharashtra" {...field} /></FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                 <FormField
-                  control={form.control}
-                  name="pincode"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Pincode</FormLabel>
-                      <FormControl><Input placeholder="400001" {...field} /></FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                  Detect
+                </Button>
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                  <FormField
+                    control={form.control}
+                    name="city"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormControl><Input placeholder="City" {...field} /></FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="state"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormControl><Input placeholder="State" {...field} /></FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="pincode"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormControl><Input placeholder="Pincode" {...field} /></FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+              </div>
             </div>
         </div>
 
