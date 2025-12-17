@@ -580,12 +580,13 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
                   Detect
                 </Button>
               </div>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-2 gap-2">
                   <FormField
                     control={form.control}
                     name="city"
                     render={({ field }) => (
                       <FormItem>
+                        <FormLabel>City</FormLabel>
                         <FormControl><Input placeholder="City" {...field} /></FormControl>
                         <FormMessage />
                       </FormItem>
@@ -596,25 +597,27 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
                     name="state"
                     render={({ field }) => (
                       <FormItem>
+                        <FormLabel>State</FormLabel>
                         <FormControl><Input placeholder="State" {...field} /></FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-                  <FormField
-                    control={form.control}
-                    name="pincode"
-                    render={({ field }) => (
-                      <FormItem>
-                        <div className="relative">
-                          <FormControl><Input placeholder="Pincode" {...field} /></FormControl>
-                          {isFetchingPincode && <Loader2 className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin" />}
-                        </div>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
               </div>
+              <FormField
+                control={form.control}
+                name="pincode"
+                render={({ field }) => (
+                  <FormItem className="mt-2 text-center">
+                    <div className="relative">
+                      <FormControl><Input placeholder="Pincode" {...field} /></FormControl>
+                      {isFetchingPincode && <Loader2 className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin" />}
+                    </div>
+                    <FormLabel className="text-xs text-muted-foreground">Pincode</FormLabel>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
         </div>
 
