@@ -9,7 +9,7 @@ import { useUser, useFirestore, useDoc, useMemoFirebase, useAuth, useCollection,
 import { deleteDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, CheckCircle2, UserCheck, UserX, Crown, Sparkles, User as UserIcon, Settings, Save, Briefcase, Building, MessageSquare, ThumbsUp, ThumbsDown, Star, Search, PlusCircle, Mail, Edit3 } from 'lucide-react';
+import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, CheckCircle2, UserCheck, UserX, Crown, Sparkles, User as UserIcon, Settings, Save, Briefcase, Building, MessageSquare, ThumbsUp, ThumbsDown, Star, Search, PlusCircle, Mail, Edit3, Link as LinkIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -40,6 +40,7 @@ import {
   DialogTitle,
   DialogTrigger,
   DialogDescription,
+  DialogFooter,
 } from '@/components/ui/dialog';
 import { PostVacancyForm } from '@/components/auth/post-vacancy-form';
 import { AddReviewForm } from '@/components/auth/add-review-form';
@@ -334,10 +335,13 @@ export default function AdminDashboardPage() {
   const [isVacancyEditDialogOpen, setIsVacancyEditDialogOpen] = useState(false);
   const [isAddReviewDialogOpen, setIsAddReviewDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isPaymentLinkDialogOpen, setIsPaymentLinkDialogOpen] = useState(false);
 
   const [selectedUser, setSelectedUser] = useState<ExpertUser | null>(null);
   const [selectedReview, setSelectedReview] = useState<Review | null>(null);
   const [selectedVacancy, setSelectedVacancy] = useState<Vacancy | null>(null);
+  const [paymentLink, setPaymentLink] = useState('');
+
 
   const [featuredExpertsLimit, setFeaturedExpertsLimit] = useState(3);
   const [isSavingSettings, setIsSavingSettings] = useState(false);
@@ -369,10 +373,17 @@ export default function AdminDashboardPage() {
   }, [firestore, isSuperAdmin]);
 
 
-  const { data: users, isLoading: isUsersLoading } = useCollection<ExpertUser>(usersCollectionRef);
+  const { data: usersData, isLoading: isUsersLoading } = useCollection<ExpertUser>(usersCollectionRef);
+  const [localUsers, setLocalUsers] = useState<ExpertUser[] | null>(null);
   const { data: reviews, isLoading: isReviewsLoading } = useCollection<Review>(reviewsCollectionQuery);
   const { data: vacancies, isLoading: isVacanciesLoading } = useCollection<Vacancy>(vacanciesCollectionQuery);
   
+  useEffect(() => {
+    if (usersData) {
+      setLocalUsers(usersData);
+    }
+  }, [usersData]);
+
   const appConfigDocRef = useMemoFirebase(() => {
       if (!firestore) return null;
       return doc(firestore, 'app_config', 'homepage');
@@ -390,10 +401,10 @@ export default function AdminDashboardPage() {
     }
   }, [appConfig, isAppConfigLoading, appConfigDocRef]);
 
-  const verifiedCount = users?.filter(u => u.verified).length || 0;
-  const unverifiedCount = users?.filter(u => !u.verified).length || 0;
-  const premierCount = users?.filter(u => u.tier === 'Premier').length || 0;
-  const superPremierCount = users?.filter(u => u.tier === 'Super Premier').length || 0;
+  const verifiedCount = localUsers?.filter(u => u.verified).length || 0;
+  const unverifiedCount = localUsers?.filter(u => !u.verified).length || 0;
+  const premierCount = localUsers?.filter(u => u.tier === 'Premier').length || 0;
+  const superPremierCount = localUsers?.filter(u => u.tier === 'Super Premier').length || 0;
 
   useEffect(() => {
     if (!isUserLoading && !user) {
@@ -419,9 +430,11 @@ export default function AdminDashboardPage() {
 
   const handleDeleteUser = () => {
     if (!selectedUser || !firestore) return;
-    const userDocRef = doc(firestore, 'users', selectedUser.id);
     
-    // The user will be removed from the 'users' collection via the hook's realtime update.
+    // Optimistically update the UI
+    setLocalUsers(prevUsers => prevUsers ? prevUsers.filter(u => u.id !== selectedUser.id) : null);
+
+    const userDocRef = doc(firestore, 'users', selectedUser.id);
     deleteDocumentNonBlocking(userDocRef);
     
     toast({
@@ -434,14 +447,41 @@ export default function AdminDashboardPage() {
   }
 
   const handleTierChange = (expert: ExpertUser, tier: ExpertUser['tier']) => {
-    if (!firestore) return;
-    const userDocRef = doc(firestore, 'users', expert.id);
-    updateDocumentNonBlocking(userDocRef, { tier });
-    toast({
-        title: "Expert Tier Updated",
-        description: `${expert.firstName} ${expert.lastName}'s tier is now ${tier}.`
-    });
+    if (tier === 'Super Premier') {
+      setSelectedUser(expert);
+      setIsPaymentLinkDialogOpen(true);
+    } else {
+        if (!firestore) return;
+        const userDocRef = doc(firestore, 'users', expert.id);
+        updateDocumentNonBlocking(userDocRef, { tier });
+        toast({
+            title: "Expert Tier Updated",
+            description: `${expert.firstName} ${expert.lastName}'s tier is now ${tier}.`
+        });
+    }
   }
+
+  const handleSuperPremierUpgrade = () => {
+    if (!firestore || !selectedUser) return;
+    
+    const userDocRef = doc(firestore, 'users', selectedUser.id);
+    updateDocumentNonBlocking(userDocRef, { tier: 'Super Premier' });
+
+    toast({
+        title: "User Upgraded to Super Premier",
+        description: (
+            <div>
+                <p>{selectedUser.firstName} {selectedUser.lastName}'s tier is now Super Premier.</p>
+                {paymentLink && <p className="mt-2">Payment Link: <a href={paymentLink} target="_blank" rel="noopener noreferrer" className="underline">{paymentLink}</a></p>}
+            </div>
+        )
+    });
+    
+    setIsPaymentLinkDialogOpen(false);
+    setSelectedUser(null);
+    setPaymentLink('');
+  }
+
 
   const handleVerificationToggle = (expert: ExpertUser) => {
     if (!firestore) return;
@@ -574,7 +614,7 @@ export default function AdminDashboardPage() {
   const isLoading = isUserLoading || isRoleLoading;
   const areTablesLoading = isSuperAdmin && (isUsersLoading || isReviewsLoading || isVacanciesLoading);
   
-  const sortedUsers = users ? [...users].sort((a, b) => (a.firstName || '').localeCompare(b.firstName || '')) : [];
+  const sortedUsers = localUsers ? [...localUsers].sort((a, b) => (a.firstName || '').localeCompare(b.firstName || '')) : [];
 
   const filteredUsers = sortedUsers.filter(user => {
       if (!user) return false;
@@ -657,7 +697,7 @@ export default function AdminDashboardPage() {
                   <Users className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{users?.length || 0}</div>
+                  <div className="text-2xl font-bold">{localUsers?.length || 0}</div>
                   <p className="text-xs text-muted-foreground">Total registered users</p>
                 </CardContent>
               </Card>
@@ -840,7 +880,7 @@ export default function AdminDashboardPage() {
                                 <DialogDescription>Manually add a review for any expert in the system.</DialogDescription>
                               </DialogHeader>
                               <AddReviewForm
-                                experts={users || []}
+                                experts={localUsers || []}
                                 onSuccess={() => setIsAddReviewDialogOpen(false)}
                               />
                             </DialogContent>
@@ -1026,8 +1066,38 @@ export default function AdminDashboardPage() {
         </DialogContent>
       </Dialog>
 
+       <Dialog open={isPaymentLinkDialogOpen} onOpenChange={setIsPaymentLinkDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Upgrade to Super Premier</DialogTitle>
+            <DialogDescription>
+              Enter the payment link for {selectedUser?.firstName} {selectedUser?.lastName}&apos;s upgrade.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="payment-link" className="text-right">
+                Payment Link
+              </Label>
+              <div className="col-span-3 relative">
+                <LinkIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  id="payment-link"
+                  value={paymentLink}
+                  onChange={(e) => setPaymentLink(e.target.value)}
+                  className="pl-10"
+                  placeholder="https://payment.link/1234"
+                />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsPaymentLinkDialogOpen(false)}>Cancel</Button>
+            <Button onClick={handleSuperPremierUpgrade}>Confirm Upgrade</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
     </>
   );
 }
-
-    
