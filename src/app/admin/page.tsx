@@ -21,6 +21,7 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
   DropdownMenuPortal,
+  DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import {
   AlertDialog,
@@ -152,6 +153,7 @@ const UserTable = ({ users, onTierChange, onVerificationToggle, onDelete }: { us
                                     </DropdownMenuSubContent></DropdownMenuPortal>
                                 </DropdownMenuSub>
                                 <DropdownMenuItem onClick={() => toast({ title: "Edit clicked", description: "Edit functionality coming soon!"})}><Edit className="mr-2 h-4 w-4" />Edit</DropdownMenuItem>
+                                <DropdownMenuSeparator />
                                 <DropdownMenuItem onClick={() => onDelete(expert)} className="text-destructive focus:text-destructive"><Trash2 className="mr-2 h-4 w-4" />Delete</DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
@@ -164,7 +166,7 @@ const UserTable = ({ users, onTierChange, onVerificationToggle, onDelete }: { us
     )
 }
 
-const ReviewTable = ({ reviews, onApprove, onReject }: { reviews: Review[], onApprove: (review: Review) => void, onReject: (review: Review) => void }) => {
+const ReviewTable = ({ reviews, onApprove, onReject, onDelete }: { reviews: Review[], onApprove: (review: Review) => void, onReject: (review: Review) => void, onDelete: (review: Review) => void }) => {
     return (
         <Table>
             <TableHeader>
@@ -193,12 +195,21 @@ const ReviewTable = ({ reviews, onApprove, onReject }: { reviews: Review[], onAp
                             <TableCell className="max-w-xs truncate">{review.comment}</TableCell>
                             <TableCell>{review.createdAt ? formatDistanceToNow(review.createdAt.toDate(), { addSuffix: true }) : 'pending...'}</TableCell>
                             <TableCell className="text-right">
-                                {review.status === 'pending' ? (
-                                    <div className="flex gap-2 justify-end">
-                                        <Button variant="outline" size="sm" onClick={() => onApprove(review)}><ThumbsUp className="mr-2 h-4 w-4" />Approve</Button>
-                                        <Button variant="destructive" size="sm" onClick={() => onReject(review)}><ThumbsDown className="mr-2 h-4 w-4" />Reject</Button>
-                                    </div>
-                                ) : (
+                                <div className="flex gap-2 justify-end">
+                                    {review.status === 'pending' && (
+                                        <>
+                                            <Button variant="outline" size="sm" onClick={() => onApprove(review)}><ThumbsUp className="mr-2 h-4 w-4" />Approve</Button>
+                                            <Button variant="destructive" size="sm" onClick={() => onReject(review)}><ThumbsDown className="mr-2 h-4 w-4" />Reject</Button>
+                                        </>
+                                    )}
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild><Button variant="ghost" className="h-8 w-8 p-0"><span className="sr-only">Open menu</span><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end">
+                                            <DropdownMenuItem onClick={() => onDelete(review)} className="text-destructive focus:text-destructive"><Trash2 className="mr-2 h-4 w-4" />Delete Review</DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+                                </div>
+                                {review.status !== 'pending' && (
                                     <Badge variant={review.status === 'approved' ? 'outline' : 'destructive'} className={review.status === 'approved' ? 'border-green-500 text-green-500' : ''}>
                                         {review.status.charAt(0).toUpperCase() + review.status.slice(1)}
                                     </Badge>
@@ -281,6 +292,7 @@ export default function AdminDashboardPage() {
 
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isReviewRejectDialogOpen, setIsReviewRejectDialogOpen] = useState(false);
+  const [isReviewDeleteDialogOpen, setIsReviewDeleteDialogOpen] = useState(false);
   const [isVacancyDeleteDialogOpen, setIsVacancyDeleteDialogOpen] = useState(false);
   const [isVacancyPostDialogOpen, setIsVacancyPostDialogOpen] = useState(false);
   const [isVacancyEditDialogOpen, setIsVacancyEditDialogOpen] = useState(false);
@@ -447,6 +459,23 @@ export default function AdminDashboardPage() {
     setSelectedReview(null);
   };
   
+  const openReviewDeleteDialog = (review: Review) => {
+    setSelectedReview(review);
+    setIsReviewDeleteDialogOpen(true);
+  };
+
+  const handleDeleteReview = () => {
+      if (!selectedReview || !firestore) return;
+      const reviewDocRef = doc(firestore, 'reviews', selectedReview.id);
+      deleteDocumentNonBlocking(reviewDocRef);
+      toast({
+          title: "Review Deleted",
+          description: `The review from ${selectedReview.reviewerName} has been removed.`,
+      });
+      setIsReviewDeleteDialogOpen(false);
+      setSelectedReview(null);
+  };
+
   const openVacancyEditDialog = (vacancy: Vacancy) => {
       setSelectedVacancy(vacancy);
       setIsVacancyEditDialogOpen(true);
@@ -729,7 +758,7 @@ export default function AdminDashboardPage() {
                             <MessageSquare className="h-6 w-6" />
                             <div>
                               <CardTitle>Review Moderation</CardTitle>
-                              <CardDescription>Approve, reject, or manually add reviews.</CardDescription>
+                              <CardDescription>Approve, reject, delete, or manually add reviews.</CardDescription>
                             </div>
                           </div>
                           <Dialog open={isAddReviewDialogOpen} onOpenChange={setIsAddReviewDialogOpen}>
@@ -766,13 +795,13 @@ export default function AdminDashboardPage() {
                                     <TabsTrigger value="rejected">Rejected</TabsTrigger>
                                 </TabsList>
                                 <TabsContent value="pending" className="mt-4">
-                                    <ReviewTable reviews={pendingReviews || []} onApprove={handleApproveReview} onReject={openReviewRejectDialog} />
+                                    <ReviewTable reviews={pendingReviews || []} onApprove={handleApproveReview} onReject={openReviewRejectDialog} onDelete={openReviewDeleteDialog}/>
                                 </TabsContent>
                                 <TabsContent value="approved" className="mt-4">
-                                    <ReviewTable reviews={approvedReviews || []} onApprove={handleApproveReview} onReject={openReviewRejectDialog} />
+                                    <ReviewTable reviews={approvedReviews || []} onApprove={handleApproveReview} onReject={openReviewRejectDialog} onDelete={openReviewDeleteDialog}/>
                                 </TabsContent>
                                  <TabsContent value="rejected" className="mt-4">
-                                    <ReviewTable reviews={rejectedReviews || []} onApprove={handleApproveReview} onReject={openReviewRejectDialog} />
+                                    <ReviewTable reviews={rejectedReviews || []} onApprove={handleApproveReview} onReject={openReviewRejectDialog} onDelete={openReviewDeleteDialog}/>
                                  </TabsContent>
                             </Tabs>
                         )}
@@ -855,6 +884,22 @@ export default function AdminDashboardPage() {
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={handleRejectReview} className="bg-destructive hover:bg-destructive/90">
               Reject
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+       <AlertDialog open={isReviewDeleteDialogOpen} onOpenChange={setIsReviewDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Review?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to permanently delete the review from <span className="font-bold">{selectedReview?.reviewerName}</span>? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteReview} className="bg-destructive hover:bg-destructive/90">
+              Delete
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
