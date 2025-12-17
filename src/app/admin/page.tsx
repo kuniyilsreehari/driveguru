@@ -97,6 +97,7 @@ type Review = {
 
 type AppConfig = {
     featuredExpertsLimit?: number;
+    superPremierPaymentLink?: string;
 };
 
 const UserTable = ({ users, onTierChange, onVerificationToggle, onDelete, onEdit }: { users: ExpertUser[], onTierChange: (expert: ExpertUser, tier: ExpertUser['tier']) => void, onVerificationToggle: (expert: ExpertUser) => void, onDelete: (expert: ExpertUser) => void, onEdit: (expert: ExpertUser) => void }) => {
@@ -335,15 +336,13 @@ export default function AdminDashboardPage() {
   const [isVacancyEditDialogOpen, setIsVacancyEditDialogOpen] = useState(false);
   const [isAddReviewDialogOpen, setIsAddReviewDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [isPaymentLinkDialogOpen, setIsPaymentLinkDialogOpen] = useState(false);
 
   const [selectedUser, setSelectedUser] = useState<ExpertUser | null>(null);
   const [selectedReview, setSelectedReview] = useState<Review | null>(null);
   const [selectedVacancy, setSelectedVacancy] = useState<Vacancy | null>(null);
-  const [paymentLink, setPaymentLink] = useState('');
-
 
   const [featuredExpertsLimit, setFeaturedExpertsLimit] = useState(3);
+  const [paymentLink, setPaymentLink] = useState('');
   const [isSavingSettings, setIsSavingSettings] = useState(false);
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -388,8 +387,12 @@ export default function AdminDashboardPage() {
     if (!isAppConfigLoading) {
       if (appConfig?.featuredExpertsLimit) {
         setFeaturedExpertsLimit(appConfig.featuredExpertsLimit);
-      } else if (appConfig === null && appConfigDocRef) {
-        setDocumentNonBlocking(appConfigDocRef, { featuredExpertsLimit: 3 }, { merge: true });
+      }
+      if (appConfig?.superPremierPaymentLink) {
+        setPaymentLink(appConfig.superPremierPaymentLink);
+      }
+      if (appConfig === null && appConfigDocRef) {
+        setDocumentNonBlocking(appConfigDocRef, { featuredExpertsLimit: 3, superPremierPaymentLink: '' }, { merge: true });
       }
     }
   }, [appConfig, isAppConfigLoading, appConfigDocRef]);
@@ -437,41 +440,28 @@ export default function AdminDashboardPage() {
   }
 
   const handleTierChange = (expert: ExpertUser, tier: ExpertUser['tier']) => {
-    if (tier === 'Super Premier') {
-      setSelectedUser(expert);
-      setIsPaymentLinkDialogOpen(true);
-    } else {
-        if (!firestore) return;
-        const userDocRef = doc(firestore, 'users', expert.id);
-        updateDocumentNonBlocking(userDocRef, { tier });
-        toast({
-            title: "Expert Tier Updated",
-            description: `${expert.firstName} ${expert.lastName}'s tier is now ${tier}.`
-        });
-    }
-  }
+    if (!firestore) return;
+    const userDocRef = doc(firestore, 'users', expert.id);
+    updateDocumentNonBlocking(userDocRef, { tier });
 
-  const handleSuperPremierUpgrade = () => {
-    if (!firestore || !selectedUser) return;
-    
-    const userDocRef = doc(firestore, 'users', selectedUser.id);
-    updateDocumentNonBlocking(userDocRef, { tier: 'Super Premier' });
+    let toastDescription = `${expert.firstName} ${expert.lastName}'s tier is now ${tier}.`;
+
+    if (tier === 'Super Premier' && paymentLink) {
+        toastDescription += ` Payment Link: ${paymentLink}`;
+    }
 
     toast({
-        title: "User Upgraded to Super Premier",
+        title: "Expert Tier Updated",
         description: (
             <div>
-                <p>{selectedUser.firstName} {selectedUser.lastName}'s tier is now Super Premier.</p>
-                {paymentLink && <p className="mt-2">Payment Link: <a href={paymentLink} target="_blank" rel="noopener noreferrer" className="underline">{paymentLink}</a></p>}
+                <p>{expert.firstName} {expert.lastName}&apos;s tier is now {tier}.</p>
+                {tier === 'Super Premier' && paymentLink && (
+                    <p className="mt-2">Payment Link: <a href={paymentLink} target="_blank" rel="noopener noreferrer" className="underline">{paymentLink}</a></p>
+                )}
             </div>
         )
     });
-    
-    setIsPaymentLinkDialogOpen(false);
-    setSelectedUser(null);
-    setPaymentLink('');
   }
-
 
   const handleVerificationToggle = (expert: ExpertUser) => {
     if (!firestore) return;
@@ -488,10 +478,14 @@ export default function AdminDashboardPage() {
     if (!appConfigDocRef) return;
     setIsSavingSettings(true);
     try {
-        await setDocumentNonBlocking(appConfigDocRef, { featuredExpertsLimit: Number(featuredExpertsLimit) }, { merge: true });
+        const settingsToSave = {
+            featuredExpertsLimit: Number(featuredExpertsLimit),
+            superPremierPaymentLink: paymentLink
+        };
+        await setDocumentNonBlocking(appConfigDocRef, settingsToSave, { merge: true });
         toast({
             title: "Settings Saved",
-            description: "Homepage settings have been updated.",
+            description: "Homepage and payment settings have been updated.",
         });
     } catch(e) {
         toast({
@@ -604,25 +598,29 @@ export default function AdminDashboardPage() {
   const isLoading = isUserLoading || isRoleLoading;
   const areTablesLoading = isSuperAdmin && (isUsersLoading || isReviewsLoading || isVacanciesLoading);
   
-  const sortedUsers = usersData ? [...usersData].sort((a, b) => (a.firstName || '').localeCompare(b.firstName || '')) : [];
+  const filteredUsers = useMemo(() => {
+    if (!usersData) return [];
+    
+    let sortedUsers = [...usersData].sort((a, b) => (a.firstName || '').localeCompare(b.firstName || ''));
 
-  const filteredUsers = sortedUsers.filter(user => {
-      if (!user) return false;
-      const searchMatch = searchQuery.length > 0 ? 
-            (user.firstName?.toLowerCase().includes(searchQuery.toLowerCase()) || 
-             user.lastName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-             user.email?.toLowerCase().includes(searchQuery.toLowerCase())) 
-          : true;
+    return sortedUsers.filter(user => {
+        if (!user) return false;
+        const searchMatch = searchQuery.length > 0 ? 
+              (user.firstName?.toLowerCase().includes(searchQuery.toLowerCase()) || 
+               user.lastName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+               user.email?.toLowerCase().includes(searchQuery.toLowerCase())) 
+            : true;
 
-      const filterMatch = activeFilter ? {
-          'verified': user.verified === true,
-          'unverified': user.verified === false,
-          'premier': user.tier === 'Premier',
-          'super-premier': user.tier === 'Super Premier'
-      }[activeFilter] : true;
+        const filterMatch = activeFilter ? {
+            'verified': user.verified === true,
+            'unverified': user.verified === false,
+            'premier': user.tier === 'Premier',
+            'super-premier': user.tier === 'Super Premier'
+        }[activeFilter] : true;
 
-      return searchMatch && filterMatch;
-  });
+        return searchMatch && filterMatch;
+    });
+}, [usersData, searchQuery, activeFilter]);
 
   const freelancers = filteredUsers?.filter(user => user.role === 'Freelancer');
   const companies = filteredUsers?.filter(user => user.role === 'Company');
@@ -734,46 +732,63 @@ export default function AdminDashboardPage() {
             </div>
             
             <Card className="mb-8">
-              <CardHeader>
-                  <div className="flex items-center gap-3">
-                      <Settings className="h-6 w-6" />
-                      <div>
-                          <CardTitle>Homepage Settings</CardTitle>
-                          <CardDescription>Control content displayed on the main landing page.</CardDescription>
-                      </div>
-                  </div>
-              </CardHeader>
-              <CardContent>
-                  {isAppConfigLoading ? (
-                      <div className="flex items-center space-x-2">
-                          <Loader className="h-4 w-4 animate-spin" />
-                          <p className="text-sm text-muted-foreground">Loading settings...</p>
-                      </div>
-                  ) : (
-                    <div className="flex flex-col sm:flex-row items-stretch sm:items-end gap-4">
-                      <div className="flex-grow">
-                          <Label htmlFor="featured-limit">Featured Experts Limit</Label>
-                          <Input 
-                              id="featured-limit"
-                              type="number" 
-                              value={featuredExpertsLimit}
-                              onChange={(e) => setFeaturedExpertsLimit(Number(e.target.value))}
-                              min="1"
-                              max="12"
-                              className="mt-1"
-                          />
-                      </div>
-                      <Button onClick={handleSaveSettings} disabled={isSavingSettings} className="w-full sm:w-auto">
-                          {isSavingSettings ? (
-                              <Loader className="mr-2 h-4 w-4 animate-spin" />
-                          ) : (
-                              <Save className="mr-2 h-4 w-4" />
-                          )}
-                          Save Settings
-                      </Button>
+                <CardHeader>
+                    <div className="flex items-center gap-3">
+                        <Settings className="h-6 w-6" />
+                        <div>
+                            <CardTitle>Global Settings</CardTitle>
+                            <CardDescription>Control content and payment links for the application.</CardDescription>
+                        </div>
                     </div>
-                  )}
-              </CardContent>
+                </CardHeader>
+                <CardContent>
+                    {isAppConfigLoading ? (
+                        <div className="flex items-center space-x-2">
+                            <Loader className="h-4 w-4 animate-spin" />
+                            <p className="text-sm text-muted-foreground">Loading settings...</p>
+                        </div>
+                    ) : (
+                        <div className="space-y-4">
+                            <div className="grid sm:grid-cols-2 gap-4">
+                                <div>
+                                    <Label htmlFor="featured-limit">Featured Experts Limit</Label>
+                                    <Input 
+                                        id="featured-limit"
+                                        type="number" 
+                                        value={featuredExpertsLimit}
+                                        onChange={(e) => setFeaturedExpertsLimit(Number(e.target.value))}
+                                        min="1"
+                                        max="12"
+                                        className="mt-1"
+                                    />
+                                </div>
+                                <div>
+                                    <Label htmlFor="payment-link">Super Premier Payment Link</Label>
+                                    <div className="relative mt-1">
+                                        <LinkIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                                        <Input
+                                            id="payment-link"
+                                            value={paymentLink}
+                                            onChange={(e) => setPaymentLink(e.target.value)}
+                                            className="pl-10"
+                                            placeholder="https://payment.link/1234"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="flex justify-end">
+                                <Button onClick={handleSaveSettings} disabled={isSavingSettings}>
+                                    {isSavingSettings ? (
+                                        <Loader className="mr-2 h-4 w-4 animate-spin" />
+                                    ) : (
+                                        <Save className="mr-2 h-4 w-4" />
+                                    )}
+                                    Save Settings
+                                </Button>
+                            </div>
+                        </div>
+                    )}
+                </CardContent>
             </Card>
 
             <Tabs defaultValue="users">
@@ -1053,38 +1068,6 @@ export default function AdminDashboardPage() {
                 }} 
             />
           )}
-        </DialogContent>
-      </Dialog>
-
-       <Dialog open={isPaymentLinkDialogOpen} onOpenChange={setIsPaymentLinkDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Upgrade to Super Premier</DialogTitle>
-            <DialogDescription>
-              Enter the payment link for {selectedUser?.firstName} {selectedUser?.lastName}&apos;s upgrade.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="payment-link" className="text-right">
-                Payment Link
-              </Label>
-              <div className="col-span-3 relative">
-                <LinkIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  id="payment-link"
-                  value={paymentLink}
-                  onChange={(e) => setPaymentLink(e.target.value)}
-                  className="pl-10"
-                  placeholder="https://payment.link/1234"
-                />
-              </div>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsPaymentLinkDialogOpen(false)}>Cancel</Button>
-            <Button onClick={handleSuperPremierUpgrade}>Confirm Upgrade</Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
 

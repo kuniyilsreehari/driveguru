@@ -331,6 +331,11 @@
         "featuredExpertsLimit": {
           "type": "number",
           "description": "The number of featured experts to show on the homepage."
+        },
+        "superPremierPaymentLink": {
+          "type": "string",
+          "description": "The central payment link for Super Premier upgrades.",
+          "format": "uri"
         }
       }
     }
