@@ -1,7 +1,7 @@
 
 'use client';
 
-import { Suspense, useState, useRef } from 'react';
+import { Suspense, useState, useRef, useMemo } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { doc, collection, query, where, addDoc, serverTimestamp, orderBy } from 'firebase/firestore';
@@ -91,6 +91,13 @@ function ExpertProfileContent() {
 
     const { data: expert, isLoading: isLoadingExpert } = useDoc<ExpertUserProfile>(expertDocRef);
     const { data: reviews, isLoading: isLoadingReviews } = useCollection<Review>(reviewsQuery);
+
+    const averageRating = useMemo(() => {
+        if (!reviews || reviews.length === 0) return 0;
+        const total = reviews.reduce((acc, review) => acc + review.rating, 0);
+        return total / reviews.length;
+    }, [reviews]);
+
 
     const getInitials = (firstName?: string, lastName?: string) => {
         if (firstName && lastName) {
@@ -287,6 +294,12 @@ function ExpertProfileContent() {
                                     {expert.department && <Badge variant="secondary">{expert.department}</Badge>}
                                     {expert.tier === 'Premier' && <Badge variant="outline" className="border-purple-500 text-purple-500"><Crown className="mr-1 h-3 w-3" /> Premier</Badge>}
                                     {expert.tier === 'Super Premier' && <Badge variant="outline" className="border-blue-500 text-blue-500"><Sparkles className="mr-1 h-3 w-3" /> Super Premier</Badge>}
+                                </div>
+                                <div className="flex items-center gap-1 mt-2">
+                                    {[...Array(5)].map((_, i) => (
+                                        <Star key={i} className={cn("h-4 w-4", i < Math.round(averageRating) ? "text-yellow-400 fill-yellow-400" : "text-gray-400")} />
+                                    ))}
+                                    <span className="text-xs text-muted-foreground ml-1">({reviews?.length || 0} review{reviews?.length === 1 ? '' : 's'})</span>
                                 </div>
                                  <div className="mt-4">
                                      {expert.verified ? (
