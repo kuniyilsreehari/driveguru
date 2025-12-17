@@ -215,8 +215,8 @@ function ExpertProfileContent() {
 
     return (
         <div className="min-h-screen bg-background p-4 sm:p-8">
-            <div className="mx-auto max-w-4xl">
-                 <div className="mb-6 flex justify-between items-center">
+            <div className="mx-auto max-w-4xl space-y-8">
+                 <div className="flex justify-between items-center">
                     <Button variant="outline" asChild>
                         <Link href="/"><ChevronLeft className="mr-2 h-4 w-4" /> Back to Home</Link>
                     </Button>
@@ -359,19 +359,29 @@ function ExpertProfileContent() {
                                 </div>
                             </div>
                         </div>
-                        <Separator className="my-6" />
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2 text-xl"><MessageSquare className="h-5 w-5" /> Customer Reviews</CardTitle>
+                    </CardHeader>
+                    <CardContent>
                         <Collapsible open={isReviewOpen} onOpenChange={setIsReviewOpen}>
-                            <h4 className="font-semibold flex items-center gap-2 mb-4 text-lg"><MessageSquare className="h-5 w-5" /> Customer Reviews</h4>
                             {user && expert.verified && (
                                 <CollapsibleTrigger asChild>
                                      <Button variant="outline"><Edit2 className="mr-2 h-4 w-4" />Leave a Review</Button>
                                 </CollapsibleTrigger>
                             )}
-                            <CollapsibleContent>
-                                <div className="p-6 bg-card-foreground/5 dark:bg-card-foreground/10 border-t mt-4 rounded-lg">
-                                    <div className="flex items-center gap-3 mb-4">
-                                        <h4 className="text-xl font-bold">Leave a Review for {displayName}</h4>
-                                    </div>
+                             {!expert.verified && user && (
+                                 <Button variant="outline" disabled>
+                                    <Lock className="mr-2 h-4 w-4" />
+                                    Reviewing is locked until expert is verified
+                                </Button>
+                            )}
+                            <CollapsibleContent className="pt-6">
+                                <div className="p-6 bg-card-foreground/5 dark:bg-card-foreground/10 border rounded-lg">
+                                    <h4 className="text-lg font-bold mb-4">Write your review for {displayName}</h4>
                                     <div className="space-y-4">
                                         <div>
                                             <Label htmlFor={`reviewerName-${expert.id}`}>Your Name</Label>
@@ -449,8 +459,8 @@ function ExpertProfileContent() {
                                     ))}
                                 </div>
                             ) : (
-                                <div className="text-center py-8 text-muted-foreground">
-                                    <p>No approved reviews for this expert yet.</p>
+                                <div className="text-center py-8 text-muted-foreground mt-4">
+                                    <p>No approved reviews for this expert yet. Be the first!</p>
                                 </div>
                             )}
                         </Collapsible>
@@ -473,5 +483,3 @@ export default function ExpertProfilePage() {
         </Suspense>
     );
 }
-
-    
