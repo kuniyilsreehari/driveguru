@@ -4,24 +4,25 @@
 
 import { Suspense, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Briefcase, Building, ChevronDown, Laptop, LocateIcon, MapPin, Search, Smartphone, Wrench, Loader2, Star, UserCheck, Crown, Sparkles, HelpCircle, Bot } from "lucide-react"
+import { Briefcase, Building, ChevronDown, Laptop, LocateIcon, MapPin, Search, Smartphone, Wrench, Loader2, Star, UserCheck, Crown, Sparkles, HelpCircle, Bot, Lock } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Slider } from "@/components/ui/slider"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Icons } from "@/components/icons"
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { useFirestore, useCollection, useDoc, useMemoFirebase } from '@/firebase';
+import { useFirestore, useCollection, useDoc, useMemoFirebase, useUser } from '@/firebase';
 import { collection, query, where, limit, doc } from 'firebase/firestore';
 import { ExpertCard } from '@/components/expert-card';
 import type { ExpertUser } from '@/components/expert-card';
 import * as LucideIcons from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { parseSearchQuery } from '@/ai/flows/ai-search-flow';
+import Link from 'next/link';
 
 
 type AppConfig = {
@@ -44,6 +45,18 @@ function HomePageContent() {
 
     const [aiSearchQuery, setAiSearchQuery] = useState('');
     const [isParsingQuery, setIsParsingQuery] = useState(false);
+    
+    const { user, isUserLoading } = useUser();
+
+    const userProfileDocRef = useMemoFirebase(() => {
+        if (!firestore || !user) return null;
+        return doc(firestore, 'users', user.uid);
+    }, [firestore, user]);
+
+    const { data: userProfile, isLoading: isUserProfileLoading } = useDoc<ExpertUser>(userProfileDocRef);
+
+    const isPremiumUser = userProfile?.tier === 'Premier' || userProfile?.tier === 'Super Premier';
+    const isLoadingUserData = isUserLoading || isUserProfileLoading;
 
     const appConfigDocRef = useMemoFirebase(() => {
         if (!firestore) return null;
@@ -127,6 +140,15 @@ function HomePageContent() {
     };
     
     const handleAiSearch = async () => {
+        if (!isPremiumUser) {
+             toast({
+                variant: 'destructive',
+                title: 'Premium Feature',
+                description: 'Upgrade to a Premier or Super Premier plan to use AI Search.',
+            });
+            return;
+        }
+
         if (!aiSearchQuery.trim()) {
             toast({ variant: 'destructive', title: "Empty Query", description: "Please enter what you're looking for."});
             return;
@@ -162,9 +184,6 @@ function HomePageContent() {
             }
             if (result.location) {
                 queryParams.set('location', result.location);
-            }
-            if (result.role) {
-                queryParams.set('role', result.role);
             }
             if (result.isVerified) {
                 queryParams.set('verified', 'true');
@@ -219,22 +238,30 @@ function HomePageContent() {
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <p className="text-muted-foreground mb-4 text-sm">
-                                Describe the expert you need in plain English. For example: &quot;a verified plumber in Mumbai available now&quot; or &quot;an affordable React developer near me&quot;.
-                            </p>
+                             {!isPremiumUser && (
+                                <CardDescription className="mb-4 text-orange-400">
+                                    <div className="flex items-center gap-2">
+                                        <Lock />
+                                        <span>
+                                            This is a premium feature. <Link href="/dashboard" className="underline font-bold">Upgrade your plan</Link> to activate.
+                                        </span>
+                                    </div>
+                                </CardDescription>
+                            )}
                             <div className="flex flex-col sm:flex-row items-stretch gap-2">
                                 <div className="relative flex-grow">
                                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                     <Input
                                         id="ai-search"
-                                        placeholder="I'm looking for..."
-                                        className="pl-10 text-base"
+                                        placeholder="I'm looking for a verified plumber in Mumbai..."
+                                        className={cn("pl-10 text-base", !isPremiumUser && "cursor-not-allowed")}
                                         value={aiSearchQuery}
                                         onChange={(e) => setAiSearchQuery(e.target.value)}
                                         onKeyDown={(e) => e.key === 'Enter' && handleAiSearch()}
+                                        disabled={!isPremiumUser || isLoadingUserData}
                                     />
                                 </div>
-                                <Button onClick={handleAiSearch} disabled={isParsingQuery} className="w-full sm:w-auto">
+                                <Button onClick={handleAiSearch} disabled={isParsingQuery || !isPremiumUser || isLoadingUserData} className="w-full sm:w-auto">
                                     {isParsingQuery ? (
                                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                                     ) : (
