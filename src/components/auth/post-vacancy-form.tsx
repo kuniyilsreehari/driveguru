@@ -103,7 +103,7 @@ export function PostVacancyForm({ onSuccess, isAdmin = false, companyId: propCom
                   <div className="relative">
                     <Building className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <FormControl>
-                      <Input placeholder="e.g. Acme Corporation" {...field} className="pl-10" disabled={!isAdmin} />
+                      <Input placeholder="e.g. Acme Corporation" {...field} className="pl-10" disabled={!isAdmin && !!propCompanyName} />
                     </FormControl>
                   </div>
                   <FormMessage />
@@ -119,7 +119,7 @@ export function PostVacancyForm({ onSuccess, isAdmin = false, companyId: propCom
                   <div className="relative">
                     <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <FormControl>
-                      <Input type="email" placeholder="e.g. careers@acme.com" {...field} className="pl-10" disabled={!isAdmin} />
+                      <Input type="email" placeholder="e.g. careers@acme.com" {...field} className="pl-10" disabled={!isAdmin && !!propCompanyEmail}/>
                     </FormControl>
                   </div>
                   <FormMessage />
@@ -234,3 +234,5 @@ export function PostVacancyForm({ onSuccess, isAdmin = false, companyId: propCom
     </Form>
   );
 }
+
+    

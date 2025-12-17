@@ -84,7 +84,7 @@ function VacanciesList() {
                             </div>
 
                             <div className="flex justify-between items-center text-xs text-muted-foreground">
-                                <span>Posted {formatDistanceToNow(vacancy.postedAt.toDate(), { addSuffix: true })}</span>
+                                <span>Posted {vacancy.postedAt ? formatDistanceToNow(vacancy.postedAt.toDate(), { addSuffix: true }) : 'just now'}</span>
                                 <Button size="sm" asChild>
                                     <a href={mailtoLink}>Apply Now</a>
                                 </Button>
@@ -124,3 +124,5 @@ export default function VacanciesPage() {
         </div>
     )
 }
+
+    
