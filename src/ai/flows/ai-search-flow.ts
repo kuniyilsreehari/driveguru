@@ -19,9 +19,8 @@ const ParseSearchQueryInputSchema = z.object({
 export type ParseSearchQueryInput = z.infer<typeof ParseSearchQueryInputSchema>;
 
 const ParseSearchQueryOutputSchema = z.object({
-  searchQuery: z.string().optional().describe("The primary search term or keyword (e.g., 'Plumber', 'React Developer')."),
+  searchQuery: z.string().optional().describe("The primary search term, skill, qualification, or keyword (e.g., 'Plumber', 'React Developer', 'B.Tech')."),
   location: z.string().optional().describe("The geographic location to search in (e.g., 'Mumbai', 'Bangalore')."),
-  role: z.enum(["Freelancer", "Company", "Authorized Pro"]).optional().describe("The category or type of expert if specified (e.g., 'freelancer', 'company')."),
   maxRate: z.number().optional().describe("An estimated maximum hourly rate if the user mentions terms like 'cheap' or 'affordable' (e.g., 500 for cheap, 1000 for mid-range)."),
   isVerified: z.boolean().optional().describe("Set to true if the user explicitly asks for 'verified' or 'trusted' experts."),
   isAvailable: z.boolean().optional().describe("Set to true if the user mentions 'available now' or 'immediately'."),
@@ -47,14 +46,11 @@ const prompt = ai.definePrompt({
   output: { schema: ParseSearchQueryOutputSchema },
   prompt: `You are an intelligent search assistant for a talent marketplace. Your job is to parse a user's natural language query and extract structured search parameters.
 
-  The available roles for experts are "Freelancer", "Company", and "Authorized Pro".
-
   User Query: "{{{query}}}"
   
   Analyze the query and extract the following information:
-  - The core profession, skill, or name the user is looking for (searchQuery).
+  - The core profession, skill, qualification, or name the user is looking for (searchQuery).
   - Any specified location (location).
-  - If the user specifies a role like "freelancer", "company", or "authorized pro", map it to the 'role' field.
   - If the user mentions affordability (e.g., "cheap", "affordable", "low cost"), set a reasonable maxRate (e.g., 500).
   - If the user asks for "verified" or "trusted" experts, set isVerified to true.
   - If the user asks for someone "available now" or "immediately", set isAvailable to true.

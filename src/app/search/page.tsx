@@ -133,11 +133,13 @@ function SearchResults() {
                 const company = expert.companyName?.toLowerCase() || '';
                 const role = expert.role?.toLowerCase() || '';
                 const skills = expert.skills?.toLowerCase() || '';
+                const qualification = expert.qualification?.toLowerCase() || '';
 
                 return name.includes(lowercasedQuery) ||
                        company.includes(lowercasedQuery) ||
                        role.includes(lowercasedQuery) ||
-                       skills.includes(lowercasedQuery);
+                       skills.includes(lowercasedQuery) ||
+                       qualification.includes(lowercasedQuery);
             });
         }
         
