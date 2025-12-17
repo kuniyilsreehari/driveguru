@@ -23,18 +23,26 @@ service cloud.firestore {
     function isExistingDoc() {
       return resource != null;
     }
+    
+    function isNewDoc() {
+      return resource == null;
+    }
 
     function isCreatingOwnUserDoc(userId) {
-      return isOwner(userId) &&
+      return isOwner(userId) && isNewDoc() &&
         request.resource.data.id == userId;
     }
 
-    function userIdImmutable() {
-      return request.resource.data.id == resource.data.id;
+    function isUpdatingOwnUserDoc() {
+      // Users can only update specific, non-critical fields on their own profile.
+      // Critical fields like 'verified', 'role', 'tier' must be managed by an admin.
+      let nonUpdatableFields = ['id', 'email', 'verified', 'role', 'tier', 'createdAt'];
+      return isOwner(request.resource.data.id) &&
+             !request.resource.data.diff(resource.data).affectedKeys().hasAny(nonUpdatableFields);
     }
-
+    
     function isCreatingOwnLocationData(userId) {
-      return request.resource.data.userId == userId;
+      return isOwner(userId) && request.resource.data.userId == userId;
     }
 
     function locationUserImmutable() {
@@ -42,24 +50,25 @@ service cloud.firestore {
     }
 
     function isMemberOfCompany(companyId) {
-      return isSignedIn() &&
-        get(/databases/$(database)/documents/users/$(request.auth.uid))
-          .data.companyId == companyId;
+      let userDoc = get(/databases/$(database)/documents/users/$(request.auth.uid));
+      return isSignedIn() && userDoc.data.companyId == companyId;
     }
     
     function isCompanyUser() {
-        return isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'Company';
+        let userDoc = get(/databases/$(database)/documents/users/$(request.auth.uid));
+        return isSignedIn() && userDoc.data.role == 'Company';
     }
 
     function isPremiumCompanyUser() {
-      let user = get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+      let userDoc = get(/databases/$(database)/documents/users/$(request.auth.uid));
       return isSignedIn() &&
-             user.role == 'Company' &&
-             (user.tier == 'Premier' || user.tier == 'Super Premier');
+             userDoc.data.role == 'Company' &&
+             (userDoc.data.tier == 'Premier' || userDoc.data.tier == 'Super Premier');
     }
 
     function isVacancyOwner(vacancy) {
-        return isCompanyUser() && vacancy.companyId == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.companyId;
+        let userDoc = get(/databases/$(database)/documents/users/$(request.auth.uid));
+        return isCompanyUser() && vacancy.companyId == userDoc.data.companyId;
     }
 
 
@@ -85,10 +94,9 @@ service cloud.firestore {
      * ===================================================== */
 
     match /companies/{companyId} {
-      allow get: if isSuperAdmin() || isMemberOfCompany(companyId);
-      allow list: if isSuperAdmin();
-      allow create: if isSuperAdmin();
-      allow update, delete: if isSuperAdmin() && isExistingDoc();
+      allow get: if isSignedIn(); // Any signed-in user can view company details.
+      allow list: if isSignedIn();
+      allow create, update, delete: if isSuperAdmin();
     }
 
     /* =====================================================
@@ -96,21 +104,17 @@ service cloud.firestore {
      * ===================================================== */
 
     match /users/{userId} {
-      // Public profiles (search, listings)
-      allow get: if true;
-      allow list: if true;
+      // Public profiles can be read by anyone.
+      allow get, list: if true;
 
-      // User onboarding
+      // New users can create their own user document.
       allow create: if isCreatingOwnUserDoc(userId);
 
-      // Secure updates
-      allow update: if
-        (isOwner(userId) && userIdImmutable()) ||
-        isSuperAdmin();
+      // Users can update their own profile, but admins can update anything.
+      allow update: if isUpdatingOwnUserDoc() || isSuperAdmin();
 
-      allow delete: if
-        (isOwner(userId) || isSuperAdmin()) &&
-        isExistingDoc();
+      // Users can delete their own account, and admins can delete any account.
+      allow delete: if isOwner(userId) || isSuperAdmin();
 
       /* ---------------------------------------------
        * Private Location Data (STRICT PRIVACY)
@@ -118,7 +122,7 @@ service cloud.firestore {
 
       match /location_data/{locationDataId} {
         allow get, list: if isOwner(userId);
-        allow create: if isOwner(userId) && isCreatingOwnLocationData(userId);
+        allow create: if isCreatingOwnLocationData(userId);
         allow update: if isOwner(userId) && locationUserImmutable();
         allow delete: if isOwner(userId);
       }
@@ -128,12 +132,14 @@ service cloud.firestore {
      * Reviews
      * ===================================================== */
     match /reviews/{reviewId} {
+        // Anyone can read approved reviews. Super admins can read all reviews.
         allow get: if resource.data.status == 'approved' || isSuperAdmin();
-        allow list: if isSuperAdmin();
-        allow create: if (isSuperAdmin()) || (isSignedIn() && request.resource.data.status == 'pending');
-        allow update: if isSuperAdmin()
-            && request.resource.data.diff(resource.data).changedKeys().hasOnly(['status'])
-            && request.resource.data.status in ['approved', 'rejected'];
+        // Only super admins can list all reviews for moderation.
+        allow list: if isSuperAdmin(); 
+        // Any signed-in user can create a review, which starts as 'pending'. Admins can bypass this.
+        allow create: if (isSignedIn() && request.resource.data.status == 'pending') || isSuperAdmin();
+        // Only super admins can change the status of a review.
+        allow update: if isSuperAdmin();
         allow delete: if isSuperAdmin();
     }
     
@@ -141,10 +147,13 @@ service cloud.firestore {
      * Vacancies
      * ===================================================== */
     match /vacancies/{vacancyId} {
-        allow get: if true;
-        allow list: if true;
+        // Anyone can read and list job vacancies.
+        allow get, list: if true;
+        // Only premium company users or super admins can create vacancies.
         allow create: if isPremiumCompanyUser() || isSuperAdmin();
+        // Only the company that owns the vacancy (and is premium) or a super admin can update it.
         allow update: if (isPremiumCompanyUser() && isVacancyOwner(request.resource.data)) || isSuperAdmin();
+        // Only the company that owns the vacancy (and is premium) or a super admin can delete it.
         allow delete: if (isPremiumCompanyUser() && isVacancyOwner(resource.data)) || isSuperAdmin();
     }
 
