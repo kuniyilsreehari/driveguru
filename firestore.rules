@@ -129,7 +129,7 @@ service cloud.firestore {
      * ===================================================== */
     match /reviews/{reviewId} {
         allow get: if resource.data.status == 'approved' || isSuperAdmin();
-        allow list: if resource.data.status == 'approved' || isSuperAdmin();
+        allow list: if isSuperAdmin();
         allow create: if (isSuperAdmin()) || (isSignedIn() && request.resource.data.status == 'pending');
         allow update: if isSuperAdmin()
             && request.resource.data.diff(resource.data).changedKeys().hasOnly(['status'])
