@@ -128,8 +128,7 @@ service cloud.firestore {
      * Reviews
      * ===================================================== */
     match /reviews/{reviewId} {
-        allow get: if true;
-        allow list: if isSuperAdmin();
+        allow get, list: if true;
         allow create: if isSignedIn()
             && request.resource.data.keys().hasAll(['expertId', 'expertName', 'reviewerName', 'rating', 'comment', 'status'])
             && request.resource.data.status == 'pending';
