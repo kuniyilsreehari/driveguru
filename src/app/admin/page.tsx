@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
@@ -9,7 +10,7 @@ import { useUser, useFirestore, useDoc, useMemoFirebase, useAuth, useCollection 
 import { deleteDocumentNonBlocking, updateDocumentNonBlocking, setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, CheckCircle2, UserCheck, UserX, Crown, Sparkles, User as UserIcon, Settings, Save, Briefcase, Building, MessageSquare, ThumbsUp, ThumbsDown, Star, Search, PlusCircle, Mail, Edit3, Link as LinkIcon, Download } from 'lucide-react';
+import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, CheckCircle2, UserCheck, UserX, Crown, Sparkles, User as UserIcon, Settings, Save, Briefcase, Building, MessageSquare, ThumbsUp, ThumbsDown, Star, Search, PlusCircle, Mail, Edit3, Link as LinkIcon, Download, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -384,19 +385,11 @@ export default function AdminDashboardPage() {
   const { data: appConfig, isLoading: isAppConfigLoading } = useDoc<AppConfig>(appConfigDocRef);
   
   useEffect(() => {
-    if (!isAppConfigLoading) {
-      if (appConfig) {
-        setFeaturedExpertsLimit(appConfig.featuredExpertsLimit || 3);
-        setPaymentLink(appConfig.superPremierPaymentLink || '');
-      } else if (appConfigDocRef) {
-        // Document doesn't exist, create it with defaults but don't overwrite local state if user is typing
-        setDocumentNonBlocking(appConfigDocRef, { 
-            featuredExpertsLimit: featuredExpertsLimit, 
-            superPremierPaymentLink: paymentLink 
-        }, { merge: true });
-      }
+    if (!isAppConfigLoading && appConfig) {
+      setFeaturedExpertsLimit(appConfig.featuredExpertsLimit || 3);
+      setPaymentLink(appConfig.superPremierPaymentLink || '');
     }
-  }, [appConfig, isAppConfigLoading, appConfigDocRef, featuredExpertsLimit, paymentLink]);
+  }, [appConfig, isAppConfigLoading]);
 
   const verifiedCount = usersData?.filter(u => u.verified).length || 0;
   const unverifiedCount = usersData?.filter(u => !u.verified).length || 0;
@@ -447,8 +440,8 @@ export default function AdminDashboardPage() {
 
     let toastDescription = `${expert.firstName} ${expert.lastName}'s tier is now ${tier}.`;
 
-    if (tier === 'Super Premier' && paymentLink) {
-        toastDescription += ` Payment Link: ${paymentLink}`;
+    if (tier === 'Super Premier' && appConfig?.superPremierPaymentLink) {
+        toastDescription += ` Payment Link: ${appConfig.superPremierPaymentLink}`;
     }
 
     toast({
@@ -456,8 +449,8 @@ export default function AdminDashboardPage() {
         description: (
             <div>
                 <p>{expert.firstName} {expert.lastName}&apos;s tier is now {tier}.</p>
-                {tier === 'Super Premier' && paymentLink && (
-                    <p className="mt-2">Payment Link: <a href={paymentLink} target="_blank" rel="noopener noreferrer" className="underline">{paymentLink}</a></p>
+                {tier === 'Super Premier' && appConfig?.superPremierPaymentLink && (
+                    <p className="mt-2">Payment Link: <a href={appConfig.superPremierPaymentLink} target="_blank" rel="noopener noreferrer" className="underline">{appConfig.superPremierPaymentLink}</a></p>
                 )}
             </div>
         )
@@ -672,10 +665,18 @@ export default function AdminDashboardPage() {
                 <p className="text-muted-foreground">Welcome, {user?.email || 'Admin'}.</p>
               </div>
             </div>
-            <Button variant="outline" onClick={handleLogout}>
-              <LogOut className="mr-2 h-4 w-4" />
-              Log Out
-            </Button>
+            <div className="flex items-center gap-2">
+                {installPrompt && (
+                  <Button onClick={handleInstallClick} variant="outline" size="sm">
+                    <Download className="mr-2 h-4 w-4" />
+                    Install App
+                  </Button>
+                )}
+                <Button variant="outline" onClick={handleLogout}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Log Out
+                </Button>
+            </div>
           </header>
 
           <main>
@@ -775,6 +776,14 @@ export default function AdminDashboardPage() {
                                             placeholder="https://payment.link/1234"
                                         />
                                     </div>
+                                     {appConfig?.superPremierPaymentLink && (
+                                        <div className="mt-2 text-xs text-muted-foreground p-2 bg-muted rounded-md">
+                                            <span>Currently saved link: </span>
+                                            <a href={appConfig.superPremierPaymentLink} target="_blank" rel="noopener noreferrer" className="text-primary underline flex items-center gap-1 break-all">
+                                               {appConfig.superPremierPaymentLink} <ExternalLink className="h-3 w-3 flex-shrink-0"/>
+                                            </a>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                             <div className="flex justify-end">
@@ -1075,3 +1084,4 @@ export default function AdminDashboardPage() {
     </>
   );
 }
+
