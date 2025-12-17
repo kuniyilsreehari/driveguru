@@ -8,7 +8,7 @@ import * as z from "zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { User as UserIcon, Mail, Lock, Eye, EyeOff, Briefcase, MapPin, Phone, LocateIcon, Loader2, Building, Home, GraduationCap, Book, ArrowRight } from "lucide-react";
-import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, getAdditionalUserInfo } from 'firebase/auth';
 import { doc, serverTimestamp } from 'firebase/firestore';
 
 import { Button } from "@/components/ui/button";
@@ -28,6 +28,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { cn } from "@/lib/utils";
 import { Textarea } from "../ui/textarea";
 import { Card, CardDescription, CardHeader, CardTitle } from "../ui/card";
+import { Icons } from "../icons";
 
 const expertTypes = [
     { name: "Freelancer", icon: <UserIcon className="w-8 h-8" />, description: "Offer your individual skills and services directly to clients." },
@@ -51,8 +52,6 @@ const formSchema = z.object({
   role: z.string({ required_error: "Please select your expert type." }),
   department: z.string().optional(),
   companyName: z.string().optional(),
-  qualification: z.string().optional(),
-  skills: z.string().optional(),
 }).refine(data => {
     if (data.role === 'Company' || data.role === 'Authorized Pro') {
         return !!data.companyName;
@@ -106,8 +105,6 @@ export function RegistrationForm() {
       phoneNumber: "",
       companyName: "",
       department: "",
-      qualification: "",
-      skills: "",
     },
   });
 
@@ -224,6 +221,52 @@ export function RegistrationForm() {
     }
   }
 
+  async function handleGoogleSignUp() {
+    if (!auth || !firestore) return;
+    const provider = new GoogleAuthProvider();
+    try {
+        const result = await signInWithPopup(auth, provider);
+        const user = result.user;
+        const additionalInfo = getAdditionalUserInfo(result);
+
+        if (additionalInfo?.isNewUser) {
+            const userDocRef = doc(firestore, "users", user.uid);
+            const nameParts = user.displayName?.split(' ') || [];
+            const firstName = nameParts[0] || 'New';
+            const lastName = nameParts.slice(1).join(' ') || 'User';
+
+            const userData = {
+                id: user.uid,
+                firstName: firstName,
+                lastName: lastName,
+                email: user.email,
+                photoUrl: user.photoURL || '',
+                role: 'Freelancer', // Default role
+                verified: false,
+                isAvailable: true,
+                createdAt: serverTimestamp(),
+            };
+            setDocumentNonBlocking(userDocRef, userData, { merge: true });
+            toast({
+                title: "Welcome!",
+                description: "Your account has been created. Please complete your profile in the dashboard.",
+            });
+        } else {
+            toast({
+                title: "Signed In",
+                description: "You have successfully signed in with Google.",
+            });
+        }
+    } catch (error: any) {
+        console.error("Google sign-in failed:", error);
+        toast({
+            variant: "destructive",
+            title: "Google Sign-In Failed",
+            description: error.message,
+        });
+    }
+  }
+
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     if (!auth || !firestore) {
@@ -258,8 +301,6 @@ export function RegistrationForm() {
         longitude: coords?.lon || null,
         phoneNumber: values.countryCode && values.phoneNumber ? `${values.countryCode} ${values.phoneNumber}` : "",
         companyName: values.companyName,
-        qualification: values.qualification,
-        skills: values.skills,
         verified: false, // Default verified status to false
         photoUrl: '', // Default photoUrl to empty string
         isAvailable: true, // Default to available
@@ -292,6 +333,23 @@ export function RegistrationForm() {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        
+        <Button variant="outline" className="w-full" onClick={handleGoogleSignUp} type="button">
+          <Icons.google className="mr-2 h-4 w-4" />
+          Sign up with Google
+        </Button>
+
+        <div className="relative my-4">
+            <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-background px-2 text-muted-foreground">
+                Or continue with
+                </span>
+            </div>
+        </div>
+
         <FormField
           control={form.control}
           name="role"
@@ -767,5 +825,3 @@ export function RegistrationForm() {
     </Form>
   );
 }
-
-    
