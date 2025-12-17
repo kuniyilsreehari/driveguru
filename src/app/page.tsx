@@ -184,6 +184,8 @@ function HomePageContent() {
             if (result.lon) {
                 queryParams.set('lon', result.lon.toString());
             }
+            // Add tier filter for AI search
+            queryParams.set('tier', 'Premier,Super Premier');
 
             router.push(`/search?${queryParams.toString()}`);
 
@@ -266,9 +268,9 @@ function HomePageContent() {
                             </div>
                             
                             <div className="space-y-4">
-                                <div className="flex items-center justify-between">
+                                <div>
                                     <Label>Location</Label>
-                                    <Button variant="outline" size="sm" onClick={handleDetectLocation} disabled={isDetecting}>
+                                    <Button variant="outline" size="sm" onClick={handleDetectLocation} disabled={isDetecting} className="float-right">
                                         {isDetecting ? (
                                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                                         ) : (
@@ -288,6 +290,7 @@ function HomePageContent() {
                                     </div>
                                 </div>
                                 <div>
+                                    <Label htmlFor="pincode" className="text-xs text-muted-foreground">Pincode</Label>
                                     <Input id="pincode" placeholder="e.g., 679587" value={pincode} onChange={(e) => setPincode(e.target.value)} />
                                 </div>
                             </div>

@@ -47,6 +47,8 @@ function SearchResults() {
     const roleQuery = searchParams.get('role');
     const verified = searchParams.get('verified') === 'true';
     const available = searchParams.get('available') === 'true';
+    const tierParam = searchParams.get('tier');
+    const tiers = tierParam ? tierParam.split(',') : null;
     const maxRateParam = searchParams.get('maxRate');
     const maxRate = maxRateParam ? parseInt(maxRateParam, 10) : null;
     const radiusParam = searchParams.get('radius');
@@ -103,6 +105,10 @@ function SearchResults() {
         if (roleQuery) {
             constraints.push(where('role', '==', roleQuery));
         }
+        
+        if (tiers && tiers.length > 0) {
+            constraints.push(where('tier', 'in', tiers));
+        }
 
         // We will query with basic filters first, then apply text and location search on the client.
         if (constraints.length > 0) {
@@ -111,7 +117,7 @@ function SearchResults() {
 
         return query(collection(firestore, 'users'));
 
-    }, [firestore, verified, available, roleQuery]);
+    }, [firestore, verified, available, roleQuery, tiers]);
 
     const { data: allExperts, isLoading } = useCollection<ExpertUser>(expertsQuery);
     
