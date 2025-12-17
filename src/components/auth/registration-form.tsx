@@ -41,7 +41,9 @@ const formSchema = z.object({
   password: z
     .string()
     .min(8, { message: "Password must be at least 8 characters." }),
-  location: z.string().min(1, { message: "Location is required." }),
+  state: z.string().min(1, { message: "State is required." }),
+  city: z.string().min(1, { message: "City is required." }),
+  pincode: z.string().min(1, { message: "Pincode is required." }),
   address: z.string().optional(),
   countryCode: z.string().optional(),
   phoneNumber: z.string().min(1, { message: "Phone number is required." }),
@@ -78,7 +80,6 @@ const formSchema = z.object({
 export function RegistrationForm() {
   const { toast } = useToast();
   const [showPassword, setShowPassword] = useState(false);
-  const [isDetecting, setIsDetecting] = useState(false);
   const auth = useAuth();
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
@@ -92,7 +93,9 @@ export function RegistrationForm() {
       lastName: "",
       email: "",
       password: "",
-      location: "",
+      state: "",
+      city: "",
+      pincode: "",
       address: "",
       countryCode: "+91",
       phoneNumber: "",
@@ -102,74 +105,6 @@ export function RegistrationForm() {
   });
 
   const selectedRole = form.watch("role");
-
-  const handleDetectLocation = () => {
-    if (!navigator.geolocation) {
-        toast({
-            variant: 'destructive',
-            title: 'Geolocation is not supported by your browser.',
-        });
-        return;
-    }
-
-    setIsDetecting(true);
-
-    navigator.geolocation.getCurrentPosition(
-        async (position) => {
-            const { latitude, longitude } = position.coords;
-            
-            try {
-                const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
-                const data = await response.json();
-                
-                const address = data.address;
-                const city = address.city || address.town || address.village || address.hamlet;
-                const state = address.state;
-                const pincode = address.postcode;
-
-                let detectedLocationParts = [];
-                if (state) detectedLocationParts.push(state);
-                if (city) detectedLocationParts.push(city);
-                if (pincode) detectedLocationParts.push(pincode);
-
-                const detectedLocation = detectedLocationParts.join(', ');
-
-                if (detectedLocation) {
-                    form.setValue('location', detectedLocation);
-                    toast({
-                        title: 'Location Detected',
-                        description: `Your location has been set to ${detectedLocation}.`,
-                    });
-                } else {
-                    const coords = `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
-                    form.setValue('location', coords);
-                     toast({
-                        title: 'Coordinates Set',
-                        description: 'We could not find a city and state for your coordinates.',
-                    });
-                }
-            } catch (apiError) {
-                const coords = `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
-                form.setValue('location', coords);
-                toast({
-                    variant: 'destructive',
-                    title: 'Could not fetch location name.',
-                    description: 'Your location is set to coordinates.'
-                });
-            } finally {
-                setIsDetecting(false);
-            }
-        },
-        (error) => {
-            setIsDetecting(false);
-            toast({
-                variant: 'destructive',
-                title: 'Unable to retrieve your location.',
-                description: error.message,
-            });
-        }
-    );
-  };
 
   useEffect(() => {
     if (!isUserLoading && user) {
@@ -199,7 +134,9 @@ export function RegistrationForm() {
         email: values.email,
         role: values.role,
         department: values.department,
-        location: values.location,
+        state: values.state,
+        city: values.city,
+        pincode: values.pincode,
         address: values.address,
         phoneNumber: values.countryCode && values.phoneNumber ? `${values.countryCode} ${values.phoneNumber}` : "",
         companyName: values.companyName,
@@ -456,30 +393,47 @@ export function RegistrationForm() {
             )}
           />
           <div className="space-y-2">
-            <FormField
+            <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="city"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>City</FormLabel>
+                        <FormControl>
+                          <Input placeholder="e.g. Mumbai" {...field} />
+                        </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="state"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>State</FormLabel>
+                        <FormControl>
+                          <Input placeholder="e.g. Maharashtra" {...field} />
+                        </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+            </div>
+             <FormField
               control={form.control}
-              name="location"
+              name="pincode"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Location</FormLabel>
-                  <div className="relative">
-                    <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <FormLabel>Pincode</FormLabel>
                     <FormControl>
-                      <Input placeholder="State, City, Pincode" {...field} className="pl-10" />
+                      <Input placeholder="e.g. 400001" {...field} />
                     </FormControl>
-                  </div>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            <Button type="button" variant="outline" className="w-full" onClick={handleDetectLocation} disabled={isDetecting}>
-                {isDetecting ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
-                    <LocateIcon className="mr-2 h-4 w-4" />
-                )}
-                Detect My Location
-            </Button>
           </div>
         </div>
 
@@ -524,5 +478,7 @@ export function RegistrationForm() {
     </Form>
   );
 }
+
+    
 
     

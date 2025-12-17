@@ -39,7 +39,9 @@ type ExpertUserProfile = {
     email: string;
     role: string;
     photoUrl?: string;
-    location?: string;
+    city?: string;
+    state?: string;
+    pincode?: string;
     address?: string;
     verified?: boolean;
     hourlyRate?: number;
@@ -192,7 +194,9 @@ export default function ExpertDashboardPage() {
     if (!profile) return 0;
 
     const fields = [
-        profile.location,
+        profile.city,
+        profile.state,
+        profile.pincode,
         profile.phoneNumber,
         profile.hourlyRate,
         profile.yearsOfExperience,
@@ -233,6 +237,8 @@ export default function ExpertDashboardPage() {
   if (!user || !userProfile) {
     return null;
   }
+  
+  const locationString = [userProfile.city, userProfile.state, userProfile.pincode].filter(Boolean).join(', ');
 
   return (
     <div className="min-h-screen bg-background p-4 sm:p-8">
@@ -336,7 +342,7 @@ export default function ExpertDashboardPage() {
                     </div>
                     <div className="flex items-center gap-3">
                         <MapPin className="h-5 w-5 text-muted-foreground" />
-                        <p><span className="font-semibold">Location:</span> {userProfile.location || <span className="text-destructive">Not specified</span>}</p>
+                        <p><span className="font-semibold">Location:</span> {locationString || <span className="text-destructive">Not specified</span>}</p>
                     </div>
                     <div className="flex items-center gap-3">
                         <GraduationCap className="h-5 w-5 text-muted-foreground" />
@@ -388,3 +394,5 @@ export default function ExpertDashboardPage() {
     </div>
   );
 }
+
+    

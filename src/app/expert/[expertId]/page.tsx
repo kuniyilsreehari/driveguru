@@ -1,25 +1,18 @@
 
 'use client';
 
-import { Suspense, useState, useRef, useMemo } from 'react';
+import { Suspense, useState, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { doc, collection, query, where, addDoc, serverTimestamp, orderBy } from 'firebase/firestore';
-import { useFirestore, useDoc, useCollection, useMemoFirebase, useUser } from '@/firebase';
-import { Loader2, Star, ChevronLeft, MapPin, IndianRupee, Briefcase, Calendar, Info, Book, GraduationCap, School, User as UserIcon, UserCheck, XCircle, Crown, Sparkles, MessageSquare, LogIn, Edit2, Send, Lock, Building, FileDown, Home } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { doc } from 'firebase/firestore';
+import { useFirestore, useDoc, useMemoFirebase, useUser } from '@/firebase';
+import { Loader2, Star, ChevronLeft, MapPin, IndianRupee, Briefcase, Calendar, Info, Book, GraduationCap, School, User as UserIcon, UserCheck, XCircle, Crown, Sparkles, LogIn, Lock, Building, FileDown, Home } from 'lucide-react';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
-import { formatDistanceToNow } from 'date-fns';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { cn } from '@/lib/utils';
-import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 
@@ -31,7 +24,9 @@ type ExpertUserProfile = {
     email: string;
     role: string;
     photoUrl?: string;
-    location?: string;
+    state?: string;
+    city?: string;
+    pincode?: string;
     address?: string;
     verified?: boolean;
     hourlyRate?: number;
@@ -47,153 +42,6 @@ type ExpertUserProfile = {
     isAvailable?: boolean;
     tier?: 'Standard' | 'Premier' | 'Super Premier';
 };
-
-type Review = {
-    id: string;
-    reviewerName: string;
-    rating: number;
-    comment: string;
-    createdAt: { seconds: number, nanoseconds: number };
-};
-
-function ReviewForm({ expertId, expertName }: { expertId: string, expertName: string }) {
-    const { user } = useUser();
-    const firestore = useFirestore();
-    const { toast } = useToast();
-    const [rating, setRating] = useState(0);
-    const [comment, setComment] = useState('');
-    const [reviewerName, setReviewerName] = useState(user?.displayName || '');
-    const [isSubmitting, setIsSubmitting] = useState(false);
-
-    if (!user) return null;
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!firestore) return;
-        if (comment.length < 10) {
-            toast({ variant: 'destructive', title: 'Comment too short', description: 'Please provide more details in your review.' });
-            return;
-        }
-        if (rating === 0) {
-            toast({ variant: 'destructive', title: 'No rating selected', description: 'Please select a star rating.' });
-            return;
-        }
-
-        setIsSubmitting(true);
-        const reviewsCollectionRef = collection(firestore, 'reviews');
-        const newReviewData = {
-            expertId,
-            expertName,
-            reviewerName: reviewerName || 'Anonymous',
-            rating,
-            comment,
-            status: 'pending',
-            createdAt: serverTimestamp(),
-            userId: user.uid,
-        };
-
-        try {
-            await addDocumentNonBlocking(reviewsCollectionRef, newReviewData);
-            toast({ title: 'Review Submitted', description: 'Your review is pending approval. Thank you!' });
-            setComment('');
-            setRating(0);
-            setReviewerName(user.displayName || '');
-        } catch (error) {
-            console.error("Error submitting review:", error);
-            toast({ variant: 'destructive', title: 'Submission Failed', description: 'An unexpected error occurred.' });
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
-
-    return (
-        <form onSubmit={handleSubmit} className="space-y-4 rounded-lg border bg-card text-card-foreground shadow-sm p-6">
-            <h4 className="font-semibold text-lg">Leave a Review</h4>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                 <div className="space-y-2">
-                    <Label htmlFor="reviewerName">Your Name</Label>
-                    <Input id="reviewerName" value={reviewerName} onChange={(e) => setReviewerName(e.target.value)} placeholder="Your name" />
-                </div>
-                <div className="space-y-2">
-                    <Label>Your Rating</Label>
-                    <div className="flex items-center gap-1">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                            <Star
-                                key={star}
-                                className={cn("h-6 w-6 cursor-pointer transition-colors", star <= rating ? "text-yellow-400 fill-yellow-400" : "text-gray-400")}
-                                onClick={() => setRating(star)}
-                            />
-                        ))}
-                    </div>
-                </div>
-            </div>
-            <div className="space-y-2">
-                <Label htmlFor="comment">Your Comment</Label>
-                <Textarea id="comment" value={comment} onChange={(e) => setComment(e.target.value)} placeholder={`Share your experience with ${expertName}...`} />
-            </div>
-            <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {isSubmitting ? 'Submitting...' : <><Send className="mr-2 h-4 w-4" /> Submit Review</>}
-            </Button>
-        </form>
-    );
-}
-
-function ReviewsList({ expertId }: { expertId: string }) {
-    const firestore = useFirestore();
-
-    const reviewsQuery = useMemoFirebase(() => {
-        if (!firestore || !expertId) return null;
-        return query(
-            collection(firestore, 'reviews'),
-            where('expertId', '==', expertId),
-            where('status', '==', 'approved'),
-            orderBy('createdAt', 'desc')
-        );
-    }, [firestore, expertId]);
-
-    const { data: reviews, isLoading } = useCollection<Review>(reviewsQuery);
-
-    if (isLoading) {
-        return (
-            <div className="flex items-center gap-2 text-muted-foreground">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                <span>Loading reviews...</span>
-            </div>
-        );
-    }
-
-    if (!reviews || reviews.length === 0) {
-        return <p className="text-muted-foreground text-sm">No approved reviews yet for this expert.</p>;
-    }
-
-    return (
-        <div className="space-y-6">
-            {reviews.map((review) => (
-                <div key={review.id} className="flex items-start gap-4">
-                    <Avatar className="h-10 w-10">
-                        <AvatarFallback>{review.reviewerName.charAt(0)}</AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1">
-                        <div className="flex items-center justify-between">
-                            <p className="font-semibold">{review.reviewerName}</p>
-                            <span className="text-xs text-muted-foreground">
-                                {formatDistanceToNow(new Date(review.createdAt.seconds * 1000), { addSuffix: true })}
-                            </span>
-                        </div>
-                         <div className="flex items-center gap-1 mt-1">
-                            {[...Array(5)].map((_, i) => (
-                                <Star key={i} className={`h-4 w-4 ${i < review.rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`} />
-                            ))}
-                        </div>
-                        <p className="text-sm text-muted-foreground mt-2">{review.comment}</p>
-                    </div>
-                </div>
-            ))}
-        </div>
-    );
-}
-
 
 function ExpertProfileContent() {
     const params = useParams();
@@ -291,6 +139,7 @@ function ExpertProfileContent() {
     }
 
     const isPremium = expert.tier === 'Premier' || expert.tier === 'Super Premier';
+    const locationString = [expert.city, expert.state, expert.pincode].filter(Boolean).join(', ');
 
     return (
         <div className="min-h-screen bg-background p-4 sm:p-8">
@@ -396,7 +245,7 @@ function ExpertProfileContent() {
                             </div>
                             <div className="flex items-start gap-3">
                                 <MapPin className="h-5 w-5 text-muted-foreground mt-1" />
-                                <p><span className="font-semibold">Location:</span> {expert.location || 'Not specified'}</p>
+                                <p><span className="font-semibold">Location:</span> {locationString || 'Not specified'}</p>
                             </div>
                             <div className="flex items-start gap-3">
                                 <GraduationCap className="h-5 w-5 text-muted-foreground mt-1" />
@@ -457,3 +306,5 @@ export default function ExpertProfilePage() {
         </Suspense>
     );
 }
+
+    

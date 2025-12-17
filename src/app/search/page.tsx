@@ -78,9 +78,12 @@ function SearchResults() {
         // Filter by location
         if (location) {
             const lowercasedLocation = location.toLowerCase();
-            experts = experts.filter(expert => 
-                expert.location?.toLowerCase().includes(lowercasedLocation)
-            );
+            experts = experts.filter(expert => {
+                const city = expert.city?.toLowerCase() || '';
+                const state = expert.state?.toLowerCase() || '';
+                const pincode = expert.pincode?.toLowerCase() || '';
+                return city.includes(lowercasedLocation) || state.includes(lowercasedLocation) || pincode.includes(lowercasedLocation);
+            });
         }
         
         // Filter by max rate
@@ -192,3 +195,5 @@ export default function SearchPage() {
         </div>
     )
 }
+
+    

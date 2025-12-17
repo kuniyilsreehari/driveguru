@@ -16,7 +16,9 @@ export type ExpertUser = {
     lastName?: string;
     companyName?: string;
     email?: string;
-    location?: string;
+    city?: string;
+    state?: string;
+    pincode?: string;
     role?: string;
     verified?: boolean;
     hourlyRate?: number;
@@ -57,6 +59,7 @@ export function ExpertCard({ expert }: ExpertCardProps) {
     }
 
     const formattedPhoneNumber = cleanPhoneNumber(expert.phoneNumber);
+    const locationString = [expert.city, expert.state, expert.pincode].filter(Boolean).join(', ');
     
     return (
         <Card key={expert.id} className="relative overflow-hidden transition-all hover:shadow-lg hover:border-primary/50">
@@ -93,7 +96,7 @@ export function ExpertCard({ expert }: ExpertCardProps) {
                         
                          <Link href={`/expert/${expert.id}`} className="block cursor-pointer">
                             <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm text-muted-foreground">
-                                <div className="flex items-center gap-2 truncate"><MapPin className="h-4 w-4 flex-shrink-0" /> <span className="truncate">{expert.location || 'N/A'}</span></div>
+                                <div className="flex items-center gap-2 truncate"><MapPin className="h-4 w-4 flex-shrink-0" /> <span className="truncate">{locationString || 'N/A'}</span></div>
                                 <div className="flex items-center gap-2"><IndianRupee className="h-4 w-4 flex-shrink-0" /> {expert.hourlyRate ? `${expert.hourlyRate}/hr` : 'N/A'}</div>
                                 <div className="flex items-center gap-2"><Briefcase className="h-4 w-4 flex-shrink-0" /> {expert.yearsOfExperience ? `${expert.yearsOfExperience} years` : 'N/A'}</div>
                                 <div className="flex items-center gap-2"><Badge variant="secondary" className="truncate">{expert.role}</Badge></div>
@@ -129,3 +132,5 @@ export function ExpertCard({ expert }: ExpertCardProps) {
         </Card>
     )
 }
+
+    

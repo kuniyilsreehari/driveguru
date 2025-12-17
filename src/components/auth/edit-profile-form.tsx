@@ -39,7 +39,9 @@ const formSchema = z.object({
   firstName: z.string().min(1, { message: "First name is required." }),
   lastName: z.string().min(1, { message: "Last name is required." }),
   photoUrl: z.string().optional().or(z.literal('')),
-  location: z.string().optional(),
+  state: z.string().optional(),
+  city: z.string().optional(),
+  pincode: z.string().optional(),
   address: z.string().optional(),
   countryCode: z.string().optional(),
   phoneNumber: z.string().optional(),
@@ -62,7 +64,9 @@ type ExpertUserProfile = {
     email: string;
     role: string;
     photoUrl?: string;
-    location?: string;
+    state?: string;
+    city?: string;
+    pincode?: string;
     address?: string;
     phoneNumber?: string;
     companyName?: string;
@@ -84,8 +88,6 @@ interface EditProfileFormProps {
 export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps) {
   const { toast } = useToast();
   const firestore = useFirestore();
-  const { user } = useUser();
-  const [isDetecting, setIsDetecting] = useState(false);
   const [isGeneratingAboutMe, setIsGeneratingAboutMe] = useState(false);
   const [isSuggestingSkills, setIsSuggestingSkills] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -115,7 +117,9 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
       firstName: userProfile.firstName || "",
       lastName: userProfile.lastName || "",
       photoUrl: userProfile.photoUrl || "",
-      location: userProfile.location || "",
+      state: userProfile.state || "",
+      city: userProfile.city || "",
+      pincode: userProfile.pincode || "",
       address: userProfile.address || "",
       countryCode: countryCode,
       phoneNumber: phoneNumber,
@@ -134,74 +138,6 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
 
   const selectedRole = form.watch("role");
   const photoUrl = form.watch("photoUrl");
-
-  const handleDetectLocation = () => {
-    if (!navigator.geolocation) {
-        toast({
-            variant: 'destructive',
-            title: 'Geolocation is not supported by your browser.',
-        });
-        return;
-    }
-
-    setIsDetecting(true);
-
-    navigator.geolocation.getCurrentPosition(
-        async (position) => {
-            const { latitude, longitude } = position.coords;
-            
-            try {
-                const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
-                const data = await response.json();
-                
-                const address = data.address;
-                const city = address.city || address.town || address.village || address.hamlet;
-                const state = address.state;
-                const pincode = address.postcode;
-
-                let detectedLocationParts = [];
-                if (state) detectedLocationParts.push(state);
-                if (city) detectedLocationParts.push(city);
-                if (pincode) detectedLocationParts.push(pincode);
-                
-                const detectedLocation = detectedLocationParts.join(', ');
-
-                if (detectedLocation) {
-                    form.setValue('location', detectedLocation, { shouldValidate: true });
-                    toast({
-                        title: 'Location Detected',
-                        description: `Your location has been set to ${detectedLocation}.`,
-                    });
-                } else {
-                    const coords = `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
-                    form.setValue('location', coords, { shouldValidate: true });
-                     toast({
-                        title: 'Coordinates Set',
-                        description: 'We could not find address details for your coordinates.',
-                    });
-                }
-            } catch (apiError) {
-                const coords = `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
-                form.setValue('location', coords, { shouldValidate: true });
-                toast({
-                    variant: 'destructive',
-                    title: 'Could not fetch location name.',
-                    description: 'Your location is set to coordinates.'
-                });
-            } finally {
-                setIsDetecting(false);
-            }
-        },
-        (error) => {
-            setIsDetecting(false);
-            toast({
-                variant: 'destructive',
-                title: 'Unable to retrieve your location.',
-                description: error.message,
-            });
-        }
-    );
-  };
 
   const handleGenerateAboutMe = async () => {
     setIsGeneratingAboutMe(true);
@@ -274,7 +210,7 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file && user && firestore) {
+    if (file && firestore) {
       setIsUploading(true);
       const reader = new FileReader();
       reader.onload = async (e) => {
@@ -537,31 +473,41 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
                 </div>
                 <FormMessage />
             </FormItem>
-          <FormField
-            control={form.control}
-            name="location"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Location</FormLabel>
-                <div className="flex items-center gap-2">
-                    <div className="relative flex-grow">
-                      <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                      <FormControl>
-                        <Input placeholder="e.g. city, state, pincode" {...field} className="pl-10" />
-                      </FormControl>
-                    </div>
-                     <Button type="button" variant="outline" size="icon" onClick={handleDetectLocation} disabled={isDetecting}>
-                        {isDetecting ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                            <LocateIcon className="h-4 w-4" />
-                        )}
-                    </Button>
-                </div>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+            <div className="grid grid-cols-3 gap-2">
+                <FormField
+                  control={form.control}
+                  name="city"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>City</FormLabel>
+                      <FormControl><Input placeholder="Mumbai" {...field} /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                 <FormField
+                  control={form.control}
+                  name="state"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>State</FormLabel>
+                      <FormControl><Input placeholder="Maharashtra" {...field} /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                 <FormField
+                  control={form.control}
+                  name="pincode"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Pincode</FormLabel>
+                      <FormControl><Input placeholder="400001" {...field} /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+            </div>
         </div>
 
         <div className="grid grid-cols-2 gap-4">
@@ -746,5 +692,7 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
     </Form>
   );
 }
+
+    
 
     
