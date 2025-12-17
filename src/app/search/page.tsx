@@ -82,7 +82,8 @@ function SearchResults() {
                 const city = expert.city?.toLowerCase() || '';
                 const state = expert.state?.toLowerCase() || '';
                 const pincode = expert.pincode?.toLowerCase() || '';
-                return city.includes(lowercasedLocation) || state.includes(lowercasedLocation) || pincode.includes(lowercasedLocation);
+                const address = expert.address?.toLowerCase() || '';
+                return city.includes(lowercasedLocation) || state.includes(lowercasedLocation) || pincode.includes(lowercasedLocation) || address.includes(lowercasedLocation);
             });
         }
         

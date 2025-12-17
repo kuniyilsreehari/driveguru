@@ -19,6 +19,7 @@ export type ExpertUser = {
     city?: string;
     state?: string;
     pincode?: string;
+    address?: string;
     role?: string;
     verified?: boolean;
     hourlyRate?: number;
@@ -132,5 +133,3 @@ export function ExpertCard({ expert }: ExpertCardProps) {
         </Card>
     )
 }
-
-    
