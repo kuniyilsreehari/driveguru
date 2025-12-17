@@ -9,7 +9,7 @@ import { useUser, useFirestore, useDoc, useMemoFirebase, useAuth, useCollection,
 import { deleteDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, CheckCircle2, UserCheck, UserX, Crown, Sparkles, User as UserIcon, Settings, Save, Briefcase, Building, MessageSquare, ThumbsUp, ThumbsDown, Star, Search, PlusCircle, Mail } from 'lucide-react';
+import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, CheckCircle2, UserCheck, UserX, Crown, Sparkles, User as UserIcon, Settings, Save, Briefcase, Building, MessageSquare, ThumbsUp, ThumbsDown, Star, Search, PlusCircle, Mail, Edit3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -41,6 +41,7 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 import { PostVacancyForm } from '@/components/auth/post-vacancy-form';
+import { AddReviewForm } from '@/components/auth/add-review-form';
 import { useToast } from '@/hooks/use-toast';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
@@ -283,6 +284,7 @@ export default function AdminDashboardPage() {
   const [isVacancyDeleteDialogOpen, setIsVacancyDeleteDialogOpen] = useState(false);
   const [isVacancyPostDialogOpen, setIsVacancyPostDialogOpen] = useState(false);
   const [isVacancyEditDialogOpen, setIsVacancyEditDialogOpen] = useState(false);
+  const [isAddReviewDialogOpen, setIsAddReviewDialogOpen] = useState(false);
 
   const [selectedUser, setSelectedUser] = useState<ExpertUser | null>(null);
   const [selectedReview, setSelectedReview] = useState<Review | null>(null);
@@ -722,13 +724,33 @@ export default function AdminDashboardPage() {
               <TabsContent value="reviews" className="mt-4">
                   <Card>
                     <CardHeader>
-                      <div className="flex items-center gap-3">
-                        <MessageSquare className="h-6 w-6" />
-                        <div>
-                          <CardTitle>Review Moderation</CardTitle>
-                          <CardDescription>Approve or reject reviews submitted by users.</CardDescription>
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                          <div className="flex items-center gap-3">
+                            <MessageSquare className="h-6 w-6" />
+                            <div>
+                              <CardTitle>Review Moderation</CardTitle>
+                              <CardDescription>Approve, reject, or manually add reviews.</CardDescription>
+                            </div>
+                          </div>
+                          <Dialog open={isAddReviewDialogOpen} onOpenChange={setIsAddReviewDialogOpen}>
+                            <DialogTrigger asChild>
+                              <Button className="w-full sm:w-auto">
+                                <Edit3 className="mr-2 h-4 w-4" />
+                                Write a Review
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent className="sm:max-w-[600px]">
+                              <DialogHeader>
+                                <DialogTitle>Add a New Review</DialogTitle>
+                                <DialogDescription>Manually add a review for any expert in the system.</DialogDescription>
+                              </DialogHeader>
+                              <AddReviewForm
+                                experts={users || []}
+                                onSuccess={() => setIsAddReviewDialogOpen(false)}
+                              />
+                            </DialogContent>
+                          </Dialog>
                         </div>
-                      </div>
                     </CardHeader>
                     <CardContent>
                         {isReviewsLoading ? (
