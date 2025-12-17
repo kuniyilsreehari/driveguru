@@ -7,7 +7,7 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { User as UserIcon, Mail, Lock, Eye, EyeOff, Briefcase, MapPin, Phone, LocateIcon, Loader2, Building, Home } from "lucide-react";
+import { User as UserIcon, Mail, Lock, Eye, EyeOff, Briefcase, MapPin, Phone, LocateIcon, Loader2, Building, Home, GraduationCap, Book } from "lucide-react";
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc, serverTimestamp } from 'firebase/firestore';
 
@@ -50,6 +50,8 @@ const formSchema = z.object({
   role: z.string({ required_error: "Please select your expert type." }),
   department: z.string().optional(),
   companyName: z.string().optional(),
+  qualification: z.string().optional(),
+  skills: z.string().optional(),
 }).refine(data => {
     if (data.role === 'Company' || data.role === 'Authorized Pro') {
         return !!data.companyName;
@@ -101,6 +103,8 @@ export function RegistrationForm() {
       phoneNumber: "",
       companyName: "",
       department: "",
+      qualification: "",
+      skills: "",
     },
   });
 
@@ -160,6 +164,8 @@ export function RegistrationForm() {
         longitude: coords?.lon || null,
         phoneNumber: values.countryCode && values.phoneNumber ? `${values.countryCode} ${values.phoneNumber}` : "",
         companyName: values.companyName,
+        qualification: values.qualification,
+        skills: values.skills,
         verified: false, // Default verified status to false
         photoUrl: '', // Default photoUrl to empty string
         isAvailable: true, // Default to available
@@ -459,6 +465,41 @@ export function RegistrationForm() {
 
         <FormField
           control={form.control}
+          name="qualification"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Highest Qualification</FormLabel>
+              <div className="relative">
+                <GraduationCap className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <FormControl>
+                  <Input placeholder="e.g. B.Tech in Computer Science" {...field} className="pl-10" />
+                </FormControl>
+              </div>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="skills"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Skills (comma-separated)</FormLabel>
+              <div className="relative">
+                <Book className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <FormControl>
+                  <Input placeholder="e.g. React, Node.js, Plumbing" {...field} className="pl-10" />
+                </FormControl>
+              </div>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+
+        <FormField
+          control={form.control}
           name="password"
           render={({ field }) => (
             <FormItem>
@@ -499,4 +540,3 @@ export function RegistrationForm() {
   );
 }
 
-    
