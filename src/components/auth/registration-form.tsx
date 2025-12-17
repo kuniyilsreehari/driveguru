@@ -473,7 +473,7 @@ export function RegistrationForm() {
               )}
             />
             
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-start">
+            <div className="grid grid-cols-1 gap-4 items-start">
                 <FormItem>
                     <FormLabel>Phone Number</FormLabel>
                     <div className="flex items-center gap-2">
