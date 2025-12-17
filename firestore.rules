@@ -129,7 +129,7 @@ service cloud.firestore {
      * ===================================================== */
     match /reviews/{reviewId} {
         allow get: if true;
-        allow list: if true;
+        allow list: if isSuperAdmin();
         allow create: if isSignedIn()
             && request.resource.data.keys().hasAll(['expertId', 'reviewerName', 'rating', 'comment', 'status'])
             && request.resource.data.status == 'pending';
@@ -145,9 +145,9 @@ service cloud.firestore {
     match /vacancies/{vacancyId} {
         allow get: if true;
         allow list: if true;
-        allow create: if isPremiumCompanyUser();
-        allow update: if isPremiumCompanyUser() && isVacancyOwner(request.resource.data);
-        allow delete: if isPremiumCompanyUser() && isVacancyOwner(resource.data);
+        allow create: if isPremiumCompanyUser() || isSuperAdmin();
+        allow update: if (isPremiumCompanyUser() && isVacancyOwner(request.resource.data)) || isSuperAdmin();
+        allow delete: if (isPremiumCompanyUser() && isVacancyOwner(resource.data)) || isSuperAdmin();
     }
 
 

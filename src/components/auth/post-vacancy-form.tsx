@@ -21,7 +21,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useFirestore } from "@/firebase";
 import { addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Briefcase, Book, MapPin, FileText, Send } from "lucide-react";
+import { Briefcase, Book, MapPin, FileText, Send, Building } from "lucide-react";
+import { v4 as uuidv4 } from 'uuid';
 
 const formSchema = z.object({
   title: z.string().min(5, { message: "Title must be at least 5 characters." }),
@@ -29,15 +30,18 @@ const formSchema = z.object({
   location: z.string().min(2, { message: "Location is required." }),
   employmentType: z.enum(["Full-time", "Part-time", "Contract", "Internship"]),
   skillsRequired: z.string().min(2, { message: "At least one skill is required." }),
+  companyName: z.string().min(2, { message: "Company name is required." }),
+  companyId: z.string().optional(),
 });
 
 interface PostVacancyFormProps {
-    companyId: string;
-    companyName: string;
     onSuccess: () => void;
+    isAdmin?: boolean;
+    companyId?: string;
+    companyName?: string;
 }
 
-export function PostVacancyForm({ companyId, companyName, onSuccess }: PostVacancyFormProps) {
+export function PostVacancyForm({ onSuccess, isAdmin = false, companyId: propCompanyId, companyName: propCompanyName }: PostVacancyFormProps) {
   const { toast } = useToast();
   const firestore = useFirestore();
 
@@ -49,6 +53,7 @@ export function PostVacancyForm({ companyId, companyName, onSuccess }: PostVacan
       location: "",
       employmentType: "Full-time",
       skillsRequired: "",
+      companyName: propCompanyName || "",
     },
   });
 
@@ -59,8 +64,8 @@ export function PostVacancyForm({ companyId, companyName, onSuccess }: PostVacan
     
     const vacancyData = {
       ...values,
-      companyId: companyId,
-      companyName: companyName,
+      companyId: isAdmin ? values.companyId || uuidv4() : propCompanyId, // Generate a UUID if admin doesn't provide one
+      companyName: values.companyName,
       postedAt: serverTimestamp(),
     };
 
@@ -68,7 +73,7 @@ export function PostVacancyForm({ companyId, companyName, onSuccess }: PostVacan
       await addDocumentNonBlocking(vacanciesCollectionRef, vacancyData);
       toast({
         title: "Vacancy Posted",
-        description: "Your new job opening has been successfully posted.",
+        description: "The new job opening has been successfully posted.",
       });
       onSuccess();
     } catch (error) {
@@ -84,6 +89,24 @@ export function PostVacancyForm({ companyId, companyName, onSuccess }: PostVacan
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        {isAdmin && (
+            <FormField
+              control={form.control}
+              name="companyName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Company Name</FormLabel>
+                  <div className="relative">
+                    <Building className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <FormControl>
+                      <Input placeholder="e.g. Acme Corporation" {...field} className="pl-10" />
+                    </FormControl>
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+        )}
         <FormField
           control={form.control}
           name="title"
@@ -165,7 +188,7 @@ export function PostVacancyForm({ companyId, companyName, onSuccess }: PostVacan
           name="skillsRequired"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Skills Required</FormLabel>
+              <FormLabel>Skills Required (comma-separated)</FormLabel>
               <div className="relative">
                 <Book className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <FormControl>

@@ -9,7 +9,7 @@ import { useUser, useFirestore, useDoc, useMemoFirebase, useAuth, useCollection,
 import { deleteDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, CheckCircle2, UserCheck, UserX, Crown, Sparkles, User as UserIcon, Settings, Save, Briefcase, Building, MessageSquare, ThumbsUp, ThumbsDown, Star, Search } from 'lucide-react';
+import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, CheckCircle2, UserCheck, UserX, Crown, Sparkles, User as UserIcon, Settings, Save, Briefcase, Building, MessageSquare, ThumbsUp, ThumbsDown, Star, Search, PlusCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -32,6 +32,15 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogDescription,
+} from '@/components/ui/dialog';
+import { PostVacancyForm } from '@/components/auth/post-vacancy-form';
 import { useToast } from '@/hooks/use-toast';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
@@ -41,6 +50,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { format, formatDistanceToNow } from 'date-fns';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
+import type { Vacancy } from '@/app/vacancies/page';
 
 type ExpertUser = {
     id: string;
@@ -203,6 +213,43 @@ const ReviewTable = ({ reviews, onApprove, onReject }: { reviews: Review[], onAp
     )
 }
 
+const VacancyTable = ({ vacancies, onDelete }: { vacancies: Vacancy[], onDelete: (vacancy: Vacancy) => void }) => {
+  return (
+      <Table>
+          <TableHeader>
+              <TableRow>
+                  <TableHead>Title</TableHead>
+                  <TableHead>Company</TableHead>
+                  <TableHead>Location</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Posted</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+          </TableHeader>
+          <TableBody>
+              {vacancies && vacancies.length > 0 ? (
+                  vacancies.map((vacancy) => (
+                      <TableRow key={vacancy.id}>
+                          <TableCell className="font-medium">{vacancy.title}</TableCell>
+                          <TableCell>{vacancy.companyName}</TableCell>
+                          <TableCell>{vacancy.location}</TableCell>
+                          <TableCell><Badge variant="secondary">{vacancy.employmentType}</Badge></TableCell>
+                          <TableCell>{formatDistanceToNow(vacancy.postedAt.toDate(), { addSuffix: true })}</TableCell>
+                          <TableCell className="text-right">
+                              <Button variant="destructive" size="sm" onClick={() => onDelete(vacancy)}>
+                                  <Trash2 className="mr-2 h-4 w-4" />Delete
+                              </Button>
+                          </TableCell>
+                      </TableRow>
+                  ))
+              ) : (
+                  <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground h-24">No vacancies found.</TableCell></TableRow>
+              )}
+          </TableBody>
+      </Table>
+  );
+}
+
 
 export default function AdminDashboardPage() {
   const { user, isUserLoading } = useUser();
@@ -213,8 +260,11 @@ export default function AdminDashboardPage() {
 
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isReviewRejectDialogOpen, setIsReviewRejectDialogOpen] = useState(false);
+  const [isVacancyDeleteDialogOpen, setIsVacancyDeleteDialogOpen] = useState(false);
+  const [isVacancyPostDialogOpen, setIsVacancyPostDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<ExpertUser | null>(null);
   const [selectedReview, setSelectedReview] = useState<Review | null>(null);
+  const [selectedVacancy, setSelectedVacancy] = useState<Vacancy | null>(null);
   const [featuredExpertsLimit, setFeaturedExpertsLimit] = useState(3);
   const [isSavingSettings, setIsSavingSettings] = useState(false);
 
@@ -236,13 +286,19 @@ export default function AdminDashboardPage() {
   }, [firestore, isSuperAdmin]);
 
   const reviewsCollectionQuery = useMemoFirebase(() => {
+      if (!firestore || !isSuperAdmin) return null;
+      return query(collection(firestore, 'reviews'), orderBy('createdAt', 'desc'));
+  }, [firestore, isSuperAdmin]);
+
+  const vacanciesCollectionQuery = useMemoFirebase(() => {
     if (!firestore || !isSuperAdmin) return null;
-    return query(collection(firestore, 'reviews'), orderBy('createdAt', 'desc'));
-}, [firestore, isSuperAdmin]);
+    return query(collection(firestore, 'vacancies'), orderBy('postedAt', 'desc'));
+  }, [firestore, isSuperAdmin]);
 
 
   const { data: users, isLoading: isUsersLoading } = useCollection<ExpertUser>(usersCollectionRef);
   const { data: reviews, isLoading: isReviewsLoading } = useCollection<Review>(reviewsCollectionQuery);
+  const { data: vacancies, isLoading: isVacanciesLoading } = useCollection<Vacancy>(vacanciesCollectionQuery);
   
   const appConfigDocRef = useMemoFirebase(() => {
       if (!firestore) return null;
@@ -366,6 +422,23 @@ export default function AdminDashboardPage() {
     setSelectedReview(null);
   };
 
+  const openVacancyDeleteDialog = (vacancy: Vacancy) => {
+      setSelectedVacancy(vacancy);
+      setIsVacancyDeleteDialogOpen(true);
+  };
+
+  const handleDeleteVacancy = () => {
+      if (!selectedVacancy || !firestore) return;
+      const vacancyDocRef = doc(firestore, 'vacancies', selectedVacancy.id);
+      deleteDocumentNonBlocking(vacancyDocRef);
+      toast({
+          title: "Vacancy Deleted",
+          description: `The vacancy "${selectedVacancy.title}" has been removed.`,
+      });
+      setIsVacancyDeleteDialogOpen(false);
+      setSelectedVacancy(null);
+  };
+
   const handleFilterClick = (filter: string | null) => {
     if (activeFilter === filter) {
         setActiveFilter(null); // Toggle off if clicked again
@@ -375,7 +448,7 @@ export default function AdminDashboardPage() {
   };
 
   const isLoading = isUserLoading || isRoleLoading;
-  const areTablesLoading = isSuperAdmin && (isUsersLoading || isReviewsLoading);
+  const areTablesLoading = isSuperAdmin && (isUsersLoading || isReviewsLoading || isVacanciesLoading);
   
   const sortedUsers = users ? [...users].sort((a, b) => (a.firstName || '').localeCompare(b.firstName || '')) : [];
 
@@ -549,9 +622,10 @@ export default function AdminDashboardPage() {
             </Card>
 
             <Tabs defaultValue="users">
-              <TabsList className="grid w-full grid-cols-2">
+              <TabsList className="grid w-full grid-cols-3">
                   <TabsTrigger value="users">User Management</TabsTrigger>
                   <TabsTrigger value="reviews">Review Management</TabsTrigger>
+                  <TabsTrigger value="vacancies">Vacancy Management</TabsTrigger>
               </TabsList>
               <TabsContent value="users" className="mt-4">
                   <Card>
@@ -655,6 +729,49 @@ export default function AdminDashboardPage() {
                     </CardContent>
                   </Card>
               </TabsContent>
+              <TabsContent value="vacancies" className="mt-4">
+                <Card>
+                    <CardHeader>
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                          <div className="flex items-center gap-3">
+                            <Briefcase className="h-6 w-6" />
+                            <div>
+                              <CardTitle>Vacancy Management</CardTitle>
+                              <CardDescription>Manage all job vacancies in the system.</CardDescription>
+                            </div>
+                          </div>
+                          <Dialog open={isVacancyPostDialogOpen} onOpenChange={setIsVacancyPostDialogOpen}>
+                            <DialogTrigger asChild>
+                              <Button className="w-full sm:w-auto">
+                                <PlusCircle className="mr-2 h-4 w-4" />
+                                Post New Vacancy
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent className="sm:max-w-[600px]">
+                              <DialogHeader>
+                                <DialogTitle>Create a New Vacancy</DialogTitle>
+                                <DialogDescription>As a Super Admin, you can post a job for any company.</DialogDescription>
+                              </DialogHeader>
+                              <PostVacancyForm
+                                onSuccess={() => setIsVacancyPostDialogOpen(false)}
+                                isAdmin={true}
+                              />
+                            </DialogContent>
+                          </Dialog>
+                        </div>
+                    </CardHeader>
+                    <CardContent>
+                        {isVacanciesLoading ? (
+                             <div className="flex justify-center items-center p-8">
+                                <Loader className="h-6 w-6 animate-spin text-primary" />
+                                <p className="ml-3 text-muted-foreground">Loading vacancies...</p>
+                              </div>
+                        ) : (
+                            <VacancyTable vacancies={vacancies || []} onDelete={openVacancyDeleteDialog} />
+                        )}
+                    </CardContent>
+                  </Card>
+              </TabsContent>
             </Tabs>
           </main>
         </div>
@@ -688,6 +805,22 @@ export default function AdminDashboardPage() {
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={handleRejectReview} className="bg-destructive hover:bg-destructive/90">
               Reject
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+       <AlertDialog open={isVacancyDeleteDialogOpen} onOpenChange={setIsVacancyDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Vacancy?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete the vacancy &quot;{selectedVacancy?.title}&quot;? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteVacancy} className="bg-destructive hover:bg-destructive/90">
+              Delete
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
