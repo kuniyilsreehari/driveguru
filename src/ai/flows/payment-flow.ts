@@ -12,6 +12,9 @@ import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { v4 as uuidv4 } from 'uuid';
 import fetch from 'node-fetch';
+import { doc, getDoc } from 'firebase/firestore';
+import { getSdks } from '@/firebase';
+
 
 const CreatePaymentOrderInputSchema = z.object({
   userId: z.string().describe("The ID of the user upgrading their plan."),
@@ -19,7 +22,6 @@ const CreatePaymentOrderInputSchema = z.object({
   userName: z.string().describe("The name of the user."),
   userPhone: z.string().describe("The phone number of the user."),
   plan: z.enum(['Premier', 'Super Premier']).describe("The plan the user is upgrading to."),
-  amount: z.number().describe("The amount to be charged."),
 });
 export type CreatePaymentOrderInput = z.infer<typeof CreatePaymentOrderInputSchema>;
 
@@ -29,7 +31,7 @@ const CreatePaymentOrderOutputSchema = z.object({
 export type CreatePaymentOrderOutput = z.infer<typeof CreatePaymentOrderOutputSchema>;
 
 
-async function createCashfreeOrder(input: CreatePaymentOrderInput): Promise<{ payment_link: string }> {
+async function createCashfreeOrder(input: CreatePaymentOrderInput & { amount: number }): Promise<{ payment_link: string }> {
     const url = 'https://sandbox.cashfree.com/pg/orders'; // Sandbox URL, replace for production
     const orderId = `order_${uuidv4()}`;
 
@@ -97,7 +99,30 @@ const createPaymentOrderFlow = ai.defineFlow(
   },
   async (input) => {
     
-    const order = await createCashfreeOrder(input);
+    // Using getSdks to get firestore instance on the server-side
+    const { firestore } = getSdks();
+    const appConfigDocRef = doc(firestore, 'app_config', 'homepage');
+    const appConfigSnap = await getDoc(appConfigDocRef);
+    
+    if (!appConfigSnap.exists()) {
+        throw new Error("Application configuration not found.");
+    }
+    
+    const appConfig = appConfigSnap.data();
+    let amount = 0;
+
+    if (input.plan === 'Premier') {
+        amount = appConfig.premierPlanPrice || 0;
+    } else if (input.plan === 'Super Premier') {
+        amount = appConfig.superPremierPlanPrice || 0;
+    }
+
+    if (amount <= 0) {
+        throw new Error(`Invalid price for ${input.plan} plan. Please set a price in the admin dashboard.`);
+    }
+
+    const orderInput = { ...input, amount };
+    const order = await createCashfreeOrder(orderInput);
 
     if (!order.payment_link) {
       throw new Error("Failed to create payment link.");

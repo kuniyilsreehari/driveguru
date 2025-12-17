@@ -10,7 +10,7 @@ import { useUser, useFirestore, useDoc, useMemoFirebase, useAuth, useCollection 
 import { deleteDocumentNonBlocking, updateDocumentNonBlocking, setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, CheckCircle2, UserCheck, UserX, Crown, Sparkles, User as UserIcon, Settings, Save, Briefcase, Building, MessageSquare, ThumbsUp, ThumbsDown, Star, Search, PlusCircle, Mail, Edit3, Link as LinkIcon, Download, ExternalLink } from 'lucide-react';
+import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, CheckCircle2, UserCheck, UserX, Crown, Sparkles, User as UserIcon, Settings, Save, Briefcase, Building, MessageSquare, ThumbsUp, ThumbsDown, Star, Search, PlusCircle, Mail, Edit3, Link as LinkIcon, Download, ExternalLink, IndianRupee } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -99,6 +99,8 @@ type Review = {
 type AppConfig = {
     featuredExpertsLimit?: number;
     superPremierPaymentLink?: string;
+    premierPlanPrice?: number;
+    superPremierPlanPrice?: number;
 };
 
 const UserTable = ({ users, onTierChange, onVerificationToggle, onDelete, onEdit }: { users: ExpertUser[], onTierChange: (expert: ExpertUser, tier: ExpertUser['tier']) => void, onVerificationToggle: (expert: ExpertUser) => void, onDelete: (expert: ExpertUser) => void, onEdit: (expert: ExpertUser) => void }) => {
@@ -328,6 +330,35 @@ export default function AdminDashboardPage() {
   const auth = useAuth();
   const router = useRouter();
   const { toast } = useToast();
+  const [installPrompt, setInstallPrompt] = useState<Event | null>(null);
+
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault();
+      setInstallPrompt(e);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
+  }, []);
+
+  const handleInstallClick = () => {
+    if (!installPrompt) {
+      return;
+    }
+    (installPrompt as any).prompt();
+    (installPrompt as any).userChoice.then((choiceResult: { outcome: 'accepted' | 'dismissed' }) => {
+      if (choiceResult.outcome === 'accepted') {
+        console.log('User accepted the install prompt');
+      } else {
+        console.log('User dismissed the install prompt');
+      }
+      setInstallPrompt(null);
+    });
+  };
 
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isReviewRejectDialogOpen, setIsReviewRejectDialogOpen] = useState(false);
@@ -344,6 +375,9 @@ export default function AdminDashboardPage() {
 
   const [featuredExpertsLimit, setFeaturedExpertsLimit] = useState(3);
   const [paymentLink, setPaymentLink] = useState('');
+  const [premierPrice, setPremierPrice] = useState(0);
+  const [superPremierPrice, setSuperPremierPrice] = useState(0);
+
   const [isSavingSettings, setIsSavingSettings] = useState(false);
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -388,6 +422,8 @@ export default function AdminDashboardPage() {
     if (!isAppConfigLoading && appConfig) {
       setFeaturedExpertsLimit(appConfig.featuredExpertsLimit || 3);
       setPaymentLink(appConfig.superPremierPaymentLink || '');
+      setPremierPrice(appConfig.premierPlanPrice || 0);
+      setSuperPremierPrice(appConfig.superPremierPlanPrice || 0);
     }
   }, [appConfig, isAppConfigLoading]);
 
@@ -472,14 +508,16 @@ export default function AdminDashboardPage() {
     if (!appConfigDocRef) return;
     setIsSavingSettings(true);
     try {
-        const settingsToSave = {
+        const settingsToSave: AppConfig = {
             featuredExpertsLimit: Number(featuredExpertsLimit),
-            superPremierPaymentLink: paymentLink
+            superPremierPaymentLink: paymentLink,
+            premierPlanPrice: Number(premierPrice),
+            superPremierPlanPrice: Number(superPremierPrice),
         };
         await setDocumentNonBlocking(appConfigDocRef, settingsToSave, { merge: true });
         toast({
             title: "Settings Saved",
-            description: "Homepage and payment settings have been updated.",
+            description: "Application settings have been updated.",
         });
     } catch(e) {
         toast({
@@ -739,7 +777,7 @@ export default function AdminDashboardPage() {
                         <Settings className="h-6 w-6" />
                         <div>
                             <CardTitle>Global Settings</CardTitle>
-                            <CardDescription>Control content and payment links for the application.</CardDescription>
+                            <CardDescription>Control content, pricing, and payment links for the application.</CardDescription>
                         </div>
                     </div>
                 </CardHeader>
@@ -751,7 +789,7 @@ export default function AdminDashboardPage() {
                         </div>
                     ) : (
                         <div className="space-y-4">
-                            <div className="grid sm:grid-cols-2 gap-4">
+                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                 <div>
                                     <Label htmlFor="featured-limit">Featured Experts Limit</Label>
                                     <Input 
@@ -764,27 +802,57 @@ export default function AdminDashboardPage() {
                                         className="mt-1"
                                     />
                                 </div>
-                                <div>
-                                    <Label htmlFor="payment-link">Super Premier Payment Link</Label>
-                                    <div className="relative mt-1">
-                                        <LinkIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                                        <Input
-                                            id="payment-link"
-                                            value={paymentLink}
-                                            onChange={(e) => setPaymentLink(e.target.value)}
-                                            className="pl-10"
-                                            placeholder="https://payment.link/1234"
-                                        />
-                                    </div>
-                                     {appConfig?.superPremierPaymentLink && (
-                                        <div className="mt-2 text-xs text-muted-foreground p-2 bg-muted rounded-md">
-                                            <span>Currently saved link: </span>
-                                            <a href={appConfig.superPremierPaymentLink} target="_blank" rel="noopener noreferrer" className="text-primary underline flex items-center gap-1 break-all">
-                                               {appConfig.superPremierPaymentLink} <ExternalLink className="h-3 w-3 flex-shrink-0"/>
-                                            </a>
+                                 <div className="space-y-4">
+                                    <div>
+                                        <Label htmlFor="premier-price">Premier Plan Price (INR)</Label>
+                                        <div className="relative mt-1">
+                                            <IndianRupee className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                                            <Input
+                                                id="premier-price"
+                                                type="number"
+                                                value={premierPrice}
+                                                onChange={(e) => setPremierPrice(Number(e.target.value))}
+                                                className="pl-10"
+                                                placeholder="e.g., 499"
+                                            />
                                         </div>
-                                    )}
+                                    </div>
+                                    <div>
+                                        <Label htmlFor="super-premier-price">Super Premier Plan Price (INR)</Label>
+                                        <div className="relative mt-1">
+                                            <IndianRupee className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                                            <Input
+                                                id="super-premier-price"
+                                                type="number"
+                                                value={superPremierPrice}
+                                                onChange={(e) => setSuperPremierPrice(Number(e.target.value))}
+                                                className="pl-10"
+                                                placeholder="e.g., 999"
+                                            />
+                                        </div>
+                                    </div>
                                 </div>
+                            </div>
+                            <div>
+                                <Label htmlFor="payment-link">Central Payment Link (Optional Fallback)</Label>
+                                <div className="relative mt-1">
+                                    <LinkIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                                    <Input
+                                        id="payment-link"
+                                        value={paymentLink}
+                                        onChange={(e) => setPaymentLink(e.target.value)}
+                                        className="pl-10"
+                                        placeholder="https://payment.link/1234"
+                                    />
+                                </div>
+                                  {appConfig?.superPremierPaymentLink && (
+                                    <div className="mt-2 text-xs text-muted-foreground p-2 bg-muted rounded-md">
+                                        <span>Currently saved link: </span>
+                                        <a href={appConfig.superPremierPaymentLink} target="_blank" rel="noopener noreferrer" className="text-primary underline flex items-center gap-1 break-all">
+                                            {appConfig.superPremierPaymentLink} <ExternalLink className="h-3 w-3 flex-shrink-0"/>
+                                        </a>
+                                    </div>
+                                )}
                             </div>
                             <div className="flex justify-end">
                                 <Button onClick={handleSaveSettings} disabled={isSavingSettings}>
@@ -1084,4 +1152,3 @@ export default function AdminDashboardPage() {
     </>
   );
 }
-

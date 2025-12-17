@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -31,6 +32,8 @@ import { useToast } from '@/hooks/use-toast';
 import type { Vacancy } from '@/app/vacancies/page';
 import Link from 'next/link';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { createPaymentOrder } from '@/ai/flows/payment-flow';
+
 
 type ExpertUserProfile = {
     id: string;
@@ -61,6 +64,8 @@ type ExpertUserProfile = {
 
 type AppConfig = {
     superPremierPaymentLink?: string;
+    premierPlanPrice?: number;
+    superPremierPlanPrice?: number;
 };
 
 function CompanyVacancies({ userProfile }: { userProfile: ExpertUserProfile }) {
@@ -151,8 +156,39 @@ function CompanyVacancies({ userProfile }: { userProfile: ExpertUserProfile }) {
 }
 
 
-function UpgradeDialog({ tier, paymentLink }: { tier: 'Premier' | 'Super Premier', paymentLink: string | undefined }) {
-    const hasLink = paymentLink && paymentLink.trim() !== '';
+function UpgradeDialog({ userProfile, tier }: { userProfile: ExpertUserProfile, tier: 'Premier' | 'Super Premier' }) {
+    const [isCreatingOrder, setIsCreatingOrder] = useState(false);
+    const { toast } = useToast();
+    const router = useRouter();
+
+    const handleUpgrade = async () => {
+        setIsCreatingOrder(true);
+        try {
+            const { payment_link } = await createPaymentOrder({
+                userId: userProfile.id,
+                userEmail: userProfile.email,
+                userName: `${userProfile.firstName} ${userProfile.lastName}`,
+                userPhone: userProfile.phoneNumber || '',
+                plan: tier,
+            });
+
+            if (payment_link) {
+                router.push(payment_link);
+            } else {
+                throw new Error("Could not retrieve payment link.");
+            }
+        } catch (error: any) {
+            console.error("Payment order creation failed:", error);
+            toast({
+                variant: 'destructive',
+                title: "Upgrade Failed",
+                description: error.message || "Could not initiate the payment process. Please try again.",
+            });
+        } finally {
+            setIsCreatingOrder(false);
+        }
+    }
+
 
     return (
         <Dialog>
@@ -166,22 +202,18 @@ function UpgradeDialog({ tier, paymentLink }: { tier: 'Premier' | 'Super Premier
                 <DialogHeader>
                     <DialogTitle>Upgrade to {tier}</DialogTitle>
                     <DialogDescription>
-                        {hasLink 
-                            ? "You will be redirected to our secure payment gateway to complete your purchase. Your account will be upgraded automatically upon successful payment."
-                            : "To upgrade your plan, please contact our support team. We'll get you set up right away!"
-                        }
+                        You will be redirected to our secure payment gateway to complete your purchase. Your account will be upgraded automatically upon successful payment.
                     </DialogDescription>
                 </DialogHeader>
                 <div className="py-4">
-                    {hasLink ? (
-                        <Button asChild className="w-full">
-                            <a href={paymentLink} target="_blank" rel="noopener noreferrer">
-                                Proceed to Payment <ExternalLink className="ml-2 h-4 w-4" />
-                            </a>
-                        </Button>
-                    ) : (
-                        <p className="font-semibold">Contact Email: <a href="mailto:support@geotrack.pro" className="text-primary underline">support@geotrack.pro</a></p>
-                    )}
+                    <Button onClick={handleUpgrade} disabled={isCreatingOrder} className="w-full">
+                        {isCreatingOrder ? (
+                            <Loader className="mr-2 h-4 w-4 animate-spin" />
+                        ) : (
+                            <ExternalLink className="mr-2 h-4 w-4" />
+                        )}
+                        {isCreatingOrder ? 'Processing...' : 'Proceed to Payment'}
+                    </Button>
                 </div>
                 <DialogFooter>
                     <DialogTrigger asChild>
@@ -194,19 +226,7 @@ function UpgradeDialog({ tier, paymentLink }: { tier: 'Premier' | 'Super Premier
 }
 
 function PlanManagement({ userProfile }: { userProfile: ExpertUserProfile }) {
-    const firestore = useFirestore();
-
-    const appConfigDocRef = useMemoFirebase(() => {
-        if (!firestore) return null;
-        return doc(firestore, 'app_config', 'homepage');
-    }, [firestore]);
-
-    const { data: appConfig, isLoading: isAppConfigLoading } = useDoc<AppConfig>(appConfigDocRef);
-    
-    // For now, let's assume one payment link. A real app might have different links per plan.
-    const paymentLink = appConfig?.superPremierPaymentLink;
-
-    const PlanCard = ({ title, icon, description, features, current, children, tier }: { title: string; icon: React.ReactNode; description: string; features: string[]; current?: boolean; children?: React.ReactNode; tier?: 'Premier' | 'Super Premier' }) => (
+    const PlanCard = ({ title, icon, description, features, current, children }: { title: string; icon: React.ReactNode; description: string; features: string[]; current?: boolean; children?: React.ReactNode; }) => (
         <Card className={cn("flex flex-col", current && "border-primary ring-2 ring-primary")}>
             <CardHeader className="text-center">
                 <div className={cn("mx-auto w-fit rounded-full p-3 mb-2", current ? "bg-primary/10" : "bg-secondary")}>
@@ -248,7 +268,7 @@ function PlanManagement({ userProfile }: { userProfile: ExpertUserProfile }) {
                         icon={<UserIcon className="h-6 w-6" />}
                         description="Your current free plan."
                         features={["Public profile listing", "Receive contact from users", "Basic search visibility"]}
-                        current={userProfile.tier === 'Standard'}
+                        current={userProfile.tier === 'Standard' || !userProfile.tier}
                     />
                      <PlanCard
                         title="Premier"
@@ -256,9 +276,8 @@ function PlanManagement({ userProfile }: { userProfile: ExpertUserProfile }) {
                         description="Get noticed and build trust."
                         features={["All Standard features", "AI-Powered Search access", "Post job vacancies", "Downloadable PDF profile"]}
                         current={userProfile.tier === 'Premier'}
-                        tier="Premier"
                      >
-                        {userProfile.tier === 'Standard' && <UpgradeDialog tier="Premier" paymentLink={paymentLink} />}
+                        {userProfile.tier === 'Standard' && <UpgradeDialog userProfile={userProfile} tier="Premier" />}
                      </PlanCard>
                      <PlanCard
                         title="Super Premier"
@@ -266,9 +285,8 @@ function PlanManagement({ userProfile }: { userProfile: ExpertUserProfile }) {
                         description="Maximum visibility and tools."
                         features={["All Premier features", "Top placement in search results", "Featured expert listing"]}
                         current={userProfile.tier === 'Super Premier'}
-                        tier="Super Premier"
                      >
-                        {userProfile.tier !== 'Super Premier' && <UpgradeDialog tier="Super Premier" paymentLink={paymentLink} />}
+                        {userProfile.tier !== 'Super Premier' && <UpgradeDialog userProfile={userProfile} tier="Super Premier" />}
                     </PlanCard>
                 </div>
             </CardContent>
