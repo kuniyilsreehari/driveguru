@@ -87,10 +87,6 @@ export function ExpertCard({ expert }: ExpertCardProps) {
                                 {expert.tier === 'Premier' && <Badge variant="outline" className="border-purple-500 text-purple-500"><Crown className="mr-1 h-3 w-3" /> Premier</Badge>}
                                 {expert.tier === 'Super Premier' && <Badge variant="outline" className="border-blue-500 text-blue-500"><Sparkles className="mr-1 h-3 w-3" /> Super Premier</Badge>}
                             </div>
-                            <div className="flex items-center gap-1 mt-2">
-                                <Star className="h-4 w-4 text-yellow-400" />
-                                <span className="text-xs text-muted-foreground ml-1">View Reviews</span>
-                            </div>
                         </Link>
 
                         <Separator className="my-3" />
