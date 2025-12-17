@@ -4,7 +4,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { collection, serverTimestamp } from 'firebase/firestore';
+import { collection, serverTimestamp, doc } from 'firebase/firestore';
 
 import { Button } from "@/components/ui/button";
 import {
@@ -18,11 +18,12 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { useFirestore, useUser } from "@/firebase";
+import { useFirestore, useUser, useDoc, useMemoFirebase } from "@/firebase";
 import { addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Briefcase, Book, MapPin, FileText, Send, Building, Mail } from "lucide-react";
+import { Briefcase, Book, MapPin, FileText, Send, Building, Mail, Phone, Users, CheckSquare } from "lucide-react";
 import { v4 as uuidv4 } from 'uuid';
+import { Checkbox } from "../ui/checkbox";
 
 const formSchema = z.object({
   title: z.string().min(5, { message: "Title must be at least 5 characters." }),
@@ -32,6 +33,9 @@ const formSchema = z.object({
   skillsRequired: z.string().min(2, { message: "At least one skill is required." }),
   companyName: z.string().min(2, { message: "Company name is required." }),
   companyEmail: z.string().email({ message: "A valid company email is required for applications." }),
+  contactPhone: z.string().optional(),
+  positionsAvailable: z.coerce.number().min(1, "At least one position must be available."),
+  isImmediate: z.boolean().default(false),
   companyId: z.string().optional(),
 });
 
@@ -41,11 +45,23 @@ interface PostVacancyFormProps {
     companyId?: string;
     companyName?: string;
     companyEmail?: string;
+    contactPhone?: string;
 }
 
-export function PostVacancyForm({ onSuccess, isAdmin = false, companyId: propCompanyId, companyName: propCompanyName, companyEmail: propCompanyEmail }: PostVacancyFormProps) {
+export function PostVacancyForm({ onSuccess, isAdmin = false, companyId: propCompanyId, companyName: propCompanyName, companyEmail: propCompanyEmail, contactPhone: propContactPhone }: PostVacancyFormProps) {
   const { toast } = useToast();
   const firestore = useFirestore();
+  const { user } = useUser();
+  
+  // Get user profile to check tier and verification status
+  const userDocRef = useMemoFirebase(() => {
+    if(!user || !propCompanyId) return null;
+    // Assuming the user posting is the one associated with the companyId
+    const posterUser = Object.values(user).find(u => u.companyId === propCompanyId);
+    return doc(firestore, 'users', user.uid);
+  }, [user, firestore, propCompanyId]);
+
+  const { data: userProfile } = useDoc(userDocRef);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -57,6 +73,9 @@ export function PostVacancyForm({ onSuccess, isAdmin = false, companyId: propCom
       skillsRequired: "",
       companyName: propCompanyName || "",
       companyEmail: propCompanyEmail || "",
+      contactPhone: propContactPhone || "",
+      positionsAvailable: 1,
+      isImmediate: false,
     },
   });
 
@@ -67,9 +86,12 @@ export function PostVacancyForm({ onSuccess, isAdmin = false, companyId: propCom
     
     const vacancyData = {
       ...values,
-      companyId: isAdmin ? values.companyId || uuidv4() : propCompanyId, // Generate a UUID if admin doesn't provide one
+      companyId: isAdmin ? values.companyId || uuidv4() : propCompanyId,
       companyName: values.companyName,
       companyEmail: values.companyEmail,
+      contactPhone: values.contactPhone,
+      isCompanyVerified: userProfile?.verified || false,
+      companyTier: userProfile?.tier || 'Standard',
       postedAt: serverTimestamp(),
     };
 
@@ -115,7 +137,7 @@ export function PostVacancyForm({ onSuccess, isAdmin = false, companyId: propCom
               name="companyEmail"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Company Contact Email</FormLabel>
+                  <FormLabel>Application Email</FormLabel>
                   <div className="relative">
                     <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <FormControl>
@@ -202,6 +224,41 @@ export function PostVacancyForm({ onSuccess, isAdmin = false, companyId: propCom
             )}
             />
         </div>
+
+         <div className="grid grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="positionsAvailable"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Positions Available</FormLabel>
+                  <div className="relative">
+                    <Users className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <FormControl>
+                      <Input type="number" {...field} className="pl-10" />
+                    </FormControl>
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+             <FormField
+              control={form.control}
+              name="contactPhone"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Contact Phone (Optional)</FormLabel>
+                  <div className="relative">
+                    <Phone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <FormControl>
+                      <Input type="tel" placeholder="+91 555 123 4567" {...field} className="pl-10" />
+                    </FormControl>
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+        </div>
         
         <FormField
           control={form.control}
@@ -219,6 +276,28 @@ export function PostVacancyForm({ onSuccess, isAdmin = false, companyId: propCom
             </FormItem>
           )}
         />
+        
+        <FormField
+          control={form.control}
+          name="isImmediate"
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4 shadow-sm">
+                <FormControl>
+                    <Checkbox
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                    />
+                </FormControl>
+                <div className="space-y-1 leading-none">
+                    <FormLabel className="flex items-center gap-2">
+                     <CheckSquare className="h-4 w-4"/>
+                        This is an immediate opening
+                    </FormLabel>
+                </div>
+            </FormItem>
+          )}
+        />
+
 
         <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
           {form.formState.isSubmitting ? (
@@ -234,5 +313,3 @@ export function PostVacancyForm({ onSuccess, isAdmin = false, companyId: propCom
     </Form>
   );
 }
-
-    

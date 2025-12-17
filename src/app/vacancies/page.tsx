@@ -5,11 +5,11 @@ import { Suspense } from 'react';
 import Link from 'next/link';
 import { collection, query, orderBy, Timestamp } from 'firebase/firestore';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Loader2, Briefcase, ChevronLeft, MapPin, Building, Book } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
+import { Loader2, Briefcase, ChevronLeft, MapPin, Building, Book, Calendar, Phone, Share2, UserCheck, Crown, Sparkles, AlertTriangle, Users } from 'lucide-react';
+import { format, formatDistanceToNow } from 'date-fns';
 
 export type Vacancy = {
     id: string;
@@ -18,9 +18,14 @@ export type Vacancy = {
     companyId: string;
     companyName: string;
     companyEmail: string;
+    contactPhone?: string;
     location: string;
     employmentType: 'Full-time' | 'Part-time' | 'Contract' | 'Internship';
     skillsRequired: string;
+    isImmediate?: boolean;
+    positionsAvailable: number;
+    isCompanyVerified?: boolean;
+    companyTier?: 'Standard' | 'Premier' | 'Super Premier';
     postedAt: Timestamp;
 };
 
@@ -53,41 +58,53 @@ function VacanciesList() {
     }
 
     return (
-        <div className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {vacancies.map(vacancy => {
                 const mailtoLink = `mailto:${vacancy.companyEmail}?subject=Application for ${encodeURIComponent(vacancy.title)}`;
+                const callLink = `tel:${vacancy.contactPhone}`;
 
                 return (
-                    <Card key={vacancy.id} id={vacancy.id}>
-                        <CardHeader>
-                            <div className="flex justify-between items-start">
-                                <div>
-                                    <CardTitle className="text-xl">{vacancy.title}</CardTitle>
-                                    <CardDescription className="flex items-center gap-4 mt-1">
-                                        <span className='flex items-center gap-1'><Building className="h-4 w-4" /> {vacancy.companyName}</span>
-                                        <span className='flex items-center gap-1'><MapPin className="h-4 w-4" /> {vacancy.location}</span>
-                                    </CardDescription>
+                    <Card key={vacancy.id} id={vacancy.id} className="flex flex-col">
+                        <CardContent className="p-6 flex flex-col flex-grow">
+                            <div className="flex items-center justify-between mb-4">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                    {vacancy.isImmediate && (
+                                        <Badge variant="destructive"><AlertTriangle className="mr-1 h-3 w-3" />Immediate</Badge>
+                                    )}
+                                    {vacancy.isCompanyVerified && (
+                                        <Badge variant="outline" className="border-green-500 text-green-500"><UserCheck className="mr-1 h-3 w-3" />Verified</Badge>
+                                    )}
+                                    {vacancy.companyTier === 'Premier' && (
+                                        <Badge variant="outline" className="border-purple-500 text-purple-500"><Crown className="mr-1 h-3 w-3" />Premier</Badge>
+                                    )}
+                                    {vacancy.companyTier === 'Super Premier' && (
+                                        <Badge variant="outline" className="border-blue-500 text-blue-500"><Sparkles className="mr-1 h-3 w-3" />Super Premier</Badge>
+                                    )}
                                 </div>
-                                <Badge variant="secondary">{vacancy.employmentType}</Badge>
+                                <Button variant="ghost" size="icon" className="h-8 w-8">
+                                    <Share2 className="h-4 w-4" />
+                                </Button>
                             </div>
-                        </CardHeader>
-                        <CardContent>
-                            <p className="text-muted-foreground text-sm mb-4">{vacancy.description}</p>
                             
-                            <div className="mb-4">
-                                <h4 className="font-semibold text-sm mb-2 flex items-center gap-2"><Book className="h-4 w-4" /> Required Skills</h4>
-                                <div className="flex flex-wrap gap-2">
-                                    {vacancy.skillsRequired.split(',').map((skill, index) => (
-                                        <Badge key={index} variant="outline">{skill.trim()}</Badge>
-                                    ))}
-                                </div>
+                            <h3 className="text-2xl font-bold">{vacancy.title}</h3>
+
+                            <div className="space-y-3 text-muted-foreground mt-4 text-sm flex-grow">
+                                <div className="flex items-center gap-3"><Building className="h-4 w-4" /> <span>{vacancy.companyName}</span></div>
+                                <div className="flex items-center gap-3"><Calendar className="h-4 w-4" /> <span>Posted: {vacancy.postedAt ? format(vacancy.postedAt.toDate(), 'PPp') : 'just now'}</span></div>
+                                <div className="flex items-center gap-3"><MapPin className="h-4 w-4" /> <span>{vacancy.location}</span></div>
+                                <div className="flex items-center gap-3"><Briefcase className="h-4 w-4" /> <Badge variant="secondary">{vacancy.employmentType}</Badge></div>
+                                <div className="flex items-center gap-3"><Users className="h-4 w-4" /> <span>Positions Available: {vacancy.positionsAvailable}</span></div>
                             </div>
 
-                            <div className="flex justify-between items-center text-xs text-muted-foreground">
-                                <span>Posted {vacancy.postedAt ? formatDistanceToNow(vacancy.postedAt.toDate(), { addSuffix: true }) : 'just now'}</span>
-                                <Button size="sm" asChild>
+                            <div className="flex gap-2 mt-6">
+                                <Button size="sm" asChild className="flex-1 bg-orange-500 hover:bg-orange-600">
                                     <a href={mailtoLink}>Apply Now</a>
                                 </Button>
+                                {vacancy.contactPhone && (
+                                    <Button size="sm" asChild variant="outline" className="flex-1">
+                                        <a href={callLink}><Phone className="mr-2 h-4 w-4"/> Call</a>
+                                    </Button>
+                                )}
                             </div>
                         </CardContent>
                     </Card>
@@ -100,7 +117,7 @@ function VacanciesList() {
 export default function VacanciesPage() {
     return (
         <div className="min-h-screen bg-background p-4 sm:p-8">
-            <div className="mx-auto max-w-3xl">
+            <div className="mx-auto max-w-6xl">
                 <header className="pb-8 text-center">
                      <div className="flex items-center justify-center gap-3 mb-4">
                         <Briefcase className="h-10 w-10 text-primary" />
@@ -124,5 +141,3 @@ export default function VacanciesPage() {
         </div>
     )
 }
-
-    
