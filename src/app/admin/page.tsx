@@ -53,15 +53,33 @@ import { format, formatDistanceToNow } from 'date-fns';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import type { Vacancy } from '@/app/vacancies/page';
+import { EditProfileForm } from '@/components/auth/edit-profile-form';
 
 type ExpertUser = {
     id: string;
-    firstName?: string;
-    lastName?: string;
-    email?: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    role: string;
+    photoUrl?: string;
+    city?: string;
+    state?: string;
+    pincode?: string;
+    address?: string;
     verified?: boolean;
+    hourlyRate?: number;
+    yearsOfExperience?: number;
+    gender?: string;
+    qualification?: string;
+    collegeName?: string;
+    skills?: string;
+    aboutMe?: string;
+    phoneNumber?: string;
+    companyName?: string;
+    department?: string;
+    isAvailable?: boolean;
+    companyId?: string;
     tier?: 'Standard' | 'Premier' | 'Super Premier';
-    role?: 'Super Admin' | 'Freelancer' | 'Company' | 'Authorized Pro';
     createdAt?: Timestamp;
 };
 
@@ -80,7 +98,7 @@ type AppConfig = {
     featuredExpertsLimit?: number;
 };
 
-const UserTable = ({ users, onTierChange, onVerificationToggle, onDelete }: { users: ExpertUser[], onTierChange: (expert: ExpertUser, tier: ExpertUser['tier']) => void, onVerificationToggle: (expert: ExpertUser) => void, onDelete: (expert: ExpertUser) => void }) => {
+const UserTable = ({ users, onTierChange, onVerificationToggle, onDelete, onEdit }: { users: ExpertUser[], onTierChange: (expert: ExpertUser, tier: ExpertUser['tier']) => void, onVerificationToggle: (expert: ExpertUser) => void, onDelete: (expert: ExpertUser) => void, onEdit: (expert: ExpertUser) => void }) => {
     const getInitials = (firstName?: string, lastName?: string) => {
         if (firstName && lastName) {
             return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
@@ -99,8 +117,6 @@ const UserTable = ({ users, onTierChange, onVerificationToggle, onDelete }: { us
         }
     }
     
-    const { toast } = useToast();
-
     return (
         <Table>
             <TableHeader>
@@ -120,6 +136,7 @@ const UserTable = ({ users, onTierChange, onVerificationToggle, onDelete }: { us
                     <TableRow key={expert.id}>
                     <TableCell>
                         <Avatar>
+                            <AvatarImage src={expert.photoUrl} alt={`${expert.firstName} ${expert.lastName}`} />
                             <AvatarFallback>{getInitials(expert.firstName, expert.lastName)}</AvatarFallback>
                         </Avatar>
                     </TableCell>
@@ -152,7 +169,7 @@ const UserTable = ({ users, onTierChange, onVerificationToggle, onDelete }: { us
                                         <DropdownMenuItem onClick={() => onTierChange(expert, 'Super Premier')}><Sparkles className="mr-2 h-4 w-4" />Super Premier</DropdownMenuItem>
                                     </DropdownMenuSubContent></DropdownMenuPortal>
                                 </DropdownMenuSub>
-                                <DropdownMenuItem onClick={() => toast({ title: "Edit clicked", description: "Edit functionality coming soon!"})}><Edit className="mr-2 h-4 w-4" />Edit</DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => onEdit(expert)}><Edit className="mr-2 h-4 w-4" />Edit</DropdownMenuItem>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem onClick={() => onDelete(expert)} className="text-destructive focus:text-destructive"><Trash2 className="mr-2 h-4 w-4" />Delete</DropdownMenuItem>
                             </DropdownMenuContent>
@@ -316,6 +333,7 @@ export default function AdminDashboardPage() {
   const [isVacancyPostDialogOpen, setIsVacancyPostDialogOpen] = useState(false);
   const [isVacancyEditDialogOpen, setIsVacancyEditDialogOpen] = useState(false);
   const [isAddReviewDialogOpen, setIsAddReviewDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   const [selectedUser, setSelectedUser] = useState<ExpertUser | null>(null);
   const [selectedReview, setSelectedReview] = useState<Review | null>(null);
@@ -395,6 +413,11 @@ export default function AdminDashboardPage() {
   const openDeleteDialog = (user: ExpertUser) => {
     setSelectedUser(user);
     setIsDeleteDialogOpen(true);
+  };
+
+  const openEditDialog = (user: ExpertUser) => {
+    setSelectedUser(user);
+    setIsEditDialogOpen(true);
   };
 
   const handleDeleteUser = () => {
@@ -772,19 +795,19 @@ export default function AdminDashboardPage() {
                                   <TabsTrigger value="superAdmins">Super Admins</TabsTrigger>
                               </TabsList>
                               <TabsContent value="all" className="mt-4">
-                                  <UserTable users={filteredUsers} onTierChange={handleTierChange} onVerificationToggle={handleVerificationToggle} onDelete={openDeleteDialog} />
+                                  <UserTable users={filteredUsers} onTierChange={handleTierChange} onVerificationToggle={handleVerificationToggle} onDelete={openDeleteDialog} onEdit={openEditDialog} />
                               </TabsContent>
                               <TabsContent value="freelancers" className="mt-4">
-                                  <UserTable users={freelancers || []} onTierChange={handleTierChange} onVerificationToggle={handleVerificationToggle} onDelete={openDeleteDialog} />
+                                  <UserTable users={freelancers || []} onTierChange={handleTierChange} onVerificationToggle={handleVerificationToggle} onDelete={openDeleteDialog} onEdit={openEditDialog} />
                               </TabsContent>
                               <TabsContent value="companies" className="mt-4">
-                                  <UserTable users={companies || []} onTierChange={handleTierChange} onVerificationToggle={handleVerificationToggle} onDelete={openDeleteDialog} />
+                                  <UserTable users={companies || []} onTierChange={handleTierChange} onVerificationToggle={handleVerificationToggle} onDelete={openDeleteDialog} onEdit={openEditDialog} />
                               </TabsContent>
                               <TabsContent value="authorizedPros" className="mt-4">
-                                  <UserTable users={authorizedPros || []} onTierChange={handleTierChange} onVerificationToggle={handleVerificationToggle} onDelete={openDeleteDialog} />
+                                  <UserTable users={authorizedPros || []} onTierChange={handleTierChange} onVerificationToggle={handleVerificationToggle} onDelete={openDeleteDialog} onEdit={openEditDialog} />
                               </TabsContent>
                               <TabsContent value="superAdmins" className="mt-4">
-                                  <UserTable users={superAdmins || []} onTierChange={handleTierChange} onVerificationToggle={handleVerificationToggle} onDelete={openDeleteDialog} />
+                                  <UserTable users={superAdmins || []} onTierChange={handleTierChange} onVerificationToggle={handleVerificationToggle} onDelete={openDeleteDialog} onEdit={openEditDialog} />
                               </TabsContent>
                           </Tabs>
                       )}
@@ -980,6 +1003,27 @@ export default function AdminDashboardPage() {
           )}
         </DialogContent>
       </Dialog>
+      
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Expert Profile</DialogTitle>
+            <DialogDescription>
+                Modify the profile for {selectedUser?.firstName} {selectedUser?.lastName}.
+            </DialogDescription>
+          </DialogHeader>
+          {selectedUser && (
+             <EditProfileForm 
+                userProfile={selectedUser}
+                onSuccess={() => {
+                    setIsEditDialogOpen(false);
+                    setSelectedUser(null);
+                }} 
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
     </>
   );
 }
