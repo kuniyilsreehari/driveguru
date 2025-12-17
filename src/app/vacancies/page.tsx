@@ -17,6 +17,7 @@ export type Vacancy = {
     description: string;
     companyId: string;
     companyName: string;
+    companyEmail: string;
     location: string;
     employmentType: 'Full-time' | 'Part-time' | 'Contract' | 'Internship';
     skillsRequired: string;
@@ -53,41 +54,45 @@ function VacanciesList() {
 
     return (
         <div className="space-y-6">
-            {vacancies.map(vacancy => (
-                <Card key={vacancy.id} id={vacancy.id}>
-                    <CardHeader>
-                        <div className="flex justify-between items-start">
-                            <div>
-                                <CardTitle className="text-xl">{vacancy.title}</CardTitle>
-                                <CardDescription className="flex items-center gap-4 mt-1">
-                                    <span className='flex items-center gap-1'><Building className="h-4 w-4" /> {vacancy.companyName}</span>
-                                    <span className='flex items-center gap-1'><MapPin className="h-4 w-4" /> {vacancy.location}</span>
-                                </CardDescription>
-                            </div>
-                            <Badge variant="secondary">{vacancy.employmentType}</Badge>
-                        </div>
-                    </CardHeader>
-                    <CardContent>
-                        <p className="text-muted-foreground text-sm mb-4">{vacancy.description}</p>
-                        
-                        <div className="mb-4">
-                            <h4 className="font-semibold text-sm mb-2 flex items-center gap-2"><Book className="h-4 w-4" /> Required Skills</h4>
-                            <div className="flex flex-wrap gap-2">
-                                {vacancy.skillsRequired.split(',').map((skill, index) => (
-                                    <Badge key={index} variant="outline">{skill.trim()}</Badge>
-                                ))}
-                            </div>
-                        </div>
+            {vacancies.map(vacancy => {
+                const mailtoLink = `mailto:${vacancy.companyEmail}?subject=Application for ${encodeURIComponent(vacancy.title)}`;
 
-                        <div className="flex justify-between items-center text-xs text-muted-foreground">
-                            <span>Posted {formatDistanceToNow(vacancy.postedAt.toDate(), { addSuffix: true })}</span>
-                            <Button size="sm" asChild>
-                                <Link href="#">Apply Now</Link>
-                            </Button>
-                        </div>
-                    </CardContent>
-                </Card>
-            ))}
+                return (
+                    <Card key={vacancy.id} id={vacancy.id}>
+                        <CardHeader>
+                            <div className="flex justify-between items-start">
+                                <div>
+                                    <CardTitle className="text-xl">{vacancy.title}</CardTitle>
+                                    <CardDescription className="flex items-center gap-4 mt-1">
+                                        <span className='flex items-center gap-1'><Building className="h-4 w-4" /> {vacancy.companyName}</span>
+                                        <span className='flex items-center gap-1'><MapPin className="h-4 w-4" /> {vacancy.location}</span>
+                                    </CardDescription>
+                                </div>
+                                <Badge variant="secondary">{vacancy.employmentType}</Badge>
+                            </div>
+                        </CardHeader>
+                        <CardContent>
+                            <p className="text-muted-foreground text-sm mb-4">{vacancy.description}</p>
+                            
+                            <div className="mb-4">
+                                <h4 className="font-semibold text-sm mb-2 flex items-center gap-2"><Book className="h-4 w-4" /> Required Skills</h4>
+                                <div className="flex flex-wrap gap-2">
+                                    {vacancy.skillsRequired.split(',').map((skill, index) => (
+                                        <Badge key={index} variant="outline">{skill.trim()}</Badge>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="flex justify-between items-center text-xs text-muted-foreground">
+                                <span>Posted {formatDistanceToNow(vacancy.postedAt.toDate(), { addSuffix: true })}</span>
+                                <Button size="sm" asChild>
+                                    <a href={mailtoLink}>Apply Now</a>
+                                </Button>
+                            </div>
+                        </CardContent>
+                    </Card>
+                )
+            })}
         </div>
     );
 }

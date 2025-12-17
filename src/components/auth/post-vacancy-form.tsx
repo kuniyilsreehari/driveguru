@@ -18,10 +18,10 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { useFirestore } from "@/firebase";
+import { useFirestore, useUser } from "@/firebase";
 import { addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Briefcase, Book, MapPin, FileText, Send, Building } from "lucide-react";
+import { Briefcase, Book, MapPin, FileText, Send, Building, Mail } from "lucide-react";
 import { v4 as uuidv4 } from 'uuid';
 
 const formSchema = z.object({
@@ -31,6 +31,7 @@ const formSchema = z.object({
   employmentType: z.enum(["Full-time", "Part-time", "Contract", "Internship"]),
   skillsRequired: z.string().min(2, { message: "At least one skill is required." }),
   companyName: z.string().min(2, { message: "Company name is required." }),
+  companyEmail: z.string().email({ message: "A valid company email is required for applications." }),
   companyId: z.string().optional(),
 });
 
@@ -39,9 +40,10 @@ interface PostVacancyFormProps {
     isAdmin?: boolean;
     companyId?: string;
     companyName?: string;
+    companyEmail?: string;
 }
 
-export function PostVacancyForm({ onSuccess, isAdmin = false, companyId: propCompanyId, companyName: propCompanyName }: PostVacancyFormProps) {
+export function PostVacancyForm({ onSuccess, isAdmin = false, companyId: propCompanyId, companyName: propCompanyName, companyEmail: propCompanyEmail }: PostVacancyFormProps) {
   const { toast } = useToast();
   const firestore = useFirestore();
 
@@ -54,6 +56,7 @@ export function PostVacancyForm({ onSuccess, isAdmin = false, companyId: propCom
       employmentType: "Full-time",
       skillsRequired: "",
       companyName: propCompanyName || "",
+      companyEmail: propCompanyEmail || "",
     },
   });
 
@@ -66,6 +69,7 @@ export function PostVacancyForm({ onSuccess, isAdmin = false, companyId: propCom
       ...values,
       companyId: isAdmin ? values.companyId || uuidv4() : propCompanyId, // Generate a UUID if admin doesn't provide one
       companyName: values.companyName,
+      companyEmail: values.companyEmail,
       postedAt: serverTimestamp(),
     };
 
@@ -89,7 +93,7 @@ export function PostVacancyForm({ onSuccess, isAdmin = false, companyId: propCom
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        {isAdmin && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <FormField
               control={form.control}
               name="companyName"
@@ -99,14 +103,30 @@ export function PostVacancyForm({ onSuccess, isAdmin = false, companyId: propCom
                   <div className="relative">
                     <Building className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <FormControl>
-                      <Input placeholder="e.g. Acme Corporation" {...field} className="pl-10" />
+                      <Input placeholder="e.g. Acme Corporation" {...field} className="pl-10" disabled={!isAdmin} />
                     </FormControl>
                   </div>
                   <FormMessage />
                 </FormItem>
               )}
             />
-        )}
+            <FormField
+              control={form.control}
+              name="companyEmail"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Company Contact Email</FormLabel>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <FormControl>
+                      <Input type="email" placeholder="e.g. careers@acme.com" {...field} className="pl-10" disabled={!isAdmin} />
+                    </FormControl>
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+        </div>
         <FormField
           control={form.control}
           name="title"

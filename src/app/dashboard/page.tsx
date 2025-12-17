@@ -93,6 +93,7 @@ function CompanyVacancies({ userProfile }: { userProfile: ExpertUserProfile }) {
                   <PostVacancyForm
                     companyId={userProfile.companyId!}
                     companyName={userProfile.companyName!}
+                    companyEmail={userProfile.email}
                     onSuccess={() => setIsPostDialogOpen(false)}
                   />
                 </DialogContent>
@@ -387,7 +388,3 @@ export default function ExpertDashboardPage() {
     </div>
   );
 }
-
-    
-
-    
