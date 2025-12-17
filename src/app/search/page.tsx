@@ -23,8 +23,9 @@ function SearchResults() {
     const router = useRouter();
 
     const searchQueryParam = searchParams.get('q');
-    const location = searchParams.get('location');
-    const locationName = searchParams.get('locationName');
+    const city = searchParams.get('city');
+    const state = searchParams.get('state');
+    const pincode = searchParams.get('pincode');
     const verified = searchParams.get('verified') === 'true';
     const available = searchParams.get('available') === 'true';
     const maxRateParam = searchParams.get('maxRate');
@@ -75,16 +76,18 @@ function SearchResults() {
             });
         }
 
-        // Filter by location
-        if (location) {
-            const lowercasedLocation = location.toLowerCase();
-            experts = experts.filter(expert => {
-                const city = expert.city?.toLowerCase() || '';
-                const state = expert.state?.toLowerCase() || '';
-                const pincode = expert.pincode?.toLowerCase() || '';
-                const address = expert.address?.toLowerCase() || '';
-                return city.includes(lowercasedLocation) || state.includes(lowercasedLocation) || pincode.includes(lowercasedLocation) || address.includes(lowercasedLocation);
-            });
+        // Filter by location fields
+        if (city) {
+            const lowercased = city.toLowerCase();
+            experts = experts.filter(expert => expert.city?.toLowerCase().includes(lowercased));
+        }
+        if (state) {
+            const lowercased = state.toLowerCase();
+            experts = experts.filter(expert => expert.state?.toLowerCase().includes(lowercased));
+        }
+        if (pincode) {
+            const lowercased = pincode.toLowerCase();
+            experts = experts.filter(expert => expert.pincode?.toLowerCase().includes(lowercased));
         }
         
         // Filter by max rate
@@ -115,7 +118,7 @@ function SearchResults() {
 
         return experts;
 
-    }, [allExperts, searchQueryParam, location, maxRate]);
+    }, [allExperts, searchQueryParam, city, state, pincode, maxRate]);
 
 
     if (isLoading) {
@@ -140,6 +143,11 @@ function SearchResults() {
 
     const searchTitle = () => {
         let titleParts: (string | JSX.Element)[] = [];
+        let locationParts: string[] = [];
+
+        if (city) locationParts.push(city);
+        if (state) locationParts.push(state);
+        if (pincode) locationParts.push(pincode);
         
         if (searchQueryParam) {
              titleParts.push(<span key="query">Results for &quot;<span className="text-primary">{searchQueryParam}</span>&quot;</span>);
@@ -147,10 +155,8 @@ function SearchResults() {
              titleParts.push(<span key="all">Showing experts</span>);
         }
 
-        if (locationName) {
-            titleParts.push(<span key="locationName"> in <span className="text-primary">{locationName}</span></span>);
-        } else if (location) {
-            titleParts.push(<span key="location"> near <span className="text-primary">{location}</span></span>);
+        if (locationParts.length > 0) {
+            titleParts.push(<span key="locationName"> in <span className="text-primary">{locationParts.join(', ')}</span></span>);
         }
 
         return <>{titleParts.map((part, i) => <span key={i}>{part}</span>)}</>
@@ -196,5 +202,3 @@ export default function SearchPage() {
         </div>
     )
 }
-
-    

@@ -31,8 +31,9 @@ type AppConfig = {
 
 function HomePageContent() {
     const [searchQuery, setSearchQuery] = useState('');
-    const [location, setLocation] = useState('');
-    const [locationName, setLocationName] = useState('');
+    const [city, setCity] = useState('');
+    const [state, setState] = useState('');
+    const [pincode, setPincode] = useState('');
     const [maxRate, setMaxRate] = useState<number | null>(null);
     const [isDetecting, setIsDetecting] = useState(false);
     const [showVerifiedOnly, setShowVerifiedOnly] = useState(false);
@@ -82,36 +83,20 @@ function HomePageContent() {
                     const data = await response.json();
                     
                     const address = data.address;
-                    const city = address.city || address.town || address.village || address.hamlet;
-                    const state = address.state;
+                    setCity(address.city || address.town || address.village || '');
+                    setState(address.state || '');
+                    setPincode(address.postcode || '');
 
-                    let detectedLocation = city || state;
-                    let displayName = [city, state].filter(Boolean).join(', ');
+                    toast({
+                        title: 'Location Detected',
+                        description: `Your location has been set to ${[address.city, address.state].filter(Boolean).join(', ')}.`,
+                    });
 
-                    if (detectedLocation) {
-                        setLocation(detectedLocation);
-                        setLocationName(displayName);
-                        toast({
-                            title: 'Location Detected',
-                            description: `Your location has been set to ${displayName}.`,
-                        });
-                    } else {
-                        const coords = `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
-                        setLocation(coords);
-                        setLocationName(coords);
-                         toast({
-                            title: 'Coordinates Set',
-                            description: `We could not find address details. Using lat/lon.`,
-                        });
-                    }
                 } catch (apiError) {
-                    const coords = `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
-                    setLocation(coords);
-                    setLocationName(coords);
                     toast({
                         variant: 'destructive',
                         title: 'Could not fetch location name.',
-                        description: 'Your location is set to coordinates.'
+                        description: 'Please enter your location manually.'
                     });
                 } finally {
                     setIsDetecting(false);
@@ -130,24 +115,14 @@ function HomePageContent() {
 
     const handleSearch = () => {
         const queryParams = new URLSearchParams();
-        if (searchQuery) {
-            queryParams.set('q', searchQuery);
-        }
-        if (location) {
-            queryParams.set('location', location);
-        }
-        if (locationName) {
-            queryParams.set('locationName', locationName);
-        }
-        if (showVerifiedOnly) {
-            queryParams.set('verified', 'true');
-        }
-        if (showAvailableOnly) {
-            queryParams.set('available', 'true');
-        }
-        if (maxRate !== null) {
-            queryParams.set('maxRate', maxRate.toString());
-        }
+        if (searchQuery) queryParams.set('q', searchQuery);
+        if (city) queryParams.set('city', city);
+        if (state) queryParams.set('state', state);
+        if (pincode) queryParams.set('pincode', pincode);
+        if (showVerifiedOnly) queryParams.set('verified', 'true');
+        if (showAvailableOnly) queryParams.set('available', 'true');
+        if (maxRate !== null) queryParams.set('maxRate', maxRate.toString());
+        
         router.push(`/search?${queryParams.toString()}`);
     };
     
@@ -166,8 +141,8 @@ function HomePageContent() {
                 queryParams.set('q', result.searchQuery);
             }
             if (result.location) {
-                queryParams.set('location', result.location);
-                queryParams.set('locationName', result.location);
+                // For now, AI location search will populate the city field.
+                queryParams.set('city', result.location);
             }
             if (result.isVerified) {
                 queryParams.set('verified', 'true');
@@ -257,42 +232,43 @@ function HomePageContent() {
                                     />
                                 </div>
                             </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div>
-                                    <Label htmlFor="location">Location</Label>
-                                    <div className="flex flex-col sm:flex-row items-stretch gap-2 mt-2">
-                                        <div className="relative flex-grow">
-                                            <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                            <Input 
-                                                id="location" 
-                                                placeholder="Enter a location" 
-                                                className="pl-10"
-                                                value={location}
-                                                onChange={(e) => {
-                                                    setLocation(e.target.value);
-                                                    setLocationName(e.target.value);
-                                                }}
-                                            />
-                                        </div>
-                                        <Button variant="outline" onClick={handleDetectLocation} disabled={isDetecting}>
-                                            {isDetecting ? (
-                                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                            ) : (
-                                                <LocateIcon className="mr-2 h-4 w-4" />
-                                            )}
-                                            Detect
-                                        </Button>
+                            
+                            <div>
+                                <div className="flex items-center justify-between mb-2">
+                                    <Label>Location</Label>
+                                    <Button variant="outline" size="sm" onClick={handleDetectLocation} disabled={isDetecting}>
+                                        {isDetecting ? (
+                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        ) : (
+                                            <LocateIcon className="mr-2 h-4 w-4" />
+                                        )}
+                                        Detect
+                                    </Button>
+                                </div>
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                    <div>
+                                        <Label htmlFor="city">City</Label>
+                                        <Input id="city" placeholder="e.g., Mumbai" value={city} onChange={(e) => setCity(e.target.value)} />
+                                    </div>
+                                    <div>
+                                        <Label htmlFor="state">State</Label>
+                                        <Input id="state" placeholder="e.g., Maharashtra" value={state} onChange={(e) => setState(e.target.value)} />
+                                    </div>
+                                    <div>
+                                        <Label htmlFor="pincode">Pincode</Label>
+                                        <Input id="pincode" placeholder="e.g., 400001" value={pincode} onChange={(e) => setPincode(e.target.value)} />
                                     </div>
                                 </div>
-                                <div>
-                                    <Label>User Type</Label>
-                                    <Tabs defaultValue="experts" className="mt-2">
-                                        <TabsList className="grid w-full grid-cols-2">
-                                            <TabsTrigger value="experts"><Briefcase className="mr-2" />Experts</TabsTrigger>
-                                            <TabsTrigger value="freshers"><Icons.graduate className="mr-2" />Freshers</TabsTrigger>
-                                        </TabsList>
-                                    </Tabs>
-                                </div>
+                            </div>
+
+                            <div className='my-6'>
+                                <Label>User Type</Label>
+                                <Tabs defaultValue="experts" className="mt-2">
+                                    <TabsList className="grid w-full grid-cols-2">
+                                        <TabsTrigger value="experts"><Briefcase className="mr-2" />Experts</TabsTrigger>
+                                        <TabsTrigger value="freshers"><Icons.graduate className="mr-2" />Freshers</TabsTrigger>
+                                    </TabsList>
+                                </Tabs>
                             </div>
                             
                             <div className="mt-6">
