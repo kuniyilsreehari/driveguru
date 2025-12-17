@@ -604,41 +604,7 @@ export function RegistrationForm() {
         )}
         
         {selectedRole && (selectedRole === 'Freelancer' ? (
-          <>
-            <FormField
-                control={form.control}
-                name="qualification"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Highest Qualification</FormLabel>
-                    <div className="relative">
-                        <GraduationCap className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                        <FormControl>
-                        <Input placeholder="e.g. B.Tech in Computer Science" {...field} className="pl-10" />
-                        </FormControl>
-                    </div>
-                    <FormMessage />
-                    </FormItem>
-                )}
-            />
-
-            <FormField
-                control={form.control}
-                name="skills"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Skills (comma-separated)</FormLabel>
-                    <div className="relative">
-                        <Book className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                        <FormControl>
-                        <Input placeholder="e.g. React, Node.js, Plumbing" {...field} className="pl-10" />
-                        </FormControl>
-                    </div>
-                    <FormMessage />
-                    </FormItem>
-                )}
-            />
-          </>
+          <></>
         ) : (
           <div className="space-y-4">
              <FormField
@@ -801,3 +767,5 @@ export function RegistrationForm() {
     </Form>
   );
 }
+
+    
