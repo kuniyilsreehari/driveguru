@@ -63,6 +63,14 @@
           "type": "string",
           "description": "The detailed address of the company or user."
         },
+        "latitude": {
+            "type": "number",
+            "description": "The latitude of the user's primary location."
+        },
+        "longitude": {
+            "type": "number",
+            "description": "The longitude of the user's primary location."
+        },
         "phoneNumber": {
           "type": "string",
           "description": "The user's mobile number, including country code."

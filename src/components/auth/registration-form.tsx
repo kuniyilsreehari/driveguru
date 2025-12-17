@@ -112,6 +112,21 @@ export function RegistrationForm() {
     }
   }, [user, isUserLoading, router]);
 
+  async function getCoordinates(address: string): Promise<{ lat: number; lon: number } | null> {
+    try {
+        const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`);
+        const data = await response.json();
+        if (data && data.length > 0) {
+            return { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon) };
+        }
+        return null;
+    } catch (error) {
+        console.error("Geocoding failed:", error);
+        return null;
+    }
+  }
+
+
   async function onSubmit(values: z.infer<typeof formSchema>) {
     if (!auth || !firestore) {
       toast({
@@ -127,6 +142,9 @@ export function RegistrationForm() {
 
       const userDocRef = doc(firestore, "users", newUser.uid);
       
+      const fullAddress = [values.address, values.city, values.state, values.pincode].filter(Boolean).join(', ');
+      const coords = await getCoordinates(fullAddress);
+      
       const userData = {
         id: newUser.uid,
         firstName: values.firstName,
@@ -138,6 +156,8 @@ export function RegistrationForm() {
         city: values.city,
         pincode: values.pincode,
         address: values.address,
+        latitude: coords?.lat || null,
+        longitude: coords?.lon || null,
         phoneNumber: values.countryCode && values.phoneNumber ? `${values.countryCode} ${values.phoneNumber}` : "",
         companyName: values.companyName,
         verified: false, // Default verified status to false
@@ -399,9 +419,9 @@ export function RegistrationForm() {
                   name="city"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>City</FormLabel>
+                      <FormLabel>District / City</FormLabel>
                         <FormControl>
-                          <Input placeholder="e.g. Mumbai" {...field} />
+                          <Input placeholder="e.g., Kozhikode / Mumbai" {...field} />
                         </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -426,10 +446,10 @@ export function RegistrationForm() {
               name="pincode"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Pincode</FormLabel>
-                    <FormControl>
-                      <Input placeholder="e.g. 400001" {...field} />
-                    </FormControl>
+                  <FormControl>
+                    <Input placeholder="Pincode" {...field} />
+                  </FormControl>
+                  <FormLabel className="text-xs text-muted-foreground text-center block">Pincode</FormLabel>
                   <FormMessage />
                 </FormItem>
               )}
@@ -478,7 +498,5 @@ export function RegistrationForm() {
     </Form>
   );
 }
-
-    
 
     

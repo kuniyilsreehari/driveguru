@@ -20,6 +20,8 @@ export type ExpertUser = {
     state?: string;
     pincode?: string;
     address?: string;
+    latitude?: number;
+    longitude?: number;
     role?: string;
     verified?: boolean;
     hourlyRate?: number;
@@ -133,3 +135,5 @@ export function ExpertCard({ expert }: ExpertCardProps) {
         </Card>
     )
 }
+
+    

@@ -62,59 +62,55 @@ function HomePageContent() {
 
     const { data: experts, isLoading: isLoadingExperts } = useCollection<ExpertUser>(expertsQuery);
 
+    const getCurrentPosition = (): Promise<GeolocationPosition> => {
+        return new Promise((resolve, reject) => {
+            if (!navigator.geolocation) {
+                reject(new Error('Geolocation is not supported by your browser.'));
+                return;
+            }
+            navigator.geolocation.getCurrentPosition(resolve, reject);
+        });
+    }
 
     const handleDetectLocation = () => {
-        if (!navigator.geolocation) {
-            toast({
-                variant: 'destructive',
-                title: 'Geolocation is not supported by your browser.',
-            });
-            return;
-        }
-
         setIsDetecting(true);
-
-        navigator.geolocation.getCurrentPosition(
-            async (position) => {
-                const { latitude, longitude } = position.coords;
+        getCurrentPosition().then(async (position) => {
+            const { latitude, longitude } = position.coords;
+            try {
+                const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
+                const data = await response.json();
                 
-                try {
-                    const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
-                    const data = await response.json();
-                    
-                    const address = data.address;
-                    const detectedCity = address.city || address.town || address.village || '';
-                    const detectedState = address.state || '';
-                    const detectedPincode = address.postcode || '';
+                const address = data.address;
+                const detectedCity = address.city || address.town || address.village || '';
+                const detectedState = address.state || '';
+                const detectedPincode = address.postcode || '';
 
-                    setCity(detectedCity);
-                    setState(detectedState);
-                    setPincode(detectedPincode);
+                setCity(detectedCity);
+                setState(detectedState);
+                setPincode(detectedPincode);
 
-                    toast({
-                        title: 'Location Detected',
-                        description: `Your location has been set to ${[detectedCity, detectedState].filter(Boolean).join(', ')}.`,
-                    });
+                toast({
+                    title: 'Location Detected',
+                    description: `Your location has been set to ${[detectedCity, detectedState].filter(Boolean).join(', ')}.`,
+                });
 
-                } catch (apiError) {
-                    toast({
-                        variant: 'destructive',
-                        title: 'Could not fetch location name.',
-                        description: 'Please enter your location manually.'
-                    });
-                } finally {
-                    setIsDetecting(false);
-                }
-            },
-            (error) => {
-                setIsDetecting(false);
+            } catch (apiError) {
                 toast({
                     variant: 'destructive',
-                    title: 'Unable to retrieve your location.',
-                    description: error.message,
+                    title: 'Could not fetch location name.',
+                    description: 'Please enter your location manually.'
                 });
+            } finally {
+                setIsDetecting(false);
             }
-        );
+        }).catch((error) => {
+            setIsDetecting(false);
+            toast({
+                variant: 'destructive',
+                title: 'Unable to retrieve your location.',
+                description: error.message,
+            });
+        });
     };
 
     const handleSearch = () => {
@@ -137,17 +133,35 @@ function HomePageContent() {
         }
 
         setIsParsingQuery(true);
+        
+        let userLat: number | undefined;
+        let userLon: number | undefined;
+
+        if (aiSearchQuery.toLowerCase().includes('near me') || aiSearchQuery.toLowerCase().includes('nearby')) {
+            try {
+                const position = await getCurrentPosition();
+                userLat = position.coords.latitude;
+                userLon = position.coords.longitude;
+            } catch (error: any) {
+                 toast({
+                    variant: 'destructive',
+                    title: 'Location Required',
+                    description: 'Could not get your location for a "near me" search. Please enable location services or try a different query.'
+                });
+                setIsParsingQuery(false);
+                return;
+            }
+        }
+
         try {
-            const result = await parseSearchQuery({ query: aiSearchQuery });
+            const result = await parseSearchQuery({ query: aiSearchQuery, userLat, userLon });
             
             const queryParams = new URLSearchParams();
             if (result.searchQuery) {
                 queryParams.set('q', result.searchQuery);
             }
             if (result.location) {
-                // AI location search will populate the city field.
-                // This could be enhanced to parse city/state/pincode.
-                queryParams.set('city', result.location);
+                queryParams.set('location', result.location);
             }
             if (result.isVerified) {
                 queryParams.set('verified', 'true');
@@ -158,6 +172,16 @@ function HomePageContent() {
             if (result.maxRate) {
                 queryParams.set('maxRate', result.maxRate.toString());
             }
+            if (result.radius) {
+                queryParams.set('radius', result.radius.toString());
+            }
+            if (result.lat) {
+                queryParams.set('lat', result.lat.toString());
+            }
+            if (result.lon) {
+                queryParams.set('lon', result.lon.toString());
+            }
+
             router.push(`/search?${queryParams.toString()}`);
 
         } catch (error) {
@@ -191,7 +215,7 @@ function HomePageContent() {
                         </CardHeader>
                         <CardContent>
                             <p className="text-muted-foreground mb-4 text-sm">
-                                Describe the expert you need in plain English. For example: &quot;a verified plumber in Mumbai available now&quot; or &quot;an affordable React developer&quot;.
+                                Describe the expert you need in plain English. For example: &quot;a verified plumber in Mumbai available now&quot; or &quot;an affordable React developer near me&quot;.
                             </p>
                             <div className="flex flex-col sm:flex-row items-stretch gap-2">
                                 <div className="relative flex-grow">
@@ -344,3 +368,5 @@ export default function TalentSearchPage() {
         </Suspense>
     );
 }
+
+    

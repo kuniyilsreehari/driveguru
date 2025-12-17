@@ -2,7 +2,7 @@
 
 'use client';
 
-import { Suspense, useMemo } from 'react';
+import { Suspense, useMemo, useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { collection, query, where, limit, or } from 'firebase/firestore';
@@ -17,19 +17,74 @@ import { ExpertCard } from '@/components/expert-card';
 import type { ExpertUser } from '@/components/expert-card';
 
 
+// Haversine distance formula
+const getDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+    const R = 6371; // Radius of the Earth in km
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c; // Distance in km
+};
+
+
 function SearchResults() {
     const searchParams = useSearchParams();
     const firestore = useFirestore();
     const router = useRouter();
 
+    const [searchCenter, setSearchCenter] = useState<{lat: number, lon: number} | null>(null);
+    const [isGeocoding, setIsGeocoding] = useState(false);
+
     const searchQueryParam = searchParams.get('q');
     const city = searchParams.get('city');
     const state = searchParams.get('state');
     const pincode = searchParams.get('pincode');
+    const locationQuery = searchParams.get('location');
     const verified = searchParams.get('verified') === 'true';
     const available = searchParams.get('available') === 'true';
     const maxRateParam = searchParams.get('maxRate');
     const maxRate = maxRateParam ? parseInt(maxRateParam, 10) : null;
+    const radiusParam = searchParams.get('radius');
+    const radius = radiusParam ? parseInt(radiusParam, 10) : null;
+    const latParam = searchParams.get('lat');
+    const lonParam = searchParams.get('lon');
+
+
+    useEffect(() => {
+        const geocodeLocation = async () => {
+            // Priority: lat/lon params > location query > city/state/pincode
+            if (latParam && lonParam) {
+                setSearchCenter({ lat: parseFloat(latParam), lon: parseFloat(lonParam) });
+                return;
+            }
+
+            const locationString = locationQuery || [city, state, pincode].filter(Boolean).join(', ');
+            if (!locationString || !radius) return;
+
+            setIsGeocoding(true);
+            try {
+                const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(locationString)}&limit=1`);
+                const data = await response.json();
+                if (data && data.length > 0) {
+                    setSearchCenter({ lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon) });
+                } else {
+                    setSearchCenter(null); // Location not found
+                }
+            } catch (error) {
+                console.error("Geocoding failed:", error);
+                setSearchCenter(null);
+            } finally {
+                setIsGeocoding(false);
+            }
+        };
+
+        geocodeLocation();
+    }, [locationQuery, city, state, pincode, radius, latParam, lonParam]);
+
 
     const expertsQuery = useMemoFirebase(() => {
         if (!firestore) return null;
@@ -57,6 +112,11 @@ function SearchResults() {
     
     const filteredExperts = useMemo(() => {
         if (!allExperts) return null;
+
+        // Wait for geocoding to finish if distance search is active
+        if (radius && !searchCenter && isGeocoding) {
+            return null; // Indicates loading state for distance filter
+        }
         
         let experts = allExperts;
 
@@ -75,19 +135,38 @@ function SearchResults() {
                        skills.includes(lowercasedQuery);
             });
         }
-
-        // Filter by location fields
-        if (city) {
-            const lowercased = city.toLowerCase();
-            experts = experts.filter(expert => expert.city?.toLowerCase().includes(lowercased));
-        }
-        if (state) {
-            const lowercased = state.toLowerCase();
-            experts = experts.filter(expert => expert.state?.toLowerCase().includes(lowercased));
-        }
-        if (pincode) {
-            const lowercased = pincode.toLowerCase();
-            experts = experts.filter(expert => expert.pincode?.toLowerCase().includes(lowercased));
+        
+        // Filter by distance if radius and center are set
+        if (radius && searchCenter) {
+             experts = experts.filter(expert => {
+                if (expert.latitude && expert.longitude) {
+                    const distance = getDistance(searchCenter.lat, searchCenter.lon, expert.latitude, expert.longitude);
+                    return distance <= radius;
+                }
+                return false;
+            });
+        } else {
+            // Fallback to text-based location filtering if no radius search
+            if (city) {
+                const lowercased = city.toLowerCase();
+                experts = experts.filter(expert => expert.city?.toLowerCase().includes(lowercased));
+            }
+            if (state) {
+                const lowercased = state.toLowerCase();
+                experts = experts.filter(expert => expert.state?.toLowerCase().includes(lowercased));
+            }
+            if (pincode) {
+                const lowercased = pincode.toLowerCase();
+                experts = experts.filter(expert => expert.pincode?.toLowerCase().includes(lowercased));
+            }
+             if (locationQuery) {
+                const lowercased = locationQuery.toLowerCase();
+                experts = experts.filter(expert => 
+                    expert.city?.toLowerCase().includes(lowercased) ||
+                    expert.state?.toLowerCase().includes(lowercased) ||
+                    expert.address?.toLowerCase().includes(lowercased)
+                );
+            }
         }
         
         // Filter by max rate
@@ -118,10 +197,10 @@ function SearchResults() {
 
         return experts;
 
-    }, [allExperts, searchQueryParam, city, state, pincode, maxRate]);
+    }, [allExperts, searchQueryParam, city, state, pincode, maxRate, radius, searchCenter, isGeocoding, locationQuery]);
 
 
-    if (isLoading) {
+    if (isLoading || isGeocoding || filteredExperts === null) {
         return (
             <div className="flex h-64 w-full items-center justify-center">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -132,7 +211,7 @@ function SearchResults() {
     
     const experts = filteredExperts;
 
-    if (!experts || experts.length === 0) {
+    if (experts.length === 0) {
         return (
             <div className="text-center py-16">
                 <h2 className="text-2xl font-semibold">No Experts Found</h2>
@@ -145,9 +224,12 @@ function SearchResults() {
         let titleParts: (string | JSX.Element)[] = [];
         let locationParts: string[] = [];
 
-        if (city) locationParts.push(city);
-        if (state) locationParts.push(state);
-        if (pincode) locationParts.push(pincode);
+        if(locationQuery) locationParts.push(locationQuery);
+        else {
+             if (city) locationParts.push(city);
+            if (state) locationParts.push(state);
+            if (pincode) locationParts.push(pincode);
+        }
         
         if (searchQueryParam) {
              titleParts.push(<span key="query">Results for &quot;<span className="text-primary">{searchQueryParam}</span>&quot;</span>);
@@ -155,8 +237,15 @@ function SearchResults() {
              titleParts.push(<span key="all">Showing experts</span>);
         }
 
+        if (radius) {
+             titleParts.push(<span key="radius"> within {radius}km</span>);
+        }
+
+
         if (locationParts.length > 0) {
             titleParts.push(<span key="locationName"> in <span className="text-primary">{locationParts.join(', ')}</span></span>);
+        } else if (latParam && lonParam) {
+            titleParts.push(<span key="locationName"> near your location</span>);
         }
 
         return <>{titleParts.map((part, i) => <span key={i}>{part}</span>)}</>
@@ -202,3 +291,5 @@ export default function SearchPage() {
         </div>
     )
 }
+
+    
