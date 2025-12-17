@@ -5,8 +5,8 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { collection, Timestamp, orderBy, query, doc } from 'firebase/firestore';
 import { signOut } from 'firebase/auth';
-import { useUser, useFirestore, useDoc, useMemoFirebase, useAuth, useCollection, setDocumentNonBlocking } from '@/firebase';
-import { deleteDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { useUser, useFirestore, useDoc, useMemoFirebase, useAuth, useCollection } from '@/firebase';
+import { deleteDocumentNonBlocking, updateDocumentNonBlocking, setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, CheckCircle2, UserCheck, UserX, Crown, Sparkles, User as UserIcon, Settings, Save, Briefcase, Building, MessageSquare, ThumbsUp, ThumbsDown, Star, Search, PlusCircle, Mail, Edit3, Link as LinkIcon } from 'lucide-react';
@@ -374,16 +374,9 @@ export default function AdminDashboardPage() {
 
 
   const { data: usersData, isLoading: isUsersLoading } = useCollection<ExpertUser>(usersCollectionRef);
-  const [localUsers, setLocalUsers] = useState<ExpertUser[] | null>(null);
   const { data: reviews, isLoading: isReviewsLoading } = useCollection<Review>(reviewsCollectionQuery);
   const { data: vacancies, isLoading: isVacanciesLoading } = useCollection<Vacancy>(vacanciesCollectionQuery);
   
-  useEffect(() => {
-    if (usersData) {
-      setLocalUsers(usersData);
-    }
-  }, [usersData]);
-
   const appConfigDocRef = useMemoFirebase(() => {
       if (!firestore) return null;
       return doc(firestore, 'app_config', 'homepage');
@@ -401,10 +394,10 @@ export default function AdminDashboardPage() {
     }
   }, [appConfig, isAppConfigLoading, appConfigDocRef]);
 
-  const verifiedCount = localUsers?.filter(u => u.verified).length || 0;
-  const unverifiedCount = localUsers?.filter(u => !u.verified).length || 0;
-  const premierCount = localUsers?.filter(u => u.tier === 'Premier').length || 0;
-  const superPremierCount = localUsers?.filter(u => u.tier === 'Super Premier').length || 0;
+  const verifiedCount = usersData?.filter(u => u.verified).length || 0;
+  const unverifiedCount = usersData?.filter(u => !u.verified).length || 0;
+  const premierCount = usersData?.filter(u => u.tier === 'Premier').length || 0;
+  const superPremierCount = usersData?.filter(u => u.tier === 'Super Premier').length || 0;
 
   useEffect(() => {
     if (!isUserLoading && !user) {
@@ -431,9 +424,6 @@ export default function AdminDashboardPage() {
   const handleDeleteUser = () => {
     if (!selectedUser || !firestore) return;
     
-    // Optimistically update the UI
-    setLocalUsers(prevUsers => prevUsers ? prevUsers.filter(u => u.id !== selectedUser.id) : null);
-
     const userDocRef = doc(firestore, 'users', selectedUser.id);
     deleteDocumentNonBlocking(userDocRef);
     
@@ -614,7 +604,7 @@ export default function AdminDashboardPage() {
   const isLoading = isUserLoading || isRoleLoading;
   const areTablesLoading = isSuperAdmin && (isUsersLoading || isReviewsLoading || isVacanciesLoading);
   
-  const sortedUsers = localUsers ? [...localUsers].sort((a, b) => (a.firstName || '').localeCompare(b.firstName || '')) : [];
+  const sortedUsers = usersData ? [...usersData].sort((a, b) => (a.firstName || '').localeCompare(b.firstName || '')) : [];
 
   const filteredUsers = sortedUsers.filter(user => {
       if (!user) return false;
@@ -697,7 +687,7 @@ export default function AdminDashboardPage() {
                   <Users className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{localUsers?.length || 0}</div>
+                  <div className="text-2xl font-bold">{usersData?.length || 0}</div>
                   <p className="text-xs text-muted-foreground">Total registered users</p>
                 </CardContent>
               </Card>
@@ -880,7 +870,7 @@ export default function AdminDashboardPage() {
                                 <DialogDescription>Manually add a review for any expert in the system.</DialogDescription>
                               </DialogHeader>
                               <AddReviewForm
-                                experts={localUsers || []}
+                                experts={usersData || []}
                                 onSuccess={() => setIsAddReviewDialogOpen(false)}
                               />
                             </DialogContent>
