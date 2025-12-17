@@ -131,10 +131,10 @@ service cloud.firestore {
         allow get: if true;
         allow list: if isSuperAdmin();
         allow create: if isSignedIn()
-            && request.resource.data.keys().hasAll(['expertId', 'reviewerName', 'rating', 'comment', 'status'])
+            && request.resource.data.keys().hasAll(['expertId', 'expertName', 'reviewerName', 'rating', 'comment', 'status'])
             && request.resource.data.status == 'pending';
         allow update: if isSuperAdmin()
-            && request.resource.data.keys().hasOnly(['status'])
+            && request.resource.data.diff(resource.data).changedKeys().hasOnly(['status'])
             && request.resource.data.status in ['approved', 'rejected'];
         allow delete: if isSuperAdmin();
     }
