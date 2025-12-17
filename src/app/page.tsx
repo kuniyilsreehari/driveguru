@@ -159,16 +159,24 @@ function HomePageContent() {
         try {
             const result = await parseSearchQuery({ query: aiSearchQuery });
             
-            if (result.searchQuery) setSearchQuery(result.searchQuery);
-            if (result.location) setLocation(result.location);
-            if (result.maxRate) setMaxRate(result.maxRate);
-            if (result.isVerified) setShowVerifiedOnly(result.isVerified);
-            if (result.isAvailable) setShowAvailableOnly(result.isAvailable);
+            const queryParams = new URLSearchParams();
+            if (result.searchQuery) {
+                queryParams.set('q', result.searchQuery);
+            }
+            if (result.location) {
+                queryParams.set('location', result.location);
+            }
+            if (result.isVerified) {
+                queryParams.set('verified', 'true');
+            }
+            if (result.isAvailable) {
+                queryParams.set('available', 'true');
+            }
+            if (result.maxRate) {
+                queryParams.set('maxRate', result.maxRate.toString());
+            }
+            router.push(`/search?${queryParams.toString()}`);
 
-            toast({
-                title: "AI Search Parsed",
-                description: "Your search filters have been updated. Review and click Search.",
-            });
         } catch (error) {
             console.error("AI search parsing failed:", error);
             toast({
