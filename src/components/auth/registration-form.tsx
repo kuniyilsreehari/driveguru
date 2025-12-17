@@ -203,7 +203,7 @@ export function RegistrationForm() {
           name="role"
           render={({ field }) => (
             <FormItem>
-                <FormLabel>Are you an individual or representing a company?</FormLabel>
+                <FormLabel>Are you an Individual or representing a company?</FormLabel>
                 <FormControl>
                     <div className="grid grid-cols-3 gap-2 text-center">
                         {expertTypes.map((type) => (
@@ -379,88 +379,88 @@ export function RegistrationForm() {
             </FormItem>
           )}
         />
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <FormField
-            control={form.control}
-            name="phoneNumber"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Phone Number</FormLabel>
-                <div className="flex items-center gap-2">
-                  <FormField
-                    control={form.control}
-                    name="countryCode"
-                    render={({ field: countryCodeField }) => (
-                      <Select
-                        onValueChange={countryCodeField.onChange}
-                        defaultValue={countryCodeField.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger className="w-[80px]">
-                            <SelectValue placeholder="Code" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="+91">IN</SelectItem>
-                          <SelectItem value="+1">USA</SelectItem>
-                          <SelectItem value="+44">UK</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    )}
-                  />
-                  <div className="relative flex-grow">
-                    <FormControl>
-                      <Input placeholder="555 123 4567" {...field} />
-                    </FormControl>
-                  </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-start">
+            <FormField
+                control={form.control}
+                name="phoneNumber"
+                render={({ field }) => (
+                <FormItem>
+                    <FormLabel>Phone Number</FormLabel>
+                    <div className="flex items-center gap-2">
+                    <FormField
+                        control={form.control}
+                        name="countryCode"
+                        render={({ field: countryCodeField }) => (
+                        <Select
+                            onValueChange={countryCodeField.onChange}
+                            defaultValue={countryCodeField.value}
+                        >
+                            <FormControl>
+                            <SelectTrigger className="w-[80px]">
+                                <SelectValue placeholder="Code" />
+                            </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                            <SelectItem value="+91">IN</SelectItem>
+                            <SelectItem value="+1">USA</SelectItem>
+                            <SelectItem value="+44">UK</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        )}
+                      />
+                      <div className="relative flex-grow">
+                          <FormControl>
+                          <Input placeholder="555 123 4567" {...field} />
+                          </FormControl>
+                      </div>
+                    </div>
+                    <FormMessage />
+                </FormItem>
+                )}
+            />
+            <div className="space-y-2">
+                <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                        control={form.control}
+                        name="city"
+                        render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>District / City</FormLabel>
+                            <FormControl>
+                            <Input placeholder="e.g., Kozhikode" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="state"
+                        render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>State</FormLabel>
+                            <FormControl>
+                            <Input placeholder="e.g. Maharashtra" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
                 </div>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <div className="space-y-2">
-            <div className="grid grid-cols-2 gap-4">
-                <FormField
+                 <FormField
                   control={form.control}
-                  name="city"
+                  name="pincode"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>District / City</FormLabel>
-                        <FormControl>
-                          <Input placeholder="e.g., Kozhikode / Mumbai" {...field} />
-                        </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="state"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>State</FormLabel>
-                        <FormControl>
-                          <Input placeholder="e.g. Maharashtra" {...field} />
-                        </FormControl>
+                      <FormControl>
+                        <Input placeholder="Pincode" {...field} />
+                      </FormControl>
+                      <FormLabel className="text-xs text-muted-foreground text-center block">Pincode</FormLabel>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
             </div>
-             <FormField
-              control={form.control}
-              name="pincode"
-              render={({ field }) => (
-                <FormItem>
-                  <FormControl>
-                    <Input placeholder="Pincode" {...field} />
-                  </FormControl>
-                  <FormLabel className="text-xs text-muted-foreground text-center block">Pincode</FormLabel>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
         </div>
 
         <FormField
@@ -539,3 +539,5 @@ export function RegistrationForm() {
     </Form>
   );
 }
+
+    
