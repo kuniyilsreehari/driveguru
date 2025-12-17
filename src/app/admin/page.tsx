@@ -231,7 +231,22 @@ const VacancyTable = ({ vacancies, onEdit, onDelete }: { vacancies: Vacancy[], o
                   vacancies.map((vacancy) => (
                       <TableRow key={vacancy.id}>
                           <TableCell className="font-medium">{vacancy.title}</TableCell>
-                          <TableCell>{vacancy.companyName}</TableCell>
+                          <TableCell>
+                            <div className="flex flex-col">
+                                <span>{vacancy.companyName}</span>
+                                <div className="flex items-center gap-1 mt-1">
+                                    {vacancy.isCompanyVerified && (
+                                        <Badge variant="outline" className="border-green-500 text-green-500"><UserCheck className="mr-1 h-3 w-3" />Verified</Badge>
+                                    )}
+                                    {vacancy.companyTier === 'Premier' && (
+                                        <Badge variant="outline" className="border-purple-500 text-purple-500"><Crown className="mr-1 h-3 w-3" />Premier</Badge>
+                                    )}
+                                     {vacancy.companyTier === 'Super Premier' && (
+                                        <Badge variant="outline" className="border-blue-500 text-blue-500"><Sparkles className="mr-1 h-3 w-3" />Super Premier</Badge>
+                                    )}
+                                </div>
+                            </div>
+                          </TableCell>
                           <TableCell>{vacancy.location}</TableCell>
                           <TableCell><Badge variant="secondary">{vacancy.employmentType}</Badge></TableCell>
                           <TableCell>{vacancy.postedAt ? formatDistanceToNow(vacancy.postedAt.toDate(), { addSuffix: true }) : 'pending...'}</TableCell>
