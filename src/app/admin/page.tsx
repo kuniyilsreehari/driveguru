@@ -225,7 +225,7 @@ const ReviewTable = ({ reviews, onApprove, onReject, onDelete }: { reviews: Revi
     )
 }
 
-const VacancyTable = ({ vacancies, onEdit, onDelete }: { vacancies: Vacancy[], onEdit: (vacancy: Vacancy) => void, onDelete: (vacancy: Vacancy) => void }) => {
+const VacancyTable = ({ vacancies, onEdit, onDelete, onVerifyToggle, onTierToggle }: { vacancies: Vacancy[], onEdit: (vacancy: Vacancy) => void, onDelete: (vacancy: Vacancy) => void, onVerifyToggle: (vacancy: Vacancy) => void, onTierToggle: (vacancy: Vacancy) => void }) => {
   return (
       <Table>
           <TableHeader>
@@ -263,14 +263,33 @@ const VacancyTable = ({ vacancies, onEdit, onDelete }: { vacancies: Vacancy[], o
                           <TableCell><Badge variant="secondary">{vacancy.employmentType}</Badge></TableCell>
                           <TableCell>{vacancy.postedAt ? formatDistanceToNow(vacancy.postedAt.toDate(), { addSuffix: true }) : 'pending...'}</TableCell>
                           <TableCell className="text-right">
-                              <div className="flex gap-2 justify-end">
-                                  <Button variant="outline" size="sm" onClick={() => onEdit(vacancy)}>
-                                    <Edit className="mr-2 h-4 w-4" />Edit
-                                  </Button>
-                                  <Button variant="destructive" size="sm" onClick={() => onDelete(vacancy)}>
-                                      <Trash2 className="mr-2 h-4 w-4" />Delete
-                                  </Button>
-                              </div>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" className="h-8 w-8 p-0">
+                                    <span className="sr-only">Open menu</span>
+                                    <MoreHorizontal className="h-4 w-4" />
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                    <DropdownMenuItem onClick={() => onEdit(vacancy)}>
+                                        <Edit className="mr-2 h-4 w-4" />
+                                        <span>Edit</span>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => onVerifyToggle(vacancy)}>
+                                        <UserCheck className="mr-2 h-4 w-4" />
+                                        <span>Toggle Verified</span>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => onTierToggle(vacancy)}>
+                                        <Crown className="mr-2 h-4 w-4" />
+                                        <span>Toggle Premier</span>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem onClick={() => onDelete(vacancy)} className="text-destructive focus:text-destructive">
+                                        <Trash2 className="mr-2 h-4 w-4" />
+                                        <span>Delete</span>
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                                </DropdownMenu>
                           </TableCell>
                       </TableRow>
                   ))
@@ -496,6 +515,28 @@ export default function AdminDashboardPage() {
       });
       setIsVacancyDeleteDialogOpen(false);
       setSelectedVacancy(null);
+  };
+
+  const handleVacancyVerifyToggle = (vacancy: Vacancy) => {
+    if (!firestore) return;
+    const vacancyDocRef = doc(firestore, 'vacancies', vacancy.id);
+    const newStatus = !vacancy.isCompanyVerified;
+    updateDocumentNonBlocking(vacancyDocRef, { isCompanyVerified: newStatus });
+    toast({
+        title: `Vacancy Company ${newStatus ? 'Verified' : 'Unverified'}`,
+        description: `Company for "${vacancy.title}" is now ${newStatus ? 'verified' : 'unverified'}.`
+    });
+  };
+
+  const handleVacancyTierToggle = (vacancy: Vacancy) => {
+    if (!firestore) return;
+    const vacancyDocRef = doc(firestore, 'vacancies', vacancy.id);
+    const newTier = vacancy.companyTier === 'Premier' ? 'Standard' : 'Premier';
+    updateDocumentNonBlocking(vacancyDocRef, { companyTier: newTier });
+     toast({
+        title: "Vacancy Company Tier Updated",
+        description: `Company tier for "${vacancy.title}" is now ${newTier}.`
+    });
   };
 
   const handleFilterClick = (filter: string | null) => {
@@ -846,7 +887,7 @@ export default function AdminDashboardPage() {
                                 <p className="ml-3 text-muted-foreground">Loading vacancies...</p>
                               </div>
                         ) : (
-                            <VacancyTable vacancies={vacancies || []} onEdit={openVacancyEditDialog} onDelete={openVacancyDeleteDialog} />
+                            <VacancyTable vacancies={vacancies || []} onEdit={openVacancyEditDialog} onDelete={openVacancyDeleteDialog} onVerifyToggle={handleVacancyVerifyToggle} onTierToggle={handleVacancyTierToggle} />
                         )}
                     </CardContent>
                   </Card>
@@ -942,3 +983,5 @@ export default function AdminDashboardPage() {
     </>
   );
 }
+
+    
