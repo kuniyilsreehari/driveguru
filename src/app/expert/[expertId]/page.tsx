@@ -380,65 +380,67 @@ function ExpertProfileContent() {
                         <CardTitle className="flex items-center gap-2 text-xl"><MessageSquare className="h-5 w-5" /> Customer Reviews</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <Collapsible open={isReviewOpen} onOpenChange={setIsReviewOpen}>
-                            {user && expert.verified && (
+                        <Collapsible open={isReviewOpen} onOpenChange={setIsReviewOpen} className="space-y-6">
+                            <div className="p-6 bg-card-foreground/5 dark:bg-card-foreground/10 border rounded-lg">
                                 <CollapsibleTrigger asChild>
-                                     <Button variant="outline"><Edit2 className="mr-2 h-4 w-4" />Leave a Review</Button>
-                                </CollapsibleTrigger>
-                            )}
-                             {!expert.verified && user && (
-                                 <Button variant="outline" disabled>
-                                    <Lock className="mr-2 h-4 w-4" />
-                                    Reviewing is locked until expert is verified
-                                </Button>
-                            )}
-                            <CollapsibleContent className="pt-6">
-                                <div className="p-6 bg-card-foreground/5 dark:bg-card-foreground/10 border rounded-lg">
-                                    <h4 className="text-lg font-bold mb-4">Write your review for {displayName}</h4>
-                                    <div className="space-y-4">
-                                        <div>
-                                            <Label htmlFor={`reviewerName-${expert.id}`}>Your Name</Label>
-                                            <Input 
-                                                id={`reviewerName-${expert.id}`}
-                                                placeholder="e.g. Jane Doe" 
-                                                value={reviewerName}
-                                                onChange={(e) => setReviewerName(e.target.value)}
-                                            />
-                                        </div>
-                                        <div>
-                                            <Label>Rating</Label>
-                                            <div className="flex items-center gap-1 mt-1">
-                                                {[1, 2, 3, 4, 5].map(star => (
-                                                    <Star
-                                                        key={star}
-                                                        className={cn(
-                                                            "h-6 w-6 cursor-pointer",
-                                                            (hoverRating >= star || rating >= star)
-                                                                ? "text-yellow-400 fill-yellow-400"
-                                                                : "text-gray-400"
-                                                        )}
-                                                        onMouseEnter={() => setHoverRating(star)}
-                                                        onMouseLeave={() => setHoverRating(0)}
-                                                        onClick={() => setRating(star)}
-                                                    />
-                                                ))}
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <Label htmlFor={`comment-${expert.id}`}>Comment</Label>
-                                            <Textarea
-                                                id={`comment-${expert.id}`}
-                                                placeholder="Share your experience..."
-                                                value={comment}
-                                                onChange={(e) => setComment(e.target.value)}
-                                            />
-                                        </div>
-                                        <Button className="w-full" onClick={handleSubmitReview}>
-                                            <Send className="mr-2 h-4 w-4" /> Submit Review
-                                        </Button>
+                                    <div className="flex justify-between items-center cursor-pointer">
+                                        <h4 className="text-lg font-bold">Write your review for {displayName}</h4>
+                                        <Button variant="outline"><Edit2 className="mr-2 h-4 w-4" /> {isReviewOpen ? 'Cancel' : 'Leave a Review'}</Button>
                                     </div>
-                                </div>
-                            </CollapsibleContent>
+                                </CollapsibleTrigger>
+                                <CollapsibleContent className="pt-6">
+                                    {user && expert.verified ? (
+                                        <div className="space-y-4">
+                                            <div>
+                                                <Label htmlFor={`reviewerName-${expert.id}`}>Your Name</Label>
+                                                <Input 
+                                                    id={`reviewerName-${expert.id}`}
+                                                    placeholder="e.g. Jane Doe" 
+                                                    value={reviewerName}
+                                                    onChange={(e) => setReviewerName(e.target.value)}
+                                                />
+                                            </div>
+                                            <div>
+                                                <Label>Rating</Label>
+                                                <div className="flex items-center gap-1 mt-1">
+                                                    {[1, 2, 3, 4, 5].map(star => (
+                                                        <Star
+                                                            key={star}
+                                                            className={cn(
+                                                                "h-6 w-6 cursor-pointer",
+                                                                (hoverRating >= star || rating >= star)
+                                                                    ? "text-yellow-400 fill-yellow-400"
+                                                                    : "text-gray-400"
+                                                            )}
+                                                            onMouseEnter={() => setHoverRating(star)}
+                                                            onMouseLeave={() => setHoverRating(0)}
+                                                            onClick={() => setRating(star)}
+                                                        />
+                                                    ))}
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <Label htmlFor={`comment-${expert.id}`}>Comment</Label>
+                                                <Textarea
+                                                    id={`comment-${expert.id}`}
+                                                    placeholder="Share your experience..."
+                                                    value={comment}
+                                                    onChange={(e) => setComment(e.target.value)}
+                                                />
+                                            </div>
+                                            <Button className="w-full" onClick={handleSubmitReview}>
+                                                <Send className="mr-2 h-4 w-4" /> Submit Review
+                                            </Button>
+                                        </div>
+                                    ) : (
+                                        <div className="text-center text-muted-foreground p-4 border-2 border-dashed rounded-lg">
+                                            <Lock className="h-6 w-6 mx-auto mb-2"/>
+                                            <p>{!user ? "You must be logged in to leave a review." : "Reviewing is locked until this expert is verified."}</p>
+                                            {!user && <Button asChild variant="secondary" className="mt-4"><Link href="/login">Login to Review</Link></Button>}
+                                        </div>
+                                    )}
+                                </CollapsibleContent>
+                            </div>
                             
                             {isLoadingReviews ? (
                                 <div className="flex justify-center items-center p-8">
@@ -446,7 +448,7 @@ function ExpertProfileContent() {
                                     <p className="ml-3 text-muted-foreground">Loading reviews...</p>
                                 </div>
                             ) : reviews && reviews.length > 0 ? (
-                                <div className="space-y-4 mt-6">
+                                <div className="space-y-4">
                                     {reviews.map(review => (
                                         <Card key={review.id} className="bg-background/50">
                                             <CardContent className="p-4">
@@ -472,7 +474,7 @@ function ExpertProfileContent() {
                                     ))}
                                 </div>
                             ) : (
-                                <div className="text-center py-8 text-muted-foreground mt-4">
+                                <div className="text-center py-8 text-muted-foreground">
                                     <p>No approved reviews for this expert yet. Be the first!</p>
                                 </div>
                             )}
