@@ -10,7 +10,7 @@ import { useUser, useFirestore, useDoc, useMemoFirebase, useAuth, useCollection 
 import { deleteDocumentNonBlocking, updateDocumentNonBlocking, setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, CheckCircle2, UserCheck, UserX, Crown, Sparkles, User as UserIcon, Settings, Save, Briefcase, Building, MessageSquare, ThumbsUp, ThumbsDown, Star, Search, PlusCircle, Mail, Edit3, Link as LinkIcon, Download, ExternalLink, IndianRupee } from 'lucide-react';
+import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, CheckCircle2, UserCheck, UserX, Crown, Sparkles, User as UserIcon, Settings, Save, Briefcase, Building, MessageSquare, ThumbsUp, ThumbsDown, Star, Search, PlusCircle, Mail, Edit3, Link as LinkIcon, Download, ExternalLink, IndianRupee, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -379,6 +379,8 @@ export default function AdminDashboardPage() {
   const [superPremierPrice, setSuperPremierPrice] = useState(0);
 
   const [isSavingSettings, setIsSavingSettings] = useState(false);
+  const [isEditingPaymentLink, setIsEditingPaymentLink] = useState(false);
+
 
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<string | null>(null);
@@ -426,6 +428,14 @@ export default function AdminDashboardPage() {
       setSuperPremierPrice(appConfig.superPremierPlanPrice || 0);
     }
   }, [appConfig, isAppConfigLoading]);
+
+  useEffect(() => {
+      if (appConfig?.superPremierPaymentLink) {
+        setIsEditingPaymentLink(false);
+      } else {
+        setIsEditingPaymentLink(true);
+      }
+  }, [appConfig?.superPremierPaymentLink]);
 
   const verifiedCount = usersData?.filter(u => u.verified).length || 0;
   const unverifiedCount = usersData?.filter(u => !u.verified).length || 0;
@@ -835,7 +845,7 @@ export default function AdminDashboardPage() {
                             </div>
                             <div>
                                 <Label htmlFor="payment-link">Central Payment Link (Optional Fallback)</Label>
-                                <div className="relative mt-1">
+                                <div className="relative mt-1 flex items-center gap-2">
                                     <LinkIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                                     <Input
                                         id="payment-link"
@@ -843,16 +853,18 @@ export default function AdminDashboardPage() {
                                         onChange={(e) => setPaymentLink(e.target.value)}
                                         className="pl-10"
                                         placeholder="https://payment.link/1234"
+                                        disabled={!isEditingPaymentLink}
                                     />
+                                    {!isEditingPaymentLink ? (
+                                        <Button variant="outline" size="icon" onClick={() => setIsEditingPaymentLink(true)}>
+                                            <Edit className="h-4 w-4" />
+                                        </Button>
+                                    ) : (
+                                        <Button variant="outline" size="icon" onClick={() => setPaymentLink('')}>
+                                            <X className="h-4 w-4" />
+                                        </Button>
+                                    )}
                                 </div>
-                                  {appConfig?.superPremierPaymentLink && (
-                                    <div className="mt-2 text-xs text-muted-foreground p-2 bg-muted rounded-md">
-                                        <span>Currently saved link: </span>
-                                        <a href={appConfig.superPremierPaymentLink} target="_blank" rel="noopener noreferrer" className="text-primary underline flex items-center gap-1 break-all">
-                                            {appConfig.superPremierPaymentLink} <ExternalLink className="h-3 w-3 flex-shrink-0"/>
-                                        </a>
-                                    </div>
-                                )}
                             </div>
                             <div className="flex justify-end">
                                 <Button onClick={handleSaveSettings} disabled={isSavingSettings}>
