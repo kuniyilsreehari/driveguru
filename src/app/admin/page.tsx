@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
@@ -787,416 +786,416 @@ export default function AdminDashboardPage() {
           </header>
 
           <main>
-            <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-5 mb-8">
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Experts</CardTitle>
-                  <Users className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{usersData?.length || 0}</div>
-                  <p className="text-xs text-muted-foreground">Total registered users</p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Verified Experts</CardTitle>
-                  <UserCheck className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{verifiedCount}</div>
-                  <p className="text-xs text-muted-foreground">Total verified experts</p>
-                </CardContent>
-              </Card>
-               <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Unverified Experts</CardTitle>
-                  <UserX className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{unverifiedCount}</div>
-                  <p className="text-xs text-muted-foreground">Pending verification</p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Premier Experts</CardTitle>
-                  <Crown className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{premierCount}</div>
-                  <p className="text-xs text-muted-foreground">Total Premier experts</p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Super Premier</CardTitle>
-                  <Sparkles className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{superPremierCount}</div>
-                  <p className="text-xs text-muted-foreground">Total Super Premier</p>
-                </CardContent>
-              </Card>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-              <Card className="lg:col-span-2">
-                  <CardHeader>
-                      <div className="flex items-center gap-3">
-                          <Settings className="h-6 w-6" />
-                          <div>
-                              <CardTitle>Global Settings</CardTitle>
-                              <CardDescription>Control content, pricing, and payment links.</CardDescription>
-                          </div>
-                      </div>
-                  </CardHeader>
-                  <CardContent>
-                      {isAppConfigLoading ? (
-                          <div className="flex items-center space-x-2">
-                              <Loader className="h-4 w-4 animate-spin" />
-                              <p className="text-sm text-muted-foreground">Loading settings...</p>
-                          </div>
-                      ) : (
-                          <div className="space-y-4">
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                                  <div>
-                                      <Label htmlFor="featured-limit">Featured Experts Limit</Label>
-                                      <Input 
-                                          id="featured-limit"
-                                          type="number" 
-                                          value={featuredExpertsLimit}
-                                          onChange={(e) => setFeaturedExpertsLimit(Number(e.target.value))}
-                                          min="1"
-                                          max="12"
-                                          className="mt-1"
-                                      />
-                                  </div>
-                                  <div className="space-y-4">
-                                      <div>
-                                          <Label htmlFor="premier-price">Premier Plan Price (INR)</Label>
-                                          <div className="relative mt-1">
-                                              <IndianRupee className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                                              <Input
-                                                  id="premier-price"
-                                                  type="number"
-                                                  value={premierPrice}
-                                                  onChange={(e) => setPremierPrice(Number(e.target.value))}
-                                                  className="pl-10"
-                                                  placeholder="e.g., 499"
-                                              />
-                                          </div>
-                                      </div>
-                                      <div>
-                                          <Label htmlFor="super-premier-price">Super Premier Plan Price (INR)</Label>
-                                          <div className="relative mt-1">
-                                              <IndianRupee className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                                              <Input
-                                                  id="super-premier-price"
-                                                  type="number"
-                                                  value={superPremierPrice}
-                                                  onChange={(e) => setSuperPremierPrice(Number(e.target.value))}
-                                                  className="pl-10"
-                                                  placeholder="e.g., 999"
-                                              />
-                                          </div>
-                                      </div>
-                                  </div>
-                              </div>
-                              <div>
-                                  <Label htmlFor="payment-link">Central Payment Link (Optional Fallback)</Label>
-                                  <div className="relative mt-1 flex items-center gap-2">
-                                      <LinkIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                                      <Input
-                                          id="payment-link"
-                                          value={paymentLink}
-                                          onChange={(e) => setPaymentLink(e.target.value)}
-                                          className="pl-10"
-                                          placeholder="https://payment.link/1234"
-                                          disabled={!isEditingPaymentLink}
-                                      />
-                                      {!isEditingPaymentLink ? (
-                                          <Button variant="outline" size="icon" onClick={() => setIsEditingPaymentLink(true)}>
-                                              <Edit className="h-4 w-4" />
-                                          </Button>
-                                      ) : (
-                                          <Button variant="outline" size="icon" onClick={() => setPaymentLink('')}>
-                                              <X className="h-4 w-4" />
-                                          </Button>
-                                      )}
-                                  </div>
-                              </div>
-                              
-                          </div>
-                      )}
-                  </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <div className="flex items-center gap-3">
-                    <Megaphone className="h-6 w-6" />
-                    <div>
-                      <CardTitle>Announcement Banner</CardTitle>
-                      <CardDescription>Display a scrolling banner at the top of the site.</CardDescription>
+            <Tabs defaultValue="dashboard" className="w-full">
+                <TabsList className="grid w-full grid-cols-3">
+                    <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+                    <TabsTrigger value="settings">Settings</TabsTrigger>
+                    <TabsTrigger value="data">Data</TabsTrigger>
+                </TabsList>
+                <TabsContent value="dashboard" className="mt-4">
+                    <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-5 mb-8">
+                      <Card>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                          <CardTitle className="text-sm font-medium">Total Experts</CardTitle>
+                          <Users className="h-4 w-4 text-muted-foreground" />
+                        </CardHeader>
+                        <CardContent>
+                          <div className="text-2xl font-bold">{usersData?.length || 0}</div>
+                          <p className="text-xs text-muted-foreground">Total registered users</p>
+                        </CardContent>
+                      </Card>
+                      <Card>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                          <CardTitle className="text-sm font-medium">Verified Experts</CardTitle>
+                          <UserCheck className="h-4 w-4 text-muted-foreground" />
+                        </CardHeader>
+                        <CardContent>
+                          <div className="text-2xl font-bold">{verifiedCount}</div>
+                          <p className="text-xs text-muted-foreground">Total verified experts</p>
+                        </CardContent>
+                      </Card>
+                       <Card>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                          <CardTitle className="text-sm font-medium">Unverified Experts</CardTitle>
+                          <UserX className="h-4 w-4 text-muted-foreground" />
+                        </CardHeader>
+                        <CardContent>
+                          <div className="text-2xl font-bold">{unverifiedCount}</div>
+                          <p className="text-xs text-muted-foreground">Pending verification</p>
+                        </CardContent>
+                      </Card>
+                      <Card>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                          <CardTitle className="text-sm font-medium">Premier Experts</CardTitle>
+                          <Crown className="h-4 w-4 text-muted-foreground" />
+                        </CardHeader>
+                        <CardContent>
+                          <div className="text-2xl font-bold">{premierCount}</div>
+                          <p className="text-xs text-muted-foreground">Total Premier experts</p>
+                        </CardContent>
+                      </Card>
+                      <Card>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                          <CardTitle className="text-sm font-medium">Super Premier</CardTitle>
+                          <Sparkles className="h-4 w-4 text-muted-foreground" />
+                        </CardHeader>
+                        <CardContent>
+                          <div className="text-2xl font-bold">{superPremierCount}</div>
+                          <p className="text-xs text-muted-foreground">Total Super Premier</p>
+                        </CardContent>
+                      </Card>
                     </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center space-x-2">
-                      <Switch id="announcement-enabled" checked={isAnnouncementEnabled} onCheckedChange={setIsAnnouncementEnabled} />
-                      <Label htmlFor="announcement-enabled">Enable Announcement Banner</Label>
-                  </div>
-                   <div>
-                        <Label htmlFor="announcement-text">Announcement Text</Label>
-                        <Input
-                            id="announcement-text"
-                            value={announcementText}
-                            onChange={(e) => setAnnouncementText(e.target.value)}
-                            placeholder="e.g. 🎉 New features just launched!"
-                            disabled={!isAnnouncementEnabled}
-                        />
-                    </div>
-                    <div>
-                        <Label htmlFor="announcement-speed">Scroll Speed: {announcementSpeed}s</Label>
-                        <Slider
-                            id="announcement-speed"
-                            min={5}
-                            max={60}
-                            step={1}
-                            value={[announcementSpeed]}
-                            onValueChange={(value) => setAnnouncementSpeed(value[0])}
-                            disabled={!isAnnouncementEnabled}
-                        />
-                        <p className="text-xs text-muted-foreground">Higher value means slower scroll speed.</p>
-                    </div>
-                </CardContent>
-              </Card>
-            </div>
-            
-            <div className="flex justify-end mb-8">
-              <Button onClick={handleSaveSettings} disabled={isSavingSettings}>
-                  {isSavingSettings ? (
-                      <Loader className="mr-2 h-4 w-4 animate-spin" />
-                  ) : (
-                      <Save className="mr-2 h-4 w-4" />
-                  )}
-                  Save All Settings
-              </Button>
-            </div>
-
-
-            <div className="grid grid-cols-1 gap-8 mb-8">
-               <Card>
-                    <CardHeader>
-                        <div className="flex items-center gap-3">
-                            <HardDriveDownload className="h-6 w-6" />
-                            <div>
-                                <CardTitle>Backup & Restore</CardTitle>
-                                <CardDescription>Export all application data or restore from a backup file.</CardDescription>
-                            </div>
-                        </div>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="flex flex-col sm:flex-row gap-4">
-                            <div className='flex-1'>
-                                <h4 className="font-semibold text-sm">Export Data</h4>
-                                <p className="text-xs text-muted-foreground mb-2">Download a JSON file containing all users, vacancies, and reviews.</p>
-                                <Button onClick={handleExportData} disabled={isExporting} className="w-full">
-                                    {isExporting ? <Loader className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
-                                    {isExporting ? 'Exporting...' : 'Export All Data'}
-                                </Button>
-                            </div>
-                            <div className='flex-1'>
-                                <h4 className="font-semibold text-sm">Import Data</h4>
-                                <p className="text-xs text-muted-foreground mb-2">Restore data from a previously exported JSON file. This will overwrite existing data.</p>
-                                <div className="relative">
-                                    <Button asChild variant="outline" className="w-full" disabled={isImporting}>
-                                      <label htmlFor="import-file">
-                                          {isImporting ? <Loader className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
-                                          {isImporting ? 'Importing...' : 'Select Backup File to Restore'}
-                                      </label>
-                                    </Button>
-                                    <Input id="import-file" type="file" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" accept=".json" onChange={handleImportData} disabled={isImporting} />
+                     <Tabs defaultValue="users">
+                        <TabsList className="grid w-full grid-cols-3">
+                            <TabsTrigger value="users">User Management</TabsTrigger>
+                            <TabsTrigger value="reviews">Review Management</TabsTrigger>
+                            <TabsTrigger value="vacancies">Vacancy Management</TabsTrigger>
+                        </TabsList>
+                        <TabsContent value="users" className="mt-4">
+                            <Card>
+                                <CardHeader>
+                                <div className="flex items-center gap-3">
+                                    <Users className="h-6 w-6" />
+                                    <div>
+                                    <CardTitle>Expert Users</CardTitle>
+                                    <CardDescription>Manage all registered users in the system.</CardDescription>
+                                    </div>
+                                </div>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="flex flex-col sm:flex-row items-stretch gap-4 mb-6">
+                                        <div className="relative flex-grow">
+                                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                            <Input
+                                                placeholder="Search by name or email..."
+                                                className="pl-10"
+                                                value={searchQuery}
+                                                onChange={(e) => setSearchQuery(e.target.value)}
+                                            />
+                                        </div>
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                            <Button variant={activeFilter === 'verified' ? 'default' : 'outline'} size="sm" onClick={() => handleFilterClick('verified')}>Verified</Button>
+                                            <Button variant={activeFilter === 'unverified' ? 'default' : 'outline'} size="sm" onClick={() => handleFilterClick('unverified')}>Unverified</Button>
+                                            <Button variant={activeFilter === 'premier' ? 'default' : 'outline'} size="sm" onClick={() => handleFilterClick('premier')}>Premier</Button>
+                                            <Button variant={activeFilter === 'super-premier' ? 'default' : 'outline'} size="sm" onClick={() => handleFilterClick('super-premier')}>Super Premier</Button>
+                                        </div>
+                                    </div>
+                                {areTablesLoading ? (
+                                    <div className="flex justify-center items-center p-8">
+                                    <Loader className="h-6 w-6 animate-spin text-primary" />
+                                    <p className="ml-3 text-muted-foreground">Loading users...</p>
+                                    </div>
+                                ) : (
+                                    <Tabs defaultValue="all">
+                                        <TabsList className="grid w-full grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
+                                            <TabsTrigger value="all">All Users</TabsTrigger>
+                                            <TabsTrigger value="freelancers">Freelancers</TabsTrigger>
+                                            <TabsTrigger value="companies">Companies</TabsTrigger>
+                                            <TabsTrigger value="authorizedPros">Authorized Pros</TabsTrigger>
+                                            <TabsTrigger value="superAdmins">Super Admins</TabsTrigger>
+                                        </TabsList>
+                                        <TabsContent value="all" className="mt-4">
+                                            <UserTable users={filteredUsers} onTierChange={handleTierChange} onVerificationToggle={handleVerificationToggle} onDelete={openDeleteDialog} onEdit={openEditDialog} />
+                                        </TabsContent>
+                                        <TabsContent value="freelancers" className="mt-4">
+                                            <UserTable users={freelancers || []} onTierChange={handleTierChange} onVerificationToggle={handleVerificationToggle} onDelete={openDeleteDialog} onEdit={openEditDialog} />
+                                        </TabsContent>
+                                        <TabsContent value="companies" className="mt-4">
+                                            <UserTable users={companies || []} onTierChange={handleTierChange} onVerificationToggle={handleVerificationToggle} onDelete={openDeleteDialog} onEdit={openEditDialog} />
+                                        </TabsContent>
+                                        <TabsContent value="authorizedPros" className="mt-4">
+                                            <UserTable users={authorizedPros || []} onTierChange={handleTierChange} onVerificationToggle={handleVerificationToggle} onDelete={openDeleteDialog} onEdit={openEditDialog} />
+                                        </TabsContent>
+                                        <TabsContent value="superAdmins" className="mt-4">
+                                            <UserTable users={superAdmins || []} onTierChange={handleTierChange} onVerificationToggle={handleVerificationToggle} onDelete={openDeleteDialog} onEdit={openEditDialog} />
+                                        </TabsContent>
+                                    </Tabs>
+                                )}
+                                </CardContent>
+                            </Card>
+                        </TabsContent>
+                        <TabsContent value="reviews" className="mt-4">
+                            <Card>
+                                <CardHeader>
+                                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                                    <div className="flex items-center gap-3">
+                                        <MessageSquare className="h-6 w-6" />
+                                        <div>
+                                        <CardTitle>Review Moderation</CardTitle>
+                                        <CardDescription>Approve, reject, delete, or manually add reviews.</CardDescription>
+                                        </div>
+                                    </div>
+                                    <Dialog open={isAddReviewDialogOpen} onOpenChange={setIsAddReviewDialogOpen}>
+                                        <DialogTrigger asChild>
+                                        <Button className="w-full sm:w-auto">
+                                            <Edit3 className="mr-2 h-4 w-4" />
+                                            Write a Review
+                                        </Button>
+                                        </DialogTrigger>
+                                        <DialogContent className="sm:max-w-[600px]">
+                                        <DialogHeader>
+                                            <DialogTitle>Add a New Review</DialogTitle>
+                                            <DialogDescription>Manually add a review for any expert in the system.</DialogDescription>
+                                        </DialogHeader>
+                                        <AddReviewForm
+                                            experts={usersData || []}
+                                            onSuccess={() => setIsAddReviewDialogOpen(false)}
+                                        />
+                                        </DialogContent>
+                                    </Dialog>
+                                    </div>
+                                </CardHeader>
+                                <CardContent>
+                                    {isReviewsLoading ? (
+                                        <div className="flex justify-center items-center p-8">
+                                            <Loader className="h-6 w-6 animate-spin text-primary" />
+                                            <p className="ml-3 text-muted-foreground">Loading reviews...</p>
+                                        </div>
+                                    ) : (
+                                        <Tabs defaultValue="pending">
+                                            <TabsList className="grid w-full grid-cols-3">
+                                                <TabsTrigger value="pending">Pending</TabsTrigger>
+                                                <TabsTrigger value="approved">Approved</TabsTrigger>
+                                                <TabsTrigger value="rejected">Rejected</TabsTrigger>
+                                            </TabsList>
+                                            <TabsContent value="pending" className="mt-4">
+                                                <ReviewTable reviews={pendingReviews || []} onApprove={handleApproveReview} onReject={openReviewRejectDialog} onDelete={openReviewDeleteDialog}/>
+                                            </TabsContent>
+                                            <TabsContent value="approved" className="mt-4">
+                                                <ReviewTable reviews={approvedReviews || []} onApprove={handleApproveReview} onReject={openReviewRejectDialog} onDelete={openReviewDeleteDialog}/>
+                                            </TabsContent>
+                                            <TabsContent value="rejected" className="mt-4">
+                                                <ReviewTable reviews={rejectedReviews || []} onApprove={handleApproveReview} onReject={openReviewRejectDialog} onDelete={openReviewDeleteDialog}/>
+                                            </TabsContent>
+                                        </Tabs>
+                                    )}
+                                </CardContent>
+                            </Card>
+                        </TabsContent>
+                        <TabsContent value="vacancies" className="mt-4">
+                            <Card>
+                                <CardHeader>
+                                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                                    <div className="flex items-center gap-3">
+                                        <Briefcase className="h-6 w-6" />
+                                        <div>
+                                        <CardTitle>Vacancy Management</CardTitle>
+                                        <CardDescription>Manage all job vacancies in the system.</CardDescription>
+                                        </div>
+                                    </div>
+                                    <Dialog open={isVacancyPostDialogOpen} onOpenChange={setIsVacancyPostDialogOpen}>
+                                        <DialogTrigger asChild>
+                                        <Button className="w-full sm:w-auto">
+                                            <PlusCircle className="mr-2 h-4 w-4" />
+                                            Post New Vacancy
+                                        </Button>
+                                        </DialogTrigger>
+                                        <DialogContent className="sm:max-w-[600px]">
+                                        <DialogHeader>
+                                            <DialogTitle>Create a New Vacancy</DialogTitle>
+                                            <DialogDescription>As a Super Admin, you can post a job for any company.</DialogDescription>
+                                        </DialogHeader>
+                                        <PostVacancyForm
+                                            onSuccess={() => setIsVacancyPostDialogOpen(false)}
+                                            isAdmin={true}
+                                        />
+                                        </DialogContent>
+                                    </Dialog>
+                                    </div>
+                                </CardHeader>
+                                <CardContent>
+                                    {isVacanciesLoading ? (
+                                        <div className="flex justify-center items-center p-8">
+                                            <Loader className="h-6 w-6 animate-spin text-primary" />
+                                            <p className="ml-3 text-muted-foreground">Loading vacancies...</p>
+                                        </div>
+                                    ) : (
+                                        <VacancyTable vacancies={vacancies || []} onEdit={openVacancyEditDialog} onDelete={openVacancyDeleteDialog} onVerifyToggle={handleVacancyVerifyToggle} onTierToggle={handleVacancyTierToggle} />
+                                    )}
+                                </CardContent>
+                            </Card>
+                        </TabsContent>
+                    </Tabs>
+                </TabsContent>
+                <TabsContent value="settings" className="mt-4 space-y-8">
+                    <Card>
+                        <CardHeader>
+                            <div className="flex items-center gap-3">
+                                <Settings className="h-6 w-6" />
+                                <div>
+                                    <CardTitle>Global Settings</CardTitle>
+                                    <CardDescription>Control content, pricing, and payment links.</CardDescription>
                                 </div>
                             </div>
+                        </CardHeader>
+                        <CardContent>
+                            {isAppConfigLoading ? (
+                                <div className="flex items-center space-x-2">
+                                    <Loader className="h-4 w-4 animate-spin" />
+                                    <p className="text-sm text-muted-foreground">Loading settings...</p>
+                                </div>
+                            ) : (
+                                <div className="space-y-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                        <div>
+                                            <Label htmlFor="featured-limit">Featured Experts Limit</Label>
+                                            <Input 
+                                                id="featured-limit"
+                                                type="number" 
+                                                value={featuredExpertsLimit}
+                                                onChange={(e) => setFeaturedExpertsLimit(Number(e.target.value))}
+                                                min="1"
+                                                max="12"
+                                                className="mt-1"
+                                            />
+                                        </div>
+                                        <div className="space-y-4">
+                                            <div>
+                                                <Label htmlFor="premier-price">Premier Plan Price (INR)</Label>
+                                                <div className="relative mt-1">
+                                                    <IndianRupee className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                                                    <Input
+                                                        id="premier-price"
+                                                        type="number"
+                                                        value={premierPrice}
+                                                        onChange={(e) => setPremierPrice(Number(e.target.value))}
+                                                        className="pl-10"
+                                                        placeholder="e.g., 499"
+                                                    />
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <Label htmlFor="super-premier-price">Super Premier Plan Price (INR)</Label>
+                                                <div className="relative mt-1">
+                                                    <IndianRupee className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                                                    <Input
+                                                        id="super-premier-price"
+                                                        type="number"
+                                                        value={superPremierPrice}
+                                                        onChange={(e) => setSuperPremierPrice(Number(e.target.value))}
+                                                        className="pl-10"
+                                                        placeholder="e.g., 999"
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <Label htmlFor="payment-link">Central Payment Link (Optional Fallback)</Label>
+                                        <div className="relative mt-1 flex items-center gap-2">
+                                            <LinkIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                                            <Input
+                                                id="payment-link"
+                                                value={paymentLink}
+                                                onChange={(e) => setPaymentLink(e.target.value)}
+                                                className="pl-10"
+                                                placeholder="https://payment.link/1234"
+                                                disabled={!isEditingPaymentLink}
+                                            />
+                                            {!isEditingPaymentLink ? (
+                                                <Button variant="outline" size="icon" onClick={() => setIsEditingPaymentLink(true)}>
+                                                    <Edit className="h-4 w-4" />
+                                                </Button>
+                                            ) : (
+                                                <Button variant="outline" size="icon" onClick={() => setPaymentLink('')}>
+                                                    <X className="h-4 w-4" />
+                                                </Button>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader>
+                        <div className="flex items-center gap-3">
+                            <Megaphone className="h-6 w-6" />
+                            <div>
+                            <CardTitle>Announcement Banner</CardTitle>
+                            <CardDescription>Display a scrolling banner at the top of the site.</CardDescription>
+                            </div>
                         </div>
-                    </CardContent>
-                </Card>
-            </div>
-            
-
-            <Tabs defaultValue="users">
-              <TabsList className="grid w-full grid-cols-3">
-                  <TabsTrigger value="users">User Management</TabsTrigger>
-                  <TabsTrigger value="reviews">Review Management</TabsTrigger>
-                  <TabsTrigger value="vacancies">Vacancy Management</TabsTrigger>
-              </TabsList>
-              <TabsContent value="users" className="mt-4">
-                  <Card>
-                    <CardHeader>
-                      <div className="flex items-center gap-3">
-                        <Users className="h-6 w-6" />
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                        <div className="flex items-center space-x-2">
+                            <Switch id="announcement-enabled" checked={isAnnouncementEnabled} onCheckedChange={setIsAnnouncementEnabled} />
+                            <Label htmlFor="announcement-enabled">Enable Announcement Banner</Label>
+                        </div>
                         <div>
-                          <CardTitle>Expert Users</CardTitle>
-                          <CardDescription>Manage all registered users in the system.</CardDescription>
-                        </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="flex flex-col sm:flex-row items-stretch gap-4 mb-6">
-                            <div className="relative flex-grow">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                <Label htmlFor="announcement-text">Announcement Text</Label>
                                 <Input
-                                    placeholder="Search by name or email..."
-                                    className="pl-10"
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    id="announcement-text"
+                                    value={announcementText}
+                                    onChange={(e) => setAnnouncementText(e.target.value)}
+                                    placeholder="e.g. 🎉 New features just launched!"
+                                    disabled={!isAnnouncementEnabled}
                                 />
                             </div>
-                            <div className="flex items-center gap-2 flex-wrap">
-                                <Button variant={activeFilter === 'verified' ? 'default' : 'outline'} size="sm" onClick={() => handleFilterClick('verified')}>Verified</Button>
-                                <Button variant={activeFilter === 'unverified' ? 'default' : 'outline'} size="sm" onClick={() => handleFilterClick('unverified')}>Unverified</Button>
-                                <Button variant={activeFilter === 'premier' ? 'default' : 'outline'} size="sm" onClick={() => handleFilterClick('premier')}>Premier</Button>
-                                <Button variant={activeFilter === 'super-premier' ? 'default' : 'outline'} size="sm" onClick={() => handleFilterClick('super-premier')}>Super Premier</Button>
-                            </div>
-                        </div>
-
-                      {areTablesLoading ? (
-                        <div className="flex justify-center items-center p-8">
-                          <Loader className="h-6 w-6 animate-spin text-primary" />
-                          <p className="ml-3 text-muted-foreground">Loading users...</p>
-                        </div>
-                      ) : (
-                          <Tabs defaultValue="all">
-                              <TabsList className="grid w-full grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
-                                  <TabsTrigger value="all">All Users</TabsTrigger>
-                                  <TabsTrigger value="freelancers">Freelancers</TabsTrigger>
-                                  <TabsTrigger value="companies">Companies</TabsTrigger>
-                                  <TabsTrigger value="authorizedPros">Authorized Pros</TabsTrigger>
-                                  <TabsTrigger value="superAdmins">Super Admins</TabsTrigger>
-                              </TabsList>
-                              <TabsContent value="all" className="mt-4">
-                                  <UserTable users={filteredUsers} onTierChange={handleTierChange} onVerificationToggle={handleVerificationToggle} onDelete={openDeleteDialog} onEdit={openEditDialog} />
-                              </TabsContent>
-                              <TabsContent value="freelancers" className="mt-4">
-                                  <UserTable users={freelancers || []} onTierChange={handleTierChange} onVerificationToggle={handleVerificationToggle} onDelete={openDeleteDialog} onEdit={openEditDialog} />
-                              </TabsContent>
-                              <TabsContent value="companies" className="mt-4">
-                                  <UserTable users={companies || []} onTierChange={handleTierChange} onVerificationToggle={handleVerificationToggle} onDelete={openDeleteDialog} onEdit={openEditDialog} />
-                              </TabsContent>
-                              <TabsContent value="authorizedPros" className="mt-4">
-                                  <UserTable users={authorizedPros || []} onTierChange={handleTierChange} onVerificationToggle={handleVerificationToggle} onDelete={openDeleteDialog} onEdit={openEditDialog} />
-                              </TabsContent>
-                              <TabsContent value="superAdmins" className="mt-4">
-                                  <UserTable users={superAdmins || []} onTierChange={handleTierChange} onVerificationToggle={handleVerificationToggle} onDelete={openDeleteDialog} onEdit={openEditDialog} />
-                              </TabsContent>
-                          </Tabs>
-                      )}
-                    </CardContent>
-                  </Card>
-              </TabsContent>
-              <TabsContent value="reviews" className="mt-4">
-                  <Card>
-                    <CardHeader>
-                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                          <div className="flex items-center gap-3">
-                            <MessageSquare className="h-6 w-6" />
                             <div>
-                              <CardTitle>Review Moderation</CardTitle>
-                              <CardDescription>Approve, reject, delete, or manually add reviews.</CardDescription>
+                                <Label htmlFor="announcement-speed">Scroll Speed: {announcementSpeed}s</Label>
+                                <Slider
+                                    id="announcement-speed"
+                                    min={5}
+                                    max={60}
+                                    step={1}
+                                    value={[announcementSpeed]}
+                                    onValueChange={(value) => setAnnouncementSpeed(value[0])}
+                                    disabled={!isAnnouncementEnabled}
+                                />
+                                <p className="text-xs text-muted-foreground">Higher value means slower scroll speed.</p>
                             </div>
-                          </div>
-                          <Dialog open={isAddReviewDialogOpen} onOpenChange={setIsAddReviewDialogOpen}>
-                            <DialogTrigger asChild>
-                              <Button className="w-full sm:w-auto">
-                                <Edit3 className="mr-2 h-4 w-4" />
-                                Write a Review
-                              </Button>
-                            </DialogTrigger>
-                            <DialogContent className="sm:max-w-[600px]">
-                              <DialogHeader>
-                                <DialogTitle>Add a New Review</DialogTitle>
-                                <DialogDescription>Manually add a review for any expert in the system.</DialogDescription>
-                              </DialogHeader>
-                              <AddReviewForm
-                                experts={usersData || []}
-                                onSuccess={() => setIsAddReviewDialogOpen(false)}
-                              />
-                            </DialogContent>
-                          </Dialog>
-                        </div>
-                    </CardHeader>
-                    <CardContent>
-                        {isReviewsLoading ? (
-                             <div className="flex justify-center items-center p-8">
-                                <Loader className="h-6 w-6 animate-spin text-primary" />
-                                <p className="ml-3 text-muted-foreground">Loading reviews...</p>
-                              </div>
-                        ) : (
-                            <Tabs defaultValue="pending">
-                                <TabsList className="grid w-full grid-cols-3">
-                                    <TabsTrigger value="pending">Pending</TabsTrigger>
-                                    <TabsTrigger value="approved">Approved</TabsTrigger>
-                                    <TabsTrigger value="rejected">Rejected</TabsTrigger>
-                                </TabsList>
-                                <TabsContent value="pending" className="mt-4">
-                                    <ReviewTable reviews={pendingReviews || []} onApprove={handleApproveReview} onReject={openReviewRejectDialog} onDelete={openReviewDeleteDialog}/>
-                                </TabsContent>
-                                <TabsContent value="approved" className="mt-4">
-                                    <ReviewTable reviews={approvedReviews || []} onApprove={handleApproveReview} onReject={openReviewRejectDialog} onDelete={openReviewDeleteDialog}/>
-                                </TabsContent>
-                                 <TabsContent value="rejected" className="mt-4">
-                                    <ReviewTable reviews={rejectedReviews || []} onApprove={handleApproveReview} onReject={openReviewRejectDialog} onDelete={openReviewDeleteDialog}/>
-                                 </TabsContent>
-                            </Tabs>
-                        )}
-                    </CardContent>
-                  </Card>
-              </TabsContent>
-              <TabsContent value="vacancies" className="mt-4">
-                <Card>
-                    <CardHeader>
-                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                          <div className="flex items-center gap-3">
-                            <Briefcase className="h-6 w-6" />
-                            <div>
-                              <CardTitle>Vacancy Management</CardTitle>
-                              <CardDescription>Manage all job vacancies in the system.</CardDescription>
+                        </CardContent>
+                    </Card>
+                    <div className="flex justify-end">
+                        <Button onClick={handleSaveSettings} disabled={isSavingSettings}>
+                            {isSavingSettings ? (
+                                <Loader className="mr-2 h-4 w-4 animate-spin" />
+                            ) : (
+                                <Save className="mr-2 h-4 w-4" />
+                            )}
+                            Save All Settings
+                        </Button>
+                    </div>
+                </TabsContent>
+                <TabsContent value="data" className="mt-4">
+                    <Card>
+                        <CardHeader>
+                            <div className="flex items-center gap-3">
+                                <HardDriveDownload className="h-6 w-6" />
+                                <div>
+                                    <CardTitle>Backup & Restore</CardTitle>
+                                    <CardDescription>Export all application data or restore from a backup file.</CardDescription>
+                                </div>
                             </div>
-                          </div>
-                          <Dialog open={isVacancyPostDialogOpen} onOpenChange={setIsVacancyPostDialogOpen}>
-                            <DialogTrigger asChild>
-                              <Button className="w-full sm:w-auto">
-                                <PlusCircle className="mr-2 h-4 w-4" />
-                                Post New Vacancy
-                              </Button>
-                            </DialogTrigger>
-                            <DialogContent className="sm:max-w-[600px]">
-                              <DialogHeader>
-                                <DialogTitle>Create a New Vacancy</DialogTitle>
-                                <DialogDescription>As a Super Admin, you can post a job for any company.</DialogDescription>
-                              </DialogHeader>
-                              <PostVacancyForm
-                                onSuccess={() => setIsVacancyPostDialogOpen(false)}
-                                isAdmin={true}
-                              />
-                            </DialogContent>
-                          </Dialog>
-                        </div>
-                    </CardHeader>
-                    <CardContent>
-                        {isVacanciesLoading ? (
-                             <div className="flex justify-center items-center p-8">
-                                <Loader className="h-6 w-6 animate-spin text-primary" />
-                                <p className="ml-3 text-muted-foreground">Loading vacancies...</p>
-                              </div>
-                        ) : (
-                            <VacancyTable vacancies={vacancies || []} onEdit={openVacancyEditDialog} onDelete={openVacancyDeleteDialog} onVerifyToggle={handleVacancyVerifyToggle} onTierToggle={handleVacancyTierToggle} />
-                        )}
-                    </CardContent>
-                  </Card>
-              </TabsContent>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="flex flex-col sm:flex-row gap-4">
+                                <div className='flex-1'>
+                                    <h4 className="font-semibold text-sm">Export Data</h4>
+                                    <p className="text-xs text-muted-foreground mb-2">Download a JSON file containing all users, vacancies, and reviews.</p>
+                                    <Button onClick={handleExportData} disabled={isExporting} className="w-full">
+                                        {isExporting ? <Loader className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
+                                        {isExporting ? 'Exporting...' : 'Export All Data'}
+                                    </Button>
+                                </div>
+                                <div className='flex-1'>
+                                    <h4 className="font-semibold text-sm">Import Data</h4>
+                                    <p className="text-xs text-muted-foreground mb-2">Restore data from a previously exported JSON file. This will overwrite existing data.</p>
+                                    <div className="relative">
+                                        <Button asChild variant="outline" className="w-full" disabled={isImporting}>
+                                        <label htmlFor="import-file">
+                                            {isImporting ? <Loader className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
+                                            {isImporting ? 'Importing...' : 'Select Backup File to Restore'}
+                                        </label>
+                                        </Button>
+                                        <Input id="import-file" type="file" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" accept=".json" onChange={handleImportData} disabled={isImporting} />
+                                    </div>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </TabsContent>
             </Tabs>
           </main>
         </div>
@@ -1309,3 +1308,5 @@ export default function AdminDashboardPage() {
     </>
   );
 }
+
+    
