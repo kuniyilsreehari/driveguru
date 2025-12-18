@@ -27,7 +27,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Input }from "@/components/ui/input";
+import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth, useUser, useFirestore, setDocumentNonBlocking } from "@/firebase";
 import { Icons } from "../icons";
@@ -56,6 +56,7 @@ export function LoginForm() {
   const [confirmationResult, setConfirmationResult] = useState<any>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const recaptchaContainerRef = useRef<HTMLDivElement>(null);
+  const [phoneNumberForSignup, setPhoneNumberForSignup] = useState('');
   
   const auth = useAuth();
   const { user, isUserLoading } = useUser();
@@ -184,14 +185,16 @@ export function LoginForm() {
   async function onPhoneSubmit(values: z.infer<typeof phoneFormSchema>) {
     if (!auth) return;
     setIsSubmitting(true);
+    const fullPhoneNumber = `+91${values.phoneNumber}`;
+    setPhoneNumberForSignup(fullPhoneNumber); // Save for potential new user profile
     try {
         const verifier = (window as any).recaptchaVerifier;
-        const result = await signInWithPhoneNumber(auth, `+91${values.phoneNumber}`, verifier);
+        const result = await signInWithPhoneNumber(auth, fullPhoneNumber, verifier);
         setConfirmationResult(result);
         setView('otp');
         toast({
             title: "OTP Sent",
-            description: `An OTP has been sent to +91${values.phoneNumber}.`,
+            description: `An OTP has been sent to ${fullPhoneNumber}.`,
         });
     } catch (error: any) {
         console.error("OTP send failed:", error);
@@ -206,10 +209,38 @@ export function LoginForm() {
   }
 
   async function onOtpSubmit(values: z.infer<typeof otpFormSchema>) {
-    if (!confirmationResult) return;
+    if (!confirmationResult || !firestore) return;
     setIsSubmitting(true);
     try {
-        await confirmationResult.confirm(values.otp);
+        const result = await confirmationResult.confirm(values.otp);
+        const user = result.user;
+        const additionalInfo = getAdditionalUserInfo(result);
+
+        if (additionalInfo?.isNewUser) {
+            const userDocRef = doc(firestore, "users", user.uid);
+            
+            const userData = {
+                id: user.uid,
+                firstName: 'New',
+                lastName: 'User',
+                email: null, // No email with phone signup
+                phoneNumber: phoneNumberForSignup,
+                role: 'Freelancer',
+                verified: false,
+                isAvailable: true,
+                createdAt: serverTimestamp(),
+            };
+            await setDocumentNonBlocking(userDocRef, userData, { merge: true });
+            toast({
+                title: "Welcome!",
+                description: "Your account has been created with your phone number. Please complete your profile in the dashboard.",
+            });
+        } else {
+             toast({
+                title: "Signed In",
+                description: "You have successfully signed in.",
+            });
+        }
         // Redirect is handled by the main useEffect
     } catch (error: any) {
         console.error("OTP verification failed:", error);
