@@ -37,7 +37,9 @@ export function FloatingActions({ expert, isPremium, isGeneratingPdf, onDownload
         if (!installPrompt) return;
         (installPrompt as any).prompt();
         (installPrompt as any).userChoice.then((choiceResult: { outcome: 'accepted' | 'dismissed' }) => {
-            setInstallPrompt(null);
+            if (choiceResult.outcome === 'accepted') {
+                 setInstallPrompt(null);
+            }
         });
     };
 
@@ -97,6 +99,10 @@ export function FloatingActions({ expert, isPremium, isGeneratingPdf, onDownload
     ];
 
     const actions = allActions.filter(action => expert ? true : !['pdf', 'call', 'whatsapp'].includes(action.id));
+
+    if (actions.length === 0) {
+        return null;
+    }
 
     return (
         <TooltipProvider>

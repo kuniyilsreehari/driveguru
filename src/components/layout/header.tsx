@@ -23,6 +23,7 @@ import { useEffect, useState } from 'react';
 import { useTheme } from 'next-themes';
 import { installPromptAtom } from '@/lib/store';
 import { useAtom } from 'jotai';
+import { InstallPwaDialog } from '@/components/install-pwa-dialog';
 
 
 export function Header() {
@@ -36,11 +37,15 @@ export function Header() {
   const { setTheme, theme } = useTheme();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [installPrompt, setInstallPrompt] = useAtom(installPromptAtom);
+  const [showInstallDialog, setShowInstallDialog] = useState(false);
+
 
   useEffect(() => {
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
       setInstallPrompt(e);
+      // Automatically show the dialog if the event fires
+      setShowInstallDialog(true); 
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
@@ -50,20 +55,6 @@ export function Header() {
     };
   }, [setInstallPrompt]);
 
-  const handleInstallClick = () => {
-    if (!installPrompt) {
-      return;
-    }
-    (installPrompt as any).prompt();
-    (installPrompt as any).userChoice.then((choiceResult: { outcome: 'accepted' | 'dismissed' }) => {
-      if (choiceResult.outcome === 'accepted') {
-        console.log('User accepted the install prompt');
-      } else {
-        console.log('User dismissed the install prompt');
-      }
-      setInstallPrompt(null);
-    });
-  };
 
   useEffect(() => {
     setMounted(true);
@@ -137,6 +128,7 @@ export function Header() {
   }
 
   return (
+    <>
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-14 max-w-screen-2xl items-center">
         
@@ -169,7 +161,7 @@ export function Header() {
                         </Link>
                     </Button>
                     {installPrompt && (
-                      <Button onClick={handleInstallClick} variant="ghost" className="justify-start">
+                      <Button onClick={() => setShowInstallDialog(true)} variant="ghost" className="justify-start">
                         <Download className="mr-2 h-4 w-4" />
                         Install App
                       </Button>
@@ -202,6 +194,12 @@ export function Header() {
                   Featured
                 </Link>
             </Button>
+             {installPrompt && (
+                <Button onClick={() => setShowInstallDialog(true)} variant="outline" size="sm" className="mr-2">
+                    <Download className="mr-2 h-4 w-4" />
+                    Install
+                </Button>
+            )}
           </nav>
             
             {isLoading ? (
@@ -237,12 +235,6 @@ export function Header() {
               </DropdownMenu>
             ) : (
               <nav className='flex items-center'>
-                {installPrompt && (
-                  <Button onClick={handleInstallClick} variant="outline" size="sm" className="mr-2">
-                    <Download className="mr-2 h-4 w-4" />
-                    Install
-                  </Button>
-                )}
                 <Button asChild variant="ghost">
                   <Link href="/login">Login</Link>
                 </Button>
@@ -263,5 +255,7 @@ export function Header() {
         </div>
       </div>
     </header>
+    <InstallPwaDialog open={showInstallDialog} onOpenChange={setShowInstallDialog} />
+    </>
   );
 }
