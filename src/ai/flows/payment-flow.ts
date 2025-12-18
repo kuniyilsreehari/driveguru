@@ -12,8 +12,8 @@ import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { v4 as uuidv4 } from 'uuid';
 import fetch from 'node-fetch';
-import { initializeApp, getApps, cert } from 'firebase-admin/app';
-import { getFirestore, doc, getDoc } from 'firebase-admin/firestore';
+import { initializeApp, getApps } from 'firebase-admin/app';
+import { getFirestore } from 'firebase-admin/firestore';
 
 
 const CreatePaymentOrderInputSchema = z.object({
@@ -109,10 +109,10 @@ const createPaymentOrderFlow = ai.defineFlow(
     }
 
     const firestore = getFirestore();
-    const appConfigDocRef = doc(firestore, 'app_config', 'homepage');
-    const appConfigSnap = await getDoc(appConfigDocRef);
+    const appConfigDocRef = firestore.doc('app_config/homepage');
+    const appConfigSnap = await appConfigDocRef.get();
     
-    if (!appConfigSnap.exists()) {
+    if (!appConfigSnap.exists) {
         throw new Error("Application configuration not found.");
     }
     
