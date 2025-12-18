@@ -454,11 +454,11 @@ export function RegistrationForm() {
         </div>
 
         <div className="grid grid-cols-2 gap-2">
-            <Button variant="outline" onClick={handleGoogleSignUp} type="button">
+            <Button onClick={handleGoogleSignUp} type="button">
               <Icons.google className="mr-2 h-4 w-4" />
               Google
             </Button>
-             <Button variant="outline" onClick={() => setView('phone')} type="button">
+             <Button onClick={() => setView('phone')} type="button">
                 <Phone className="mr-2 h-4 w-4" />
                 Phone
             </Button>
@@ -1020,5 +1020,3 @@ export function RegistrationForm() {
     </>
   );
 }
-
-    
