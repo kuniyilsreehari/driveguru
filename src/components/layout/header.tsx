@@ -166,6 +166,12 @@ export function Header() {
                             <Award className="mr-2 h-4 w-4" /> Featured
                         </Link>
                     </Button>
+                    {installPrompt && (
+                      <Button onClick={handleInstallClick} variant="ghost" className="justify-start">
+                        <Download className="mr-2 h-4 w-4" />
+                        Install App
+                      </Button>
+                    )}
                 </div>
             </SheetContent>
         </Sheet>
