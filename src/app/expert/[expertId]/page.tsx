@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import { FloatingActions } from '@/components/floating-actions';
 
 
 type ExpertUserProfile = {
@@ -148,21 +149,6 @@ function ExpertProfileContent() {
                     <Button variant="outline" asChild>
                         <Link href="/"><ChevronLeft className="mr-2 h-4 w-4" /> Back to Home</Link>
                     </Button>
-                    {isPremium ? (
-                         <Button variant="outline" onClick={handleDownloadPdf} disabled={isGeneratingPdf}>
-                            {isGeneratingPdf ? (
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            ) : (
-                                <FileDown className="mr-2 h-4 w-4" />
-                            )}
-                            {isGeneratingPdf ? 'Generating...' : 'Download PDF'}
-                        </Button>
-                    ) : (
-                         <Button variant="outline" disabled>
-                            <Lock className="mr-2 h-4 w-4" />
-                            Download PDF (Premium)
-                        </Button>
-                    )}
                 </div>
                 
                 {!user && (
@@ -289,6 +275,12 @@ function ExpertProfileContent() {
                         </div>
                     </CardContent>
                 </Card>
+                <FloatingActions 
+                    expert={expert}
+                    isPremium={isPremium} 
+                    isGeneratingPdf={isGeneratingPdf} 
+                    onDownloadPdf={handleDownloadPdf} 
+                />
             </div>
         </div>
     );
@@ -306,5 +298,3 @@ export default function ExpertProfilePage() {
         </Suspense>
     );
 }
-
-    
