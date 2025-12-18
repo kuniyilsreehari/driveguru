@@ -6,7 +6,7 @@ import { Header } from '@/components/layout/header';
 import { ThemeProvider } from '@/components/theme-provider';
 
 export const metadata: Metadata = {
-  title: 'Driveguru',
+  title: 'DriveGuru',
   description: 'Find local talent instantly.',
   manifest: '/manifest.json'
 };
