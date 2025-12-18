@@ -9,7 +9,7 @@ import { useUser, useFirestore, useDoc, useMemoFirebase, useAuth, useCollection 
 import { deleteDocumentNonBlocking, updateDocumentNonBlocking, setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, CheckCircle2, UserCheck, UserX, Crown, Sparkles, User as UserIcon, Settings, Save, Briefcase, Building, MessageSquare, ThumbsUp, ThumbsDown, Star, Search, PlusCircle, Mail, Edit3, Link as LinkIcon, Download, ExternalLink, IndianRupee, X, Upload, HardDriveDownload, Megaphone } from 'lucide-react';
+import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, CheckCircle2, UserCheck, UserX, Crown, Sparkles, User as UserIcon, Settings, Save, Briefcase, Building, MessageSquare, ThumbsUp, ThumbsDown, Star, Search, PlusCircle, Mail, Edit3, Link as LinkIcon, Download, ExternalLink, IndianRupee, X, Upload, HardDriveDownload, Megaphone, Phone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -133,6 +133,7 @@ const UserTable = ({ users, onTierChange, onVerificationToggle, onDelete, onEdit
                 <TableHead className="w-[80px]">Avatar</TableHead>
                 <TableHead>Full Name</TableHead>
                 <TableHead>Email</TableHead>
+                <TableHead>Mobile Number</TableHead>
                 <TableHead>Role</TableHead>
                 <TableHead className="text-center">Tier</TableHead>
                 <TableHead className="text-center">Verified</TableHead>
@@ -158,6 +159,7 @@ const UserTable = ({ users, onTierChange, onVerificationToggle, onDelete, onEdit
                         )}
                     </TableCell>
                     <TableCell>{expert.email}</TableCell>
+                    <TableCell>{expert.phoneNumber || 'N/A'}</TableCell>
                     <TableCell><Badge variant="secondary">{expert.role}</Badge></TableCell>
                     <TableCell className="text-center">{renderTierBadge(expert.tier)}</TableCell>
                     <TableCell className="text-center">
@@ -186,7 +188,7 @@ const UserTable = ({ users, onTierChange, onVerificationToggle, onDelete, onEdit
                     </TableCell>
                     </TableRow>
                 ))
-                ) : ( <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground h-24">No users found for this role.</TableCell></TableRow> )}
+                ) : ( <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground h-24">No users found for this role.</TableCell></TableRow> )}
             </TableBody>
         </Table>
     )
