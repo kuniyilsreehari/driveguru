@@ -104,7 +104,7 @@ export function Header() {
         <div className="container flex h-14 max-w-screen-2xl items-center">
           <Link href="/" className="mr-6 flex items-center space-x-2">
             <Icons.logo className="h-6 w-6" />
-            <span className="hidden font-bold sm:inline-block">Find Local Talent</span>
+            <span className="hidden font-bold sm:inline-block">Driveguru</span>
           </Link>
           <div className="flex flex-1 items-center justify-end space-x-4">
             <nav className="hidden sm:flex items-center space-x-2">
@@ -148,7 +148,7 @@ export function Header() {
             <SheetContent side="left" className="pr-0">
                 <Link href="/" className="flex items-center space-x-2 mb-6" onClick={() => setIsMobileMenuOpen(false)}>
                     <Icons.logo className="h-6 w-6" />
-                    <span className="font-bold">Find Local Talent</span>
+                    <span className="font-bold">Driveguru</span>
                 </Link>
                 <div className="flex flex-col space-y-2">
                     <Button asChild variant="ghost" className="justify-start" onClick={() => setIsMobileMenuOpen(false)}>
@@ -172,7 +172,7 @@ export function Header() {
         
         <Link href="/" className="mr-auto flex items-center space-x-2">
           <Icons.logo className="h-6 w-6" />
-          <span className="hidden font-bold sm:inline-block">Find Local Talent</span>
+          <span className="hidden font-bold sm:inline-block">Driveguru</span>
         </Link>
         <div className="flex items-center justify-end space-x-1 sm:space-x-2">
           <nav className="hidden sm:flex items-center space-x-1">

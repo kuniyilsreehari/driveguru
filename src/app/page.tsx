@@ -224,7 +224,7 @@ function HomePageContent() {
         <div className="dark min-h-screen bg-background text-foreground p-4 sm:p-8">
             <div className="max-w-4xl mx-auto">
                 <header className="text-center py-8 sm:py-12">
-                    <h1 className="text-4xl sm:text-5xl font-bold text-primary">Find Local Talent, Instantly</h1>
+                    <h1 className="text-4xl sm:text-5xl font-bold text-primary">Driveguru</h1>
                     <p className="mt-4 text-muted-foreground max-w-2xl mx-auto">
                         Your one-stop platform for finding trusted local service professionals and kickstarting your career.
                     </p>
