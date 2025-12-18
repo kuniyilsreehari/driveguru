@@ -34,6 +34,8 @@ export type CreatePaymentOrderOutput = z.infer<typeof CreatePaymentOrderOutputSc
 async function createCashfreeOrder(input: CreatePaymentOrderInput & { amount: number }): Promise<{ payment_link: string }> {
     const url = 'https://sandbox.cashfree.com/pg/orders'; // Sandbox URL, replace for production
     const orderId = `order_${uuidv4()}`;
+    const returnUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002'}/payment-status?order_id={order_id}`;
+
 
     const headers = {
         'Content-Type': 'application/json',
@@ -53,7 +55,7 @@ async function createCashfreeOrder(input: CreatePaymentOrderInput & { amount: nu
             customer_name: input.userName,
         },
         order_meta: {
-            return_url: `https://YOUR_APP_URL/payment-status?order_id={order_id}`, // IMPORTANT: Replace with your actual return URL
+            return_url: returnUrl,
         },
         order_note: `Upgrade to ${input.plan} plan`,
     };
