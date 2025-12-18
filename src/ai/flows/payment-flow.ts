@@ -101,17 +101,16 @@ const createPaymentOrderFlow = ai.defineFlow(
     
     // Initialize Firebase Admin SDK if not already initialized
     if (!getApps().length) {
-      const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY || '{}');
-      initializeApp({
-        credential: cert(serviceAccount)
-      });
+      // In a managed environment like App Hosting, initializeApp() without arguments
+      // automatically discovers service account credentials.
+      initializeApp();
     }
 
     const firestore = getFirestore();
     const appConfigDocRef = doc(firestore, 'app_config', 'homepage');
     const appConfigSnap = await getDoc(appConfigDocRef);
     
-    if (!appConfigSnap.exists) {
+    if (!appConfigSnap.exists()) {
         throw new Error("Application configuration not found.");
     }
     
