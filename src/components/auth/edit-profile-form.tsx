@@ -767,7 +767,7 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
                 <FormControl>
                     <Input
                         type="email"
-                        value={userProfile.email}
+                        value={userProfile.email || ''}
                         disabled
                         className="pl-10"
                     />
@@ -782,3 +782,5 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
     </Form>
   );
 }
+
+    
