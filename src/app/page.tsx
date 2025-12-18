@@ -23,6 +23,7 @@ import * as LucideIcons from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { parseSearchQuery } from '@/ai/flows/ai-search-flow';
 import Link from 'next/link';
+import { FloatingActions } from '@/components/floating-actions';
 
 
 type AppConfig = {
@@ -384,6 +385,7 @@ function HomePageContent() {
                         )}
                     </div>
                 </main>
+                <FloatingActions />
             </div>
         </div>
     )
