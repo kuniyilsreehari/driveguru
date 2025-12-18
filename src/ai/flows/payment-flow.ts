@@ -12,8 +12,8 @@ import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { v4 as uuidv4 } from 'uuid';
 import fetch from 'node-fetch';
-import { doc, getDoc } from 'firebase/firestore';
-import { getSdks } from '@/firebase';
+import { initializeApp, getApps, cert } from 'firebase-admin/app';
+import { getFirestore, doc, getDoc } from 'firebase-admin/firestore';
 
 
 const CreatePaymentOrderInputSchema = z.object({
@@ -99,17 +99,28 @@ const createPaymentOrderFlow = ai.defineFlow(
   },
   async (input) => {
     
-    // Using getSdks to get firestore instance on the server-side
-    const { firestore } = getSdks();
+    // Initialize Firebase Admin SDK if not already initialized
+    if (!getApps().length) {
+      const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY || '{}');
+      initializeApp({
+        credential: cert(serviceAccount)
+      });
+    }
+
+    const firestore = getFirestore();
     const appConfigDocRef = doc(firestore, 'app_config', 'homepage');
     const appConfigSnap = await getDoc(appConfigDocRef);
     
-    if (!appConfigSnap.exists()) {
+    if (!appConfigSnap.exists) {
         throw new Error("Application configuration not found.");
     }
     
     const appConfig = appConfigSnap.data();
     let amount = 0;
+
+    if (!appConfig) {
+      throw new Error("Application configuration is empty.");
+    }
 
     if (input.plan === 'Premier') {
         amount = appConfig.premierPlanPrice || 0;
