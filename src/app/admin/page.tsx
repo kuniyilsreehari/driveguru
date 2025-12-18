@@ -10,7 +10,7 @@ import { useUser, useFirestore, useDoc, useMemoFirebase, useAuth, useCollection 
 import { deleteDocumentNonBlocking, updateDocumentNonBlocking, setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, CheckCircle2, UserCheck, UserX, Crown, Sparkles, User as UserIcon, Settings, Save, Briefcase, Building, MessageSquare, ThumbsUp, ThumbsDown, Star, Search, PlusCircle, Mail, Edit3, Link as LinkIcon, Download, ExternalLink, IndianRupee, X } from 'lucide-react';
+import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, CheckCircle2, UserCheck, UserX, Crown, Sparkles, User as UserIcon, Settings, Save, Briefcase, Building, MessageSquare, ThumbsUp, ThumbsDown, Star, Search, PlusCircle, Mail, Edit3, Link as LinkIcon, Download, ExternalLink, IndianRupee, X, Upload, HardDriveDownload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -56,6 +56,7 @@ import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import type { Vacancy } from '@/app/vacancies/page';
 import { EditProfileForm } from '@/components/auth/edit-profile-form';
+import { exportAllData } from '@/ai/flows/export-data-flow';
 
 type ExpertUser = {
     id: string;
@@ -380,6 +381,8 @@ export default function AdminDashboardPage() {
 
   const [isSavingSettings, setIsSavingSettings] = useState(false);
   const [isEditingPaymentLink, setIsEditingPaymentLink] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
 
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -637,6 +640,48 @@ export default function AdminDashboardPage() {
     }
   };
 
+  const handleExportData = async () => {
+    setIsExporting(true);
+    try {
+        const data = await exportAllData();
+        const jsonString = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(data, null, 2))}`;
+        const link = document.createElement("a");
+        link.href = jsonString;
+        link.download = "drive-guru-backup.json";
+        link.click();
+        toast({
+            title: "Export Successful",
+            description: "Your data has been downloaded as a JSON file.",
+        });
+    } catch (error) {
+        console.error("Export failed:", error);
+        toast({
+            variant: "destructive",
+            title: "Export Failed",
+            description: "Could not export data. Please check the console.",
+        });
+    } finally {
+        setIsExporting(false);
+    }
+  };
+
+  const handleImportData = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+        // Placeholder for future import logic
+        setIsImporting(true);
+        console.log("File selected for import:", file.name);
+        toast({
+            title: "Import Under Construction",
+            description: "Data import functionality is not yet implemented.",
+        });
+        // Reset the input
+        event.target.value = '';
+        setIsImporting(false);
+    }
+  };
+
+
   const isLoading = isUserLoading || isRoleLoading;
   const areTablesLoading = isSuperAdmin && (isUsersLoading || isReviewsLoading || isVacanciesLoading);
   
@@ -780,106 +825,146 @@ export default function AdminDashboardPage() {
                 </CardContent>
               </Card>
             </div>
-            
-            <Card className="mb-8">
-                <CardHeader>
-                    <div className="flex items-center gap-3">
-                        <Settings className="h-6 w-6" />
-                        <div>
-                            <CardTitle>Global Settings</CardTitle>
-                            <CardDescription>Control content, pricing, and payment links for the application.</CardDescription>
-                        </div>
-                    </div>
-                </CardHeader>
-                <CardContent>
-                    {isAppConfigLoading ? (
-                        <div className="flex items-center space-x-2">
-                            <Loader className="h-4 w-4 animate-spin" />
-                            <p className="text-sm text-muted-foreground">Loading settings...</p>
-                        </div>
-                    ) : (
-                        <div className="space-y-4">
-                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                                <div>
-                                    <Label htmlFor="featured-limit">Featured Experts Limit</Label>
-                                    <Input 
-                                        id="featured-limit"
-                                        type="number" 
-                                        value={featuredExpertsLimit}
-                                        onChange={(e) => setFeaturedExpertsLimit(Number(e.target.value))}
-                                        min="1"
-                                        max="12"
-                                        className="mt-1"
-                                    />
-                                </div>
-                                 <div className="space-y-4">
-                                    <div>
-                                        <Label htmlFor="premier-price">Premier Plan Price (INR)</Label>
-                                        <div className="relative mt-1">
-                                            <IndianRupee className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                                            <Input
-                                                id="premier-price"
-                                                type="number"
-                                                value={premierPrice}
-                                                onChange={(e) => setPremierPrice(Number(e.target.value))}
-                                                className="pl-10"
-                                                placeholder="e.g., 499"
-                                            />
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <Label htmlFor="super-premier-price">Super Premier Plan Price (INR)</Label>
-                                        <div className="relative mt-1">
-                                            <IndianRupee className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                                            <Input
-                                                id="super-premier-price"
-                                                type="number"
-                                                value={superPremierPrice}
-                                                onChange={(e) => setSuperPremierPrice(Number(e.target.value))}
-                                                className="pl-10"
-                                                placeholder="e.g., 999"
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+              <Card>
+                  <CardHeader>
+                      <div className="flex items-center gap-3">
+                          <Settings className="h-6 w-6" />
+                          <div>
+                              <CardTitle>Global Settings</CardTitle>
+                              <CardDescription>Control content, pricing, and payment links.</CardDescription>
+                          </div>
+                      </div>
+                  </CardHeader>
+                  <CardContent>
+                      {isAppConfigLoading ? (
+                          <div className="flex items-center space-x-2">
+                              <Loader className="h-4 w-4 animate-spin" />
+                              <p className="text-sm text-muted-foreground">Loading settings...</p>
+                          </div>
+                      ) : (
+                          <div className="space-y-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                  <div>
+                                      <Label htmlFor="featured-limit">Featured Experts Limit</Label>
+                                      <Input 
+                                          id="featured-limit"
+                                          type="number" 
+                                          value={featuredExpertsLimit}
+                                          onChange={(e) => setFeaturedExpertsLimit(Number(e.target.value))}
+                                          min="1"
+                                          max="12"
+                                          className="mt-1"
+                                      />
+                                  </div>
+                                  <div className="space-y-4">
+                                      <div>
+                                          <Label htmlFor="premier-price">Premier Plan Price (INR)</Label>
+                                          <div className="relative mt-1">
+                                              <IndianRupee className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                                              <Input
+                                                  id="premier-price"
+                                                  type="number"
+                                                  value={premierPrice}
+                                                  onChange={(e) => setPremierPrice(Number(e.target.value))}
+                                                  className="pl-10"
+                                                  placeholder="e.g., 499"
+                                              />
+                                          </div>
+                                      </div>
+                                      <div>
+                                          <Label htmlFor="super-premier-price">Super Premier Plan Price (INR)</Label>
+                                          <div className="relative mt-1">
+                                              <IndianRupee className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                                              <Input
+                                                  id="super-premier-price"
+                                                  type="number"
+                                                  value={superPremierPrice}
+                                                  onChange={(e) => setSuperPremierPrice(Number(e.target.value))}
+                                                  className="pl-10"
+                                                  placeholder="e.g., 999"
+                                              />
+                                          </div>
+                                      </div>
+                                  </div>
+                              </div>
+                              <div>
+                                  <Label htmlFor="payment-link">Central Payment Link (Optional Fallback)</Label>
+                                  <div className="relative mt-1 flex items-center gap-2">
+                                      <LinkIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                                      <Input
+                                          id="payment-link"
+                                          value={paymentLink}
+                                          onChange={(e) => setPaymentLink(e.target.value)}
+                                          className="pl-10"
+                                          placeholder="https://payment.link/1234"
+                                          disabled={!isEditingPaymentLink}
+                                      />
+                                      {!isEditingPaymentLink ? (
+                                          <Button variant="outline" size="icon" onClick={() => setIsEditingPaymentLink(true)}>
+                                              <Edit className="h-4 w-4" />
+                                          </Button>
+                                      ) : (
+                                          <Button variant="outline" size="icon" onClick={() => setPaymentLink('')}>
+                                              <X className="h-4 w-4" />
+                                          </Button>
+                                      )}
+                                  </div>
+                              </div>
+                              <div className="flex justify-end">
+                                  <Button onClick={handleSaveSettings} disabled={isSavingSettings}>
+                                      {isSavingSettings ? (
+                                          <Loader className="mr-2 h-4 w-4 animate-spin" />
+                                      ) : (
+                                          <Save className="mr-2 h-4 w-4" />
+                                      )}
+                                      Save Settings
+                                  </Button>
+                              </div>
+                          </div>
+                      )}
+                  </CardContent>
+              </Card>
+
+               <Card>
+                    <CardHeader>
+                        <div className="flex items-center gap-3">
+                            <HardDriveDownload className="h-6 w-6" />
                             <div>
-                                <Label htmlFor="payment-link">Central Payment Link (Optional Fallback)</Label>
-                                <div className="relative mt-1 flex items-center gap-2">
-                                    <LinkIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                                    <Input
-                                        id="payment-link"
-                                        value={paymentLink}
-                                        onChange={(e) => setPaymentLink(e.target.value)}
-                                        className="pl-10"
-                                        placeholder="https://payment.link/1234"
-                                        disabled={!isEditingPaymentLink}
-                                    />
-                                    {!isEditingPaymentLink ? (
-                                        <Button variant="outline" size="icon" onClick={() => setIsEditingPaymentLink(true)}>
-                                            <Edit className="h-4 w-4" />
-                                        </Button>
-                                    ) : (
-                                        <Button variant="outline" size="icon" onClick={() => setPaymentLink('')}>
-                                            <X className="h-4 w-4" />
-                                        </Button>
-                                    )}
-                                </div>
+                                <CardTitle>Backup & Restore</CardTitle>
+                                <CardDescription>Export all application data or restore from a backup file.</CardDescription>
                             </div>
-                            <div className="flex justify-end">
-                                <Button onClick={handleSaveSettings} disabled={isSavingSettings}>
-                                    {isSavingSettings ? (
-                                        <Loader className="mr-2 h-4 w-4 animate-spin" />
-                                    ) : (
-                                        <Save className="mr-2 h-4 w-4" />
-                                    )}
-                                    Save Settings
+                        </div>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="space-y-4">
+                            <div>
+                                <h4 className="font-semibold text-sm">Export Data</h4>
+                                <p className="text-xs text-muted-foreground mb-2">Download a JSON file containing all users, vacancies, and reviews.</p>
+                                <Button onClick={handleExportData} disabled={isExporting} className="w-full">
+                                    {isExporting ? <Loader className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
+                                    {isExporting ? 'Exporting...' : 'Export All Data'}
                                 </Button>
                             </div>
+                            <div>
+                                <h4 className="font-semibold text-sm">Import Data</h4>
+                                <p className="text-xs text-muted-foreground mb-2">Restore data from a previously exported JSON file. This will overwrite existing data.</p>
+                                <div className="relative">
+                                    <Button asChild variant="outline" className="w-full" disabled={isImporting}>
+                                      <label htmlFor="import-file">
+                                          {isImporting ? <Loader className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
+                                          {isImporting ? 'Importing...' : 'Select Backup File to Restore'}
+                                      </label>
+                                    </Button>
+                                    <Input id="import-file" type="file" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" accept=".json" onChange={handleImportData} disabled={isImporting} />
+                                </div>
+                            </div>
                         </div>
-                    )}
-                </CardContent>
-            </Card>
+                    </CardContent>
+                </Card>
+            </div>
+            
 
             <Tabs defaultValue="users">
               <TabsList className="grid w-full grid-cols-3">
