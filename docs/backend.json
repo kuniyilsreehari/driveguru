@@ -157,7 +157,7 @@
           "description": "The address of the company."
         },
         "contactEmail": {
-          "type":- "string",
+          "type": "string",
           "description": "The contact email address for the company.",
           "format": "email"
         }
@@ -336,6 +336,18 @@
           "type": "string",
           "description": "The central payment link for Super Premier upgrades.",
           "format": "uri"
+        },
+        "isAnnouncementEnabled": {
+          "type": "boolean",
+          "description": "Whether the announcement banner is currently active."
+        },
+        "announcementText": {
+          "type": "string",
+          "description": "The text to display in the scrolling announcement banner."
+        },
+        "announcementSpeed": {
+          "type": "number",
+          "description": "The scrolling duration for the announcement in seconds. A higher number means slower speed."
         }
       }
     }

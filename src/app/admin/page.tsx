@@ -10,7 +10,7 @@ import { useUser, useFirestore, useDoc, useMemoFirebase, useAuth, useCollection 
 import { deleteDocumentNonBlocking, updateDocumentNonBlocking, setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, CheckCircle2, UserCheck, UserX, Crown, Sparkles, User as UserIcon, Settings, Save, Briefcase, Building, MessageSquare, ThumbsUp, ThumbsDown, Star, Search, PlusCircle, Mail, Edit3, Link as LinkIcon, Download, ExternalLink, IndianRupee, X, Upload, HardDriveDownload } from 'lucide-react';
+import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, CheckCircle2, UserCheck, UserX, Crown, Sparkles, User as UserIcon, Settings, Save, Briefcase, Building, MessageSquare, ThumbsUp, ThumbsDown, Star, Search, PlusCircle, Mail, Edit3, Link as LinkIcon, Download, ExternalLink, IndianRupee, X, Upload, HardDriveDownload, Megaphone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -57,6 +57,7 @@ import { cn } from '@/lib/utils';
 import type { Vacancy } from '@/app/vacancies/page';
 import { EditProfileForm } from '@/components/auth/edit-profile-form';
 import { exportAllData } from '@/ai/flows/export-data-flow';
+import { Slider } from '@/components/ui/slider';
 
 type ExpertUser = {
     id: string;
@@ -102,6 +103,9 @@ type AppConfig = {
     superPremierPaymentLink?: string;
     premierPlanPrice?: number;
     superPremierPlanPrice?: number;
+    isAnnouncementEnabled?: boolean;
+    announcementText?: string;
+    announcementSpeed?: number;
 };
 
 const UserTable = ({ users, onTierChange, onVerificationToggle, onDelete, onEdit }: { users: ExpertUser[], onTierChange: (expert: ExpertUser, tier: ExpertUser['tier']) => void, onVerificationToggle: (expert: ExpertUser) => void, onDelete: (expert: ExpertUser) => void, onEdit: (expert: ExpertUser) => void }) => {
@@ -379,6 +383,10 @@ export default function AdminDashboardPage() {
   const [premierPrice, setPremierPrice] = useState(0);
   const [superPremierPrice, setSuperPremierPrice] = useState(0);
 
+  const [isAnnouncementEnabled, setIsAnnouncementEnabled] = useState(false);
+  const [announcementText, setAnnouncementText] = useState('');
+  const [announcementSpeed, setAnnouncementSpeed] = useState(20);
+
   const [isSavingSettings, setIsSavingSettings] = useState(false);
   const [isEditingPaymentLink, setIsEditingPaymentLink] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
@@ -429,6 +437,9 @@ export default function AdminDashboardPage() {
       setPaymentLink(appConfig.superPremierPaymentLink || '');
       setPremierPrice(appConfig.premierPlanPrice || 0);
       setSuperPremierPrice(appConfig.superPremierPlanPrice || 0);
+      setIsAnnouncementEnabled(appConfig.isAnnouncementEnabled || false);
+      setAnnouncementText(appConfig.announcementText || '');
+      setAnnouncementSpeed(appConfig.announcementSpeed || 20);
     }
   }, [appConfig, isAppConfigLoading]);
 
@@ -526,6 +537,9 @@ export default function AdminDashboardPage() {
             superPremierPaymentLink: paymentLink,
             premierPlanPrice: Number(premierPrice),
             superPremierPlanPrice: Number(superPremierPrice),
+            isAnnouncementEnabled: isAnnouncementEnabled,
+            announcementText: announcementText,
+            announcementSpeed: Number(announcementSpeed),
         };
         await setDocumentNonBlocking(appConfigDocRef, settingsToSave, { merge: true });
         toast({
@@ -826,8 +840,8 @@ export default function AdminDashboardPage() {
               </Card>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-              <Card>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+              <Card className="lg:col-span-2">
                   <CardHeader>
                       <div className="flex items-center gap-3">
                           <Settings className="h-6 w-6" />
@@ -912,21 +926,67 @@ export default function AdminDashboardPage() {
                                       )}
                                   </div>
                               </div>
-                              <div className="flex justify-end">
-                                  <Button onClick={handleSaveSettings} disabled={isSavingSettings}>
-                                      {isSavingSettings ? (
-                                          <Loader className="mr-2 h-4 w-4 animate-spin" />
-                                      ) : (
-                                          <Save className="mr-2 h-4 w-4" />
-                                      )}
-                                      Save Settings
-                                  </Button>
-                              </div>
+                              
                           </div>
                       )}
                   </CardContent>
               </Card>
 
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center gap-3">
+                    <Megaphone className="h-6 w-6" />
+                    <div>
+                      <CardTitle>Announcement Banner</CardTitle>
+                      <CardDescription>Display a scrolling banner at the top of the site.</CardDescription>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center space-x-2">
+                      <Switch id="announcement-enabled" checked={isAnnouncementEnabled} onCheckedChange={setIsAnnouncementEnabled} />
+                      <Label htmlFor="announcement-enabled">Enable Announcement Banner</Label>
+                  </div>
+                   <div>
+                        <Label htmlFor="announcement-text">Announcement Text</Label>
+                        <Input
+                            id="announcement-text"
+                            value={announcementText}
+                            onChange={(e) => setAnnouncementText(e.target.value)}
+                            placeholder="e.g. 🎉 New features just launched!"
+                            disabled={!isAnnouncementEnabled}
+                        />
+                    </div>
+                    <div>
+                        <Label htmlFor="announcement-speed">Scroll Speed: {announcementSpeed}s</Label>
+                        <Slider
+                            id="announcement-speed"
+                            min={5}
+                            max={60}
+                            step={1}
+                            value={[announcementSpeed]}
+                            onValueChange={(value) => setAnnouncementSpeed(value[0])}
+                            disabled={!isAnnouncementEnabled}
+                        />
+                        <p className="text-xs text-muted-foreground">Higher value means slower scroll speed.</p>
+                    </div>
+                </CardContent>
+              </Card>
+            </div>
+            
+            <div className="flex justify-end mb-8">
+              <Button onClick={handleSaveSettings} disabled={isSavingSettings}>
+                  {isSavingSettings ? (
+                      <Loader className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                      <Save className="mr-2 h-4 w-4" />
+                  )}
+                  Save All Settings
+              </Button>
+            </div>
+
+
+            <div className="grid grid-cols-1 gap-8 mb-8">
                <Card>
                     <CardHeader>
                         <div className="flex items-center gap-3">
@@ -938,8 +998,8 @@ export default function AdminDashboardPage() {
                         </div>
                     </CardHeader>
                     <CardContent>
-                        <div className="space-y-4">
-                            <div>
+                        <div className="flex flex-col sm:flex-row gap-4">
+                            <div className='flex-1'>
                                 <h4 className="font-semibold text-sm">Export Data</h4>
                                 <p className="text-xs text-muted-foreground mb-2">Download a JSON file containing all users, vacancies, and reviews.</p>
                                 <Button onClick={handleExportData} disabled={isExporting} className="w-full">
@@ -947,7 +1007,7 @@ export default function AdminDashboardPage() {
                                     {isExporting ? 'Exporting...' : 'Export All Data'}
                                 </Button>
                             </div>
-                            <div>
+                            <div className='flex-1'>
                                 <h4 className="font-semibold text-sm">Import Data</h4>
                                 <p className="text-xs text-muted-foreground mb-2">Restore data from a previously exported JSON file. This will overwrite existing data.</p>
                                 <div className="relative">
