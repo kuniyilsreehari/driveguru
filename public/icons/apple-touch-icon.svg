@@ -1,7 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="180" height="180" viewBox="0 0 180 180" fill="none">
-    <circle cx="90" cy="90" r="90" fill="hsl(25 95% 53%)"/>
-    <g fill="white">
-        <path d="M90 40c-16.568 0-30 13.432-30 30s13.432 30 30 30 30-13.432 30-30-13.432-30-30-30zm0 48c-9.941 0-18-8.059-18-18s8.059-18 18-18 18 8.059 18 18-8.059 18-18 18z"/>
-        <path d="M90 25c-24.853 0-45 20.147-45 45 0 24.852 45 70 45 70s45-45.148 45-70c0-24.853-20.147-45-45-45zm0 82.343c-14.54-10.42-33-31.252-33-47.343 0-18.196 14.804-33 33-33s33 14.804 33 33c0 16.09-18.46 36.922-33 47.343z"/>
-    </g>
+<svg width="180" height="180" viewBox="0 0 180 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect width="180" height="180" rx="40" fill="#18181B"/>
+<text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-size="90" font-weight="bold" fill="hsl(25, 95%, 53%)">
+DG
+</text>
 </svg>
