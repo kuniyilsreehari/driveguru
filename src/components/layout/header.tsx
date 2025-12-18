@@ -21,6 +21,8 @@ import { User as UserIcon, LogOut, LayoutDashboard, MessageSquare, Home, Award, 
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useTheme } from 'next-themes';
+import { installPromptAtom } from '@/lib/store';
+import { useAtom } from 'jotai';
 
 
 export function Header() {
@@ -33,7 +35,7 @@ export function Header() {
   const [mounted, setMounted] = useState(false);
   const { setTheme, theme } = useTheme();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [installPrompt, setInstallPrompt] = useState<Event | null>(null);
+  const [installPrompt, setInstallPrompt] = useAtom(installPromptAtom);
 
   useEffect(() => {
     const handleBeforeInstallPrompt = (e: Event) => {
@@ -46,7 +48,7 @@ export function Header() {
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     };
-  }, []);
+  }, [setInstallPrompt]);
 
   const handleInstallClick = () => {
     if (!installPrompt) {

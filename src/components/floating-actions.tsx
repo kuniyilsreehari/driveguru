@@ -7,6 +7,9 @@ import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import type { ExpertUser } from '@/components/expert-card';
+import { useAtom } from 'jotai';
+import { installPromptAtom } from '@/lib/store';
+
 
 interface FloatingActionsProps {
     expert?: ExpertUser;
@@ -22,21 +25,12 @@ const cleanPhoneNumber = (phoneNumber?: string) => {
 
 export function FloatingActions({ expert, isPremium, isGeneratingPdf, onDownloadPdf }: FloatingActionsProps) {
     const [isOpen, setIsOpen] = useState(false);
-    const [installPrompt, setInstallPrompt] = useState<Event | null>(null);
+    const [installPrompt, setInstallPrompt] = useAtom(installPromptAtom);
     const [canShare, setCanShare] = useState(false);
 
     useEffect(() => {
         // Client-side only check
         setCanShare(navigator.share !== undefined);
-
-        const handleBeforeInstallPrompt = (e: Event) => {
-            e.preventDefault();
-            setInstallPrompt(e);
-        };
-        window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-        return () => {
-            window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-        };
     }, []);
 
     const handleInstallClick = () => {
