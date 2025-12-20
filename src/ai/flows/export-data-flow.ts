@@ -9,22 +9,9 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
-import { initializeApp, getApps, App, cert } from 'firebase-admin/app';
+import { initializeApp, getApps, App } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 import { firebaseConfig } from '@/firebase/config';
-
-// Load the service account key
-let serviceAccount: any;
-try {
-    const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
-    if (!serviceAccountJson) {
-        throw new Error("FIREBASE_SERVICE_ACCOUNT_KEY environment variable is not set.");
-    }
-    serviceAccount = JSON.parse(serviceAccountJson);
-} catch (e) {
-    console.error("Failed to parse Firebase service account key. Make sure it's a valid JSON string in the environment variable.", e);
-    serviceAccount = null;
-}
 
 const UserSchema = z.any();
 const CompanySchema = z.any();
@@ -41,17 +28,15 @@ const ExportDataOutputSchema = z.object({
 });
 export type ExportDataOutput = z.infer<typeof ExportDataOutputSchema>;
 
-// Initialize Firebase Admin SDK with service account
+// Initialize Firebase Admin SDK
 function getAdminApp(): App {
+    // Check if the app is already initialized to prevent errors.
     if (getApps().length > 0) {
         return getApps()[0];
     }
-    if (!serviceAccount) {
-        throw new Error("Cannot initialize Firebase Admin SDK: Service account key is missing or invalid.");
-    }
+    // Initialize with default credentials available in the environment.
     return initializeApp({
-        credential: cert(serviceAccount),
-        databaseURL: `https://${firebaseConfig.projectId}.firebaseio.com`
+        projectId: firebaseConfig.projectId,
     });
 }
 
