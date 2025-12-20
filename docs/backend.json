@@ -356,6 +356,10 @@
         "announcementSpeed": {
           "type": "number",
           "description": "The scrolling duration for the announcement in seconds. A higher number means slower speed."
+        },
+        "availabilityLocationText": {
+          "type": "string",
+          "description": "The text displayed in the footer indicating the service availability location."
         }
       }
     }

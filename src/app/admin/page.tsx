@@ -9,7 +9,7 @@ import { useUser, useFirestore, useDoc, useMemoFirebase, useAuth, useCollection 
 import { deleteDocumentNonBlocking, updateDocumentNonBlocking, setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, CheckCircle2, UserCheck, UserX, Crown, Sparkles, User as UserIcon, Settings, Save, Briefcase, Building, MessageSquare, ThumbsUp, ThumbsDown, Star, Search, PlusCircle, Mail, Edit3, Link as LinkIcon, Download, ExternalLink, IndianRupee, X, Upload, HardDriveDownload, Megaphone, Phone } from 'lucide-react';
+import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, CheckCircle2, UserCheck, UserX, Crown, Sparkles, User as UserIcon, Settings, Save, Briefcase, Building, MessageSquare, ThumbsUp, ThumbsDown, Star, Search, PlusCircle, Mail, Edit3, Link as LinkIcon, Download, ExternalLink, IndianRupee, X, Upload, HardDriveDownload, Megaphone, Phone, MapPinIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -106,6 +106,7 @@ type AppConfig = {
     isAnnouncementEnabled?: boolean;
     announcementText?: string;
     announcementSpeed?: number;
+    availabilityLocationText?: string;
 };
 
 const UserTable = ({ users, onTierChange, onVerificationToggle, onDelete, onEdit }: { users: ExpertUser[], onTierChange: (expert: ExpertUser, tier: ExpertUser['tier']) => void, onVerificationToggle: (expert: ExpertUser) => void, onDelete: (expert: ExpertUser) => void, onEdit: (expert: ExpertUser) => void }) => {
@@ -385,6 +386,7 @@ export default function AdminDashboardPage() {
   const [premierPrice, setPremierPrice] = useState(0);
   const [superPremierPrice, setSuperPremierPrice] = useState(0);
   const [verificationFee, setVerificationFee] = useState(0);
+  const [availabilityLocationText, setAvailabilityLocationText] = useState('');
 
   const [isAnnouncementEnabled, setIsAnnouncementEnabled] = useState(false);
   const [announcementText, setAnnouncementText] = useState('');
@@ -441,6 +443,7 @@ export default function AdminDashboardPage() {
       setPremierPrice(appConfig.premierPlanPrice || 0);
       setSuperPremierPrice(appConfig.superPremierPlanPrice || 0);
       setVerificationFee(appConfig.verificationFee || 0);
+      setAvailabilityLocationText(appConfig.availabilityLocationText || '');
       setIsAnnouncementEnabled(appConfig.isAnnouncementEnabled || false);
       setAnnouncementText(appConfig.announcementText || '');
       setAnnouncementSpeed(appConfig.announcementSpeed || 20);
@@ -542,6 +545,7 @@ export default function AdminDashboardPage() {
             premierPlanPrice: Number(premierPrice),
             superPremierPlanPrice: Number(superPremierPrice),
             verificationFee: Number(verificationFee),
+            availabilityLocationText: availabilityLocationText,
             isAnnouncementEnabled: isAnnouncementEnabled,
             announcementText: announcementText,
             announcementSpeed: Number(announcementSpeed),
@@ -1041,8 +1045,21 @@ export default function AdminDashboardPage() {
                                     <p className="text-sm text-muted-foreground">Loading settings...</p>
                                 </div>
                             ) : (
-                                <div className="space-y-4">
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                <div className="space-y-6">
+                                    <div>
+                                        <Label htmlFor="availability-location">Footer Location Text</Label>
+                                        <div className="relative mt-1">
+                                            <MapPinIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                                            <Input
+                                                id="availability-location"
+                                                value={availabilityLocationText}
+                                                onChange={(e) => setAvailabilityLocationText(e.target.value)}
+                                                className="pl-10"
+                                                placeholder="e.g., Kozhikode - Kerala"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                         <div className="space-y-4">
                                             <div>
                                                 <Label htmlFor="featured-limit">Featured Experts Limit</Label>
