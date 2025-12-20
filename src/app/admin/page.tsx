@@ -56,6 +56,7 @@ import { cn } from '@/lib/utils';
 import type { Vacancy } from '@/app/vacancies/page';
 import { EditProfileForm } from '@/components/auth/edit-profile-form';
 import { exportAllData } from '@/ai/flows/export-data-flow';
+import { importUsers } from '@/ai/flows/import-users-flow';
 import { Slider } from '@/components/ui/slider';
 
 type ExpertUser = {
@@ -687,20 +688,76 @@ export default function AdminDashboardPage() {
         setIsExporting(false);
     }
   };
+  
+    const handleExportUsersCsv = () => {
+        if (!usersData) {
+            toast({ variant: 'destructive', title: 'No users to export.' });
+            return;
+        }
 
-  const handleImportData = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const headers = ['id', 'firstName', 'lastName', 'email', 'role', 'companyName', 'department', 'phoneNumber', 'city', 'state', 'pincode', 'address', 'verified', 'tier', 'isAvailable', 'hourlyRate', 'yearsOfExperience', 'qualification', 'skills', 'aboutMe', 'referralCode', 'referredBy'];
+        const csvRows = [headers.join(',')];
+
+        for (const user of usersData) {
+            const values = headers.map(header => {
+                const value = (user as any)[header];
+                if (value === undefined || value === null) return '';
+                if (typeof value === 'string' && value.includes(',')) return `"${value}"`;
+                return value;
+            });
+            csvRows.push(values.join(','));
+        }
+
+        const csvString = csvRows.join('\n');
+        const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        if (link.download !== undefined) {
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', 'expert_users_template.csv');
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        toast({ title: 'Users Exported', description: 'A CSV template has been downloaded.' });
+    };
+
+  const handleImportUsersCsv = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-        // Placeholder for future import logic
         setIsImporting(true);
-        console.log("File selected for import:", file.name);
-        toast({
-            title: "Import Under Construction",
-            description: "Data import functionality is not yet implemented.",
-        });
-        // Reset the input
-        event.target.value = '';
-        setIsImporting(false);
+        try {
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                const content = e.target?.result as string;
+                const result = await importUsers({ csvData: content });
+                toast({
+                    title: "Import Complete",
+                    description: `${result.processedCount} users were processed. ${result.createdCount} created, ${result.updatedCount} updated.`,
+                });
+                if (result.errors.length > 0) {
+                     toast({
+                        variant: 'destructive',
+                        title: "Import had some issues",
+                        description: `${result.errors.length} rows had errors. Check console for details.`,
+                    });
+                    console.error("Import errors:", result.errors);
+                }
+            };
+            reader.readAsText(file);
+        } catch (error) {
+            console.error("Import failed:", error);
+            toast({
+                variant: 'destructive',
+                title: 'Import Failed',
+                description: 'An unexpected error occurred during import.',
+            });
+        } finally {
+            setIsImporting(false);
+            if (event.target) event.target.value = '';
+        }
     }
   };
 
@@ -800,7 +857,7 @@ export default function AdminDashboardPage() {
                 <TabsList className="grid w-full grid-cols-3">
                     <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
                     <TabsTrigger value="settings">Settings</TabsTrigger>
-                    <TabsTrigger value="data">Data</TabsTrigger>
+                    <TabsTrigger value="data">Data Management</TabsTrigger>
                 </TabsList>
                 <TabsContent value="dashboard" className="mt-4">
                     <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-5 mb-8">
@@ -1197,41 +1254,59 @@ export default function AdminDashboardPage() {
                         </Button>
                     </div>
                 </TabsContent>
-                <TabsContent value="data" className="mt-4">
+                <TabsContent value="data" className="mt-4 space-y-8">
                     <Card>
                         <CardHeader>
                             <div className="flex items-center gap-3">
-                                <HardDriveDownload className="h-6 w-6" />
+                                <Users className="h-6 w-6" />
                                 <div>
-                                    <CardTitle>Backup & Restore</CardTitle>
-                                    <CardDescription>Export all application data or restore from a backup file.</CardDescription>
+                                    <CardTitle>Expert User Management</CardTitle>
+                                    <CardDescription>Bulk import and export expert users using a CSV template.</CardDescription>
                                 </div>
                             </div>
                         </CardHeader>
                         <CardContent>
                             <div className="flex flex-col sm:flex-row gap-4">
                                 <div className='flex-1'>
-                                    <h4 className="font-semibold text-sm">Export Data</h4>
-                                    <p className="text-xs text-muted-foreground mb-2">Download a JSON file containing all users, vacancies, and reviews.</p>
-                                    <Button onClick={handleExportData} disabled={isExporting} className="w-full">
-                                        {isExporting ? <Loader className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
-                                        {isExporting ? 'Exporting...' : 'Export All Data'}
+                                    <h4 className="font-semibold text-sm">Export Users as CSV</h4>
+                                    <p className="text-xs text-muted-foreground mb-2">Download a CSV template with all current expert users. Use this file for bulk updates.</p>
+                                    <Button onClick={handleExportUsersCsv} disabled={!usersData || usersData.length === 0} className="w-full">
+                                        <Download className="mr-2 h-4 w-4" />
+                                        Export Users (CSV)
                                     </Button>
                                 </div>
                                 <div className='flex-1'>
-                                    <h4 className="font-semibold text-sm">Import Data</h4>
-                                    <p className="text-xs text-muted-foreground mb-2">Restore data from a previously exported JSON file. This will overwrite existing data.</p>
+                                    <h4 className="font-semibold text-sm">Import Users from CSV</h4>
+                                    <p className="text-xs text-muted-foreground mb-2">Upload a CSV file to bulk create or update users. Matches based on 'id' or 'email'.</p>
                                     <div className="relative">
                                         <Button asChild variant="outline" className="w-full" disabled={isImporting}>
-                                        <label htmlFor="import-file">
-                                            {isImporting ? <Loader className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
-                                            {isImporting ? 'Importing...' : 'Select Backup File to Restore'}
-                                        </label>
+                                            <label htmlFor="import-users-csv">
+                                                {isImporting ? <Loader className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
+                                                {isImporting ? 'Importing...' : 'Select CSV to Import'}
+                                            </label>
                                         </Button>
-                                        <Input id="import-file" type="file" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" accept=".json" onChange={handleImportData} disabled={isImporting} />
+                                        <Input id="import-users-csv" type="file" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" accept=".csv" onChange={handleImportUsersCsv} disabled={isImporting} />
                                     </div>
                                 </div>
                             </div>
+                        </CardContent>
+                    </Card>
+
+                    <Card>
+                        <CardHeader>
+                            <div className="flex items-center gap-3">
+                                <HardDriveDownload className="h-6 w-6" />
+                                <div>
+                                    <CardTitle>Full Application Backup</CardTitle>
+                                    <CardDescription>Export all application data (users, vacancies, etc.) as a single JSON file.</CardDescription>
+                                </div>
+                            </div>
+                        </CardHeader>
+                        <CardContent>
+                           <Button onClick={handleExportData} disabled={isExporting} className="w-full">
+                                {isExporting ? <Loader className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
+                                {isExporting ? 'Exporting...' : 'Export All Data (JSON)'}
+                            </Button>
                         </CardContent>
                     </Card>
                 </TabsContent>
