@@ -29,6 +29,7 @@ import { cn } from "@/lib/utils";
 import { Textarea } from "../ui/textarea";
 import { Card, CardDescription, CardHeader, CardTitle } from "../ui/card";
 import { Icons } from "../icons";
+import { Checkbox } from "../ui/checkbox";
 
 const expertTypes = [
     { name: "Freelancer", icon: <UserIcon className="w-8 h-8" />, description: "Offer your individual skills and services directly to clients." },
@@ -53,6 +54,9 @@ const formSchema = z.object({
   department: z.string().optional(),
   companyName: z.string().optional(),
   referralCode: z.string().optional(),
+  terms: z.boolean().default(false).refine(val => val === true, {
+      message: "You must accept the terms and conditions to continue.",
+  }),
 }).refine(data => {
     if (data.role === 'Company' || data.role === 'Authorized Pro') {
         return !!data.companyName;
@@ -121,6 +125,7 @@ export function RegistrationForm() {
       companyName: "",
       department: "",
       referralCode: "",
+      terms: false,
     },
   });
 
@@ -981,6 +986,31 @@ export function RegistrationForm() {
                             <FormMessage />
                         </FormItem>
                     )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="terms"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel>
+                          I agree to the{" "}
+                          <Link href="/terms" target="_blank" className="underline hover:text-primary">
+                            Terms & Conditions
+                          </Link>
+                          .
+                        </FormLabel>
+                        <FormMessage />
+                      </div>
+                    </FormItem>
+                  )}
                 />
 
                 <Button type="submit" className="w-full" disabled={form.formState.isSubmitting || isSubmitting}>
