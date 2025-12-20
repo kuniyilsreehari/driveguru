@@ -8,7 +8,7 @@ import { signOut } from 'firebase/auth';
 import { doc, collection, query, where } from 'firebase/firestore';
 import { useUser, useAuth, useFirestore, useDoc, useCollection, useMemoFirebase, updateDocumentNonBlocking } from '@/firebase';
 import { Button } from '@/components/ui/button';
-import { LogOut, Briefcase, Loader, Edit, UserCheck, XCircle, MapPin, IndianRupee, Calendar, Book, GraduationCap, School, Info, User as UserIcon, Check, Power, Building, PlusCircle, Crown, Sparkles, Lock, Home, ArrowUpCircle, ShieldCheck, ExternalLink } from 'lucide-react';
+import { LogOut, Briefcase, Loader, Edit, UserCheck, XCircle, MapPin, IndianRupee, Calendar, Book, GraduationCap, School, Info, User as UserIcon, Check, Power, Building, PlusCircle, Crown, Sparkles, Lock, Home, ArrowUpCircle, ShieldCheck, ExternalLink, Gift, Copy } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import {
   Dialog,
@@ -59,6 +59,7 @@ type ExpertUserProfile = {
     department?: string;
     isAvailable?: boolean;
     companyId?: string;
+    referralCode?: string;
     tier?: 'Standard' | 'Premier' | 'Super Premier';
 };
 
@@ -368,6 +369,15 @@ export default function ExpertDashboardPage() {
     return Math.round((filledFields / totalFields) * 100);
   }
 
+  const copyReferralCode = () => {
+    if (!userProfile?.referralCode) return;
+    navigator.clipboard.writeText(userProfile.referralCode);
+    toast({
+      title: 'Referral Code Copied',
+      description: 'Your referral code has been copied to your clipboard.',
+    });
+  };
+
   const profileCompletion = calculateProfileCompletion(userProfile);
   
   const isLoading = isUserLoading || isProfileLoading;
@@ -474,6 +484,24 @@ export default function ExpertDashboardPage() {
                 </div>
 
                 <Separator className="my-6" />
+
+                {userProfile.referralCode && (
+                    <>
+                        <div className="space-y-2">
+                            <h4 className="font-semibold flex items-center gap-2"><Gift className="h-5 w-5 text-primary" /> Your Referral Code</h4>
+                            <p className="text-sm text-muted-foreground">Share this code with others to invite them to DriveGuru. You'll get rewards for every successful referral!</p>
+                            <div className="flex items-center gap-2 p-3 rounded-lg bg-secondary">
+                                <p className="text-lg font-mono tracking-widest text-secondary-foreground flex-grow">{userProfile.referralCode}</p>
+                                <Button size="sm" variant="outline" onClick={copyReferralCode}>
+                                    <Copy className="mr-2 h-4 w-4" />
+                                    Copy
+                                </Button>
+                            </div>
+                        </div>
+                        <Separator className="my-6" />
+                    </>
+                )}
+                
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
                     <div className="flex items-center gap-3">
                         <UserIcon className="h-5 w-5 text-muted-foreground" />

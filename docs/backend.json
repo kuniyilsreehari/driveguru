@@ -122,6 +122,14 @@
           "type": "boolean",
           "description": "Indicates if the expert is currently available for work."
         },
+        "referralCode": {
+          "type": "string",
+          "description": "A unique code for this user to refer others."
+        },
+        "referredBy": {
+          "type": "string",
+          "description": "The ID of the user who referred this user."
+        },
         "createdAt": {
             "type": "string",
             "format": "date-time",

@@ -7,9 +7,9 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { User as UserIcon, Mail, Lock, Eye, EyeOff, Briefcase, MapPin, Phone, LocateIcon, Loader2, Building, Home, GraduationCap, Book, ArrowRight, MessageSquare } from "lucide-react";
+import { User as UserIcon, Mail, Lock, Eye, EyeOff, Briefcase, MapPin, Phone, LocateIcon, Loader2, Building, Home, GraduationCap, Book, ArrowRight, MessageSquare, Gift } from "lucide-react";
 import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, getAdditionalUserInfo, RecaptchaVerifier, signInWithPhoneNumber } from 'firebase/auth';
-import { doc, serverTimestamp } from 'firebase/firestore';
+import { doc, serverTimestamp, collection, query, where, getDocs } from 'firebase/firestore';
 
 import { Button } from "@/components/ui/button";
 import {
@@ -52,6 +52,7 @@ const formSchema = z.object({
   role: z.string({ required_error: "Please select your expert type." }),
   department: z.string().optional(),
   companyName: z.string().optional(),
+  referralCode: z.string().optional(),
 }).refine(data => {
     if (data.role === 'Company' || data.role === 'Authorized Pro') {
         return !!data.companyName;
@@ -119,6 +120,7 @@ export function RegistrationForm() {
       phoneNumber: "",
       companyName: "",
       department: "",
+      referralCode: "",
     },
   });
 
@@ -254,6 +256,10 @@ export function RegistrationForm() {
     }
   }
 
+  const generateReferralCode = () => {
+    return Math.random().toString(36).substring(2, 10).toUpperCase();
+  }
+
   async function handleGoogleSignUp() {
     if (!auth || !firestore) return;
     const provider = new GoogleAuthProvider();
@@ -277,6 +283,7 @@ export function RegistrationForm() {
                 role: 'Freelancer', // Default role
                 verified: false,
                 isAvailable: true,
+                referralCode: generateReferralCode(),
                 createdAt: serverTimestamp(),
             };
             setDocumentNonBlocking(userDocRef, userData, { merge: true });
@@ -300,6 +307,16 @@ export function RegistrationForm() {
     }
   }
 
+  async function getReferringUser(referralCode: string) {
+    if (!firestore || !referralCode) return null;
+    const usersRef = collection(firestore, 'users');
+    const q = query(usersRef, where('referralCode', '==', referralCode), limit(1));
+    const querySnapshot = await getDocs(q);
+    if (!querySnapshot.empty) {
+        return querySnapshot.docs[0].id;
+    }
+    return null;
+  }
 
   async function onEmailSubmit(values: z.infer<typeof formSchema>) {
     if (!auth || !firestore) {
@@ -312,6 +329,17 @@ export function RegistrationForm() {
     }
     setIsSubmitting(true);
     try {
+      const referringUserId = await getReferringUser(values.referralCode || '');
+      if (values.referralCode && !referringUserId) {
+        toast({
+          variant: "destructive",
+          title: "Invalid Referral Code",
+          description: "The referral code you entered is not valid. Please check it or leave the field blank.",
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
       const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
       const newUser = userCredential.user;
 
@@ -320,7 +348,7 @@ export function RegistrationForm() {
       const fullAddress = [values.address, values.city, values.state, values.pincode].filter(Boolean).join(', ');
       const coords = await getCoordinates(fullAddress);
       
-      const userData = {
+      const userData: any = {
         id: newUser.uid,
         firstName: values.firstName,
         lastName: values.lastName,
@@ -335,13 +363,17 @@ export function RegistrationForm() {
         longitude: coords?.lon || null,
         phoneNumber: values.countryCode && values.phoneNumber ? `${values.countryCode} ${values.phoneNumber}` : "",
         companyName: values.companyName,
-        verified: false, // Default verified status to false
-        photoUrl: '', // Default photoUrl to empty string
-        isAvailable: true, // Default to available
+        verified: false,
+        photoUrl: '',
+        isAvailable: true,
+        referralCode: generateReferralCode(),
         createdAt: serverTimestamp(),
       };
+      
+      if (referringUserId) {
+          userData.referredBy = referringUserId;
+      }
 
-      // Use non-blocking write
       setDocumentNonBlocking(userDocRef, userData, { merge: true });
 
       toast({
@@ -349,7 +381,6 @@ export function RegistrationForm() {
         description: "Your account has been successfully created. You are now logged in.",
       });
 
-      // Redirect is handled by the useEffect
     } catch (error: any) {
       console.error("Registration failed:", error);
       let errorMessage = "An unexpected error occurred. Please try again.";
@@ -412,6 +443,7 @@ export function RegistrationForm() {
                 role: 'Freelancer', // Default role for phone signup
                 verified: false,
                 isAvailable: true,
+                referralCode: generateReferralCode(),
                 createdAt: serverTimestamp(),
             };
             await setDocumentNonBlocking(userDocRef, userData, { merge: true });
@@ -788,157 +820,176 @@ export function RegistrationForm() {
           </div>
         )}
         
-        {selectedRole && (selectedRole === 'Freelancer' ? (
-          <></>
-        ) : (
-          <div className="space-y-4">
-             <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Email</FormLabel>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <FormControl>
-                      <Input
-                        type="email"
-                        placeholder="name@example.com"
-                        {...field}
-                        className="pl-10"
-                      />
-                    </FormControl>
-                  </div>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="password"
-              render={({ field }) => (
-                <FormItem>
-                    <div className="flex items-center">
-                        <FormLabel>Password</FormLabel>
-                    </div>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <FormControl>
-                      <Input type={showPassword ? "text" : "password"} placeholder="••••••••" {...field} className="pl-10 pr-10" />
-                    </FormControl>
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
-                    >
-                      {showPassword ? <EyeOff /> : <Eye />}
-                    </button>
-                  </div>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormItem>
-                <FormLabel>Phone Number</FormLabel>
-                <div className="flex items-center gap-2">
+        {selectedRole && (
+            <div className="space-y-4">
+                {(selectedRole === 'Freelancer' ? (
+                <></>
+                ) : (
+                <div className="space-y-4">
                     <FormField
-                        control={form.control}
-                        name="countryCode"
-                        render={({ field: countryCodeField }) => (
-                        <Select
-                            onValueChange={countryCodeField.onChange}
-                            defaultValue={countryCodeField.value}
-                        >
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Email</FormLabel>
+                        <div className="relative">
+                            <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                             <FormControl>
-                            <SelectTrigger className="w-[80px]">
-                                <SelectValue placeholder="Code" />
-                            </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                            <SelectItem value="+91">IN</SelectItem>
-                            <SelectItem value="+1">USA</SelectItem>
-                            <SelectItem value="+44">UK</SelectItem>
-                            </SelectContent>
-                        </Select>
-                        )}
-                    />
-                    <FormField
-                        control={form.control}
-                        name="phoneNumber"
-                        render={({ field }) => (
-                        <div className="relative flex-grow">
-                            <FormControl>
-                            <Input placeholder="555 123 4567" {...field} />
+                            <Input
+                                type="email"
+                                placeholder="name@example.com"
+                                {...field}
+                                className="pl-10"
+                            />
                             </FormControl>
                         </div>
-                        )}
-                    />
-                </div>
-                <FormMessage />
-            </FormItem>
-            <div className="space-y-2">
-                <div className="flex items-center justify-between mb-2">
-                    <FormLabel>Location</FormLabel>
-                    <Button type="button" variant="outline" size="sm" onClick={handleDetectLocation} disabled={isDetectingLocation}>
-                    {isDetectingLocation ? (
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    ) : (
-                        <LocateIcon className="mr-2 h-4 w-4" />
+                        <FormMessage />
+                        </FormItem>
                     )}
-                    Detect
-                    </Button>
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                    <FormField
-                        control={form.control}
-                        name="city"
-                        render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>District / City</FormLabel>
-                            <FormControl><Input placeholder="e.g., Kozhikode" {...field} /></FormControl>
-                            <FormMessage />
-                        </FormItem>
-                        )}
                     />
-                    <FormField
-                        control={form.control}
-                        name="state"
-                        render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>State</FormLabel>
-                            <FormControl><Input placeholder="e.g. Kerala" {...field} /></FormControl>
-                            <FormMessage />
-                        </FormItem>
-                        )}
-                    />
-                </div>
-                 <FormField
-                control={form.control}
-                name="pincode"
-                render={({ field }) => (
-                  <FormItem className="mt-2 text-center">
-                    <div className="relative">
-                      <FormControl><Input placeholder="Pincode" {...field} /></FormControl>
-                      {isFetchingPincode && <Loader2 className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin" />}
-                    </div>
-                    <FormLabel className="text-xs text-muted-foreground">Pincode</FormLabel>
-                    <FormMessage />
-                  </FormItem>
-                )}
-                />
-            </div>
-          </div>
-        ))}
 
-        {selectedRole &&
-          <Button type="submit" className="w-full" disabled={form.formState.isSubmitting || isSubmitting}>
-            {form.formState.isSubmitting || isSubmitting ? 'Creating Account...' : <>
-              <Briefcase className="mr-2 h-4 w-4" /> Sign Up as Expert
-            </>}
-          </Button>
-        }
+                    <FormField
+                    control={form.control}
+                    name="password"
+                    render={({ field }) => (
+                        <FormItem>
+                            <div className="flex items-center">
+                                <FormLabel>Password</FormLabel>
+                            </div>
+                        <div className="relative">
+                            <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                            <FormControl>
+                            <Input type={showPassword ? "text" : "password"} placeholder="••••••••" {...field} className="pl-10 pr-10" />
+                            </FormControl>
+                            <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+                            >
+                            {showPassword ? <EyeOff /> : <Eye />}
+                            </button>
+                        </div>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                    />
+                    
+                    <FormItem>
+                        <FormLabel>Phone Number</FormLabel>
+                        <div className="flex items-center gap-2">
+                            <FormField
+                                control={form.control}
+                                name="countryCode"
+                                render={({ field: countryCodeField }) => (
+                                <Select
+                                    onValueChange={countryCodeField.onChange}
+                                    defaultValue={countryCodeField.value}
+                                >
+                                    <FormControl>
+                                    <SelectTrigger className="w-[80px]">
+                                        <SelectValue placeholder="Code" />
+                                    </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                    <SelectItem value="+91">IN</SelectItem>
+                                    <SelectItem value="+1">USA</SelectItem>
+                                    <SelectItem value="+44">UK</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="phoneNumber"
+                                render={({ field }) => (
+                                <div className="relative flex-grow">
+                                    <FormControl>
+                                    <Input placeholder="555 123 4567" {...field} />
+                                    </FormControl>
+                                </div>
+                                )}
+                            />
+                        </div>
+                        <FormMessage />
+                    </FormItem>
+                    <div className="space-y-2">
+                        <div className="flex items-center justify-between mb-2">
+                            <FormLabel>Location</FormLabel>
+                            <Button type="button" variant="outline" size="sm" onClick={handleDetectLocation} disabled={isDetectingLocation}>
+                            {isDetectingLocation ? (
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            ) : (
+                                <LocateIcon className="mr-2 h-4 w-4" />
+                            )}
+                            Detect
+                            </Button>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                            <FormField
+                                control={form.control}
+                                name="city"
+                                render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>District / City</FormLabel>
+                                    <FormControl><Input placeholder="e.g., Kozhikode" {...field} /></FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name="state"
+                                render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>State</FormLabel>
+                                    <FormControl><Input placeholder="e.g. Kerala" {...field} /></FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                                )}
+                            />
+                        </div>
+                        <FormField
+                        control={form.control}
+                        name="pincode"
+                        render={({ field }) => (
+                        <FormItem className="mt-2 text-center">
+                            <div className="relative">
+                            <FormControl><Input placeholder="Pincode" {...field} /></FormControl>
+                            {isFetchingPincode && <Loader2 className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin" />}
+                            </div>
+                            <FormLabel className="text-xs text-muted-foreground">Pincode</FormLabel>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                        />
+                    </div>
+                </div>
+                ))}
+                
+                <FormField
+                    control={form.control}
+                    name="referralCode"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Referral Code (Optional)</FormLabel>
+                            <div className="relative">
+                                <Gift className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                                <FormControl>
+                                    <Input placeholder="Enter a referral code" {...field} className="pl-10" />
+                                </FormControl>
+                            </div>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+
+                <Button type="submit" className="w-full" disabled={form.formState.isSubmitting || isSubmitting}>
+                    {form.formState.isSubmitting || isSubmitting ? 'Creating Account...' : <>
+                    <Briefcase className="mr-2 h-4 w-4" /> Sign Up as Expert
+                    </>}
+                </Button>
+            </div>
+        )}
 
         <div className="mt-4 text-center text-sm">
             Already have an account?{" "}
