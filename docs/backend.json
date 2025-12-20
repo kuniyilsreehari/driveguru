@@ -340,6 +340,15 @@
           "type": "number",
           "description": "The number of featured experts to show on the homepage."
         },
+        "isPaymentsEnabled": {
+          "type": "boolean",
+          "description": "Globally enables or disables all payment functionalities."
+        },
+        "paymentMethod": {
+            "type": "string",
+            "description": "The selected payment method.",
+            "enum": ["API", "Link"]
+        },
         "premierPaymentLink": {
           "type": "string",
           "description": "The payment link for the Premier plan upgrade.",

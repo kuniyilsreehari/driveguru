@@ -10,7 +10,7 @@ import { useUser, useFirestore, useDoc, useMemoFirebase, useAuth, useCollection 
 import { deleteDocumentNonBlocking, updateDocumentNonBlocking, setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, CheckCircle2, UserCheck, UserX, Crown, Sparkles, User as UserIcon, Settings, Save, Briefcase, Building, MessageSquare, ThumbsUp, ThumbsDown, Star, Search, PlusCircle, Mail, Edit3, Link as LinkIcon, Download, ExternalLink, IndianRupee, X, Upload, HardDriveDownload, Megaphone, Phone, MapPinIcon } from 'lucide-react';
+import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, CheckCircle2, UserCheck, UserX, Crown, Sparkles, User as UserIcon, Settings, Save, Briefcase, Building, MessageSquare, ThumbsUp, ThumbsDown, Star, Search, PlusCircle, Mail, Edit3, Link as LinkIcon, Download, ExternalLink, IndianRupee, X, Upload, HardDriveDownload, Megaphone, Phone, MapPinIcon, CreditCard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -59,6 +59,7 @@ import { EditProfileForm } from '@/components/auth/edit-profile-form';
 import { exportAllData } from '@/ai/flows/export-data-flow';
 import { importUsers } from '@/ai/flows/import-users-flow';
 import { Slider } from '@/components/ui/slider';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 type ExpertUser = {
     id: string;
@@ -111,6 +112,8 @@ type AppConfig = {
     announcementText?: string;
     announcementSpeed?: number;
     availabilityLocationText?: string;
+    isPaymentsEnabled?: boolean;
+    paymentMethod?: 'API' | 'Link';
 };
 
 const UserTable = ({ users, onTierChange, onVerificationToggle, onDelete, onEdit }: { users: ExpertUser[], onTierChange: (expert: ExpertUser, tier: ExpertUser['tier']) => void, onVerificationToggle: (expert: ExpertUser) => void, onDelete: (expert: ExpertUser) => void, onEdit: (expert: ExpertUser) => void }) => {
@@ -398,6 +401,9 @@ export default function AdminDashboardPage() {
   const [announcementText, setAnnouncementText] = useState('');
   const [announcementSpeed, setAnnouncementSpeed] = useState(20);
 
+  const [isPaymentsEnabled, setIsPaymentsEnabled] = useState(true);
+  const [paymentMethod, setPaymentMethod] = useState<'API' | 'Link'>('API');
+
   const [isSavingSettings, setIsSavingSettings] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
@@ -454,6 +460,8 @@ export default function AdminDashboardPage() {
         setIsAnnouncementEnabled(appConfig.isAnnouncementEnabled || false);
         setAnnouncementText(appConfig.announcementText || '');
         setAnnouncementSpeed(appConfig.announcementSpeed || 20);
+        setIsPaymentsEnabled(appConfig.isPaymentsEnabled === undefined ? true : appConfig.isPaymentsEnabled);
+        setPaymentMethod(appConfig.paymentMethod || 'API');
     }
   }, [appConfig, isAppConfigLoading]);
 
@@ -550,6 +558,8 @@ export default function AdminDashboardPage() {
             isAnnouncementEnabled: isAnnouncementEnabled,
             announcementText: announcementText,
             announcementSpeed: Number(announcementSpeed),
+            isPaymentsEnabled,
+            paymentMethod,
         };
         await setDocumentNonBlocking(appConfigDocRef, settingsToSave, { merge: true });
         toast({
@@ -1088,6 +1098,39 @@ export default function AdminDashboardPage() {
                     <Card>
                         <CardHeader>
                             <div className="flex items-center gap-3">
+                                <CreditCard className="h-6 w-6" />
+                                <div>
+                                    <CardTitle>Manage Payment Method</CardTitle>
+                                    <CardDescription>Globally enable or disable payments and choose the method for expert activation.</CardDescription>
+                                </div>
+                            </div>
+                        </CardHeader>
+                        <CardContent>
+                             <div className="space-y-6">
+                                <div className="flex items-center justify-between rounded-lg border p-4">
+                                    <div>
+                                        <Label htmlFor="payments-enabled">Payments Enabled</Label>
+                                        <p className="text-sm text-muted-foreground">Turn all payment functionalities on or off.</p>
+                                    </div>
+                                    <Switch id="payments-enabled" checked={isPaymentsEnabled} onCheckedChange={setIsPaymentsEnabled} />
+                                </div>
+                                <RadioGroup value={paymentMethod} onValueChange={(value: 'API' | 'Link') => setPaymentMethod(value)} disabled={!isPaymentsEnabled}>
+                                    <Label>Payment Method</Label>
+                                    <div className="flex items-center space-x-2 mt-2">
+                                        <RadioGroupItem value="API" id="api" />
+                                        <Label htmlFor="api">API (Cashfree Popup)</Label>
+                                    </div>
+                                    <div className="flex items-center space-x-2">
+                                        <RadioGroupItem value="Link" id="link" />
+                                        <Label htmlFor="link">Payment Link</Label>
+                                    </div>
+                                </RadioGroup>
+                             </div>
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader>
+                            <div className="flex items-center gap-3">
                                 <Settings className="h-6 w-6" />
                                 <div>
                                     <CardTitle>Global Settings</CardTitle>
@@ -1178,9 +1221,9 @@ export default function AdminDashboardPage() {
                                     </div>
                                     
                                     <div className="space-y-4">
-                                        <h4 className="font-medium text-sm">Payment Links (Optional Fallback)</h4>
+                                        <h4 className="font-medium text-sm">Static Payment Links (Fallback)</h4>
                                         <p className="text-xs text-muted-foreground -mt-2">
-                                            If you fill these, the system will use these links instead of the dynamic payment gateway.
+                                            If the Payment Method is set to 'Payment Link', these URLs will be used.
                                         </p>
                                         <div>
                                             <Label htmlFor="verification-payment-link">Verification Payment Link</Label>

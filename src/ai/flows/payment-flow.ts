@@ -122,19 +122,27 @@ const createPaymentOrderFlow = ai.defineFlow(
     if (!appConfig) {
       throw new Error("Application configuration is empty.");
     }
-
-    // Check for a plan-specific payment link first
-    if (input.plan === 'Premier' && appConfig.premierPaymentLink) {
-        return { payment_link: appConfig.premierPaymentLink };
-    }
-    if (input.plan === 'Super Premier' && appConfig.superPremierPaymentLink) {
-        return { payment_link: appConfig.superPremierPaymentLink };
-    }
-    if (input.plan === 'Verification' && appConfig.verificationPaymentLink) {
-        return { payment_link: appConfig.verificationPaymentLink };
+    
+    // 1. Check if payments are globally enabled
+    if (!appConfig.isPaymentsEnabled) {
+        throw new Error("Payments are currently disabled by the site administrator.");
     }
 
-    // If no specific link, fall back to dynamic generation with Cashfree
+    // 2. Check the selected payment method
+    if (appConfig.paymentMethod === 'Link') {
+        let paymentLink = '';
+        if (input.plan === 'Premier') paymentLink = appConfig.premierPaymentLink;
+        if (input.plan === 'Super Premier') paymentLink = appConfig.superPremierPaymentLink;
+        if (input.plan === 'Verification') paymentLink = appConfig.verificationPaymentLink;
+
+        if (paymentLink) {
+            return { payment_link: paymentLink };
+        } else {
+            throw new Error(`A static payment link for the ${input.plan} plan has not been configured. Please contact support.`);
+        }
+    }
+
+    // 3. Fallback to dynamic API generation (Cashfree) if method is 'API'
     let amount = 0;
     if (input.plan === 'Premier') {
         amount = appConfig.premierPlanPrice || 0;
@@ -152,7 +160,7 @@ const createPaymentOrderFlow = ai.defineFlow(
     const order = await createCashfreeOrder(orderInput);
 
     if (!order.payment_link) {
-      throw new Error("Failed to create dynamic payment link.");
+      throw new Error("Failed to create dynamic payment link via API.");
     }
     
     return {
