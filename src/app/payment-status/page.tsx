@@ -26,6 +26,7 @@ function PaymentStatusContent() {
 
             if (plan === 'Verification') {
                 updateData.verified = true;
+                updateData.tier = 'Standard';
             } else if (plan === 'Premier' || plan === 'Super Premier') {
                 updateData.tier = plan;
             }
@@ -56,7 +57,7 @@ function PaymentStatusContent() {
                      {txStatus === 'SUCCESS' ? 'Payment Successful' : txStatus === 'FAILED' ? 'Payment Failed' : txStatus === 'CANCELLED' ? 'Payment Cancelled' : 'Processing Payment'}
                 </CardTitle>
                 <CardDescription>
-                    {txStatus === 'SUCCESS' ? `Your account has been updated to ${plan}.` : txStatus === 'FAILED' ? 'There was an issue with your payment.' : txStatus === 'CANCELLED' ? 'Your payment was cancelled.' : 'Please wait while we confirm your payment status. Do not refresh this page.'}
+                    {txStatus === 'SUCCESS' ? `Your account has been updated.` : txStatus === 'FAILED' ? 'There was an issue with your payment.' : txStatus === 'CANCELLED' ? 'Your payment was cancelled.' : 'Please wait while we confirm your payment status. Do not refresh this page.'}
                 </CardDescription>
             </CardHeader>
             <CardContent>
