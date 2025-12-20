@@ -48,7 +48,7 @@ async function createCashfreeOrder(input: CreatePaymentOrderInput & { amount: nu
     const headers = {
         'Content-Type': 'application/json',
         'x-api-version': '2023-08-01',
-        'x-client-id': process.env.CASHFREE_APP_ID || '',
+        'x-client-id': process.env.CASHFREE_CLIENT_ID || '',
         'x-client-secret': process.env.CASHFREE_SECRET_KEY || '',
     };
 

@@ -10,7 +10,7 @@ import { useUser, useFirestore, useDoc, useMemoFirebase, useAuth, useCollection 
 import { deleteDocumentNonBlocking, updateDocumentNonBlocking, setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, CheckCircle2, UserCheck, UserX, Crown, Sparkles, User as UserIcon, Settings, Save, Briefcase, Building, MessageSquare, ThumbsUp, ThumbsDown, Star, Search, PlusCircle, Mail, Edit3, Link as LinkIcon, Download, ExternalLink, IndianRupee, X, Upload, HardDriveDownload, Megaphone, Phone, MapPinIcon, CreditCard } from 'lucide-react';
+import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, CheckCircle2, UserCheck, UserX, Crown, Sparkles, User as UserIcon, Settings, Save, Briefcase, Building, MessageSquare, ThumbsUp, ThumbsDown, Star, Search, PlusCircle, Mail, Edit3, Link as LinkIcon, Download, ExternalLink, IndianRupee, X, Upload, HardDriveDownload, Megaphone, Phone, MapPinIcon, CreditCard, AlertTriangle, Key } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -60,6 +60,7 @@ import { exportAllData } from '@/ai/flows/export-data-flow';
 import { importUsers } from '@/ai/flows/import-users-flow';
 import { Slider } from '@/components/ui/slider';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 type ExpertUser = {
     id: string;
@@ -114,6 +115,7 @@ type AppConfig = {
     availabilityLocationText?: string;
     isPaymentsEnabled?: boolean;
     paymentMethod?: 'API' | 'Link';
+    publicApiKey?: string;
 };
 
 const UserTable = ({ users, onTierChange, onVerificationToggle, onDelete, onEdit }: { users: ExpertUser[], onTierChange: (expert: ExpertUser, tier: ExpertUser['tier']) => void, onVerificationToggle: (expert: ExpertUser) => void, onDelete: (expert: ExpertUser) => void, onEdit: (expert: ExpertUser) => void }) => {
@@ -396,6 +398,7 @@ export default function AdminDashboardPage() {
   const [superPremierPrice, setSuperPremierPrice] = useState(0);
   const [verificationFee, setVerificationFee] = useState(0);
   const [availabilityLocationText, setAvailabilityLocationText] = useState('');
+  const [publicApiKey, setPublicApiKey] = useState('');
 
   const [isAnnouncementEnabled, setIsAnnouncementEnabled] = useState(false);
   const [announcementText, setAnnouncementText] = useState('');
@@ -457,6 +460,7 @@ export default function AdminDashboardPage() {
         setSuperPremierPrice(appConfig.superPremierPlanPrice || 0);
         setVerificationFee(appConfig.verificationFee || 0);
         setAvailabilityLocationText(appConfig.availabilityLocationText || '');
+        setPublicApiKey(appConfig.publicApiKey || '');
         setIsAnnouncementEnabled(appConfig.isAnnouncementEnabled || false);
         setAnnouncementText(appConfig.announcementText || '');
         setAnnouncementSpeed(appConfig.announcementSpeed || 20);
@@ -555,6 +559,7 @@ export default function AdminDashboardPage() {
             superPremierPlanPrice: Number(superPremierPrice),
             verificationFee: Number(verificationFee),
             availabilityLocationText: availabilityLocationText,
+            publicApiKey,
             isAnnouncementEnabled: isAnnouncementEnabled,
             announcementText: announcementText,
             announcementSpeed: Number(announcementSpeed),
@@ -1095,6 +1100,48 @@ export default function AdminDashboardPage() {
                     </Tabs>
                 </TabsContent>
                 <TabsContent value="settings" className="mt-4 space-y-8">
+                    <Card>
+                        <CardHeader>
+                            <div className="flex items-center gap-3">
+                                <Key className="h-6 w-6" />
+                                <div>
+                                    <CardTitle>Manage API Keys</CardTitle>
+                                    <CardDescription>Manage public-facing API keys and view instructions for secret keys.</CardDescription>
+                                </div>
+                            </div>
+                        </CardHeader>
+                        <CardContent className="space-y-6">
+                            <Alert variant="destructive">
+                                <AlertTriangle className="h-4 w-4" />
+                                <AlertTitle>Action Required: Set Up Environment Variables</AlertTitle>
+                                <AlertDescription>
+                                    To use features like Cashfree payments or Gemini AI, you must add your secret API keys to the `.env` file in the project's root directory.
+                                    <strong className="block my-2">Never save secret keys directly in this form or in your code.</strong>
+                                    <pre className="p-2 bg-muted/50 rounded-md text-xs font-mono mt-2 overflow-x-auto">
+                                        <code>
+                                            # For Gemini AI Features{'\n'}
+                                            GEMINI_API_KEY=your_gemini_api_key_here{'\n\n'}
+                                            # For Cashfree Payment Gateway{'\n'}
+                                            CASHFREE_CLIENT_ID=your_cashfree_client_id{'\n'}
+                                            CASHFREE_SECRET_KEY=your_cashfree_secret_key
+                                        </code>
+                                    </pre>
+                                    <p className="mt-2">After adding or changing any keys in the `.env` file, you must restart your development server for the changes to take effect.</p>
+                                </AlertDescription>
+                            </Alert>
+                             <div>
+                                <Label htmlFor="public-api-key">Public API Key / App ID (e.g., Cashfree)</Label>
+                                <Input
+                                    id="public-api-key"
+                                    value={publicApiKey}
+                                    onChange={(e) => setPublicApiKey(e.target.value)}
+                                    className="mt-1"
+                                    placeholder="Enter public-facing key"
+                                />
+                                <p className="text-xs text-muted-foreground mt-1">This key will be used for client-side operations where needed.</p>
+                            </div>
+                        </CardContent>
+                    </Card>
                     <Card>
                         <CardHeader>
                             <div className="flex items-center gap-3">

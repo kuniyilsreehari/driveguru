@@ -349,6 +349,10 @@
             "description": "The selected payment method.",
             "enum": ["API", "Link"]
         },
+        "publicApiKey": {
+          "type": "string",
+          "description": "A public-facing API key for client-side services (e.g., a public Cashfree key)."
+        },
         "premierPaymentLink": {
           "type": "string",
           "description": "The payment link for the Premier plan upgrade.",
