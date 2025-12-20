@@ -3,6 +3,7 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import { FirebaseClientProvider } from '@/firebase/client-provider';
 import { Header } from '@/components/layout/header';
+import { Footer } from '@/components/layout/footer';
 import { ThemeProvider } from '@/components/theme-provider';
 
 export const metadata: Metadata = {
@@ -26,7 +27,7 @@ export default function RootLayout({
         <link rel="icon" href="/icons/apple-touch-icon.svg" type="image/svg+xml" sizes="any" />
         <link rel="apple-touch-icon" href="/icons/apple-touch-icon.svg" />
       </head>
-      <body className="font-body antialiased">
+      <body className="font-body antialiased flex flex-col min-h-screen">
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"
@@ -35,7 +36,10 @@ export default function RootLayout({
         >
           <FirebaseClientProvider>
             <Header />
-            {children}
+            <main className="flex-grow">
+              {children}
+            </main>
+            <Footer />
           </FirebaseClientProvider>
           <Toaster />
         </ThemeProvider>
