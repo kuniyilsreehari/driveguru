@@ -102,6 +102,7 @@ type AppConfig = {
     superPremierPaymentLink?: string;
     premierPlanPrice?: number;
     superPremierPlanPrice?: number;
+    verificationFee?: number;
     isAnnouncementEnabled?: boolean;
     announcementText?: string;
     announcementSpeed?: number;
@@ -383,6 +384,7 @@ export default function AdminDashboardPage() {
   const [paymentLink, setPaymentLink] = useState('');
   const [premierPrice, setPremierPrice] = useState(0);
   const [superPremierPrice, setSuperPremierPrice] = useState(0);
+  const [verificationFee, setVerificationFee] = useState(0);
 
   const [isAnnouncementEnabled, setIsAnnouncementEnabled] = useState(false);
   const [announcementText, setAnnouncementText] = useState('');
@@ -438,6 +440,7 @@ export default function AdminDashboardPage() {
       setPaymentLink(appConfig.superPremierPaymentLink || '');
       setPremierPrice(appConfig.premierPlanPrice || 0);
       setSuperPremierPrice(appConfig.superPremierPlanPrice || 0);
+      setVerificationFee(appConfig.verificationFee || 0);
       setIsAnnouncementEnabled(appConfig.isAnnouncementEnabled || false);
       setAnnouncementText(appConfig.announcementText || '');
       setAnnouncementSpeed(appConfig.announcementSpeed || 20);
@@ -538,6 +541,7 @@ export default function AdminDashboardPage() {
             superPremierPaymentLink: paymentLink,
             premierPlanPrice: Number(premierPrice),
             superPremierPlanPrice: Number(superPremierPrice),
+            verificationFee: Number(verificationFee),
             isAnnouncementEnabled: isAnnouncementEnabled,
             announcementText: announcementText,
             announcementSpeed: Number(announcementSpeed),
@@ -1039,17 +1043,33 @@ export default function AdminDashboardPage() {
                             ) : (
                                 <div className="space-y-4">
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                                        <div>
-                                            <Label htmlFor="featured-limit">Featured Experts Limit</Label>
-                                            <Input 
-                                                id="featured-limit"
-                                                type="number" 
-                                                value={featuredExpertsLimit}
-                                                onChange={(e) => setFeaturedExpertsLimit(Number(e.target.value))}
-                                                min="1"
-                                                max="12"
-                                                className="mt-1"
-                                            />
+                                        <div className="space-y-4">
+                                            <div>
+                                                <Label htmlFor="featured-limit">Featured Experts Limit</Label>
+                                                <Input 
+                                                    id="featured-limit"
+                                                    type="number" 
+                                                    value={featuredExpertsLimit}
+                                                    onChange={(e) => setFeaturedExpertsLimit(Number(e.target.value))}
+                                                    min="1"
+                                                    max="12"
+                                                    className="mt-1"
+                                                />
+                                            </div>
+                                            <div>
+                                                <Label htmlFor="verification-fee">Verification Fee (INR)</Label>
+                                                <div className="relative mt-1">
+                                                    <IndianRupee className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                                                    <Input
+                                                        id="verification-fee"
+                                                        type="number"
+                                                        value={verificationFee}
+                                                        onChange={(e) => setVerificationFee(Number(e.target.value))}
+                                                        className="pl-10"
+                                                        placeholder="e.g., 199"
+                                                    />
+                                                </div>
+                                            </div>
                                         </div>
                                         <div className="space-y-4">
                                             <div>
@@ -1310,5 +1330,3 @@ export default function AdminDashboardPage() {
     </>
   );
 }
-
-    

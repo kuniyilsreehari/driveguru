@@ -1,21 +1,44 @@
 
 'use client';
 
-import { Suspense } from 'react';
+import { Suspense, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Loader2, CheckCircle, XCircle } from 'lucide-react';
+import { useFirestore, updateDocumentNonBlocking } from '@/firebase';
+import { doc } from 'firebase/firestore';
 
 function PaymentStatusContent() {
     const searchParams = useSearchParams();
+    const firestore = useFirestore();
+    
     const orderId = searchParams.get('order_id');
-    const txStatus = searchParams.get('txStatus'); // Cashfree often returns txStatus
+    const txStatus = searchParams.get('tx_status') || searchParams.get('txStatus'); // Cashfree uses both casings
+    const uid = searchParams.get('uid');
+    const plan = searchParams.get('plan') as 'Premier' | 'Super Premier' | 'Verification' | null;
 
-    // This is a simplified view. In a real app, you'd make an API call
-    // to your backend to verify the payment status with Cashfree using the orderId
-    // to prevent tampering.
+    useEffect(() => {
+        if (txStatus === 'SUCCESS' && uid && plan && firestore) {
+            const userDocRef = doc(firestore, 'users', uid);
+            let updateData: any = {};
+
+            if (plan === 'Verification') {
+                updateData.verified = true;
+            } else if (plan === 'Premier' || plan === 'Super Premier') {
+                updateData.tier = plan;
+            }
+
+            if (Object.keys(updateData).length > 0) {
+                updateDocumentNonBlocking(userDocRef, updateData)
+                    .catch(error => {
+                        console.error("Failed to update user profile after payment:", error);
+                        // Optionally, show a toast to the user here
+                    });
+            }
+        }
+    }, [txStatus, uid, plan, firestore]);
 
     return (
         <Card className="w-full max-w-md">
@@ -33,7 +56,7 @@ function PaymentStatusContent() {
                      {txStatus === 'SUCCESS' ? 'Payment Successful' : txStatus === 'FAILED' ? 'Payment Failed' : txStatus === 'CANCELLED' ? 'Payment Cancelled' : 'Processing Payment'}
                 </CardTitle>
                 <CardDescription>
-                    {txStatus === 'SUCCESS' ? 'Your account has been upgraded.' : txStatus === 'FAILED' ? 'There was an issue with your payment.' : txStatus === 'CANCELLED' ? 'Your payment was cancelled.' : 'Please wait while we confirm your payment status. Do not refresh this page.'}
+                    {txStatus === 'SUCCESS' ? `Your account has been updated to ${plan}.` : txStatus === 'FAILED' ? 'There was an issue with your payment.' : txStatus === 'CANCELLED' ? 'Your payment was cancelled.' : 'Please wait while we confirm your payment status. Do not refresh this page.'}
                 </CardDescription>
             </CardHeader>
             <CardContent>
@@ -65,4 +88,3 @@ export default function PaymentStatusPage() {
         </div>
     );
 }
-

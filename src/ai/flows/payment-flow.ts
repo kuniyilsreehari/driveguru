@@ -17,11 +17,11 @@ import { getFirestore } from 'firebase-admin/firestore';
 
 
 const CreatePaymentOrderInputSchema = z.object({
-  userId: z.string().describe("The ID of the user upgrading their plan."),
+  userId: z.string().describe("The ID of the user making the payment."),
   userEmail: z.string().describe("The email of the user."),
   userName: z.string().describe("The name of the user."),
   userPhone: z.string().describe("The phone number of the user."),
-  plan: z.enum(['Premier', 'Super Premier']).describe("The plan the user is upgrading to."),
+  plan: z.enum(['Premier', 'Super Premier', 'Verification']).describe("The product the user is paying for."),
 });
 export type CreatePaymentOrderInput = z.infer<typeof CreatePaymentOrderInputSchema>;
 
@@ -34,7 +34,9 @@ export type CreatePaymentOrderOutput = z.infer<typeof CreatePaymentOrderOutputSc
 async function createCashfreeOrder(input: CreatePaymentOrderInput & { amount: number }): Promise<{ payment_link: string }> {
     const url = 'https://sandbox.cashfree.com/pg/orders'; // Sandbox URL, replace for production
     const orderId = `order_${uuidv4()}`;
-    const returnUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002'}/payment-status?order_id={order_id}`;
+    
+    // Pass user and plan info through the return URL to update status later
+    const returnUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002'}/payment-status?order_id={order_id}&uid=${input.userId}&plan=${input.plan}`;
 
 
     const headers = {
@@ -57,7 +59,7 @@ async function createCashfreeOrder(input: CreatePaymentOrderInput & { amount: nu
         order_meta: {
             return_url: returnUrl,
         },
-        order_note: `Upgrade to ${input.plan} plan`,
+        order_note: `Payment for DriveGuru: ${input.plan}`,
     };
 
     try {
@@ -103,8 +105,6 @@ const createPaymentOrderFlow = ai.defineFlow(
     
     // Initialize Firebase Admin SDK if not already initialized
     if (!getApps().length) {
-      // In a managed environment like App Hosting, initializeApp() without arguments
-      // automatically discovers service account credentials.
       initializeApp();
     }
 
@@ -127,6 +127,8 @@ const createPaymentOrderFlow = ai.defineFlow(
         amount = appConfig.premierPlanPrice || 0;
     } else if (input.plan === 'Super Premier') {
         amount = appConfig.superPremierPlanPrice || 0;
+    } else if (input.plan === 'Verification') {
+        amount = appConfig.verificationFee || 0;
     }
 
     if (amount <= 0) {

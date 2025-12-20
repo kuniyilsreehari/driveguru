@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -8,7 +7,7 @@ import { signOut } from 'firebase/auth';
 import { doc, collection, query, where } from 'firebase/firestore';
 import { useUser, useAuth, useFirestore, useDoc, useCollection, useMemoFirebase, updateDocumentNonBlocking } from '@/firebase';
 import { Button } from '@/components/ui/button';
-import { LogOut, Briefcase, Loader, Edit, UserCheck, XCircle, MapPin, IndianRupee, Calendar, Book, GraduationCap, School, Info, User as UserIcon, Check, Power, Building, PlusCircle, Crown, Sparkles, Lock, Home, ArrowUpCircle, ShieldCheck, ExternalLink, Gift, Copy } from 'lucide-react';
+import { LogOut, Briefcase, Loader, Edit, UserCheck, XCircle, MapPin, IndianRupee, Calendar, Book, GraduationCap, School, Info, User as UserIcon, Check, Power, Building, PlusCircle, Crown, Sparkles, Lock, Home, ArrowUpCircle, ShieldCheck, ExternalLink, Gift, Copy, Shield } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import {
   Dialog,
@@ -157,7 +156,7 @@ function CompanyVacancies({ userProfile }: { userProfile: ExpertUserProfile }) {
 }
 
 
-function UpgradeDialog({ userProfile, tier }: { userProfile: ExpertUserProfile, tier: 'Premier' | 'Super Premier' }) {
+function UpgradeDialog({ userProfile, tier }: { userProfile: ExpertUserProfile, tier: 'Premier' | 'Super Premier' | 'Verification' }) {
     const [isCreatingOrder, setIsCreatingOrder] = useState(false);
     const { toast } = useToast();
     const router = useRouter();
@@ -182,7 +181,7 @@ function UpgradeDialog({ userProfile, tier }: { userProfile: ExpertUserProfile, 
             console.error("Payment order creation failed:", error);
             toast({
                 variant: 'destructive',
-                title: "Upgrade Failed",
+                title: "Action Failed",
                 description: error.message || "Could not initiate the payment process. Please try again.",
             });
         } finally {
@@ -190,20 +189,25 @@ function UpgradeDialog({ userProfile, tier }: { userProfile: ExpertUserProfile, 
         }
     }
 
+    const buttonText = tier === 'Verification' ? 'Get Verified' : `Upgrade to ${tier}`;
+    const dialogTitle = tier === 'Verification' ? 'Become a Verified Expert' : `Upgrade to ${tier}`;
+    const dialogDescription = tier === 'Verification' 
+        ? "You will be redirected to our secure payment gateway to pay the one-time verification fee. Your account will be marked as verified upon successful payment."
+        : "You will be redirected to our secure payment gateway to complete your purchase. Your account will be upgraded automatically upon successful payment.";
 
     return (
         <Dialog>
             <DialogTrigger asChild>
-                <Button size="sm" className="mt-auto w-full">
-                    <ArrowUpCircle className="mr-2 h-4 w-4" />
-                    Upgrade to {tier}
+                <Button size={tier === 'Verification' ? 'default' : 'sm'} className={cn("mt-auto w-full", tier === 'Verification' && "bg-green-600 hover:bg-green-700")}>
+                    {tier === 'Verification' ? <ShieldCheck className="mr-2 h-4 w-4" /> : <ArrowUpCircle className="mr-2 h-4 w-4" />}
+                    {buttonText}
                 </Button>
             </DialogTrigger>
             <DialogContent>
                 <DialogHeader>
-                    <DialogTitle>Upgrade to {tier}</DialogTitle>
+                    <DialogTitle>{dialogTitle}</DialogTitle>
                     <DialogDescription>
-                        You will be redirected to our secure payment gateway to complete your purchase. Your account will be upgraded automatically upon successful payment.
+                       {dialogDescription}
                     </DialogDescription>
                 </DialogHeader>
                 <div className="py-4">
@@ -474,6 +478,19 @@ export default function ExpertDashboardPage() {
                 </div>
             </CardHeader>
             <CardContent>
+                {!userProfile.verified && (
+                    <div className="bg-blue-900/20 border border-blue-700 text-blue-200 p-4 rounded-lg mb-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+                        <div className="flex items-center gap-4">
+                            <Shield className="h-8 w-8 text-blue-400 flex-shrink-0" />
+                            <div>
+                                <h4 className="font-bold">Become a Verified Expert</h4>
+                                <p className="text-sm text-blue-300">Unlock contact features and gain client trust by verifying your profile for a one-time fee.</p>
+                            </div>
+                        </div>
+                        <UpgradeDialog userProfile={userProfile} tier="Verification" />
+                    </div>
+                )}
+                
                 <div className="my-6">
                   <div className="flex justify-between items-center mb-2">
                     <h4 className="font-semibold text-sm">Profile Completion</h4>
