@@ -40,7 +40,7 @@ function getAdminApp(): App {
 
 
 async function createCashfreeOrder(input: CreatePaymentOrderInput & { amount: number }): Promise<{ payment_link: string }> {
-    const url = 'https://sandbox.cashfree.com/pg/orders'; // Sandbox URL, replace for production
+    const url = 'https://api.cashfree.com/pg/orders'; // Production URL
     const orderId = `order_${uuidv4()}`;
     
     const returnUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002'}/payment-status?order_id={order_id}&uid=${input.userId}&plan=${input.plan}`;
