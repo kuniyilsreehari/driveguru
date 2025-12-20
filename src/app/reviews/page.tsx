@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Suspense } from 'react';
@@ -78,7 +79,7 @@ function ReviewsList() {
                     <CardContent>
                         <p className="text-muted-foreground mb-4">&quot;{review.comment}&quot;</p>
                         <div className="flex justify-between items-center text-xs text-muted-foreground">
-                            <span>{formatDistanceToNow(new Date(review.createdAt.seconds * 1000), { addSuffix: true })}</span>
+                            <span>{review.createdAt ? formatDistanceToNow(new Date(review.createdAt.seconds * 1000), { addSuffix: true }) : ''}</span>
                             <Badge variant="secondary">Approved</Badge>
                         </div>
                     </CardContent>

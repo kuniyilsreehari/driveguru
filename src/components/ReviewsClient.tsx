@@ -1,14 +1,18 @@
+
 "use client";
 
 import { useEffect, useState } from "react";
-import { collection, getDocs, QueryDocumentSnapshot, DocumentData } from "firebase/firestore";
+import { collection, getDocs, query, where, QueryDocumentSnapshot, DocumentData } from "firebase/firestore";
 import { useFirestore } from "@/firebase";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
+import { Loader2 } from "lucide-react";
 
 type Review = {
   id: string;
   comment: string;
   reviewerName: string;
+  expertName: string;
+  rating: number;
   // Add other review fields as needed for display
   [key: string]: any;
 };
@@ -25,7 +29,9 @@ export default function ReviewsClient() {
     const fetchReviews = async () => {
       try {
         setLoading(true);
-        const querySnapshot = await getDocs(collection(firestore, "reviews"));
+        // Only fetch approved reviews, which is allowed by security rules for all users
+        const reviewsQuery = query(collection(firestore, "reviews"), where("status", "==", "approved"));
+        const querySnapshot = await getDocs(reviewsQuery);
         const reviewsData = querySnapshot.docs.map(
           (doc: QueryDocumentSnapshot<DocumentData>) => ({
             id: doc.id,
@@ -45,7 +51,7 @@ export default function ReviewsClient() {
   }, [firestore]);
 
   if (loading) {
-    return <p>Loading reviews...</p>;
+    return <div className="flex items-center justify-center p-8"><Loader2 className="mr-2 h-6 w-6 animate-spin" /> Loading reviews...</div>;
   }
 
   if (error) {
@@ -58,15 +64,20 @@ export default function ReviewsClient() {
         reviews.map((r) => (
           <Card key={r.id}>
             <CardHeader>
-                <CardTitle>Review by {r.reviewerName}</CardTitle>
+                <CardTitle>Review for {r.expertName} by {r.reviewerName}</CardTitle>
             </CardHeader>
             <CardContent>
-                <p>{r.comment}</p>
+                <p>&quot;{r.comment}&quot;</p>
+                <div className="flex items-center gap-1 mt-2">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                        <span key={i} className={`h-4 w-4 ${i < r.rating ? 'text-yellow-400' : 'text-gray-300'}`}>★</span>
+                    ))}
+                </div>
             </CardContent>
           </Card>
         ))
       ) : (
-        <p>No reviews found.</p>
+        <p>No approved reviews found.</p>
       )}
     </div>
   );
