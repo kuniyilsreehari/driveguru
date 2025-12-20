@@ -1,9 +1,9 @@
 
 'use server';
 /**
- * @fileOverview A flow for handling payment gateway integration with Cashfree.
+ * @fileOverview A flow for handling payment gateway integration.
  *
- * - createPaymentOrder - A function that creates a payment order with Cashfree.
+ * - createPaymentOrder - A function that creates a payment order.
  * - CreatePaymentOrderInput - The input type for the createPaymentOrder function.
  * - CreatePaymentOrderOutput - The return type for the createPaymentOrder function.
  */
@@ -34,9 +34,7 @@ async function createCashfreeOrder(input: CreatePaymentOrderInput & { amount: nu
     const url = 'https://sandbox.cashfree.com/pg/orders'; // Sandbox URL, replace for production
     const orderId = `order_${uuidv4()}`;
     
-    // Pass user and plan info through the return URL to update status later
     const returnUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002'}/payment-status?order_id={order_id}&uid=${input.userId}&plan=${input.plan}`;
-
 
     const headers = {
         'Content-Type': 'application/json',
@@ -102,7 +100,6 @@ const createPaymentOrderFlow = ai.defineFlow(
   },
   async (input) => {
     
-    // Initialize Firebase Admin SDK if not already initialized
     if (!getApps().length) {
       initializeApp();
     }
@@ -116,12 +113,23 @@ const createPaymentOrderFlow = ai.defineFlow(
     }
     
     const appConfig = appConfigSnap.data();
-    let amount = 0;
-
     if (!appConfig) {
       throw new Error("Application configuration is empty.");
     }
 
+    // Check for a plan-specific payment link first
+    if (input.plan === 'Premier' && appConfig.premierPaymentLink) {
+        return { payment_link: appConfig.premierPaymentLink };
+    }
+    if (input.plan === 'Super Premier' && appConfig.superPremierPaymentLink) {
+        return { payment_link: appConfig.superPremierPaymentLink };
+    }
+    if (input.plan === 'Verification' && appConfig.verificationPaymentLink) {
+        return { payment_link: appConfig.verificationPaymentLink };
+    }
+
+    // If no specific link, fall back to dynamic generation with Cashfree
+    let amount = 0;
     if (input.plan === 'Premier') {
         amount = appConfig.premierPlanPrice || 0;
     } else if (input.plan === 'Super Premier') {
@@ -131,14 +139,14 @@ const createPaymentOrderFlow = ai.defineFlow(
     }
 
     if (amount <= 0) {
-        throw new Error(`Invalid price for ${input.plan} plan. Please set a price in the admin dashboard.`);
+        throw new Error(`Invalid or missing price for ${input.plan} plan. Please set a price in the admin dashboard.`);
     }
 
     const orderInput = { ...input, amount };
     const order = await createCashfreeOrder(orderInput);
 
     if (!order.payment_link) {
-      throw new Error("Failed to create payment link.");
+      throw new Error("Failed to create dynamic payment link.");
     }
     
     return {

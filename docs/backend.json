@@ -340,9 +340,19 @@
           "type": "number",
           "description": "The number of featured experts to show on the homepage."
         },
+        "premierPaymentLink": {
+          "type": "string",
+          "description": "The payment link for the Premier plan upgrade.",
+          "format": "uri"
+        },
         "superPremierPaymentLink": {
           "type": "string",
-          "description": "The central payment link for Super Premier upgrades.",
+          "description": "The payment link for the Super Premier plan upgrade.",
+          "format": "uri"
+        },
+        "verificationPaymentLink": {
+          "type": "string",
+          "description": "The payment link for the one-time verification fee.",
           "format": "uri"
         },
         "isAnnouncementEnabled": {

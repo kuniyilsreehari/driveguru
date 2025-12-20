@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
@@ -100,7 +101,9 @@ type Review = {
 
 type AppConfig = {
     featuredExpertsLimit?: number;
+    premierPaymentLink?: string;
     superPremierPaymentLink?: string;
+    verificationPaymentLink?: string;
     premierPlanPrice?: number;
     superPremierPlanPrice?: number;
     verificationFee?: number;
@@ -383,7 +386,9 @@ export default function AdminDashboardPage() {
   const [selectedVacancy, setSelectedVacancy] = useState<Vacancy | null>(null);
 
   const [featuredExpertsLimit, setFeaturedExpertsLimit] = useState(3);
-  const [paymentLink, setPaymentLink] = useState('');
+  const [premierPaymentLink, setPremierPaymentLink] = useState('');
+  const [superPremierPaymentLink, setSuperPremierPaymentLink] = useState('');
+  const [verificationPaymentLink, setVerificationPaymentLink] = useState('');
   const [premierPrice, setPremierPrice] = useState(0);
   const [superPremierPrice, setSuperPremierPrice] = useState(0);
   const [verificationFee, setVerificationFee] = useState(0);
@@ -394,7 +399,6 @@ export default function AdminDashboardPage() {
   const [announcementSpeed, setAnnouncementSpeed] = useState(20);
 
   const [isSavingSettings, setIsSavingSettings] = useState(false);
-  const [isEditingPaymentLink, setIsEditingPaymentLink] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
 
@@ -439,25 +443,19 @@ export default function AdminDashboardPage() {
   
   useEffect(() => {
     if (!isAppConfigLoading && appConfig) {
-      setFeaturedExpertsLimit(appConfig.featuredExpertsLimit || 3);
-      setPaymentLink(appConfig.superPremierPaymentLink || '');
-      setPremierPrice(appConfig.premierPlanPrice || 0);
-      setSuperPremierPrice(appConfig.superPremierPlanPrice || 0);
-      setVerificationFee(appConfig.verificationFee || 0);
-      setAvailabilityLocationText(appConfig.availabilityLocationText || '');
-      setIsAnnouncementEnabled(appConfig.isAnnouncementEnabled || false);
-      setAnnouncementText(appConfig.announcementText || '');
-      setAnnouncementSpeed(appConfig.announcementSpeed || 20);
+        setFeaturedExpertsLimit(appConfig.featuredExpertsLimit || 3);
+        setPremierPaymentLink(appConfig.premierPaymentLink || '');
+        setSuperPremierPaymentLink(appConfig.superPremierPaymentLink || '');
+        setVerificationPaymentLink(appConfig.verificationPaymentLink || '');
+        setPremierPrice(appConfig.premierPlanPrice || 0);
+        setSuperPremierPrice(appConfig.superPremierPlanPrice || 0);
+        setVerificationFee(appConfig.verificationFee || 0);
+        setAvailabilityLocationText(appConfig.availabilityLocationText || '');
+        setIsAnnouncementEnabled(appConfig.isAnnouncementEnabled || false);
+        setAnnouncementText(appConfig.announcementText || '');
+        setAnnouncementSpeed(appConfig.announcementSpeed || 20);
     }
   }, [appConfig, isAppConfigLoading]);
-
-  useEffect(() => {
-      if (appConfig?.superPremierPaymentLink) {
-        setIsEditingPaymentLink(false);
-      } else {
-        setIsEditingPaymentLink(true);
-      }
-  }, [appConfig?.superPremierPaymentLink]);
 
   const verifiedCount = usersData?.filter(u => u.verified).length || 0;
   const unverifiedCount = usersData?.filter(u => !u.verified).length || 0;
@@ -542,7 +540,9 @@ export default function AdminDashboardPage() {
     try {
         const settingsToSave: AppConfig = {
             featuredExpertsLimit: Number(featuredExpertsLimit),
-            superPremierPaymentLink: paymentLink,
+            premierPaymentLink,
+            superPremierPaymentLink,
+            verificationPaymentLink,
             premierPlanPrice: Number(premierPrice),
             superPremierPlanPrice: Number(superPremierPrice),
             verificationFee: Number(verificationFee),
@@ -1176,27 +1176,50 @@ export default function AdminDashboardPage() {
                                             </div>
                                         </div>
                                     </div>
-                                    <div>
-                                        <Label htmlFor="payment-link">Central Payment Link (Optional Fallback)</Label>
-                                        <div className="relative mt-1 flex items-center gap-2">
-                                            <LinkIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                                            <Input
-                                                id="payment-link"
-                                                value={paymentLink}
-                                                onChange={(e) => setPaymentLink(e.target.value)}
-                                                className="pl-10"
-                                                placeholder="https://payment.link/1234"
-                                                disabled={!isEditingPaymentLink}
-                                            />
-                                            {!isEditingPaymentLink ? (
-                                                <Button variant="outline" size="icon" onClick={() => setIsEditingPaymentLink(true)}>
-                                                    <Edit className="h-4 w-4" />
-                                                </Button>
-                                            ) : (
-                                                <Button variant="outline" size="icon" onClick={() => setPaymentLink('')}>
-                                                    <X className="h-4 w-4" />
-                                                </Button>
-                                            )}
+                                    
+                                    <div className="space-y-4">
+                                        <h4 className="font-medium text-sm">Payment Links (Optional Fallback)</h4>
+                                        <p className="text-xs text-muted-foreground -mt-2">
+                                            If you fill these, the system will use these links instead of the dynamic payment gateway.
+                                        </p>
+                                        <div>
+                                            <Label htmlFor="verification-payment-link">Verification Payment Link</Label>
+                                            <div className="relative mt-1 flex items-center gap-2">
+                                                <LinkIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                                                <Input
+                                                    id="verification-payment-link"
+                                                    value={verificationPaymentLink}
+                                                    onChange={(e) => setVerificationPaymentLink(e.target.value)}
+                                                    className="pl-10"
+                                                    placeholder="https://payment.link/verification"
+                                                />
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <Label htmlFor="premier-payment-link">Premier Payment Link</Label>
+                                            <div className="relative mt-1 flex items-center gap-2">
+                                                <LinkIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                                                <Input
+                                                    id="premier-payment-link"
+                                                    value={premierPaymentLink}
+                                                    onChange={(e) => setPremierPaymentLink(e.target.value)}
+                                                    className="pl-10"
+                                                    placeholder="https://payment.link/premier"
+                                                />
+                                            </div>
+                                        </div>
+                                         <div>
+                                            <Label htmlFor="super-premier-payment-link">Super Premier Payment Link</Label>
+                                            <div className="relative mt-1 flex items-center gap-2">
+                                                <LinkIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                                                <Input
+                                                    id="super-premier-payment-link"
+                                                    value={superPremierPaymentLink}
+                                                    onChange={(e) => setSuperPremierPaymentLink(e.target.value)}
+                                                    className="pl-10"
+                                                    placeholder="https://payment.link/super-premier"
+                                                />
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
