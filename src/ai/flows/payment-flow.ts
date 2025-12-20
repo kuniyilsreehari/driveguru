@@ -11,7 +11,7 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { v4 as uuidv4 } from 'uuid';
-import { initializeApp, getApps } from 'firebase-admin/app';
+import { initializeApp, getApps, App } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 
 
@@ -28,6 +28,15 @@ const CreatePaymentOrderOutputSchema = z.object({
   payment_link: z.string().describe('The URL to redirect the user to for payment.'),
 });
 export type CreatePaymentOrderOutput = z.infer<typeof CreatePaymentOrderOutputSchema>;
+
+
+// Helper to initialize Firebase Admin SDK
+function getAdminApp(): App {
+    if (getApps().length) {
+        return getApps()[0];
+    }
+    return initializeApp();
+}
 
 
 async function createCashfreeOrder(input: CreatePaymentOrderInput & { amount: number }): Promise<{ payment_link: string }> {
@@ -100,11 +109,8 @@ const createPaymentOrderFlow = ai.defineFlow(
   },
   async (input) => {
     
-    if (!getApps().length) {
-      initializeApp();
-    }
-
-    const firestore = getFirestore();
+    const adminApp = getAdminApp();
+    const firestore = getFirestore(adminApp);
     const appConfigDocRef = firestore.doc('app_config/homepage');
     const appConfigSnap = await appConfigDocRef.get();
     
