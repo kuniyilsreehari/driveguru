@@ -278,7 +278,7 @@ function PlanManagement({ userProfile }: { userProfile: ExpertUserProfile }) {
                         features={["All Standard features", "AI-Powered Search access", "Post job vacancies", "Downloadable PDF profile"]}
                         current={userProfile.tier === 'Premier'}
                      >
-                        {userProfile.tier === 'Standard' && <UpgradeDialog userProfile={userProfile} tier="Premier" />}
+                        {(userProfile.tier === 'Standard' || !userProfile.tier) && <UpgradeDialog userProfile={userProfile} tier="Premier" />}
                      </PlanCard>
                      <PlanCard
                         title="Super Premier"
