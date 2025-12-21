@@ -383,6 +383,11 @@ export default function ExpertDashboardPage() {
 
   const { data: referredUsers, isLoading: isReferralsLoading } = useCollection(referralsQuery);
   const referralCount = referredUsers?.length || 0;
+  
+  const totalPoints = useMemo(() => {
+      const pointsPerReferral = appConfig?.referralRewardPoints || 0;
+      return referralCount * pointsPerReferral;
+  }, [referralCount, appConfig]);
 
 
   useEffect(() => {
@@ -740,8 +745,8 @@ export default function ExpertDashboardPage() {
                     </div>
                     <div className="grid grid-cols-2 gap-4 mt-4">
                         <div className="p-4 rounded-lg border text-center">
-                            <p className="text-sm font-medium text-muted-foreground">Total Points</p>
-                            <p className="text-3xl font-bold">{userProfile.referralPoints || 0}</p>
+                            <p className="text-sm font-medium text-muted-foreground">Total Points Earned</p>
+                            <p className="text-3xl font-bold">{totalPoints}</p>
                         </div>
                         <div className="p-4 rounded-lg border text-center">
                             <p className="text-sm font-medium text-muted-foreground">Times Used</p>
@@ -750,7 +755,7 @@ export default function ExpertDashboardPage() {
                     </div>
                 </CardContent>
                 <CardFooter>
-                    <p className="text-xs text-muted-foreground">Share your code to earn points. 1 point = ₹1. Earnings can be redeemed upon request.</p>
+                    <p className="text-xs text-muted-foreground">Share your code to earn points. Each referral earns you {appConfig?.referralRewardPoints || 0} points. 1 point = ₹1. Earnings can be redeemed upon request.</p>
                 </CardFooter>
             </Card>
         )}
