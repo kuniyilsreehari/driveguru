@@ -63,7 +63,6 @@ type ExpertUserProfile = {
 };
 
 type AppConfig = {
-    superPremierPaymentLink?: string;
     premierPlanPrice?: number;
     superPremierPlanPrice?: number;
     verificationFee?: number;
@@ -157,7 +156,7 @@ function CompanyVacancies({ userProfile }: { userProfile: ExpertUserProfile }) {
 }
 
 
-function UpgradeDialog({ userProfile, tier, verificationFee }: { userProfile: ExpertUserProfile, tier: 'Premier' | 'Super Premier' | 'Verification', verificationFee?: number }) {
+function UpgradeDialog({ userProfile, tier, price }: { userProfile: ExpertUserProfile, tier: 'Premier' | 'Super Premier' | 'Verification', price?: number }) {
     const [isCreatingOrder, setIsCreatingOrder] = useState(false);
     const { toast } = useToast();
     const router = useRouter();
@@ -190,17 +189,22 @@ function UpgradeDialog({ userProfile, tier, verificationFee }: { userProfile: Ex
         }
     }
 
-    const buttonText = tier === 'Verification' 
-        ? `Get Verified ${verificationFee ? `for ₹${verificationFee}` : ''}`
-        : `Upgrade to ${tier}`;
+    let buttonText = `Upgrade to ${tier}`;
+    if (tier === 'Verification') {
+        buttonText = 'Get Verified';
+    }
+    if (price && price > 0) {
+        buttonText += ` for ₹${price}`;
+    }
+
 
     const dialogTitle = tier === 'Verification' ? 'Become a Verified Expert' : `Upgrade to ${tier}`;
     
     let dialogDescription = "You will be redirected to our secure payment gateway to complete your purchase. Your account will be upgraded automatically upon successful payment.";
     if (tier === 'Verification') {
         dialogDescription = `You will be redirected to our secure payment gateway to pay the one-time verification fee. Your account will be marked as verified upon successful payment.`;
-        if (verificationFee) {
-            dialogDescription = `You will be redirected to our secure payment gateway to pay the one-time verification fee of ₹${verificationFee}. Your account will be marked as verified upon successful payment.`;
+        if (price) {
+            dialogDescription = `You will be redirected to our secure payment gateway to pay the one-time verification fee of ₹${price}. Your account will be marked as verified upon successful payment.`;
         }
     }
 
@@ -240,7 +244,7 @@ function UpgradeDialog({ userProfile, tier, verificationFee }: { userProfile: Ex
     )
 }
 
-function PlanManagement({ userProfile }: { userProfile: ExpertUserProfile }) {
+function PlanManagement({ userProfile, appConfig }: { userProfile: ExpertUserProfile; appConfig: AppConfig | null }) {
     const PlanCard = ({ title, icon, description, features, current, children }: { title: string; icon: React.ReactNode; description: string; features: string[]; current?: boolean; children?: React.ReactNode; }) => (
         <Card className={cn("flex flex-col", current && "border-primary ring-2 ring-primary")}>
             <CardHeader className="text-center">
@@ -292,7 +296,7 @@ function PlanManagement({ userProfile }: { userProfile: ExpertUserProfile }) {
                         features={["All Standard features", "AI-Powered Search access", "Post job vacancies", "Downloadable PDF profile"]}
                         current={userProfile.tier === 'Premier'}
                      >
-                        {(userProfile.tier === 'Standard' || !userProfile.tier) && <UpgradeDialog userProfile={userProfile} tier="Premier" />}
+                        {(userProfile.tier === 'Standard' || !userProfile.tier) && <UpgradeDialog userProfile={userProfile} tier="Premier" price={appConfig?.premierPlanPrice} />}
                      </PlanCard>
                      <PlanCard
                         title="Super Premier"
@@ -301,7 +305,7 @@ function PlanManagement({ userProfile }: { userProfile: ExpertUserProfile }) {
                         features={["All Premier features", "Top placement in search results", "Featured expert listing"]}
                         current={userProfile.tier === 'Super Premier'}
                      >
-                        {userProfile.tier !== 'Super Premier' && <UpgradeDialog userProfile={userProfile} tier="Super Premier" />}
+                        {userProfile.tier !== 'Super Premier' && <UpgradeDialog userProfile={userProfile} tier="Super Premier" price={appConfig?.superPremierPlanPrice} />}
                     </PlanCard>
                 </div>
             </CardContent>
@@ -533,7 +537,7 @@ export default function ExpertDashboardPage() {
                                 </p>
                             </div>
                         </div>
-                        <UpgradeDialog userProfile={userProfile} tier="Verification" verificationFee={verificationFee} />
+                        <UpgradeDialog userProfile={userProfile} tier="Verification" price={verificationFee} />
                     </div>
                 )}
                 
@@ -626,7 +630,7 @@ export default function ExpertDashboardPage() {
             </CardFooter>
         </Card>
 
-        <PlanManagement userProfile={userProfile} />
+        <PlanManagement userProfile={userProfile} appConfig={appConfig} />
         
         {userProfile.role === 'Company' && <CompanyVacancies userProfile={userProfile} />}
 
