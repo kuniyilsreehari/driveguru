@@ -32,14 +32,15 @@ function getAdminApp(): App {
         return getApps()[0];
     }
     
-    const serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
-    if (!serviceAccount) {
+    const serviceAccountString = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
+    if (!serviceAccountString) {
       throw new Error('FIREBASE_SERVICE_ACCOUNT_KEY environment variable is not set.');
     }
 
     try {
+        const serviceAccount = JSON.parse(serviceAccountString);
         return initializeApp({
-            credential: cert(JSON.parse(serviceAccount))
+            credential: cert(serviceAccount)
         });
     } catch (error: any) {
         console.error("Error initializing Firebase Admin SDK with service account:", error.message);
