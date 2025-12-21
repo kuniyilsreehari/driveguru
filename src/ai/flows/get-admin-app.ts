@@ -3,15 +3,27 @@
 
 import { initializeApp, getApps, App, cert } from 'firebase-admin/app';
 
+// Use a global symbol to store the initialized app instance to prevent re-initialization
+// during Next.js hot-reloading in development.
+const globalWithApp = global as typeof globalThis & {
+  _firebaseAdminApp?: App;
+};
+
 /**
- * Initializes and returns a Firebase Admin App instance.
- * It ensures that the app is initialized only once (singleton pattern).
+ * Initializes and returns a Firebase Admin App instance using a robust singleton pattern.
+ * This ensures that the app is initialized only once per server instance.
  * This function is for server-side use only.
  */
 export async function getAdminApp(): Promise<App> {
-  // If the app is already initialized, return the existing instance.
+  // If the app is already cached on the global object, return it.
+  if (globalWithApp._firebaseAdminApp) {
+    return globalWithApp._firebaseAdminApp;
+  }
+  
+  // If not cached, check if any Firebase apps are initialized.
   const apps = getApps();
   if (apps.length) {
+    globalWithApp._firebaseAdminApp = apps[0];
     return apps[0];
   }
 
@@ -28,9 +40,15 @@ export async function getAdminApp(): Promise<App> {
     const serviceAccount = JSON.parse(serviceAccountString);
     
     // Initialize the Firebase Admin App with the parsed service account credentials.
-    return initializeApp({
+    const newApp = initializeApp({
       credential: cert(serviceAccount),
     });
+
+    // Cache the newly created app on the global object.
+    globalWithApp._firebaseAdminApp = newApp;
+    
+    return newApp;
+
   } catch (e: any) {
     // If parsing fails, throw a more informative error.
     throw new Error(
