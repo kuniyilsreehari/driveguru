@@ -8,7 +8,7 @@ import { signOut } from 'firebase/auth';
 import { doc, collection, query, where, getDoc, runTransaction, increment } from 'firebase/firestore';
 import { useUser, useAuth, useFirestore, useDoc, useCollection, useMemoFirebase, updateDocumentNonBlocking } from '@/firebase';
 import { Button } from '@/components/ui/button';
-import { LogOut, Briefcase, Loader, Edit, UserCheck, XCircle, MapPin, IndianRupee, Calendar, Book, GraduationCap, School, Info, User as UserIcon, Check, Power, Building, PlusCircle, Crown, Sparkles, Lock, Home, ArrowUpCircle, ShieldCheck, ExternalLink, Gift, Copy, Shield, AlertTriangle, ChevronDown, Link as LinkIcon } from 'lucide-react';
+import { LogOut, Briefcase, Loader, Edit, UserCheck, XCircle, MapPin, IndianRupee, Calendar, Book, GraduationCap, School, Info, User as UserIcon, Check, Power, Building, PlusCircle, Crown, Sparkles, Lock, Home, ArrowUpCircle, ShieldCheck, ExternalLink, Gift, Copy, Shield, AlertTriangle, ChevronDown, Link as LinkIcon, MessageCircle } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import {
   Dialog,
@@ -386,8 +386,8 @@ export default function ExpertDashboardPage() {
   
   const totalPoints = useMemo(() => {
       const pointsPerReferral = appConfig?.referralRewardPoints || 0;
-      return referralCount * pointsPerReferral;
-  }, [referralCount, appConfig]);
+      return (userProfile?.referralPoints || 0);
+  }, [userProfile?.referralPoints]);
 
 
   useEffect(() => {
@@ -455,13 +455,23 @@ export default function ExpertDashboardPage() {
   const copyReferralLink = () => {
     if (!userProfile?.referralCode) return;
     const baseUrl = window.location.origin;
-    const signupUrl = new URL('/signup', baseUrl);
+    const signupUrl = new URL('/signup/role', baseUrl);
     signupUrl.searchParams.set('ref', userProfile.referralCode);
     navigator.clipboard.writeText(signupUrl.toString());
     toast({
       title: 'Referral Link Copied',
       description: 'Your unique signup link has been copied to your clipboard.',
     });
+  };
+  
+  const shareOnWhatsApp = () => {
+    if (!userProfile?.referralCode) return;
+    const baseUrl = window.location.origin;
+    const signupUrl = new URL('/signup/role', baseUrl);
+    signupUrl.searchParams.set('ref', userProfile.referralCode);
+    const text = `Join me on DriveGuru! Use my referral code to sign up: ${signupUrl.toString()}`;
+    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(text)}`;
+    window.open(whatsappUrl, '_blank');
   };
 
   const handleAwardReferral = async (userToReward: ExpertUserProfile) => {
@@ -741,15 +751,21 @@ export default function ExpertDashboardPage() {
                             <p className="text-sm text-muted-foreground">Your Referral Code</p>
                             <p className="text-2xl font-mono tracking-widest text-secondary-foreground">{userProfile.referralCode}</p>
                         </div>
-                        <Button size="sm" variant="outline" onClick={copyReferralLink}>
-                            <LinkIcon className="mr-2 h-4 w-4" />
-                            Copy Signup Link
-                        </Button>
+                        <div className="flex items-center gap-2">
+                            <Button size="sm" variant="outline" onClick={copyReferralLink}>
+                                <LinkIcon className="mr-2 h-4 w-4" />
+                                Copy Link
+                            </Button>
+                             <Button size="sm" variant="outline" onClick={shareOnWhatsApp} className="bg-green-500/10 border-green-500/50 text-green-500 hover:bg-green-500/20 hover:text-green-500">
+                                <MessageCircle className="mr-2 h-4 w-4" />
+                                WhatsApp
+                            </Button>
+                        </div>
                     </div>
                     <div className="grid grid-cols-2 gap-4 mt-4">
                         <div className="p-4 rounded-lg border text-center">
                             <p className="text-sm font-medium text-muted-foreground">Total Points Earned</p>
-                            <p className="text-3xl font-bold">{totalPoints}</p>
+                            <p className="text-3xl font-bold">{userProfile.referralPoints || 0}</p>
                         </div>
                         <div className="p-4 rounded-lg border text-center">
                             <p className="text-sm font-medium text-muted-foreground">Times Used</p>
