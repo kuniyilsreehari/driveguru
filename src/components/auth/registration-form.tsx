@@ -352,10 +352,9 @@ export function RegistrationForm() {
     try {
       const referringUserDoc = await getReferringUser(values.referralCode || '');
       if (values.referralCode && !referringUserDoc) {
-        toast({
-          variant: "destructive",
-          title: "Invalid Referral Code",
-          description: "The referral code you entered is not valid. Please check it or leave the field blank.",
+        form.setError("referralCode", {
+          type: "manual",
+          message: "This referral code is not valid.",
         });
         setIsSubmitting(false);
         return;
@@ -545,12 +544,112 @@ export function RegistrationForm() {
             </div>
         </div>
 
+        <div className="grid grid-cols-2 gap-4">
+            <FormField
+            control={form.control}
+            name="firstName"
+            render={({ field }) => (
+                <FormItem>
+                <FormLabel>First Name</FormLabel>
+                <div className="relative">
+                    <UserIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <FormControl>
+                    <Input placeholder="John" {...field} className="pl-10" />
+                    </FormControl>
+                </div>
+                <FormMessage />
+                </FormItem>
+            )}
+            />
+            <FormField
+            control={form.control}
+            name="lastName"
+            render={({ field }) => (
+                <FormItem>
+                <FormLabel>Last Name</FormLabel>
+                <div className="relative">
+                    <UserIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <FormControl>
+                    <Input placeholder="Doe" {...field} className="pl-10" />
+                    </FormControl>
+                </div>
+                <FormMessage />
+                </FormItem>
+            )}
+            />
+        </div>
+
+        <FormField
+          control={form.control}
+          name="email"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Email</FormLabel>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <FormControl>
+                  <Input
+                    type="email"
+                    placeholder="name@example.com"
+                    {...field}
+                    className="pl-10"
+                  />
+                </FormControl>
+              </div>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        
+        <FormField
+          control={form.control}
+          name="referralCode"
+          render={({ field }) => (
+              <FormItem>
+                  <FormLabel>Referral Code (Optional)</FormLabel>
+                  <div className="relative">
+                      <Gift className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                      <FormControl>
+                          <Input placeholder="Enter a referral code" {...field} className="pl-10" />
+                      </FormControl>
+                  </div>
+                  <FormMessage />
+              </FormItem>
+          )}
+        />
+        
+        <FormField
+          control={form.control}
+          name="password"
+          render={({ field }) => (
+            <FormItem>
+                <div className="flex items-center">
+                    <FormLabel>Password</FormLabel>
+                </div>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <FormControl>
+                  <Input type={showPassword ? "text" : "password"} placeholder="••••••••" {...field} className="pl-10 pr-10" />
+                </FormControl>
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+                >
+                  {showPassword ? <EyeOff /> : <Eye />}
+                </button>
+              </div>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        
         <FormField
           control={form.control}
           name="role"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>First, select your role</FormLabel>
+              <FormLabel>Next, select your role</FormLabel>
               <FormControl>
                   <div className="grid grid-cols-1 gap-4">
                       {expertTypes.map((type) => (
@@ -585,89 +684,6 @@ export function RegistrationForm() {
         
         {selectedRole === 'Freelancer' && (
           <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-                <FormField
-                control={form.control}
-                name="firstName"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>First Name</FormLabel>
-                    <div className="relative">
-                        <UserIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                        <FormControl>
-                        <Input placeholder="John" {...field} className="pl-10" />
-                        </FormControl>
-                    </div>
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
-                <FormField
-                control={form.control}
-                name="lastName"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Last Name</FormLabel>
-                    <div className="relative">
-                        <UserIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                        <FormControl>
-                        <Input placeholder="Doe" {...field} className="pl-10" />
-                        </FormControl>
-                    </div>
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
-            </div>
-
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Email</FormLabel>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <FormControl>
-                      <Input
-                        type="email"
-                        placeholder="name@example.com"
-                        {...field}
-                        className="pl-10"
-                      />
-                    </FormControl>
-                  </div>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="password"
-              render={({ field }) => (
-                <FormItem>
-                    <div className="flex items-center">
-                        <FormLabel>Password</FormLabel>
-                    </div>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <FormControl>
-                      <Input type={showPassword ? "text" : "password"} placeholder="••••••••" {...field} className="pl-10 pr-10" />
-                    </FormControl>
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
-                    >
-                      {showPassword ? <EyeOff /> : <Eye />}
-                    </button>
-                  </div>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
             <FormItem>
                 <FormLabel>Phone Number</FormLabel>
                 <div className="flex items-center gap-2">
@@ -779,40 +795,6 @@ export function RegistrationForm() {
                 </FormItem>
               )}
             />
-             <div className="grid grid-cols-2 gap-4">
-                <FormField
-                control={form.control}
-                name="firstName"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Contact First Name</FormLabel>
-                    <div className="relative">
-                        <UserIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                        <FormControl>
-                        <Input placeholder="John" {...field} className="pl-10" />
-                        </FormControl>
-                    </div>
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
-                <FormField
-                control={form.control}
-                name="lastName"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Contact Last Name</FormLabel>
-                    <div className="relative">
-                        <UserIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                        <FormControl>
-                        <Input placeholder="Doe" {...field} className="pl-10" />
-                        </FormControl>
-                    </div>
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
-            </div>
              <FormField
               control={form.control}
               name="department"
@@ -863,54 +845,6 @@ export function RegistrationForm() {
                 <></>
                 ) : (
                 <div className="space-y-4">
-                    <FormField
-                    control={form.control}
-                    name="email"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Email</FormLabel>
-                        <div className="relative">
-                            <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                            <FormControl>
-                            <Input
-                                type="email"
-                                placeholder="name@example.com"
-                                {...field}
-                                className="pl-10"
-                            />
-                            </FormControl>
-                        </div>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                    />
-
-                    <FormField
-                    control={form.control}
-                    name="password"
-                    render={({ field }) => (
-                        <FormItem>
-                            <div className="flex items-center">
-                                <FormLabel>Password</FormLabel>
-                            </div>
-                        <div className="relative">
-                            <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                            <FormControl>
-                            <Input type={showPassword ? "text" : "password"} placeholder="••••••••" {...field} className="pl-10 pr-10" />
-                            </FormControl>
-                            <button
-                            type="button"
-                            onClick={() => setShowPassword(!showPassword)}
-                            className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
-                            >
-                            {showPassword ? <EyeOff /> : <Eye />}
-                            </button>
-                        </div>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                    />
-                    
                     <FormItem>
                         <FormLabel>Phone Number</FormLabel>
                         <div className="flex items-center gap-2">
@@ -1003,23 +937,6 @@ export function RegistrationForm() {
                 </div>
                 ))}
                 
-                <FormField
-                    control={form.control}
-                    name="referralCode"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Referral Code (Optional)</FormLabel>
-                            <div className="relative">
-                                <Gift className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                                <FormControl>
-                                    <Input placeholder="Enter a referral code" {...field} className="pl-10" />
-                                </FormControl>
-                            </div>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-
                 <FormField
                   control={form.control}
                   name="terms"
@@ -1133,9 +1050,3 @@ export function RegistrationForm() {
     </>
   );
 }
-
-    
-
-    
-
-
