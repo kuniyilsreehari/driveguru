@@ -43,7 +43,7 @@ function getAdminApp(): App {
         }
     }
     
-    console.log("Initializing Firebase Admin SDK with default credentials.");
+    console.log("Initializing Firebase Admin SDK with default application credentials.");
     return initializeApp();
 }
 

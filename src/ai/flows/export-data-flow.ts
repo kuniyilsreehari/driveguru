@@ -41,10 +41,11 @@ function getAdminApp(): App {
             });
         } catch (error) {
             console.error("Error initializing Firebase Admin SDK with service account:", error);
+            // Fallback for when service account parsing fails or is invalid
         }
     }
     
-    console.log("Initializing Firebase Admin SDK with default credentials.");
+    console.log("Initializing Firebase Admin SDK with default application credentials.");
     return initializeApp();
 }
 
