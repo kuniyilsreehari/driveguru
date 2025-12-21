@@ -95,7 +95,7 @@ const importUsersFlow = ai.defineFlow(
             const { id, email, ...userData } = data;
 
             if (!id && !email) {
-                errors.push(`Row ${'${processedCount}'}: Missing 'id' or 'email' for user.`);
+                errors.push(`Row ${processedCount}: Missing 'id' or 'email' for user.`);
                 continue;
             }
 
@@ -119,14 +119,14 @@ const importUsersFlow = ai.defineFlow(
                 updatedCount++;
             } else { // User does not exist, create them
                 if (!userData.password) {
-                     errors.push(`Row ${'${processedCount}'}: New user with email ${'${email}'} requires a 'password' field in the CSV.`);
+                     errors.push(`Row ${processedCount}: New user with email ${email} requires a 'password' field in the CSV.`);
                      continue;
                 }
                 
                 const newUserAuth = await auth.createUser({
                     email: email,
                     password: userData.password,
-                    displayName: `${'${userData.firstName}'} ${'${userData.lastName}'}`,
+                    displayName: `${userData.firstName} ${userData.lastName}`,
                 });
 
                 // Set document with the new UID
@@ -137,7 +137,7 @@ const importUsersFlow = ai.defineFlow(
             }
 
         } catch (error: any) {
-            errors.push(`Row ${'${processedCount}'}: ${'${error.message}'}`);
+            errors.push(`Row ${processedCount}: ${error.message}`);
         }
     }
 
