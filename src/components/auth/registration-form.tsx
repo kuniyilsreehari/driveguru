@@ -242,25 +242,10 @@ export function RegistrationForm() {
   };
 
   useEffect(() => {
-    if (!isUserLoading && user && firestore) {
-      const checkAdminAndRedirect = async () => {
-        const superAdminDocRef = doc(firestore, 'roles_super_admin', user.uid);
-        try {
-            const superAdminDoc = await getDoc(superAdminDocRef);
-            if (superAdminDoc.exists()) {
-              router.push('/admin');
-            } else {
-              router.push('/dashboard');
-            }
-        } catch (e) {
-            console.error("Error checking for admin role, redirecting to default dashboard", e);
-            router.push('/dashboard');
-        }
-      };
-
-      checkAdminAndRedirect();
+    if (!isUserLoading && user) {
+        router.push('/dashboard');
     }
-  }, [user, isUserLoading, router, firestore]);
+  }, [user, isUserLoading, router]);
 
   async function getCoordinates(address: string): Promise<{ lat: number; lon: number } | null> {
     try {
@@ -374,7 +359,7 @@ export function RegistrationForm() {
 
             const appConfigSnap = await transaction.get(appConfigDocRef);
             // Safely get referral points, defaulting to 0 if config is missing.
-            const referralRewardPoints = appConfigSnap.data()?.referralRewardPoints || 0;
+            const referralRewardPoints = appConfigSnap.exists() ? (appConfigSnap.data()?.referralRewardPoints || 0) : 0;
             
             const userData: any = {
                 id: newUser.uid,

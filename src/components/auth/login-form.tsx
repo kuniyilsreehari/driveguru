@@ -79,25 +79,10 @@ export function LoginForm() {
   });
 
   useEffect(() => {
-    if (!isUserLoading && user && firestore) {
-      const checkAdminAndRedirect = async () => {
-        const superAdminDocRef = doc(firestore, 'roles_super_admin', user.uid);
-        try {
-            const superAdminDoc = await getDoc(superAdminDocRef);
-            if (superAdminDoc.exists()) {
-              router.push('/admin');
-            } else {
-              router.push('/dashboard');
-            }
-        } catch (e) {
-            console.error("Error checking for admin role, redirecting to default dashboard", e);
-            router.push('/dashboard');
-        }
-      };
-
-      checkAdminAndRedirect();
+    if (!isUserLoading && user) {
+        router.push('/dashboard');
     }
-  }, [user, isUserLoading, router, firestore]);
+  }, [user, isUserLoading, router]);
   
   useEffect(() => {
     if (view === 'phone' && auth && recaptchaContainerRef.current) {

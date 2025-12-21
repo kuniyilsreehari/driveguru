@@ -4,7 +4,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { signOut } from 'firebase/auth';
-import { doc, collection, query, where } from 'firebase/firestore';
+import { doc, collection, query, where, getDoc } from 'firebase/firestore';
 import { useUser, useAuth, useFirestore, useDoc, useCollection, useMemoFirebase, updateDocumentNonBlocking } from '@/firebase';
 import { Button } from '@/components/ui/button';
 import { LogOut, Briefcase, Loader, Edit, UserCheck, XCircle, MapPin, IndianRupee, Calendar, Book, GraduationCap, School, Info, User as UserIcon, Check, Power, Building, PlusCircle, Crown, Sparkles, Lock, Home, ArrowUpCircle, ShieldCheck, ExternalLink, Gift, Copy, Shield, AlertTriangle, ChevronDown } from 'lucide-react';
@@ -363,12 +363,27 @@ export default function ExpertDashboardPage() {
   }, [firestore]);
   
   const { data: appConfig, isLoading: isAppConfigLoading } = useDoc<AppConfig>(appConfigDocRef);
+  
+  const superAdminDocRef = useMemoFirebase(() => {
+    if (!user) return null;
+    return doc(firestore, 'roles_super_admin', user.uid);
+  }, [firestore, user]);
+
+  const { data: superAdminData, isLoading: isRoleLoading } = useDoc(superAdminDocRef);
+  const isSuperAdmin = superAdminData !== null;
 
   useEffect(() => {
     if (!isUserLoading && !user) {
       router.push('/login');
     }
   }, [user, isUserLoading, router]);
+
+  useEffect(() => {
+    if (!isUserLoading && !isProfileLoading && !isRoleLoading && user && isSuperAdmin) {
+        router.push('/admin');
+    }
+  }, [user, isUserLoading, isProfileLoading, isRoleLoading, isSuperAdmin, router]);
+
 
   const handleLogout = () => {
     if (auth) {
@@ -434,13 +449,13 @@ export default function ExpertDashboardPage() {
 
   const profileCompletion = calculateProfileCompletion(userProfile);
   
-  const isLoading = isUserLoading || isProfileLoading || isAppConfigLoading;
+  const isLoading = isUserLoading || isProfileLoading || isAppConfigLoading || isRoleLoading;
 
   if (isLoading) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
         <Loader className="h-8 w-8 animate-spin text-primary" />
-        <p className="ml-4 text-muted-foreground">Loading dashboard...</p>
+        <p className="ml-4 text-muted-foreground">Finalizing session...</p>
       </div>
     );
   }
@@ -463,9 +478,9 @@ export default function ExpertDashboardPage() {
     );
   }
 
-  if (!user || !userProfile) {
+  if (!user || !userProfile || isSuperAdmin) {
     // This case should be rare due to the loading and error states above,
-    // but it's a good fallback.
+    // but it's a good fallback. Also handles the brief moment before admin redirect.
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
         <Loader className="h-8 w-8 animate-spin text-primary" />
