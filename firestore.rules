@@ -39,16 +39,16 @@ service cloud.firestore {
              !request.resource.data.diff(resource.data).affectedKeys().hasAny(protectedFields);
     }
     
-    // A user can update the referral points of another user.
+    // A signed-in user can update the referral points of another user.
     // This is needed for the referral system during signup.
     function isUpdatingReferralPoints() {
       // Allow only the 'referralPoints' field to be changed.
       let affectedKeys = request.resource.data.diff(resource.data).affectedKeys();
-      return affectedKeys.size() == 1 && affectedKeys.hasOnly(['referralPoints']);
+      return isSignedIn() && affectedKeys.size() == 1 && affectedKeys.hasOnly(['referralPoints']);
     }
 
     function isCreatingOwnLocationData(userId) {
-      return isOwner(userId) && requestData().userId == userId;
+      return isCreatingOwnUserDoc(userId) && requestData().userId == userId;
     }
 
     function locationUserImmutable() {
