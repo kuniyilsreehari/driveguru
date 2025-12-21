@@ -27,12 +27,18 @@ service cloud.firestore {
     function isNewDoc() {
       return resource == null;
     }
+    
+    function requestData() {
+      return request.resource.data;
+    }
 
-    // A user can create their own user document.
+    // A user can create their own user document with all the required fields.
     function isCreatingOwnUserDoc(userId) {
+      let allowedFields = ['id', 'firstName', 'lastName', 'email', 'role', 'department', 'state', 'city', 'pincode', 'address', 'latitude', 'longitude', 'phoneNumber', 'companyName', 'verified', 'photoUrl', 'isAvailable', 'referralCode', 'referralPoints', 'referredBy', 'createdAt'];
       return isOwner(userId) && isNewDoc() &&
-        request.resource.data.id == userId &&
-        request.resource.data.createdAt == request.time;
+        requestData().id == userId &&
+        requestData().createdAt == request.time &&
+        requestData().keys().hasOnly(allowedFields);
     }
     
     // A user can update certain fields of their own profile.
@@ -46,16 +52,16 @@ service cloud.firestore {
     // This is needed for the referral system during signup.
     function isUpdatingReferralPoints() {
       // Allow only the 'referralPoints' field to be changed.
-      let a = request.resource.data.diff(resource.data).affectedKeys();
-      return a.size() == 1 && a.hasOnly(['referralPoints']);
+      let affectedKeys = request.resource.data.diff(resource.data).affectedKeys();
+      return affectedKeys.size() == 1 && affectedKeys.hasOnly(['referralPoints']);
     }
 
     function isCreatingOwnLocationData(userId) {
-      return isOwner(userId) && request.resource.data.userId == userId;
+      return isOwner(userId) && requestData().userId == userId;
     }
 
     function locationUserImmutable() {
-      return request.resource.data.userId == resource.data.userId;
+      return requestData().userId == resource.data.userId;
     }
 
     function isMemberOfCompany(companyId) {
@@ -83,7 +89,7 @@ service cloud.firestore {
     function isCreatingCorrectVacancy() {
         let userDoc = get(/databases/$(database)/documents/users/$(request.auth.uid));
         // The companyId in the new vacancy must match the companyId of the user creating it.
-        return request.resource.data.companyId == userDoc.data.companyId;
+        return requestData().companyId == userDoc.data.companyId;
     }
 
 
@@ -100,6 +106,7 @@ service cloud.firestore {
      * App Configuration
      * ===================================================== */
     match /app_config/{configId} {
+      // Any signed-in user can read config for dashboard/signup purposes.
       allow read: if isSignedIn();
       allow write: if isSuperAdmin();
     }
@@ -119,7 +126,7 @@ service cloud.firestore {
      * ===================================================== */
     match /payments/{paymentId} {
         // Users can create their own payment record, but can't specify status or update it later.
-        allow create: if isOwner(request.resource.data.userId) && request.resource.data.status == 'pending';
+        allow create: if isOwner(requestData().userId) && requestData().status == 'pending';
         // Users can read their own payment records. Admins can read any.
         allow get: if isOwner(resource.data.userId) || isSuperAdmin();
         // Admins can list all payments. Users can list their own.
@@ -170,7 +177,7 @@ service cloud.firestore {
         // Logged in users can list approved reviews. Super admins can list all.
         allow list: if isSignedIn() || isSuperAdmin(); 
         // Any signed-in user can create a review, which starts as 'pending'. Admins can bypass this.
-        allow create: if (isSignedIn() && request.resource.data.status == 'pending') || isSuperAdmin();
+        allow create: if (isSignedIn() && requestData().status == 'pending') || isSuperAdmin();
         // Only super admins can change the status of a review.
         allow update: if isSuperAdmin();
         allow delete: if isSuperAdmin();
@@ -185,7 +192,7 @@ service cloud.firestore {
         // Only premium company users or super admins can create vacancies.
         allow create: if (isPremiumCompanyUser() && isCreatingCorrectVacancy()) || isSuperAdmin();
         // Only the company that owns the vacancy (and is premium) or a super admin can update it.
-        allow update: if (isPremiumCompanyUser() && isVacancyOwner(request.resource.data)) || isSuperAdmin();
+        allow update: if (isPremiumCompanyUser() && isVacancyOwner(requestData())) || isSuperAdmin();
         // Only the company that owns the vacancy (and is premium) or a super admin can delete it.
         allow delete: if (isPremiumCompanyUser() && isVacancyOwner(resource.data)) || isSuperAdmin();
     }
