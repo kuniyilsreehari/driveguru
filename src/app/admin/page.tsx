@@ -9,7 +9,7 @@ import { useUser, useFirestore, useDoc, useMemoFirebase, useAuth, useCollection 
 import { deleteDocumentNonBlocking, updateDocumentNonBlocking, setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, CheckCircle2, UserCheck, UserX, Crown, Sparkles, User as UserIcon, Settings, Save, Briefcase, Building, MessageSquare, ThumbsUp, ThumbsDown, Star, Search, PlusCircle, Mail, Edit3, Link as LinkIcon, Download, ExternalLink, IndianRupee, X, Upload, HardDriveDownload, Megaphone, Phone, MapPinIcon, CreditCard, AlertTriangle, Key, Gift } from 'lucide-react';
+import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, CheckCircle2, UserCheck, UserX, Crown, Sparkles, User as UserIcon, Settings, Save, Briefcase, Building, MessageSquare, ThumbsUp, ThumbsDown, Star, Search, PlusCircle, Mail, Edit3, Link as LinkIcon, Download, ExternalLink, IndianRupee, X, Upload, HardDriveDownload, Megaphone, Phone, MapPinIcon, CreditCard, AlertTriangle, Key, Gift, Code } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -87,6 +87,7 @@ type ExpertUser = {
     isAvailable?: boolean;
     companyId?: string;
     tier?: 'Standard' | 'Premier' | 'Super Premier';
+    referralCode?: string;
     referralPoints?: number;
     referredByCode?: string | null;
     createdAt?: Timestamp;
@@ -184,6 +185,18 @@ const UserTable = ({ users, onTierChange, onVerificationToggle, onDelete, onEdit
                     <TableCell>
                         <div className="font-medium">{expert.firstName} {expert.lastName}</div>
                         <div className="text-xs text-muted-foreground">{expert.email}</div>
+                        {expert.phoneNumber && (
+                            <div className="text-xs text-muted-foreground flex items-center gap-1">
+                                <Phone className="h-3 w-3" />
+                                {expert.phoneNumber}
+                            </div>
+                        )}
+                        {expert.referralCode && (
+                            <div className="text-xs text-muted-foreground flex items-center gap-1">
+                                <Code className="h-3 w-3" />
+                                {expert.referralCode}
+                            </div>
+                        )}
                     </TableCell>
                     <TableCell>
                         {expert.referredByCode ? (
@@ -789,14 +802,21 @@ export default function AdminDashboardPage() {
   };
 
   const handleAwardReferral = async (userToReward: ExpertUser) => {
-    if (!userToReward.referredByCode) return;
-
+    if (!userToReward.referredByCode) {
+      toast({
+        variant: "destructive",
+        title: "No Referral Code",
+        description: "This user did not sign up with a referral code.",
+      });
+      return;
+    }
+  
     try {
       const result = await processReferral({
         newUserUid: userToReward.id,
         referralCode: userToReward.referredByCode
       });
-
+  
       if (result.success) {
         toast({
           title: "Referral Points Awarded",
