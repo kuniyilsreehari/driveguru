@@ -75,6 +75,8 @@ async function createCashfreeOrder(input: CreatePaymentOrderInput & { amount: nu
         'x-client-id': cashfreeAppId,
         'x-client-secret': cashfreeSecretKey,
     };
+    
+    const sanitizedPhone = input.userPhone.replace(/[^0-9]/g, '');
 
     const body = {
         order_id: orderId,
@@ -83,11 +85,14 @@ async function createCashfreeOrder(input: CreatePaymentOrderInput & { amount: nu
         customer_details: {
             customer_id: input.userId,
             customer_email: input.userEmail,
-            customer_phone: input.userPhone.replace(/[^0-9]/g, ''), // Remove non-numeric characters
+            customer_phone: sanitizedPhone,
             customer_name: input.userName,
         },
         order_meta: {
             return_url: returnUrl,
+        },
+        order_tags: {
+            whatsapp: sanitizedPhone, // Instruct Cashfree to send WhatsApp notification
         },
         order_note: `Payment for DriveGuru: ${input.plan}`,
     };
