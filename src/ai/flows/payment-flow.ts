@@ -5,7 +5,7 @@
  *
  * - createPaymentOrder - A function that creates a payment order.
  * - CreatePaymentOrderInput - The input type for the createPaymentOrder function.
- * - CreatePaymentOrderOutput - The return type for the createPaymentOrder function.
+ * - CreatePaymentOrderOutput - The return type for the createPaymentOrderOutput function.
  */
 
 import { ai } from '@/ai/genkit';
@@ -65,17 +65,17 @@ async function createCashfreeOrder(input: CreatePaymentOrderInput & { amount: nu
     const returnUrl = `${appUrl}/payment-status?order_id={order_id}&uid=${input.userId}&plan=${input.plan}`;
 
     const cashfreeAppId = process.env.CASHFREE_APP_ID;
-    const cashfreeSecretKey = process.env.CASHFREE_SECRET_KEY;
+    const cashfreeSecret = process.env.CASHFREE_SECRET;
 
-    if (!cashfreeAppId || !cashfreeSecretKey) {
-        throw new Error('Cashfree credentials (CASHFREE_APP_ID or CASHFREE_SECRET_KEY) are not set in the environment variables.');
+    if (!cashfreeAppId || !cashfreeSecret) {
+        throw new Error('Cashfree credentials (CASHFREE_APP_ID or CASHFREE_SECRET) are not set in the environment variables.');
     }
 
     const headers = {
         'Content-Type': 'application/json',
         'x-api-version': '2023-08-01',
         'x-client-id': cashfreeAppId,
-        'x-client-secret': cashfreeSecretKey,
+        'x-client-secret': cashfreeSecret,
     };
     
     const sanitizedPhone = input.userPhone.replace(/[^0-9]/g, '');

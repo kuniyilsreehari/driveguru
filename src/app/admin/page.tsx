@@ -1123,7 +1123,7 @@ export default function AdminDashboardPage() {
                                             GEMINI_API_KEY=your_gemini_api_key_here{'\n\n'}
                                             # For Cashfree Payment Gateway{'\n'}
                                             CASHFREE_CLIENT_ID=your_cashfree_client_id{'\n'}
-                                            CASHFREE_SECRET_KEY=your_cashfree_secret_key
+                                            CASHFREE_SECRET=your_cashfree_secret_key
                                         </code>
                                     </pre>
                                     <p className="mt-2">After adding or changing any keys in the `.env` file, you must restart your development server for the changes to take effect.</p>
