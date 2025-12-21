@@ -56,7 +56,11 @@ async function createCashfreeOrder(input: CreatePaymentOrderInput & { amount: nu
     const url = 'https://api.cashfree.com/pg/orders'; // Production URL
     const orderId = `order_${uuidv4()}`;
     
-    const returnUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002'}/payment-status?order_id={order_id}&uid=${input.userId}&plan=${input.plan}`;
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+    if (!appUrl) {
+        throw new Error('NEXT_PUBLIC_APP_URL environment variable is not set.');
+    }
+    const returnUrl = `${appUrl}/payment-status?order_id={order_id}&uid=${input.userId}&plan=${input.plan}`;
 
     const cashfreeAppId = process.env.CASHFREE_APP_ID;
     const cashfreeSecretKey = process.env.CASHFREE_SECRET_KEY;
