@@ -588,9 +588,6 @@ export default function AdminDashboardPage() {
   const unverifiedCount = usersData?.filter(u => !u.verified).length || 0;
   const premierCount = usersData?.filter(u => u.tier === 'Premier').length || 0;
   const superPremierCount = usersData?.filter(u => u.tier === 'Super Premier').length || 0;
-  const totalReferralPoints = useMemo(() => {
-    return usersData?.reduce((sum, user) => sum + (user.referralPoints || 0), 0) || 0;
-  }, [usersData]);
 
   useEffect(() => {
     if (!isUserLoading && !user) {
@@ -1040,7 +1037,7 @@ export default function AdminDashboardPage() {
                     <TabsTrigger value="data">Data Management</TabsTrigger>
                 </TabsList>
                 <TabsContent value="dashboard" className="mt-4">
-                    <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-6 mb-8">
+                    <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-5 mb-8">
                       <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                           <CardTitle className="text-sm font-medium">Total Experts</CardTitle>
@@ -1089,16 +1086,6 @@ export default function AdminDashboardPage() {
                         <CardContent>
                           <div className="text-2xl font-bold">{superPremierCount}</div>
                           <p className="text-xs text-muted-foreground">Total Super Premier</p>
-                        </CardContent>
-                      </Card>
-                      <Card>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                          <CardTitle className="text-sm font-medium">Total Awarded Points</CardTitle>
-                          <Gift className="h-4 w-4 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent>
-                          <div className="text-2xl font-bold">{totalReferralPoints}</div>
-                          <p className="text-xs text-muted-foreground">All referral points</p>
                         </CardContent>
                       </Card>
                     </div>
