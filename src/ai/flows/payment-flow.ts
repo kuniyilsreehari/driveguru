@@ -1,7 +1,7 @@
 
 'use server';
 /**
- * @fileOverview A flow for handling payment gateway integration.
+ * @fileOverview A flow for handling payment gateway integration with transactional safety.
  *
  * - createPaymentOrder - A function that creates a payment order.
  * - CreatePaymentOrderInput - The input type for the createPaymentOrder function.
@@ -12,7 +12,7 @@ import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { v4 as uuidv4 } from 'uuid';
 import { initializeApp, getApps, App, cert } from 'firebase-admin/app';
-import { getFirestore } from 'firebase-admin/firestore';
+import { getFirestore, runTransaction, collection, query, where, getDocs, Timestamp } from 'firebase-admin/firestore';
 
 
 const CreatePaymentOrderInputSchema = z.object({
@@ -41,22 +41,23 @@ function getAdminApp(): App {
   if (!serviceAccountString) {
     throw new Error('FIREBASE_SERVICE_ACCOUNT_KEY environment variable is not set. Please check your environment configuration.');
   }
+  
+  const serviceAccount = JSON.parse(serviceAccountString);
 
   return initializeApp({
-    credential: cert(JSON.parse(serviceAccountString)),
+    credential: cert(serviceAccount),
   });
 }
 
 
-async function createCashfreeOrder(input: CreatePaymentOrderInput & { amount: number }): Promise<{ payment_link: string }> {
+async function createCashfreeOrder(input: CreatePaymentOrderInput & { amount: number, orderId: string }): Promise<{ payment_link: string }> {
     const url = 'https://api.cashfree.com/pg/orders'; // Production URL
-    const orderId = `order_${'${uuidv4()}'}`;
     
     const appUrl = process.env.NEXT_PUBLIC_APP_URL;
     if (!appUrl) {
         throw new Error('NEXT_PUBLIC_APP_URL environment variable is not set.');
     }
-    const returnUrl = `${'${appUrl}'}/payment-status?order_id={order_id}&uid=${'${input.userId}'}&plan=${'${input.plan}'}`;
+    const returnUrl = `${appUrl}/payment-status?order_id=${input.orderId}`;
 
     const cashfreeAppId = process.env.CASHFREE_APP_ID;
     const cashfreeSecret = process.env.CASHFREE_SECRET;
@@ -75,7 +76,7 @@ async function createCashfreeOrder(input: CreatePaymentOrderInput & { amount: nu
     const sanitizedPhone = input.userPhone.replace(/[^0-9]/g, '');
 
     const body = {
-        order_id: orderId,
+        order_id: input.orderId,
         order_amount: input.amount,
         order_currency: 'INR',
         customer_details: {
@@ -90,7 +91,7 @@ async function createCashfreeOrder(input: CreatePaymentOrderInput & { amount: nu
         order_tags: {
             whatsapp: sanitizedPhone, // Instruct Cashfree to send WhatsApp notification
         },
-        order_note: `Payment for DriveGuru: ${'${input.plan}'}`,
+        order_note: `Payment for DriveGuru: ${input.plan}`,
     };
 
     try {
@@ -103,7 +104,7 @@ async function createCashfreeOrder(input: CreatePaymentOrderInput & { amount: nu
         if (!response.ok) {
             const errorBody = await response.json();
             console.error('Cashfree API Error:', errorBody);
-            throw new Error(`Cashfree API responded with status ${'${response.status}'}: ${'${errorBody.message}'}`);
+            throw new Error(`Cashfree API responded with status ${response.status}: ${errorBody.message}`);
         }
 
         const data: any = await response.json();
@@ -137,6 +138,7 @@ const createPaymentOrderFlow = ai.defineFlow(
     const adminApp = getAdminApp();
     const firestore = getFirestore(adminApp);
     const appConfigDocRef = firestore.doc('app_config/homepage');
+    
     const appConfigSnap = await appConfigDocRef.get();
     
     if (!appConfigSnap.exists) {
@@ -163,7 +165,7 @@ const createPaymentOrderFlow = ai.defineFlow(
         if (paymentLink) {
             return { payment_link: paymentLink };
         } else {
-            throw new Error(`A static payment link for the ${'${input.plan}'} plan has not been configured. Please contact support.`);
+            throw new Error(`A static payment link for the ${input.plan} plan has not been configured. Please contact support.`);
         }
     }
 
@@ -178,18 +180,60 @@ const createPaymentOrderFlow = ai.defineFlow(
     }
 
     if (amount <= 0) {
-        throw new Error(`Invalid or missing price for ${'${input.plan}'} plan. Please set a price in the admin dashboard.`);
+        throw new Error(`Invalid or missing price for ${input.plan} plan. Please set a price in the admin dashboard.`);
     }
 
-    const orderInput = { ...input, amount };
-    const order = await createCashfreeOrder(orderInput);
+    // 4. Create payment record in a transaction
+    const paymentsCol = collection(firestore, 'payments');
+    const orderId = `order_${uuidv4()}`;
 
-    if (!order.payment_link) {
-      throw new Error("Failed to create dynamic payment link via API.");
+    try {
+        const payment_link = await runTransaction(firestore, async (transaction) => {
+            // Check if there is already a pending payment for this user and plan
+            const pendingPaymentQuery = query(
+                paymentsCol,
+                where('userId', '==', input.userId),
+                where('plan', '==', input.plan),
+                where('status', '==', 'pending')
+            );
+            const pendingPayments = await getDocs(pendingPaymentQuery);
+
+            if (!pendingPayments.empty) {
+                throw new Error(`You already have a pending payment for the ${input.plan} plan. Please complete or cancel it before creating a new one.`);
+            }
+
+            // Create new payment document
+            const newPaymentRef = doc(paymentsCol);
+            const paymentData = {
+                userId: input.userId,
+                plan: input.plan,
+                amount,
+                currency: 'INR',
+                orderId,
+                status: 'pending',
+                createdAt: Timestamp.now(),
+                updatedAt: Timestamp.now(),
+            };
+            transaction.set(newPaymentRef, paymentData);
+
+            // Create Cashfree order
+            const orderInput = { ...input, amount, orderId };
+            const { payment_link } = await createCashfreeOrder(orderInput);
+            
+            if (!payment_link) {
+                throw new Error("Failed to create dynamic payment link via API.");
+            }
+
+            return payment_link;
+        });
+
+        return { payment_link };
+
+    } catch (error: any) {
+        console.error("Payment transaction failed:", error);
+        throw new Error(error.message || "An error occurred during the payment process.");
     }
-    
-    return {
-      payment_link: order.payment_link,
-    };
   }
 );
+
+    

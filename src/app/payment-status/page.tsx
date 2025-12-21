@@ -1,69 +1,127 @@
 
 'use client';
 
-import { Suspense, useEffect } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Loader2, CheckCircle, XCircle } from 'lucide-react';
 import { useFirestore, updateDocumentNonBlocking } from '@/firebase';
-import { doc } from 'firebase/firestore';
+import { doc, collection, query, where, getDocs, writeBatch } from 'firebase/firestore';
 
 function PaymentStatusContent() {
     const searchParams = useSearchParams();
     const firestore = useFirestore();
-    
+    const [isLoading, setIsLoading] = useState(true);
+    const [status, setStatus] = useState<'processing' | 'success' | 'failed' | 'cancelled' | 'error'>('processing');
+    const [message, setMessage] = useState('Please wait while we confirm your payment status. Do not refresh this page.');
+
     const orderId = searchParams.get('order_id');
-    const txStatus = searchParams.get('tx_status') || searchParams.get('txStatus'); // Cashfree uses both casings
-    const uid = searchParams.get('uid');
-    const plan = searchParams.get('plan') as 'Premier' | 'Super Premier' | 'Verification' | null;
+    const orderStatus = searchParams.get('order_status'); // For Cashfree v2023-08-01, status is in order_status
 
     useEffect(() => {
-        if (txStatus === 'SUCCESS' && uid && plan && firestore) {
-            const userDocRef = doc(firestore, 'users', uid);
-            let updateData: any = {};
-
-            if (plan === 'Verification') {
-                updateData.verified = true;
-                updateData.tier = 'Standard';
-            } else if (plan === 'Premier' || plan === 'Super Premier') {
-                updateData.tier = plan;
-            }
-
-            if (Object.keys(updateData).length > 0) {
-                updateDocumentNonBlocking(userDocRef, updateData)
-                    .catch(error => {
-                        console.error("Failed to update user profile after payment:", error);
-                        // Optionally, show a toast to the user here
-                    });
-            }
+        if (!orderId || !firestore) {
+            setStatus('error');
+            setMessage('Invalid request. Order ID is missing.');
+            setIsLoading(false);
+            return;
         }
-    }, [txStatus, uid, plan, firestore]);
+
+        const finalizePayment = async () => {
+            const paymentsCol = collection(firestore, 'payments');
+            const q = query(paymentsCol, where('orderId', '==', orderId), where('status', '==', 'pending'));
+
+            try {
+                const querySnapshot = await getDocs(q);
+
+                if (querySnapshot.empty) {
+                    // Could be that the user refreshed the page after a successful update.
+                    // Check if a successful payment already exists.
+                    const successQuery = query(paymentsCol, where('orderId', '==', orderId), where('status', '==', 'successful'));
+                    const successSnapshot = await getDocs(successQuery);
+                    if (!successSnapshot.empty) {
+                        setStatus('success');
+                        setMessage('Your payment was already confirmed and your account has been updated.');
+                    } else {
+                        setStatus('error');
+                        setMessage('Payment record not found or already processed. If you have been charged, please contact support.');
+                    }
+                    setIsLoading(false);
+                    return;
+                }
+
+                const paymentDoc = querySnapshot.docs[0];
+                const paymentData = paymentDoc.data();
+                const userId = paymentData.userId;
+                const plan = paymentData.plan;
+
+                const batch = writeBatch(firestore);
+                const userDocRef = doc(firestore, 'users', userId);
+
+                if (orderStatus === 'PAID') {
+                    // Update payment status
+                    batch.update(paymentDoc.ref, { status: 'successful', updatedAt: new Date() });
+
+                    // Update user profile
+                    let updateData: any = {};
+                    if (plan === 'Verification') {
+                        updateData.verified = true;
+                    } else if (plan === 'Premier' || plan === 'Super Premier') {
+                        updateData.tier = plan;
+                    }
+                    batch.update(userDocRef, updateData);
+
+                    await batch.commit();
+                    setStatus('success');
+                    setMessage('Your payment was successful and your account has been updated.');
+                } else if (orderStatus === 'CANCELLED') {
+                    batch.update(paymentDoc.ref, { status: 'failed', updatedAt: new Date() });
+                    await batch.commit();
+                    setStatus('cancelled');
+                    setMessage('Your payment was cancelled.');
+                } else { // FAILED or other status
+                    batch.update(paymentDoc.ref, { status: 'failed', updatedAt: new Date() });
+                    await batch.commit();
+                    setStatus('failed');
+                    setMessage('There was an issue with your payment. Please try again.');
+                }
+            } catch (error) {
+                console.error("Error processing payment status:", error);
+                setStatus('error');
+                setMessage('An error occurred while updating your status. Please contact support.');
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        finalizePayment();
+
+    }, [orderId, orderStatus, firestore]);
 
     return (
         <Card className="w-full max-w-md">
             <CardHeader className="text-center">
                 <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 mb-4">
-                    {txStatus === 'SUCCESS' ? (
-                         <CheckCircle className="h-8 w-8 text-green-500" />
-                    ) : txStatus === 'FAILED' || txStatus === 'CANCELLED' ? (
-                        <XCircle className="h-8 w-8 text-destructive" />
-                    ) : (
+                    {isLoading || status === 'processing' ? (
                         <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                    ) : status === 'success' ? (
+                         <CheckCircle className="h-8 w-8 text-green-500" />
+                    ) : (
+                        <XCircle className="h-8 w-8 text-destructive" />
                     )}
                 </div>
                 <CardTitle className="text-2xl">
-                     {txStatus === 'SUCCESS' ? 'Payment Successful' : txStatus === 'FAILED' ? 'Payment Failed' : txStatus === 'CANCELLED' ? 'Payment Cancelled' : 'Processing Payment'}
+                     {isLoading || status === 'processing' ? 'Processing Payment' : status === 'success' ? 'Payment Successful' : status === 'cancelled' ? 'Payment Cancelled' : 'Payment Failed'}
                 </CardTitle>
                 <CardDescription>
-                    {txStatus === 'SUCCESS' ? `Your account has been updated.` : txStatus === 'FAILED' ? 'There was an issue with your payment.' : txStatus === 'CANCELLED' ? 'Your payment was cancelled.' : 'Please wait while we confirm your payment status. Do not refresh this page.'}
+                    {message}
                 </CardDescription>
             </CardHeader>
             <CardContent>
                 <div className="text-sm text-muted-foreground text-center">
                     <p>Order ID: {orderId}</p>
-                    <p>If you have any questions, please contact our support.</p>
+                    {status === 'error' && <p>If you have any questions, please contact our support.</p>}
                 </div>
             </CardContent>
             <CardFooter>
@@ -89,3 +147,5 @@ export default function PaymentStatusPage() {
         </div>
     );
 }
+
+    
