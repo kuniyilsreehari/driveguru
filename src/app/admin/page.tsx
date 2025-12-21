@@ -640,49 +640,52 @@ export default function AdminDashboardPage() {
     });
   }
 
-  const handleSaveSettings = async () => {
+  const handleSaveSettings = () => {
     if (!appConfigDocRef) return;
     setIsSavingSettings(true);
-    try {
-        const settingsToSave: AppConfig = {
-            featuredExpertsLimit: Number(featuredExpertsLimit),
-            premierPaymentLink,
-            superPremierPaymentLink,
-            verificationPaymentLink,
-            premierPlanPrices: {
-                daily: Number(premierPrices.daily) || 0,
-                monthly: Number(premierPrices.monthly) || 0,
-                yearly: Number(premierPrices.yearly) || 0,
-            },
-            superPremierPlanPrices: {
-                daily: Number(superPremierPrices.daily) || 0,
-                monthly: Number(superPremierPrices.monthly) || 0,
-                yearly: Number(superPremierPrices.yearly) || 0,
-            },
-            verificationFee: Number(verificationFee),
-            availabilityLocationText: availabilityLocationText,
-            publicApiKey: publicApiKey,
-            referralRewardPoints: Number(referralRewardPoints),
-            isAnnouncementEnabled: isAnnouncementEnabled,
-            announcementText: announcementText,
-            announcementSpeed: Number(announcementSpeed),
-            isPaymentsEnabled,
-            paymentMethod,
-        };
-        await setDocumentNonBlocking(appConfigDocRef, settingsToSave, { merge: true });
+
+    const settingsToSave: AppConfig = {
+        featuredExpertsLimit: Number(featuredExpertsLimit),
+        premierPaymentLink,
+        superPremierPaymentLink,
+        verificationPaymentLink,
+        premierPlanPrices: {
+            daily: Number(premierPrices.daily) || 0,
+            monthly: Number(premierPrices.monthly) || 0,
+            yearly: Number(premierPrices.yearly) || 0,
+        },
+        superPremierPlanPrices: {
+            daily: Number(superPremierPrices.daily) || 0,
+            monthly: Number(superPremierPrices.monthly) || 0,
+            yearly: Number(superPremierPrices.yearly) || 0,
+        },
+        verificationFee: Number(verificationFee),
+        availabilityLocationText: availabilityLocationText,
+        publicApiKey: publicApiKey,
+        referralRewardPoints: Number(referralRewardPoints),
+        isAnnouncementEnabled: isAnnouncementEnabled,
+        announcementText: announcementText,
+        announcementSpeed: Number(announcementSpeed),
+        isPaymentsEnabled,
+        paymentMethod,
+    };
+    
+    setDocumentNonBlocking(appConfigDocRef, settingsToSave, { merge: true }).then(() => {
         toast({
             title: "Settings Saved",
             description: "Application settings have been updated.",
         });
-    } catch(e) {
-        toast({
-            variant: "destructive",
-            title: "Error saving settings",
-            description: "Could not save settings. Please try again.",
-        });
-    } finally {
+    }).catch(error => {
+        if (error.name !== 'FirebaseError') {
+             toast({
+                variant: "destructive",
+                title: "Error saving settings",
+                description: "Could not save settings. Please try again.",
+            });
+        }
+    }).finally(() => {
         setIsSavingSettings(false);
-    }
+    });
   }
 
   const handleApproveReview = (review: Review) => {

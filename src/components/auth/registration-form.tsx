@@ -349,84 +349,88 @@ export function RegistrationForm() {
       return;
     }
     setIsSubmitting(true);
+    
     try {
-      const referringUserDoc = await getReferringUser(values.referralCode || '');
-      if (values.referralCode && !referringUserDoc) {
-        form.setError("referralCode", {
-          type: "manual",
-          message: "This referral code is not valid.",
-        });
-        setIsSubmitting(false);
-        return;
-      }
-
-      const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
-      const newUser = userCredential.user;
-      
-      const fullAddress = [values.address, values.city, values.state, values.pincode].filter(Boolean).join(', ');
-      const coords = await getCoordinates(fullAddress);
-      
-      await runTransaction(firestore, async (transaction) => {
-        const newUserDocRef = doc(firestore, "users", newUser.uid);
-        const appConfigDocRef = doc(firestore, 'app_config', 'homepage');
-
-        const appConfigSnap = await transaction.get(appConfigDocRef);
-        const appConfigData = appConfigSnap.data();
-        const referralRewardPoints = appConfigData?.referralRewardPoints || 0;
-        
-        const userData: any = {
-            id: newUser.uid,
-            firstName: values.firstName,
-            lastName: values.lastName,
-            email: values.email,
-            role: values.role,
-            department: values.department,
-            state: values.state,
-            city: values.city,
-            pincode: values.pincode,
-            address: values.address,
-            latitude: coords?.lat || null,
-            longitude: coords?.lon || null,
-            phoneNumber: values.countryCode && values.phoneNumber ? `${values.countryCode} ${values.phoneNumber}` : "",
-            companyName: values.companyName,
-            verified: false,
-            photoUrl: '',
-            isAvailable: true,
-            referralCode: generateReferralCode(),
-            referralPoints: 0,
-            createdAt: serverTimestamp(),
-        };
-        
-        if (referringUserDoc && referralRewardPoints > 0) {
-            userData.referredBy = referringUserDoc.id;
-            const referrerRef = doc(firestore, 'users', referringUserDoc.id);
-            transaction.update(referrerRef, {
-                referralPoints: increment(referralRewardPoints)
+        const referringUserDoc = await getReferringUser(values.referralCode || '');
+        if (values.referralCode && !referringUserDoc) {
+            form.setError("referralCode", {
+            type: "manual",
+            message: "This referral code is not valid.",
             });
+            setIsSubmitting(false);
+            return;
         }
-        
-        transaction.set(newUserDocRef, userData);
-      });
 
-      toast({
-        title: "Account Created",
-        description: "Your account has been successfully created. You are now logged in.",
-      });
+        const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
+        const newUser = userCredential.user;
+        
+        const fullAddress = [values.address, values.city, values.state, values.pincode].filter(Boolean).join(', ');
+        const coords = await getCoordinates(fullAddress);
+        
+        // This transaction will either complete fully or fail, preventing partial data writes.
+        await runTransaction(firestore, async (transaction) => {
+            const newUserDocRef = doc(firestore, "users", newUser.uid);
+            const appConfigDocRef = doc(firestore, 'app_config', 'homepage');
+
+            const appConfigSnap = await transaction.get(appConfigDocRef);
+            // Safely get referral points, defaulting to 0 if config is missing.
+            const referralRewardPoints = appConfigSnap.data()?.referralRewardPoints || 0;
+            
+            const userData: any = {
+                id: newUser.uid,
+                firstName: values.firstName,
+                lastName: values.lastName,
+                email: values.email,
+                role: values.role,
+                department: values.department,
+                state: values.state,
+                city: values.city,
+                pincode: values.pincode,
+                address: values.address,
+                latitude: coords?.lat || null,
+                longitude: coords?.lon || null,
+                phoneNumber: values.countryCode && values.phoneNumber ? `${values.countryCode} ${values.phoneNumber}` : "",
+                companyName: values.companyName,
+                verified: false,
+                photoUrl: '',
+                isAvailable: true,
+                referralCode: generateReferralCode(),
+                referralPoints: 0,
+                createdAt: serverTimestamp(),
+            };
+            
+            if (referringUserDoc && referralRewardPoints > 0) {
+                userData.referredBy = referringUserDoc.id;
+                const referrerRef = doc(firestore, 'users', referringUserDoc.id);
+                transaction.update(referrerRef, {
+                    referralPoints: increment(referralRewardPoints)
+                });
+            }
+            
+            transaction.set(newUserDocRef, userData);
+        });
+
+        toast({
+            title: "Account Created",
+            description: "Your account has been successfully created. You are now logged in.",
+        });
 
     } catch (error: any) {
-      console.error("Registration failed:", error);
-      if (error.code === 'auth/email-already-in-use') {
-        form.setError("email", {
-            type: "manual",
-            message: "This email is already registered. Please use a different email or log in.",
-        });
-      } else {
-        toast({
-            variant: "destructive",
-            title: "Registration Failed",
-            description: "An unexpected error occurred. Please try again.",
-        });
-      }
+        if (error.code === 'auth/email-already-in-use') {
+            form.setError("email", {
+                type: "manual",
+                message: "This email is already registered. Please use a different email or log in.",
+            });
+        } else {
+             // Let the global error handler catch other Firestore permission errors
+            if (error.name !== 'FirebaseError') {
+                toast({
+                    variant: "destructive",
+                    title: "Registration Failed",
+                    description: error.message || "An unexpected error occurred. Please try again.",
+                });
+            }
+        }
     } finally {
         setIsSubmitting(false);
     }

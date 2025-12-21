@@ -113,21 +113,21 @@ export function PostVacancyForm({
     if (vacancy) {
       // Update existing vacancy
       const vacancyDocRef = doc(firestore, 'vacancies', vacancy.id);
-      try {
-        await updateDocumentNonBlocking(vacancyDocRef, values);
-        toast({
-          title: "Vacancy Updated",
-          description: "The job opening has been successfully updated.",
-        });
-        onSuccess();
-      } catch (error) {
-        console.error("Error updating vacancy:", error);
-        toast({
-          variant: "destructive",
-          title: "Update Failed",
-          description: "An unexpected error occurred. Please try again.",
-        });
-      }
+      updateDocumentNonBlocking(vacancyDocRef, values).then(() => {
+          toast({
+              title: "Vacancy Updated",
+              description: "The job opening has been successfully updated.",
+          });
+          onSuccess();
+      }).catch(error => {
+          if (error.name !== 'FirebaseError') {
+              toast({
+                  variant: "destructive",
+                  title: "Update Failed",
+                  description: "An unexpected error occurred. Please try again.",
+              });
+          }
+      });
 
     } else {
       // Create new vacancy
@@ -144,21 +144,21 @@ export function PostVacancyForm({
         postedAt: serverTimestamp(),
       };
 
-      try {
-        await addDocumentNonBlocking(vacanciesCollectionRef, newVacancyData);
-        toast({
-          title: "Vacancy Posted",
-          description: "The new job opening has been successfully posted.",
-        });
-        onSuccess();
-      } catch (error) {
-        console.error("Error posting vacancy:", error);
-        toast({
-          variant: "destructive",
-          title: "Posting Failed",
-          description: "An unexpected error occurred. Please try again.",
-        });
-      }
+      addDocumentNonBlocking(vacanciesCollectionRef, newVacancyData).then(() => {
+          toast({
+              title: "Vacancy Posted",
+              description: "The new job opening has been successfully posted.",
+          });
+          onSuccess();
+      }).catch(error => {
+          if (error.name !== 'FirebaseError') {
+              toast({
+                  variant: "destructive",
+                  title: "Posting Failed",
+                  description: "An unexpected error occurred. Please try again.",
+              });
+          }
+      });
     }
   }
 

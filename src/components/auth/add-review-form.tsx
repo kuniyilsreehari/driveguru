@@ -79,21 +79,24 @@ export function AddReviewForm({ experts, onSuccess }: AddReviewFormProps) {
       createdAt: serverTimestamp(),
     };
 
-    try {
-      await addDocumentNonBlocking(reviewsCollectionRef, newReviewData);
-      toast({
-        title: "Review Added",
-        description: "The new review has been successfully posted.",
-      });
-      onSuccess();
-    } catch (error) {
-      console.error("Error adding review:", error);
-      toast({
-        variant: "destructive",
-        title: "Submission Failed",
-        description: "An unexpected error occurred. Please try again.",
-      });
-    }
+    // Use non-blocking update and let the centralized error handler catch permission issues.
+    addDocumentNonBlocking(reviewsCollectionRef, newReviewData).then(() => {
+        toast({
+            title: "Review Added",
+            description: "The new review has been successfully posted.",
+        });
+        onSuccess();
+    }).catch(error => {
+        // This catch is for client-side validation or other non-permission errors.
+        // Permission errors are handled globally.
+        if (error.name !== 'FirebaseError') {
+             toast({
+                variant: "destructive",
+                title: "Submission Failed",
+                description: "An unexpected error occurred. Please try again.",
+            });
+        }
+    });
   }
 
   return (
