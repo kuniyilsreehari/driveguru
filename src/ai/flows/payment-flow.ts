@@ -11,7 +11,7 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { v4 as uuidv4 } from 'uuid';
-import { initializeApp, getApps, App, cert } from 'firebase-admin/app';
+import { initializeApp, getApps, App } from 'firebase-admin/app';
 import { getFirestore, runTransaction, collection, query, where, getDocs, Timestamp, doc } from 'firebase-admin/firestore';
 
 
@@ -21,6 +21,7 @@ const CreatePaymentOrderInputSchema = z.object({
   userName: z.string().describe("The name of the user."),
   userPhone: z.string().describe("The phone number of the user."),
   plan: z.enum(['Premier', 'Super Premier', 'Verification']).describe("The product the user is paying for."),
+  billingCycle: z.enum(['daily', 'monthly', 'yearly', 'one-time']).describe("The billing cycle for the plan."),
 });
 export type CreatePaymentOrderInput = z.infer<typeof CreatePaymentOrderInputSchema>;
 
@@ -43,7 +44,11 @@ function getAdminApp(): App {
   }
   
   return initializeApp({
-    credential: cert(JSON.parse(serviceAccountString)),
+    credential: {
+        projectId: JSON.parse(serviceAccountString).project_id,
+        privateKey: JSON.parse(serviceAccountString).private_key,
+        clientEmail: JSON.parse(serviceAccountString).client_email,
+    }
   });
 }
 
@@ -89,7 +94,7 @@ async function createCashfreeOrder(input: CreatePaymentOrderInput & { amount: nu
         order_tags: {
             whatsapp: sanitizedPhone, // Instruct Cashfree to send WhatsApp notification
         },
-        order_note: `Payment for DriveGuru: ${input.plan}`,
+        order_note: `Payment for DriveGuru: ${input.plan} (${input.billingCycle})`,
     };
 
     try {
@@ -169,16 +174,17 @@ const createPaymentOrderFlow = ai.defineFlow(
 
     // 3. Fallback to dynamic API generation (Cashfree) if method is 'API'
     let amount = 0;
-    if (input.plan === 'Premier') {
-        amount = appConfig.premierPlanPrice || 0;
-    } else if (input.plan === 'Super Premier') {
-        amount = appConfig.superPremierPlanPrice || 0;
-    } else if (input.plan === 'Verification') {
+    if (input.plan === 'Verification') {
         amount = appConfig.verificationFee || 0;
+    } else if (input.plan === 'Premier') {
+        amount = appConfig.premierPlanPrices?.[input.billingCycle] || 0;
+    } else if (input.plan === 'Super Premier') {
+        amount = appConfig.superPremierPlanPrices?.[input.billingCycle] || 0;
     }
 
+
     if (amount <= 0) {
-        throw new Error(`Invalid or missing price for ${input.plan} plan. Please set a price in the admin dashboard.`);
+        throw new Error(`Invalid or missing price for ${input.plan} plan (${input.billingCycle}). Please set a price in the admin dashboard.`);
     }
 
     // 4. Create payment record in a transaction
@@ -206,6 +212,7 @@ const createPaymentOrderFlow = ai.defineFlow(
                 id: newPaymentRef.id,
                 userId: input.userId,
                 plan: input.plan,
+                billingCycle: input.billingCycle,
                 amount,
                 currency: 'INR',
                 orderId,

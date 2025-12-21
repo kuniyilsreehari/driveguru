@@ -7,7 +7,7 @@ import { signOut } from 'firebase/auth';
 import { doc, collection, query, where } from 'firebase/firestore';
 import { useUser, useAuth, useFirestore, useDoc, useCollection, useMemoFirebase, updateDocumentNonBlocking } from '@/firebase';
 import { Button } from '@/components/ui/button';
-import { LogOut, Briefcase, Loader, Edit, UserCheck, XCircle, MapPin, IndianRupee, Calendar, Book, GraduationCap, School, Info, User as UserIcon, Check, Power, Building, PlusCircle, Crown, Sparkles, Lock, Home, ArrowUpCircle, ShieldCheck, ExternalLink, Gift, Copy, Shield, AlertTriangle } from 'lucide-react';
+import { LogOut, Briefcase, Loader, Edit, UserCheck, XCircle, MapPin, IndianRupee, Calendar, Book, GraduationCap, School, Info, User as UserIcon, Check, Power, Building, PlusCircle, Crown, Sparkles, Lock, Home, ArrowUpCircle, ShieldCheck, ExternalLink, Gift, Copy, Shield, AlertTriangle, ChevronDown } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import {
   Dialog,
@@ -18,6 +18,12 @@ import {
   DialogDescription,
   DialogFooter
 } from '@/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { EditProfileForm } from '@/components/auth/edit-profile-form';
 import { PostVacancyForm } from '@/components/auth/post-vacancy-form';
 import { Badge } from '@/components/ui/badge';
@@ -62,9 +68,15 @@ type ExpertUserProfile = {
     tier?: 'Standard' | 'Premier' | 'Super Premier';
 };
 
+type PlanPrices = {
+    daily?: number;
+    monthly?: number;
+    yearly?: number;
+};
+
 type AppConfig = {
-    premierPlanPrice?: number;
-    superPremierPlanPrice?: number;
+    premierPlanPrices?: PlanPrices;
+    superPremierPlanPrices?: PlanPrices;
     verificationFee?: number;
 };
 
@@ -156,7 +168,7 @@ function CompanyVacancies({ userProfile }: { userProfile: ExpertUserProfile }) {
 }
 
 
-function UpgradeDialog({ userProfile, tier, price }: { userProfile: ExpertUserProfile, tier: 'Premier' | 'Super Premier' | 'Verification', price?: number }) {
+function UpgradeDialog({ userProfile, tier, billingCycle, price }: { userProfile: ExpertUserProfile, tier: 'Premier' | 'Super Premier' | 'Verification', billingCycle: 'daily' | 'monthly' | 'yearly' | 'one-time', price?: number }) {
     const [isCreatingOrder, setIsCreatingOrder] = useState(false);
     const { toast } = useToast();
     const router = useRouter();
@@ -170,6 +182,7 @@ function UpgradeDialog({ userProfile, tier, price }: { userProfile: ExpertUserPr
                 userName: `${userProfile.firstName} ${userProfile.lastName}`,
                 userPhone: userProfile.phoneNumber || '',
                 plan: tier,
+                billingCycle: billingCycle,
             });
 
             if (payment_link) {
@@ -212,14 +225,13 @@ function UpgradeDialog({ userProfile, tier, price }: { userProfile: ExpertUserPr
     return (
         <Dialog>
             <DialogTrigger asChild>
-                <Button size={tier === 'Verification' ? 'default' : 'sm'} className={cn("mt-auto w-full", tier === 'Verification' && "bg-green-600 hover:bg-green-700")}>
-                    {tier === 'Verification' ? <ShieldCheck className="mr-2 h-4 w-4" /> : <ArrowUpCircle className="mr-2 h-4 w-4" />}
-                    {buttonText}
+                 <Button className="w-full justify-start" variant="ghost" size="sm">
+                    {billingCycle.charAt(0).toUpperCase() + billingCycle.slice(1)} - ₹{price}
                 </Button>
             </DialogTrigger>
             <DialogContent>
                 <DialogHeader>
-                    <DialogTitle>{dialogTitle}</DialogTitle>
+                    <DialogTitle>{dialogTitle} - {billingCycle.charAt(0).toUpperCase() + billingCycle.slice(1)}</DialogTitle>
                     <DialogDescription>
                        {dialogDescription}
                     </DialogDescription>
@@ -231,7 +243,7 @@ function UpgradeDialog({ userProfile, tier, price }: { userProfile: ExpertUserPr
                         ) : (
                             <ExternalLink className="mr-2 h-4 w-4" />
                         )}
-                        {isCreatingOrder ? 'Processing...' : 'Proceed to Payment'}
+                        {isCreatingOrder ? 'Processing...' : `Proceed to Pay ₹${price}`}
                     </Button>
                 </div>
                 <DialogFooter>
@@ -245,7 +257,7 @@ function UpgradeDialog({ userProfile, tier, price }: { userProfile: ExpertUserPr
 }
 
 function PlanManagement({ userProfile, appConfig }: { userProfile: ExpertUserProfile; appConfig: AppConfig | null }) {
-    const PlanCard = ({ title, icon, description, features, current, children }: { title: string; icon: React.ReactNode; description: string; features: string[]; current?: boolean; children?: React.ReactNode; }) => (
+    const PlanCard = ({ title, icon, description, features, children, current }: { title: string; icon: React.ReactNode; description: string; features: string[]; children?: React.ReactNode, current?: boolean }) => (
         <Card className={cn("flex flex-col", current && "border-primary ring-2 ring-primary")}>
             <CardHeader className="text-center">
                 <div className={cn("mx-auto w-fit rounded-full p-3 mb-2", current ? "bg-primary/10" : "bg-secondary")}>
@@ -264,7 +276,7 @@ function PlanManagement({ userProfile, appConfig }: { userProfile: ExpertUserPro
                     ))}
                 </ul>
             </CardContent>
-            <CardFooter>
+            <CardFooter className="flex-col">
                 {current ? (
                     <Button variant="outline" disabled className="w-full"><ShieldCheck className="mr-2 h-4 w-4" /> Current Plan</Button>
                 ) : (
@@ -272,7 +284,30 @@ function PlanManagement({ userProfile, appConfig }: { userProfile: ExpertUserPro
                 )}
             </CardFooter>
         </Card>
-    )
+    );
+
+    const UpgradeButton = ({ tier, prices }: { tier: 'Premier' | 'Super Premier', prices?: PlanPrices }) => {
+        if (!prices || Object.values(prices).every(p => !p || p <= 0)) {
+            return <Button disabled className="w-full mt-auto"><ArrowUpCircle className="mr-2 h-4 w-4" />Upgrade to {tier}</Button>;
+        }
+
+        return (
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button className="w-full mt-auto">
+                        <ArrowUpCircle className="mr-2 h-4 w-4" />
+                        Upgrade to {tier}
+                        <ChevronDown className="ml-auto h-4 w-4" />
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                    {prices.daily && prices.daily > 0 && <DropdownMenuItem asChild><UpgradeDialog userProfile={userProfile} tier={tier} billingCycle="daily" price={prices.daily} /></DropdownMenuItem>}
+                    {prices.monthly && prices.monthly > 0 && <DropdownMenuItem asChild><UpgradeDialog userProfile={userProfile} tier={tier} billingCycle="monthly" price={prices.monthly} /></DropdownMenuItem>}
+                    {prices.yearly && prices.yearly > 0 && <DropdownMenuItem asChild><UpgradeDialog userProfile={userProfile} tier={tier} billingCycle="yearly" price={prices.yearly} /></DropdownMenuItem>}
+                </DropdownMenuContent>
+            </DropdownMenu>
+        );
+    };
 
     return (
         <Card>
@@ -296,7 +331,7 @@ function PlanManagement({ userProfile, appConfig }: { userProfile: ExpertUserPro
                         features={["All Standard features", "AI-Powered Search access", "Post job vacancies", "Downloadable PDF profile"]}
                         current={userProfile.tier === 'Premier'}
                      >
-                        {(userProfile.tier === 'Standard' || !userProfile.tier) && <UpgradeDialog userProfile={userProfile} tier="Premier" price={appConfig?.premierPlanPrice} />}
+                        {(userProfile.tier === 'Standard' || !userProfile.tier) && <UpgradeButton tier="Premier" prices={appConfig?.premierPlanPrices} />}
                      </PlanCard>
                      <PlanCard
                         title="Super Premier"
@@ -305,7 +340,7 @@ function PlanManagement({ userProfile, appConfig }: { userProfile: ExpertUserPro
                         features={["All Premier features", "Top placement in search results", "Featured expert listing"]}
                         current={userProfile.tier === 'Super Premier'}
                      >
-                        {userProfile.tier !== 'Super Premier' && <UpgradeDialog userProfile={userProfile} tier="Super Premier" price={appConfig?.superPremierPlanPrice} />}
+                        {userProfile.tier !== 'Super Premier' && <UpgradeButton tier="Super Premier" prices={appConfig?.superPremierPlanPrices} />}
                     </PlanCard>
                 </div>
             </CardContent>
@@ -537,7 +572,17 @@ export default function ExpertDashboardPage() {
                                 </p>
                             </div>
                         </div>
-                        <UpgradeDialog userProfile={userProfile} tier="Verification" price={verificationFee} />
+                        <Dialog>
+                            <DialogTrigger asChild>
+                                <Button size="default" className="mt-auto w-full sm:w-auto bg-green-600 hover:bg-green-700">
+                                    <ShieldCheck className="mr-2 h-4 w-4" />
+                                    Get Verified {verificationFee && verificationFee > 0 ? ` for ₹${verificationFee}` : ''}
+                                </Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                                <UpgradeDialog userProfile={userProfile} tier="Verification" billingCycle="one-time" price={verificationFee} />
+                            </DialogContent>
+                        </Dialog>
                     </div>
                 )}
                 

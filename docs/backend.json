@@ -353,6 +353,11 @@
           "description": "The plan or product being purchased (e.g., 'Premier', 'Verification').",
           "enum": ["Premier", "Super Premier", "Verification"]
         },
+        "billingCycle": {
+          "type": "string",
+          "description": "The billing cycle for the plan.",
+          "enum": ["daily", "monthly", "yearly", "one-time"]
+        },
         "amount": {
           "type": "number",
           "description": "The amount paid."
@@ -405,6 +410,28 @@
         "publicApiKey": {
           "type": "string",
           "description": "A public-facing API key for client-side services (e.g., a public Cashfree key)."
+        },
+        "premierPlanPrices": {
+            "type": "object",
+            "description": "Pricing for the Premier plan.",
+            "properties": {
+                "daily": { "type": "number" },
+                "monthly": { "type": "number" },
+                "yearly": { "type": "number" }
+            }
+        },
+        "superPremierPlanPrices": {
+            "type": "object",
+            "description": "Pricing for the Super Premier plan.",
+            "properties": {
+                "daily": { "type": "number" },
+                "monthly": { "type": "number" },
+                "yearly": { "type": "number" }
+            }
+        },
+        "verificationFee": {
+          "type": "number",
+          "description": "The one-time fee for expert verification."
         },
         "premierPaymentLink": {
           "type": "string",
@@ -589,6 +616,3 @@
     "reasoning": "The Firestore structure is designed to support DriveGuru's core features while adhering to the principles of Authorization Independence, Structural Segregation, and Access Modeling. User data, company information, and location data are stored in separate collections to maintain clarity and enforce consistent security rules. Crucially, authorization data is denormalized to avoid `get()` calls in security rules and ensure atomic operations.\n\n1.  **Authorization Independence:** A separate `/roles_super_admin/{userId}` collection determines super admin privileges based on document existence rather than user document content. This simplifies security rules and avoids hierarchical dependencies.\n\n2.  **Structural Segregation:**  User data, company data, location data, and reviews are stored in separate collections, each with distinct security requirements. This segregation simplifies security rule management and prevents unintended access.\n\n3.  **Access Modeling:**\n    *   User-owned location data is structured under `/users/{userId}/location_data/{locationDataId}`. This allows for path-based security rules, ensuring that only the user can access their own location data.\n    *   Companies are stored in a top-level `/companies` collection.\n    *   The super admin role is managed through the `/roles_super_admin/{userId}` collection, where the existence of a document for a user ID grants super admin privileges.\n    *   Reviews are in a top-level collection to allow admins to easily list and moderate all submitted reviews, while rules can still be written to allow users to create reviews or read approved ones."
   }
 }
-
-    
-    

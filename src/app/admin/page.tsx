@@ -113,13 +113,19 @@ type Payment = {
     updatedAt: Timestamp;
 };
 
+type PlanPrices = {
+    daily?: number;
+    monthly?: number;
+    yearly?: number;
+};
+
 type AppConfig = {
     featuredExpertsLimit?: number;
     premierPaymentLink?: string;
     superPremierPaymentLink?: string;
     verificationPaymentLink?: string;
-    premierPlanPrice?: number;
-    superPremierPlanPrice?: number;
+    premierPlanPrices?: PlanPrices;
+    superPremierPlanPrices?: PlanPrices;
     verificationFee?: number;
     isAnnouncementEnabled?: boolean;
     announcementText?: string;
@@ -472,8 +478,10 @@ export default function AdminDashboardPage() {
   const [premierPaymentLink, setPremierPaymentLink] = useState('');
   const [superPremierPaymentLink, setSuperPremierPaymentLink] = useState('');
   const [verificationPaymentLink, setVerificationPaymentLink] = useState('');
-  const [premierPrice, setPremierPrice] = useState(0);
-  const [superPremierPrice, setSuperPremierPrice] = useState(0);
+  
+  const [premierPrices, setPremierPrices] = useState<PlanPrices>({ daily: 0, monthly: 0, yearly: 0 });
+  const [superPremierPrices, setSuperPremierPrices] = useState<PlanPrices>({ daily: 0, monthly: 0, yearly: 0 });
+
   const [verificationFee, setVerificationFee] = useState(0);
   const [availabilityLocationText, setAvailabilityLocationText] = useState('');
   const [publicApiKey, setPublicApiKey] = useState('');
@@ -541,8 +549,8 @@ export default function AdminDashboardPage() {
         setPremierPaymentLink(appConfig.premierPaymentLink || '');
         setSuperPremierPaymentLink(appConfig.superPremierPaymentLink || '');
         setVerificationPaymentLink(appConfig.verificationPaymentLink || '');
-        setPremierPrice(appConfig.premierPlanPrice || 0);
-        setSuperPremierPrice(appConfig.superPremierPlanPrice || 0);
+        setPremierPrices(appConfig.premierPlanPrices || { daily: 0, monthly: 0, yearly: 0 });
+        setSuperPremierPrices(appConfig.superPremierPlanPrices || { daily: 0, monthly: 0, yearly: 0 });
         setVerificationFee(appConfig.verificationFee || 0);
         setAvailabilityLocationText(appConfig.availabilityLocationText || '');
         setPublicApiKey(appConfig.publicApiKey || '');
@@ -641,8 +649,16 @@ export default function AdminDashboardPage() {
             premierPaymentLink,
             superPremierPaymentLink,
             verificationPaymentLink,
-            premierPlanPrice: Number(premierPrice),
-            superPremierPlanPrice: Number(superPremierPrice),
+            premierPlanPrices: {
+                daily: Number(premierPrices.daily) || 0,
+                monthly: Number(premierPrices.monthly) || 0,
+                yearly: Number(premierPrices.yearly) || 0,
+            },
+            superPremierPlanPrices: {
+                daily: Number(superPremierPrices.daily) || 0,
+                monthly: Number(superPremierPrices.monthly) || 0,
+                yearly: Number(superPremierPrices.yearly) || 0,
+            },
             verificationFee: Number(verificationFee),
             availabilityLocationText: availabilityLocationText,
             publicApiKey: publicApiKey,
@@ -1374,32 +1390,20 @@ export default function AdminDashboardPage() {
                                             </div>
                                         </div>
                                         <div className="space-y-4">
-                                            <div>
-                                                <Label htmlFor="premier-price">Premier Plan Price (INR)</Label>
-                                                <div className="relative mt-1">
-                                                    <IndianRupee className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                                                    <Input
-                                                        id="premier-price"
-                                                        type="number"
-                                                        value={premierPrice}
-                                                        onChange={(e) => setPremierPrice(Number(e.target.value))}
-                                                        className="pl-10"
-                                                        placeholder="e.g., 499"
-                                                    />
+                                            <div className="space-y-2">
+                                                <Label>Premier Plan Prices (INR)</Label>
+                                                <div className="grid grid-cols-3 gap-2">
+                                                    <Input type="number" placeholder="Daily" value={premierPrices.daily || ''} onChange={e => setPremierPrices(p => ({ ...p, daily: Number(e.target.value) }))} />
+                                                    <Input type="number" placeholder="Monthly" value={premierPrices.monthly || ''} onChange={e => setPremierPrices(p => ({ ...p, monthly: Number(e.target.value) }))} />
+                                                    <Input type="number" placeholder="Yearly" value={premierPrices.yearly || ''} onChange={e => setPremierPrices(p => ({ ...p, yearly: Number(e.target.value) }))} />
                                                 </div>
                                             </div>
-                                            <div>
-                                                <Label htmlFor="super-premier-price">Super Premier Plan Price (INR)</Label>
-                                                <div className="relative mt-1">
-                                                    <IndianRupee className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                                                    <Input
-                                                        id="super-premier-price"
-                                                        type="number"
-                                                        value={superPremierPrice}
-                                                        onChange={(e) => setSuperPremierPrice(Number(e.target.value))}
-                                                        className="pl-10"
-                                                        placeholder="e.g., 999"
-                                                    />
+                                            <div className="space-y-2">
+                                                <Label>Super Premier Plan Prices (INR)</Label>
+                                                <div className="grid grid-cols-3 gap-2">
+                                                    <Input type="number" placeholder="Daily" value={superPremierPrices.daily || ''} onChange={e => setSuperPremierPrices(p => ({ ...p, daily: Number(e.target.value) }))} />
+                                                    <Input type="number" placeholder="Monthly" value={superPremierPrices.monthly || ''} onChange={e => setSuperPremierPrices(p => ({ ...p, monthly: Number(e.target.value) }))} />
+                                                    <Input type="number" placeholder="Yearly" value={superPremierPrices.yearly || ''} onChange={e => setSuperPremierPrices(p => ({ ...p, yearly: Number(e.target.value) }))} />
                                                 </div>
                                             </div>
                                         </div>
@@ -1673,5 +1677,3 @@ export default function AdminDashboardPage() {
     </>
   );
 }
-
-    
