@@ -10,9 +10,9 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
-import { initializeApp, getApps, App, cert } from 'firebase-admin/app';
 import { getFirestore, Timestamp } from 'firebase-admin/firestore';
 import { getAuth } from 'firebase-admin/auth';
+import { getAdminApp } from './get-admin-app';
 
 const ImportUsersInputSchema = z.object({
   csvData: z.string().describe('The full string content of the CSV file.'),
@@ -26,28 +26,6 @@ const ImportUsersOutputSchema = z.object({
   errors: z.array(z.string()),
 });
 export type ImportUsersOutput = z.infer<typeof ImportUsersOutputSchema>;
-
-function getAdminApp(): App {
-  const apps = getApps();
-  if (apps.length) {
-    return apps[0];
-  }
-
-  const serviceAccountString = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
-  if (!serviceAccountString) {
-    throw new Error('FIREBASE_SERVICE_ACCOUNT_KEY environment variable is not set. Please check your environment configuration.');
-  }
-
-  try {
-    // The service account key is a JSON string, so we need to parse it.
-    const serviceAccount = JSON.parse(serviceAccountString);
-    return initializeApp({
-      credential: cert(serviceAccount),
-    });
-  } catch (e: any) {
-    throw new Error(`Failed to parse FIREBASE_SERVICE_ACCOUNT_KEY. Please ensure it's a valid JSON string. Error: ${e.message}`);
-  }
-}
 
 
 function parseCSV(csvData: string): Record<string, any>[] {

@@ -11,8 +11,8 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { v4 as uuidv4 } from 'uuid';
-import { initializeApp, getApps, App, cert } from 'firebase-admin/app';
 import { getFirestore, runTransaction, collection, query, where, getDocs, Timestamp, doc } from 'firebase-admin/firestore';
+import { getAdminApp } from './get-admin-app';
 
 
 const CreatePaymentOrderInputSchema = z.object({
@@ -29,30 +29,6 @@ const CreatePaymentOrderOutputSchema = z.object({
   payment_link: z.string().describe('The URL to redirect the user to for payment.'),
 });
 export type CreatePaymentOrderOutput = z.infer<typeof CreatePaymentOrderOutputSchema>;
-
-
-// Helper to initialize Firebase Admin SDK
-function getAdminApp(): App {
-  const apps = getApps();
-  if (apps.length) {
-    return apps[0];
-  }
-
-  const serviceAccountString = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
-  if (!serviceAccountString) {
-    throw new Error('FIREBASE_SERVICE_ACCOUNT_KEY environment variable is not set. Please check your environment configuration.');
-  }
-  
-  try {
-    // The service account key is a JSON string, so we need to parse it.
-    const serviceAccount = JSON.parse(serviceAccountString);
-    return initializeApp({
-      credential: cert(serviceAccount),
-    });
-  } catch (e: any) {
-    throw new Error(`Failed to parse FIREBASE_SERVICE_ACCOUNT_KEY. Please ensure it's a valid JSON string. Error: ${e.message}`);
-  }
-}
 
 
 async function createCashfreeOrder(input: CreatePaymentOrderInput & { amount: number, orderId: string }): Promise<{ payment_link: string }> {
