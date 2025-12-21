@@ -401,15 +401,18 @@ export function RegistrationForm() {
 
     } catch (error: any) {
       console.error("Registration failed:", error);
-      let errorMessage = "An unexpected error occurred. Please try again.";
       if (error.code === 'auth/email-already-in-use') {
-        errorMessage = "This email address is already in use by another account.";
+        form.setError("email", {
+            type: "manual",
+            message: "This email is already registered. Please use a different email or log in.",
+        });
+      } else {
+        toast({
+            variant: "destructive",
+            title: "Registration Failed",
+            description: "An unexpected error occurred. Please try again.",
+        });
       }
-      toast({
-        variant: "destructive",
-        title: "Registration Failed",
-        description: errorMessage,
-      });
     } finally {
         setIsSubmitting(false);
     }
@@ -1119,3 +1122,4 @@ export function RegistrationForm() {
     
 
     
+
