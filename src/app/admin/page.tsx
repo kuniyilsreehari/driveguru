@@ -145,7 +145,7 @@ const UserTable = ({ users, onTierChange, onVerificationToggle, onDelete, onEdit
                 <TableRow>
                 <TableHead className="w-[80px]">Avatar</TableHead>
                 <TableHead>Full Name</TableHead>
-                <TableHead>Email</TableHead>
+                <TableHead>Contact</TableHead>
                 <TableHead>Referral Points</TableHead>
                 <TableHead>Role</TableHead>
                 <TableHead className="text-center">Tier</TableHead>
@@ -171,7 +171,10 @@ const UserTable = ({ users, onTierChange, onVerificationToggle, onDelete, onEdit
                             </div>
                         )}
                     </TableCell>
-                    <TableCell>{expert.email}</TableCell>
+                    <TableCell>
+                        <div>{expert.email}</div>
+                        <div className="text-xs text-muted-foreground">{expert.phoneNumber}</div>
+                    </TableCell>
                     <TableCell>
                         <Badge variant="outline" className="flex items-center gap-1 w-fit">
                             <Gift className="h-3 w-3" /> {expert.referralPoints || 0}
