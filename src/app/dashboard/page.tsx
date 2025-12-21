@@ -8,7 +8,7 @@ import { signOut } from 'firebase/auth';
 import { doc, collection, query, where, getDoc, runTransaction, increment } from 'firebase/firestore';
 import { useUser, useAuth, useFirestore, useDoc, useCollection, useMemoFirebase, updateDocumentNonBlocking } from '@/firebase';
 import { Button } from '@/components/ui/button';
-import { LogOut, Briefcase, Loader, Edit, UserCheck, XCircle, MapPin, IndianRupee, Calendar, Book, GraduationCap, School, Info, User as UserIcon, Check, Power, Building, PlusCircle, Crown, Sparkles, Lock, Home, ArrowUpCircle, ShieldCheck, ExternalLink, Gift, Copy, Shield, AlertTriangle, ChevronDown } from 'lucide-react';
+import { LogOut, Briefcase, Loader, Edit, UserCheck, XCircle, MapPin, IndianRupee, Calendar, Book, GraduationCap, School, Info, User as UserIcon, Check, Power, Building, PlusCircle, Crown, Sparkles, Lock, Home, ArrowUpCircle, ShieldCheck, ExternalLink, Gift, Copy, Shield, AlertTriangle, ChevronDown, Link as LinkIcon } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import {
   Dialog,
@@ -452,12 +452,15 @@ export default function ExpertDashboardPage() {
     return Math.round((filledFields / totalFields) * 100);
   }
 
-  const copyReferralCode = () => {
+  const copyReferralLink = () => {
     if (!userProfile?.referralCode) return;
-    navigator.clipboard.writeText(userProfile.referralCode);
+    const baseUrl = window.location.origin;
+    const signupUrl = new URL('/signup', baseUrl);
+    signupUrl.searchParams.set('ref', userProfile.referralCode);
+    navigator.clipboard.writeText(signupUrl.toString());
     toast({
-      title: 'Referral Code Copied',
-      description: 'Your referral code has been copied to your clipboard.',
+      title: 'Referral Link Copied',
+      description: 'Your unique signup link has been copied to your clipboard.',
     });
   };
 
@@ -738,9 +741,9 @@ export default function ExpertDashboardPage() {
                             <p className="text-sm text-muted-foreground">Your Referral Code</p>
                             <p className="text-2xl font-mono tracking-widest text-secondary-foreground">{userProfile.referralCode}</p>
                         </div>
-                        <Button size="sm" variant="outline" onClick={copyReferralCode}>
-                            <Copy className="mr-2 h-4 w-4" />
-                            Copy Code
+                        <Button size="sm" variant="outline" onClick={copyReferralLink}>
+                            <LinkIcon className="mr-2 h-4 w-4" />
+                            Copy Signup Link
                         </Button>
                     </div>
                     <div className="grid grid-cols-2 gap-4 mt-4">
@@ -755,7 +758,7 @@ export default function ExpertDashboardPage() {
                     </div>
                 </CardContent>
                 <CardFooter>
-                    <p className="text-xs text-muted-foreground">Share your code to earn points. Each referral earns you {appConfig?.referralRewardPoints || 0} points. 1 point = ₹1. Earnings can be redeemed upon request.</p>
+                    <p className="text-xs text-muted-foreground">Share your link to earn points. Each referral earns you {appConfig?.referralRewardPoints || 0} points. 1 point = ₹1. Earnings can be redeemed upon request.</p>
                 </CardFooter>
             </Card>
         )}

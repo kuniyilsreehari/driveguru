@@ -7,7 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { User as UserIcon, Mail, Lock, Eye, EyeOff, Briefcase, MapPin, Phone, LocateIcon, Loader2, Building, Home, GraduationCap, Book, ArrowRight, MessageSquare, Gift } from "lucide-react";
 import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, getAdditionalUserInfo, RecaptchaVerifier, signInWithPhoneNumber } from 'firebase/auth';
 import { doc, serverTimestamp, collection, query, where, getDocs, runTransaction, increment, limit, getDoc } from 'firebase/firestore';
@@ -107,6 +107,7 @@ export function RegistrationForm() {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [isDetectingLocation, setIsDetectingLocation] = useState(false);
   const [isFetchingPincode, setIsFetchingPincode] = useState(false);
 
@@ -126,7 +127,7 @@ export function RegistrationForm() {
       phoneNumber: "",
       companyName: "",
       department: "",
-      referralCode: "",
+      referralCode: searchParams.get('ref') || "",
       terms: false,
     },
   });
@@ -534,7 +535,7 @@ export function RegistrationForm() {
                   <div className="relative">
                       <Gift className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                       <FormControl>
-                          <Input placeholder="Enter a referral code" {...field} className="pl-10" />
+                          <Input placeholder="Enter a referral code" {...field} className="pl-10" disabled={!!searchParams.get('ref')} />
                       </FormControl>
                   </div>
                   <FormMessage />
