@@ -32,7 +32,10 @@ export type CreatePaymentOrderOutput = z.infer<typeof CreatePaymentOrderOutputSc
 
 
 async function createCashfreeOrder(input: CreatePaymentOrderInput & { amount: number, orderId: string }): Promise<{ payment_link: string }> {
-    const baseUrl = process.env.CASHFREE_API_URL || 'https://api.cashfree.com/pg';
+    const baseUrl = process.env.CASHFREE_API_URL;
+    if (!baseUrl) {
+        throw new Error('CASHFREE_API_URL environment variable is not set. Use https://sandbox.cashfree.com/pg for testing or https://api.cashfree.com/pg for production.');
+    }
     const url = `${baseUrl}/orders`;
     
     const appUrl = process.env.NEXT_PUBLIC_APP_URL;
