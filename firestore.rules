@@ -38,7 +38,7 @@ service cloud.firestore {
     function isUpdatingOwnUserDoc(userId) {
       // Users can only update specific, non-critical fields on their own profile.
       // This list defines fields that a user CANNOT change themselves.
-      let protectedFields = ['id', 'email', 'verified', 'role', 'tier', 'createdAt', 'referralCode', 'referredBy'];
+      let protectedFields = ['id', 'email', 'verified', 'role', 'tier', 'createdAt', 'referralCode', 'referredBy', 'referralPoints'];
       return isOwner(userId) && isExistingDoc() &&
              !request.resource.data.diff(resource.data).affectedKeys().hasAny(protectedFields);
     }
@@ -93,7 +93,7 @@ service cloud.firestore {
      * App Configuration
      * ===================================================== */
     match /app_config/{configId} {
-      allow read: if true;
+      allow read: if isSignedIn();
       allow write: if isSuperAdmin();
     }
 
@@ -127,8 +127,8 @@ service cloud.firestore {
      * ===================================================== */
 
     match /users/{userId} {
-      // Public profiles can be read by anyone.
-      allow get, list: if true;
+      // Any signed-in user can view any public profile.
+      allow get, list: if isSignedIn();
 
       // New users can create their own user document.
       allow create: if isCreatingOwnUserDoc(userId);
@@ -188,5 +188,3 @@ service cloud.firestore {
      * ===================================================== */
   }
 }
-
-    
