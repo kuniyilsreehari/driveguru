@@ -84,6 +84,8 @@ type AppConfig = {
     verificationFee?: number;
     referralRewardPoints?: number;
     verificationPaymentLink?: string;
+    premierPaymentLink?: string;
+    superPremierPaymentLink?: string;
 };
 
 function CompanyVacancies({ userProfile }: { userProfile: ExpertUserProfile }) {
@@ -263,7 +265,7 @@ function UpgradeDialog({ userProfile, tier, billingCycle, price }: { userProfile
 }
 
 function PlanManagement({ userProfile, appConfig }: { userProfile: ExpertUserProfile; appConfig: AppConfig | null }) {
-    const PlanCard = ({ title, icon, description, features, children, current }: { title: string; icon: React.ReactNode; description: string; features: string[]; children?: React.ReactNode, current?: boolean }) => (
+    const PlanCard = ({ title, icon, description, features, children, current, link }: { title: string; icon: React.ReactNode; description: string; features: string[]; children?: React.ReactNode, current?: boolean, link?: string }) => (
         <Card className={cn("flex flex-col", current && "border-primary ring-2 ring-primary")}>
             <CardHeader className="text-center">
                 <div className={cn("mx-auto w-fit rounded-full p-3 mb-2", current ? "bg-primary/10" : "bg-secondary")}>
@@ -285,35 +287,18 @@ function PlanManagement({ userProfile, appConfig }: { userProfile: ExpertUserPro
             <CardFooter className="flex-col">
                 {current ? (
                     <Button variant="outline" disabled className="w-full"><ShieldCheck className="mr-2 h-4 w-4" /> Current Plan</Button>
+                ) : link ? (
+                     <Button asChild className="w-full mt-auto">
+                        <Link href={link}>
+                            <ArrowUpCircle className="mr-2 h-4 w-4" /> Upgrade to {title}
+                        </Link>
+                    </Button>
                 ) : (
                     children
                 )}
             </CardFooter>
         </Card>
     );
-
-    const UpgradeButton = ({ tier, prices }: { tier: 'Premier' | 'Super Premier', prices?: PlanPrices }) => {
-        if (!prices || Object.values(prices).every(p => !p || p <= 0)) {
-            return <Button disabled className="w-full mt-auto"><ArrowUpCircle className="mr-2 h-4 w-4" />Upgrade to {tier}</Button>;
-        }
-
-        return (
-            <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                    <Button className="w-full mt-auto">
-                        <ArrowUpCircle className="mr-2 h-4 w-4" />
-                        Upgrade to {tier}
-                        <ChevronDown className="ml-auto h-4 w-4" />
-                    </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                    {prices.daily && prices.daily > 0 && <DropdownMenuItem asChild><UpgradeDialog userProfile={userProfile} tier={tier} billingCycle="daily" price={prices.daily} /></DropdownMenuItem>}
-                    {prices.monthly && prices.monthly > 0 && <DropdownMenuItem asChild><UpgradeDialog userProfile={userProfile} tier={tier} billingCycle="monthly" price={prices.monthly} /></DropdownMenuItem>}
-                    {prices.yearly && prices.yearly > 0 && <DropdownMenuItem asChild><UpgradeDialog userProfile={userProfile} tier={tier} billingCycle="yearly" price={prices.yearly} /></DropdownMenuItem>}
-                </DropdownMenuContent>
-            </DropdownMenu>
-        );
-    };
 
     return (
         <Card>
@@ -329,18 +314,16 @@ function PlanManagement({ userProfile, appConfig }: { userProfile: ExpertUserPro
                         description="Get noticed and build trust."
                         features={["Public profile listing", "AI-Powered Search access", "Post job vacancies", "Downloadable PDF profile"]}
                         current={userProfile.tier === 'Premier'}
-                     >
-                        {(userProfile.tier === 'Standard' || !userProfile.tier) && <UpgradeButton tier="Premier" prices={appConfig?.premierPlanPrices} />}
-                     </PlanCard>
+                        link={appConfig?.premierPaymentLink}
+                     />
                      <PlanCard
                         title="Super Premier"
                         icon={<Sparkles className="h-6 w-6" />}
                         description="Maximum visibility and tools."
                         features={["All Premier features", "Top placement in search results", "Featured expert listing"]}
                         current={userProfile.tier === 'Super Premier'}
-                     >
-                        {userProfile.tier !== 'Super Premier' && <UpgradeButton tier="Super Premier" prices={appConfig?.superPremierPlanPrices} />}
-                    </PlanCard>
+                        link={appConfig?.superPremierPaymentLink}
+                    />
                 </div>
             </CardContent>
         </Card>
