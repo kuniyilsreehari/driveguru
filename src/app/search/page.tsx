@@ -48,7 +48,7 @@ function SearchResults() {
     const verified = searchParams.get('verified') === 'true';
     const available = searchParams.get('available') === 'true';
     const tierParam = searchParams.get('tier');
-    const tiers = tierParam ? tierParam.split(',') : null;
+    const tiers = tierParam ? tierParam.split(',') : ['Premier', 'Super Premier']; // Default to subscription tiers
     const maxRateParam = searchParams.get('maxRate');
     const maxRate = maxRateParam ? parseInt(maxRateParam, 10) : null;
     const radiusParam = searchParams.get('radius');
@@ -106,16 +106,16 @@ function SearchResults() {
             constraints.push(where('role', '==', roleQuery));
         }
         
-        if (tiers && tiers.length > 0) {
-            constraints.push(where('tier', 'in', tiers));
-        }
+        // Enforce subscription model by default
+        constraints.push(where('tier', 'in', tiers && tiers.length > 0 ? tiers : ['Premier', 'Super Premier']));
 
         // We will query with basic filters first, then apply text and location search on the client.
         if (constraints.length > 0) {
             return query(collection(firestore, 'users'), ...constraints);
         }
 
-        return query(collection(firestore, 'users'));
+        // Fallback to only subscribed users if no other filters are present
+        return query(collection(firestore, 'users'), where('tier', 'in', ['Premier', 'Super Premier']));
 
     }, [firestore, verified, available, roleQuery, tiers]);
 
@@ -249,7 +249,7 @@ function SearchResults() {
         } else if (searchQueryParam) {
              titleParts.push(<span key="query">Results for &quot;<span className="text-primary">{searchQueryParam}</span>&quot;</span>);
         } else {
-             titleParts.push(<span key="all">Showing all experts</span>);
+             titleParts.push(<span key="all">Showing all subscribed experts</span>);
         }
 
         if (radius) {

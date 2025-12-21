@@ -316,19 +316,12 @@ function PlanManagement({ userProfile, appConfig }: { userProfile: ExpertUserPro
                 <CardDescription>Upgrade your plan to unlock powerful new features and increase your visibility.</CardDescription>
             </CardHeader>
             <CardContent>
-                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <PlanCard
-                        title="Standard"
-                        icon={<UserIcon className="h-6 w-6" />}
-                        description="Your current free plan."
-                        features={["Public profile listing", "Receive contact from users", "Basic search visibility"]}
-                        current={userProfile.tier === 'Standard' || !userProfile.tier}
-                    />
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                      <PlanCard
                         title="Premier"
                         icon={<Crown className="h-6 w-6" />}
                         description="Get noticed and build trust."
-                        features={["All Standard features", "AI-Powered Search access", "Post job vacancies", "Downloadable PDF profile"]}
+                        features={["Public profile listing", "AI-Powered Search access", "Post job vacancies", "Downloadable PDF profile"]}
                         current={userProfile.tier === 'Premier'}
                      >
                         {(userProfile.tier === 'Standard' || !userProfile.tier) && <UpgradeButton tier="Premier" prices={appConfig?.premierPlanPrices} />}
