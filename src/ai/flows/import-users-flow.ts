@@ -28,24 +28,24 @@ const ImportUsersOutputSchema = z.object({
 export type ImportUsersOutput = z.infer<typeof ImportUsersOutputSchema>;
 
 function getAdminApp(): App {
-    if (getApps().length) {
-        return getApps()[0];
-    }
-    
-    const serviceAccountString = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
-    if (!serviceAccountString) {
-      throw new Error('FIREBASE_SERVICE_ACCOUNT_KEY environment variable is not set.');
-    }
+  if (getApps().length) {
+    return getApps()[0];
+  }
 
-    try {
-        const serviceAccount = JSON.parse(serviceAccountString);
-        return initializeApp({
-            credential: cert(serviceAccount)
-        });
-    } catch (error: any) {
-        console.error("Error initializing Firebase Admin SDK with service account:", error.message);
-        throw new Error("Failed to initialize Firebase Admin SDK. Please check your FIREBASE_SERVICE_ACCOUNT_KEY.");
-    }
+  const serviceAccountString = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
+  if (!serviceAccountString) {
+    throw new Error('FIREBASE_SERVICE_ACCOUNT_KEY environment variable is not set.');
+  }
+
+  try {
+    const serviceAccount = JSON.parse(serviceAccountString);
+    return initializeApp({
+      credential: cert(serviceAccount)
+    });
+  } catch (error: any) {
+    console.error("Error initializing Firebase Admin SDK with service account:", error.message);
+    throw new Error("Failed to initialize Firebase Admin SDK. Please check your FIREBASE_SERVICE_ACCOUNT_KEY.");
+  }
 }
 
 
