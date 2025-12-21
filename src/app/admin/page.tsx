@@ -141,7 +141,7 @@ type AppConfig = {
     referralRewardPoints?: number;
 };
 
-const UserTable = ({ users, onTierChange, onVerificationToggle, onDelete, onEdit, onAwardReferral }: { users: ExpertUser[], onTierChange: (expert: ExpertUser, tier: ExpertUser['tier']) => void, onVerificationToggle: (expert: ExpertUser) => void, onDelete: (expert: ExpertUser) => void, onEdit: (expert: ExpertUser) => void, onAwardReferral: (user: ExpertUser) => void }) => {
+const UserTable = ({ users, allUsers, onTierChange, onVerificationToggle, onDelete, onEdit, onAwardReferral }: { users: ExpertUser[], allUsers: ExpertUser[], onTierChange: (expert: ExpertUser, tier: ExpertUser['tier']) => void, onVerificationToggle: (expert: ExpertUser) => void, onDelete: (expert: ExpertUser) => void, onEdit: (expert: ExpertUser) => void, onAwardReferral: (user: ExpertUser) => void }) => {
     const getInitials = (firstName?: string, lastName?: string) => {
         if (firstName && lastName) {
             return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
@@ -175,73 +175,77 @@ const UserTable = ({ users, onTierChange, onVerificationToggle, onDelete, onEdit
             </TableHeader>
             <TableBody>
                 {users && users.length > 0 ? (
-                users.map((expert) => (
-                    <TableRow key={expert.id}>
-                    <TableCell>
-                        <Avatar>
-                            <AvatarImage src={expert.photoUrl} alt={`${expert.firstName} ${expert.lastName}`} />
-                            <AvatarFallback>{getInitials(expert.firstName, expert.lastName)}</AvatarFallback>
-                        </Avatar>
-                    </TableCell>
-                    <TableCell>
-                        <div className="font-medium">{expert.firstName} {expert.lastName}</div>
-                        <div className="text-xs text-muted-foreground">{expert.email}</div>
-                        {expert.phoneNumber && (
-                            <div className="text-xs text-muted-foreground flex items-center gap-1">
-                                <Phone className="h-3 w-3" />
-                                {expert.phoneNumber}
+                users.map((expert) => {
+                    const referralCount = expert.referralCode ? allUsers.filter(u => u.referredByCode === expert.referralCode).length : 0;
+                    return (
+                        <TableRow key={expert.id}>
+                        <TableCell>
+                            <Avatar>
+                                <AvatarImage src={expert.photoUrl} alt={`${expert.firstName} ${expert.lastName}`} />
+                                <AvatarFallback>{getInitials(expert.firstName, expert.lastName)}</AvatarFallback>
+                            </Avatar>
+                        </TableCell>
+                        <TableCell>
+                            <div className="font-medium">{expert.firstName} {expert.lastName}</div>
+                            <div className="text-xs text-muted-foreground">{expert.email}</div>
+                            {expert.phoneNumber && (
+                                <div className="text-xs text-muted-foreground flex items-center gap-1">
+                                    <Phone className="h-3 w-3" />
+                                    {expert.phoneNumber}
+                                </div>
+                            )}
+                            {expert.referralCode && (
+                                <div className="text-xs text-muted-foreground flex items-center gap-1">
+                                    <Code className="h-3 w-3" />
+                                    <span>{expert.referralCode}</span>
+                                    <Badge variant="secondary" className="ml-1">Used: {referralCount}</Badge>
+                                </div>
+                            )}
+                        </TableCell>
+                        <TableCell>
+                            {expert.referredByCode ? (
+                                <div className="flex items-center gap-2">
+                                    <Badge variant="outline">{expert.referredByCode}</Badge>
+                                    <Button size="sm" variant="outline" onClick={() => onAwardReferral(expert)}>
+                                        <Gift className="mr-2 h-4 w-4" /> Award
+                                    </Button>
+                                </div>
+                            ) : (
+                                <div className="flex items-center gap-1">
+                                    <Badge variant="outline">{expert.referralPoints || 0}</Badge>
+                                    <span className="text-muted-foreground text-xs">Points</span>
+                                </div>
+                            )}
+                        </TableCell>
+                        <TableCell><Badge variant="secondary">{expert.role}</Badge></TableCell>
+                        <TableCell className="text-center">{renderTierBadge(expert.tier)}</TableCell>
+                        <TableCell className="text-center">
+                            <div className='flex items-center justify-center space-x-2'>
+                                <Switch id={`verified-switch-${expert.id}`} checked={expert.verified || false} onCheckedChange={() => onVerificationToggle(expert)} />
+                                {expert.verified ? <CheckCircle2 className="h-5 w-5 text-green-500" /> : <Ban className="h-5 w-5 text-destructive" />}
                             </div>
-                        )}
-                        {expert.referralCode && (
-                            <div className="text-xs text-muted-foreground flex items-center gap-1">
-                                <Code className="h-3 w-3" />
-                                {expert.referralCode}
-                            </div>
-                        )}
-                    </TableCell>
-                    <TableCell>
-                        {expert.referredByCode ? (
-                            <div className="flex items-center gap-2">
-                                <Badge variant="outline">{expert.referredByCode}</Badge>
-                                <Button size="sm" variant="outline" onClick={() => onAwardReferral(expert)}>
-                                    <Gift className="mr-2 h-4 w-4" /> Award
-                                </Button>
-                            </div>
-                        ) : (
-                            <div className="flex items-center gap-1">
-                                <Badge variant="outline">{expert.referralPoints || 0}</Badge>
-                                <span className="text-muted-foreground text-xs">Points</span>
-                            </div>
-                        )}
-                    </TableCell>
-                    <TableCell><Badge variant="secondary">{expert.role}</Badge></TableCell>
-                    <TableCell className="text-center">{renderTierBadge(expert.tier)}</TableCell>
-                    <TableCell className="text-center">
-                        <div className='flex items-center justify-center space-x-2'>
-                            <Switch id={`verified-switch-${expert.id}`} checked={expert.verified || false} onCheckedChange={() => onVerificationToggle(expert)} />
-                            {expert.verified ? <CheckCircle2 className="h-5 w-5 text-green-500" /> : <Ban className="h-5 w-5 text-destructive" />}
-                        </div>
-                    </TableCell>
-                    <TableCell className="text-right">
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild><Button variant="ghost" className="h-8 w-8 p-0"><span className="sr-only">Open menu</span><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                                <DropdownMenuSub>
-                                    <DropdownMenuSubTrigger><Sparkles className="mr-2 h-4 w-4" /><span>Change Tier</span></DropdownMenuSubTrigger>
-                                    <DropdownMenuPortal><DropdownMenuSubContent>
-                                        <DropdownMenuItem onClick={() => onTierChange(expert, 'Standard')}><UserIcon className="mr-2 h-4 w-4" />Standard</DropdownMenuItem>
-                                        <DropdownMenuItem onClick={() => onTierChange(expert, 'Premier')}><Crown className="mr-2 h-4 w-4" />Premier</DropdownMenuItem>
-                                        <DropdownMenuItem onClick={() => onTierChange(expert, 'Super Premier')}><Sparkles className="mr-2 h-4 w-4" />Super Premier</DropdownMenuItem>
-                                    </DropdownMenuSubContent></DropdownMenuPortal>
-                                </DropdownMenuSub>
-                                <DropdownMenuItem onClick={() => onEdit(expert)}><Edit className="mr-2 h-4 w-4" />Edit</DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem onClick={() => onDelete(expert)} className="text-destructive focus:text-destructive"><Trash2 className="mr-2 h-4 w-4" />Delete</DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                    </TableCell>
-                    </TableRow>
-                ))
+                        </TableCell>
+                        <TableCell className="text-right">
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild><Button variant="ghost" className="h-8 w-8 p-0"><span className="sr-only">Open menu</span><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                    <DropdownMenuSub>
+                                        <DropdownMenuSubTrigger><Sparkles className="mr-2 h-4 w-4" /><span>Change Tier</span></DropdownMenuSubTrigger>
+                                        <DropdownMenuPortal><DropdownMenuSubContent>
+                                            <DropdownMenuItem onClick={() => onTierChange(expert, 'Standard')}><UserIcon className="mr-2 h-4 w-4" />Standard</DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => onTierChange(expert, 'Premier')}><Crown className="mr-2 h-4 w-4" />Premier</DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => onTierChange(expert, 'Super Premier')}><Sparkles className="mr-2 h-4 w-4" />Super Premier</DropdownMenuItem>
+                                        </DropdownMenuSubContent></DropdownMenuPortal>
+                                    </DropdownMenuSub>
+                                    <DropdownMenuItem onClick={() => onEdit(expert)}><Edit className="mr-2 h-4 w-4" />Edit</DropdownMenuItem>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem onClick={() => onDelete(expert)} className="text-destructive focus:text-destructive"><Trash2 className="mr-2 h-4 w-4" />Delete</DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        </TableCell>
+                        </TableRow>
+                    )
+                })
                 ) : ( <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground h-24">No users found for this role.</TableCell></TableRow> )}
             </TableBody>
         </Table>
@@ -1149,19 +1153,19 @@ export default function AdminDashboardPage() {
                                             <TabsTrigger value="superAdmins">Super Admins</TabsTrigger>
                                         </TabsList>
                                         <TabsContent value="all" className="mt-4">
-                                            <UserTable users={filteredUsers} onTierChange={handleTierChange} onVerificationToggle={handleVerificationToggle} onDelete={openDeleteDialog} onEdit={openEditDialog} onAwardReferral={handleAwardReferral} />
+                                            <UserTable users={filteredUsers} allUsers={usersData || []} onTierChange={handleTierChange} onVerificationToggle={handleVerificationToggle} onDelete={openDeleteDialog} onEdit={openEditDialog} onAwardReferral={handleAwardReferral} />
                                         </TabsContent>
                                         <TabsContent value="freelancers" className="mt-4">
-                                            <UserTable users={freelancers || []} onTierChange={handleTierChange} onVerificationToggle={handleVerificationToggle} onDelete={openDeleteDialog} onEdit={openEditDialog} onAwardReferral={handleAwardReferral} />
+                                            <UserTable users={freelancers || []} allUsers={usersData || []} onTierChange={handleTierChange} onVerificationToggle={handleVerificationToggle} onDelete={openDeleteDialog} onEdit={openEditDialog} onAwardReferral={handleAwardReferral} />
                                         </TabsContent>
                                         <TabsContent value="companies" className="mt-4">
-                                            <UserTable users={companies || []} onTierChange={handleTierChange} onVerificationToggle={handleVerificationToggle} onDelete={openDeleteDialog} onEdit={openEditDialog} onAwardReferral={handleAwardReferral} />
+                                            <UserTable users={companies || []} allUsers={usersData || []} onTierChange={handleTierChange} onVerificationToggle={handleVerificationToggle} onDelete={openDeleteDialog} onEdit={openEditDialog} onAwardReferral={handleAwardReferral} />
                                         </TabsContent>
                                         <TabsContent value="authorizedPros" className="mt-4">
-                                            <UserTable users={authorizedPros || []} onTierChange={handleTierChange} onVerificationToggle={handleVerificationToggle} onDelete={openDeleteDialog} onEdit={openEditDialog} onAwardReferral={handleAwardReferral} />
+                                            <UserTable users={authorizedPros || []} allUsers={usersData || []} onTierChange={handleTierChange} onVerificationToggle={handleVerificationToggle} onDelete={openDeleteDialog} onEdit={openEditDialog} onAwardReferral={handleAwardReferral} />
                                         </TabsContent>
                                         <TabsContent value="superAdmins" className="mt-4">
-                                            <UserTable users={superAdmins || []} onTierChange={handleTierChange} onVerificationToggle={handleVerificationToggle} onDelete={openDeleteDialog} onEdit={openEditDialog} onAwardReferral={handleAwardReferral} />
+                                            <UserTable users={superAdmins || []} allUsers={usersData || []} onTierChange={handleTierChange} onVerificationToggle={handleVerificationToggle} onDelete={openDeleteDialog} onEdit={openEditDialog} onAwardReferral={handleAwardReferral} />
                                         </TabsContent>
                                     </Tabs>
                                 )}
@@ -1745,4 +1749,3 @@ export default function AdminDashboardPage() {
     </>
   );
 }
-
