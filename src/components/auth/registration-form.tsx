@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect, useRef } from "react";
@@ -34,7 +35,7 @@ import { Checkbox } from "../ui/checkbox";
 const expertTypes = [
     { name: "Freelancer", icon: <UserIcon className="w-8 h-8" />, description: "Offer your individual skills and services directly to clients." },
     { name: "Company", icon: <Building className="w-8 h-8" />, description: "Represent your business and manage company-wide talent." },
-    { name: "Authorized Pro", icon: <Briefcase className="w-8 h-8" />, description: "A professional authorized to represent or work for a company." },
+    { name: "Authorized Pro", icon: <Briefcase className="w-8 h-8" />, description: "A professional authorized to work for a company." },
 ]
 
 const formSchema = z.object({
@@ -352,48 +353,38 @@ export function RegistrationForm() {
         const fullAddress = [values.address, values.city, values.state, values.pincode].filter(Boolean).join(', ');
         const coords = await getCoordinates(fullAddress);
         
-        // This transaction will either complete fully or fail, preventing partial data writes.
-        await runTransaction(firestore, async (transaction) => {
-            const newUserDocRef = doc(firestore, "users", newUser.uid);
-            const appConfigDocRef = doc(firestore, 'app_config', 'homepage');
+        const newUserDocRef = doc(firestore, "users", newUser.uid);
 
-            const appConfigSnap = await transaction.get(appConfigDocRef);
-            // Safely get referral points, defaulting to 0 if config is missing.
-            const referralRewardPoints = appConfigSnap.exists() ? (appConfigSnap.data()?.referralRewardPoints || 0) : 0;
-            
-            const userData: any = {
-                id: newUser.uid,
-                firstName: values.firstName,
-                lastName: values.lastName,
-                email: values.email,
-                role: values.role,
-                department: values.department,
-                state: values.state,
-                city: values.city,
-                pincode: values.pincode,
-                address: values.address,
-                latitude: coords?.lat || null,
-                longitude: coords?.lon || null,
-                phoneNumber: values.countryCode && values.phoneNumber ? `${values.countryCode} ${values.phoneNumber}` : "",
-                companyName: values.companyName,
-                verified: false,
-                photoUrl: '',
-                isAvailable: true,
-                referralCode: generateReferralCode(),
-                referralPoints: 0,
-                createdAt: serverTimestamp(),
-            };
-            
-            if (referringUserDoc && referralRewardPoints > 0) {
-                userData.referredBy = referringUserDoc.id;
-                const referrerRef = doc(firestore, 'users', referringUserDoc.id);
-                transaction.update(referrerRef, {
-                    referralPoints: increment(referralRewardPoints)
-                });
-            }
-            
-            transaction.set(newUserDocRef, userData);
-        });
+        const userData: any = {
+            id: newUser.uid,
+            firstName: values.firstName,
+            lastName: values.lastName,
+            email: values.email,
+            role: values.role,
+            department: values.department,
+            state: values.state,
+            city: values.city,
+            pincode: values.pincode,
+            address: values.address,
+            latitude: coords?.lat || null,
+            longitude: coords?.lon || null,
+            phoneNumber: values.countryCode && values.phoneNumber ? `${values.countryCode} ${values.phoneNumber}` : "",
+            companyName: values.companyName,
+            verified: false,
+            photoUrl: '',
+            isAvailable: true,
+            referralCode: generateReferralCode(),
+            referralPoints: 0,
+            createdAt: serverTimestamp(),
+            // Add referral info if applicable, to be processed later
+            ...(referringUserDoc && { 
+              referredBy: referringUserDoc.id,
+              referralProcessed: false 
+            }),
+        };
+
+        // Use a non-blocking set which internally handles permission errors
+        await setDocumentNonBlocking(newUserDocRef, userData);
 
         toast({
             title: "Account Created",
@@ -532,7 +523,24 @@ export function RegistrationForm() {
                 </span>
             </div>
         </div>
-
+        
+        <FormField
+          control={form.control}
+          name="referralCode"
+          render={({ field }) => (
+              <FormItem>
+                  <FormLabel>Referral Code (Optional)</FormLabel>
+                  <div className="relative">
+                      <Gift className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                      <FormControl>
+                          <Input placeholder="Enter a referral code" {...field} className="pl-10" />
+                      </FormControl>
+                  </div>
+                  <FormMessage />
+              </FormItem>
+          )}
+        />
+        
         <div className="grid grid-cols-2 gap-4">
             <FormField
             control={form.control}
@@ -587,23 +595,6 @@ export function RegistrationForm() {
               </div>
               <FormMessage />
             </FormItem>
-          )}
-        />
-        
-        <FormField
-          control={form.control}
-          name="referralCode"
-          render={({ field }) => (
-              <FormItem>
-                  <FormLabel>Referral Code (Optional)</FormLabel>
-                  <div className="relative">
-                      <Gift className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                      <FormControl>
-                          <Input placeholder="Enter a referral code" {...field} className="pl-10" />
-                      </FormControl>
-                  </div>
-                  <FormMessage />
-              </FormItem>
           )}
         />
         
@@ -1039,3 +1030,4 @@ export function RegistrationForm() {
     </>
   );
 }
+

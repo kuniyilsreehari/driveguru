@@ -1,4 +1,5 @@
 
+
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -32,9 +33,20 @@ service cloud.firestore {
       return request.resource.data;
     }
     
+    function isCreatingOwnUserDoc(userId) {
+      let allowedKeys = [
+        'id', 'firstName', 'lastName', 'email', 'role', 'department',
+        'state', 'city', 'pincode', 'address', 'latitude', 'longitude',
+        'phoneNumber', 'companyName', 'verified', 'isAvailable',
+        'createdAt', 'referralCode', 'referralPoints', 'photoUrl',
+        'referredBy', 'referralProcessed'
+      ];
+      return isOwner(userId) && requestData().keys().hasOnly(allowedKeys);
+    }
+    
     // A user can update certain fields of their own profile.
     function isUpdatingOwnUserDoc(userId) {
-      let protectedFields = ['id', 'email', 'verified', 'role', 'tier', 'createdAt', 'referralCode', 'referredBy', 'referralPoints'];
+      let protectedFields = ['id', 'email', 'verified', 'role', 'tier', 'createdAt', 'referralCode', 'referralPoints', 'referredBy'];
       return isOwner(userId) && isExistingDoc() &&
              !request.resource.data.diff(resource.data).affectedKeys().hasAny(protectedFields);
     }
@@ -138,8 +150,7 @@ service cloud.firestore {
       // VERY PERMISSIVE: Any signed-in user can create their own user document.
       allow create: if isOwner(userId);
 
-      // A user can update their own document, or a super admin can.
-      // Also allows any user to update ONLY the referral points of another user.
+      // A user can update their own document, a super admin can, or a user can update referral points.
       allow update: if isUpdatingOwnUserDoc(userId) || 
                        isUpdatingReferralPoints() ||
                        (isSuperAdmin() && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['id', 'createdAt']));
