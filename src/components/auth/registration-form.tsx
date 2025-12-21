@@ -9,7 +9,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { User as UserIcon, Mail, Lock, Eye, EyeOff, Briefcase, MapPin, Phone, LocateIcon, Loader2, Building, Home, GraduationCap, Book, ArrowRight, MessageSquare, Gift } from "lucide-react";
 import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, getAdditionalUserInfo, RecaptchaVerifier, signInWithPhoneNumber } from 'firebase/auth';
-import { doc, serverTimestamp, collection, query, where, getDocs, runTransaction, increment } from 'firebase/firestore';
+import { doc, serverTimestamp, collection, query, where, getDocs, runTransaction, increment, limit } from 'firebase/firestore';
 
 import { Button } from "@/components/ui/button";
 import {
@@ -1114,5 +1114,7 @@ export function RegistrationForm() {
     </>
   );
 }
+
+    
 
     
