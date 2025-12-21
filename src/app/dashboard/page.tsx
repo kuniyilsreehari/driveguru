@@ -375,6 +375,15 @@ export default function ExpertDashboardPage() {
 
   const { data: superAdminData, isLoading: isRoleLoading } = useDoc(superAdminDocRef);
   const isSuperAdmin = superAdminData !== null;
+  
+  const referralsQuery = useMemoFirebase(() => {
+    if (!firestore || !userProfile?.referralCode) return null;
+    return query(collection(firestore, 'users'), where('referredByCode', '==', userProfile.referralCode));
+  }, [firestore, userProfile?.referralCode]);
+
+  const { data: referredUsers, isLoading: isReferralsLoading } = useCollection(referralsQuery);
+  const referralCount = referredUsers?.length || 0;
+
 
   useEffect(() => {
     if (!isUserLoading && !user) {
@@ -483,7 +492,7 @@ export default function ExpertDashboardPage() {
 
   const profileCompletion = calculateProfileCompletion(userProfile);
   
-  const isLoading = isUserLoading || isProfileLoading || isAppConfigLoading || isRoleLoading;
+  const isLoading = isUserLoading || isProfileLoading || isAppConfigLoading || isRoleLoading || isReferralsLoading;
 
   if (isLoading) {
     return (
@@ -735,8 +744,8 @@ export default function ExpertDashboardPage() {
                             <p className="text-3xl font-bold">{userProfile.referralPoints || 0}</p>
                         </div>
                         <div className="p-4 rounded-lg border text-center">
-                            <p className="text-sm font-medium text-muted-foreground">Estimated Earnings</p>
-                            <p className="text-3xl font-bold">₹{userProfile.referralPoints || 0}</p>
+                            <p className="text-sm font-medium text-muted-foreground">Times Used</p>
+                            <p className="text-3xl font-bold">{referralCount}</p>
                         </div>
                     </div>
                 </CardContent>
