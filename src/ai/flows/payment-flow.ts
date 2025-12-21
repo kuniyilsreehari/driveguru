@@ -37,19 +37,18 @@ function getAdminApp(): App {
     }
     
     const serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
-    if (serviceAccount) {
-        try {
-            return initializeApp({
-                credential: cert(JSON.parse(serviceAccount))
-            });
-        } catch (error) {
-            console.error("Error initializing Firebase Admin SDK with service account:", error);
-            // Fallback for when service account parsing fails or is invalid
-        }
+    if (!serviceAccount) {
+      throw new Error('FIREBASE_SERVICE_ACCOUNT_KEY environment variable is not set.');
     }
-    
-    console.log("Initializing Firebase Admin SDK with default application credentials.");
-    return initializeApp();
+
+    try {
+        return initializeApp({
+            credential: cert(JSON.parse(serviceAccount))
+        });
+    } catch (error: any) {
+        console.error("Error initializing Firebase Admin SDK with service account:", error.message);
+        throw new Error("Failed to initialize Firebase Admin SDK. Please check your FIREBASE_SERVICE_ACCOUNT_KEY.");
+    }
 }
 
 
@@ -59,11 +58,18 @@ async function createCashfreeOrder(input: CreatePaymentOrderInput & { amount: nu
     
     const returnUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002'}/payment-status?order_id={order_id}&uid=${input.userId}&plan=${input.plan}`;
 
+    const cashfreeAppId = process.env.CASHFREE_APP_ID;
+    const cashfreeSecretKey = process.env.CASHFREE_SECRET_KEY;
+
+    if (!cashfreeAppId || !cashfreeSecretKey) {
+        throw new Error('Cashfree credentials (CASHFREE_APP_ID or CASHFREE_SECRET_KEY) are not set in the environment variables.');
+    }
+
     const headers = {
         'Content-Type': 'application/json',
         'x-api-version': '2023-08-01',
-        'x-client-id': process.env.CASHFREE_APP_ID || '',
-        'x-client-secret': process.env.CASHFREE_SECRET_KEY || '',
+        'x-client-id': cashfreeAppId,
+        'x-client-secret': cashfreeSecretKey,
     };
 
     const body = {
