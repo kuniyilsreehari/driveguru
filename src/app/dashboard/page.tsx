@@ -377,14 +377,10 @@ export default function ExpertDashboardPage() {
   useEffect(() => {
     if (!isUserLoading && !user) {
       router.push('/login');
+    } else if (!isUserLoading && user && !isRoleLoading && isSuperAdmin) {
+      router.push('/admin');
     }
-  }, [user, isUserLoading, router]);
-
-  useEffect(() => {
-    if (!isUserLoading && !isProfileLoading && !isRoleLoading && user && isSuperAdmin) {
-        router.push('/admin');
-    }
-  }, [user, isUserLoading, isProfileLoading, isRoleLoading, isSuperAdmin, router]);
+  }, [user, isUserLoading, isRoleLoading, isSuperAdmin, router]);
   
 
   const handleLogout = () => {

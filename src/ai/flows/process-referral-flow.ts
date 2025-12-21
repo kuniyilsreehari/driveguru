@@ -7,6 +7,15 @@
  * - ProcessReferralInput - The input type for the processReferral function.
  * - ProcessReferralOutput - The return type for the processReferral function.
  */
+import { config } from 'dotenv';
+config();
+import {genkit} from 'genkit';
+import {googleAI} from '@genkit-ai/google-genai';
+
+genkit({
+  plugins: [googleAI()],
+});
+
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
