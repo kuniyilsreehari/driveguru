@@ -1,7 +1,7 @@
 
 'use server';
 
-import { initializeApp, getApps, App, cert } from 'firebase-admin/app';
+import { initializeApp, getApps, App, applicationDefault } from 'firebase-admin/app';
 
 // Use a global symbol to store the initialized app instance to prevent re-initialization
 // during Next.js hot-reloading in development.
@@ -12,6 +12,7 @@ const globalWithApp = global as typeof globalThis & {
 /**
  * Initializes and returns a Firebase Admin App instance using a robust singleton pattern.
  * This ensures that the app is initialized only once per server instance.
+ * It uses Application Default Credentials (ADC) for authentication.
  * This function is for server-side use only.
  */
 export async function getAdminApp(): Promise<App> {
@@ -27,21 +28,10 @@ export async function getAdminApp(): Promise<App> {
     return apps[0];
   }
 
-  // Retrieve the service account key from environment variables.
-  const serviceAccountString = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
-  if (!serviceAccountString) {
-    throw new Error(
-      'FIREBASE_SERVICE_ACCOUNT_KEY environment variable is not set. Please check your environment configuration.'
-    );
-  }
-
   try {
-    // The service account key is a JSON string, so we need to parse it.
-    const serviceAccount = JSON.parse(serviceAccountString);
-    
-    // Initialize the Firebase Admin App with the parsed service account credentials.
+    // Initialize the Firebase Admin App using Application Default Credentials.
     const newApp = initializeApp({
-      credential: cert(serviceAccount),
+      credential: applicationDefault(),
     });
 
     // Cache the newly created app on the global object.
@@ -50,9 +40,10 @@ export async function getAdminApp(): Promise<App> {
     return newApp;
 
   } catch (e: any) {
-    // If parsing fails, throw a more informative error.
+    console.error("Firebase Admin SDK Initialization Error:", e);
+    // Provide a more helpful error message for local development.
     throw new Error(
-      `Failed to parse FIREBASE_SERVICE_ACCOUNT_KEY. Please ensure it's a valid JSON string. Error: ${e.message}`
+      `Failed to initialize Firebase Admin SDK. This is likely because Application Default Credentials are not configured for your local environment. Please run 'gcloud auth application-default login' in your terminal and try again. Original Error: ${e.message}`
     );
   }
 }
