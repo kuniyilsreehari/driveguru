@@ -8,3 +8,4 @@ import '@/ai/flows/ai-search-flow.ts';
 import '@/ai/flows/payment-flow.ts';
 import '@/ai/flows/export-data-flow.ts';
 import '@/ai/flows/import-users-flow.ts';
+import '@/ai/flows/verify-user-flow.ts';
