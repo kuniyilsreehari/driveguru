@@ -946,7 +946,8 @@ export default function AdminDashboardPage() {
         const searchMatch = searchQuery.length > 0 ? 
               (user.firstName?.toLowerCase().includes(searchQuery.toLowerCase()) || 
                user.lastName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-               user.email?.toLowerCase().includes(searchQuery.toLowerCase())) 
+               user.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+               user.referralCode?.toLowerCase().includes(searchQuery.toLowerCase())) 
             : true;
 
         const filterMatch = activeFilter ? {
@@ -1106,7 +1107,7 @@ export default function AdminDashboardPage() {
                                         <div className="relative flex-grow">
                                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                             <Input
-                                                placeholder="Search by name or email..."
+                                                placeholder="Search by name, email, or referral code..."
                                                 className="pl-10"
                                                 value={searchQuery}
                                                 onChange={(e) => setSearchQuery(e.target.value)}
