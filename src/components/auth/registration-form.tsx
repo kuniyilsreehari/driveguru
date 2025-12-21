@@ -9,7 +9,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { User as UserIcon, Mail, Lock, Eye, EyeOff, Briefcase, MapPin, Phone, LocateIcon, Loader2, Building, Home, GraduationCap, Book, ArrowRight, MessageSquare, Gift } from "lucide-react";
 import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, getAdditionalUserInfo, RecaptchaVerifier, signInWithPhoneNumber } from 'firebase/auth';
-import { doc, serverTimestamp, collection, query, where, getDocs, runTransaction, increment, limit } from 'firebase/firestore';
+import { doc, serverTimestamp, collection, query, where, getDocs, runTransaction, increment, limit, getDoc } from 'firebase/firestore';
 
 import { Button } from "@/components/ui/button";
 import {
@@ -242,10 +242,25 @@ export function RegistrationForm() {
   };
 
   useEffect(() => {
-    if (!isUserLoading && user) {
-      router.push('/dashboard');
+    if (!isUserLoading && user && firestore) {
+      const checkAdminAndRedirect = async () => {
+        const superAdminDocRef = doc(firestore, 'roles_super_admin', user.uid);
+        try {
+            const superAdminDoc = await getDoc(superAdminDocRef);
+            if (superAdminDoc.exists()) {
+              router.push('/admin');
+            } else {
+              router.push('/dashboard');
+            }
+        } catch (e) {
+            console.error("Error checking for admin role, redirecting to default dashboard", e);
+            router.push('/dashboard');
+        }
+      };
+
+      checkAdminAndRedirect();
     }
-  }, [user, isUserLoading, router]);
+  }, [user, isUserLoading, router, firestore]);
 
   async function getCoordinates(address: string): Promise<{ lat: number; lon: number } | null> {
     try {
@@ -383,7 +398,7 @@ export function RegistrationForm() {
             createdAt: serverTimestamp(),
         };
         
-        if (referringUserDoc) {
+        if (referringUserDoc && referralRewardPoints > 0) {
             userData.referredBy = referringUserDoc.id;
             const referrerRef = doc(firestore, 'users', referringUserDoc.id);
             transaction.update(referrerRef, {
@@ -1122,4 +1137,5 @@ export function RegistrationForm() {
     
 
     
+
 
