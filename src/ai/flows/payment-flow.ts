@@ -42,10 +42,8 @@ function getAdminApp(): App {
     throw new Error('FIREBASE_SERVICE_ACCOUNT_KEY environment variable is not set. Please check your environment configuration.');
   }
   
-  const serviceAccount = JSON.parse(serviceAccountString);
-
   return initializeApp({
-    credential: cert(serviceAccount),
+    credential: cert(JSON.parse(serviceAccountString)),
   });
 }
 
