@@ -66,6 +66,7 @@ type AppConfig = {
     superPremierPaymentLink?: string;
     premierPlanPrice?: number;
     superPremierPlanPrice?: number;
+    verificationFee?: number;
 };
 
 function CompanyVacancies({ userProfile }: { userProfile: ExpertUserProfile }) {
@@ -156,7 +157,7 @@ function CompanyVacancies({ userProfile }: { userProfile: ExpertUserProfile }) {
 }
 
 
-function UpgradeDialog({ userProfile, tier }: { userProfile: ExpertUserProfile, tier: 'Premier' | 'Super Premier' | 'Verification' }) {
+function UpgradeDialog({ userProfile, tier, verificationFee }: { userProfile: ExpertUserProfile, tier: 'Premier' | 'Super Premier' | 'Verification', verificationFee?: number }) {
     const [isCreatingOrder, setIsCreatingOrder] = useState(false);
     const { toast } = useToast();
     const router = useRouter();
@@ -191,9 +192,15 @@ function UpgradeDialog({ userProfile, tier }: { userProfile: ExpertUserProfile, 
 
     const buttonText = tier === 'Verification' ? 'Get Verified' : `Upgrade to ${tier}`;
     const dialogTitle = tier === 'Verification' ? 'Become a Verified Expert' : `Upgrade to ${tier}`;
-    const dialogDescription = tier === 'Verification' 
-        ? "You will be redirected to our secure payment gateway to pay the one-time verification fee. Your account will be marked as verified upon successful payment."
-        : "You will be redirected to our secure payment gateway to complete your purchase. Your account will be upgraded automatically upon successful payment.";
+    
+    let dialogDescription = "You will be redirected to our secure payment gateway to complete your purchase. Your account will be upgraded automatically upon successful payment.";
+    if (tier === 'Verification') {
+        dialogDescription = `You will be redirected to our secure payment gateway to pay the one-time verification fee. Your account will be marked as verified upon successful payment.`;
+        if (verificationFee) {
+            dialogDescription = `You will be redirected to our secure payment gateway to pay the one-time verification fee of ₹${verificationFee}. Your account will be marked as verified upon successful payment.`;
+        }
+    }
+
 
     return (
         <Dialog>
@@ -314,6 +321,13 @@ export default function ExpertDashboardPage() {
 
   const { data: userProfile, isLoading: isProfileLoading, error: profileError } = useDoc<ExpertUserProfile>(userDocRef);
 
+  const appConfigDocRef = useMemoFirebase(() => {
+      if (!firestore) return null;
+      return doc(firestore, 'app_config', 'homepage');
+  }, [firestore]);
+  
+  const { data: appConfig, isLoading: isAppConfigLoading } = useDoc<AppConfig>(appConfigDocRef);
+
   useEffect(() => {
     if (!isUserLoading && !user) {
       router.push('/login');
@@ -384,7 +398,7 @@ export default function ExpertDashboardPage() {
 
   const profileCompletion = calculateProfileCompletion(userProfile);
   
-  const isLoading = isUserLoading || isProfileLoading;
+  const isLoading = isUserLoading || isProfileLoading || isAppConfigLoading;
 
   if (isLoading) {
     return (
@@ -425,6 +439,7 @@ export default function ExpertDashboardPage() {
   }
   
   const locationString = [userProfile.city, userProfile.state, userProfile.pincode].filter(Boolean).join(', ');
+  const verificationFee = appConfig?.verificationFee;
 
   return (
     <div className="min-h-screen bg-background p-4 sm:p-8">
@@ -509,10 +524,13 @@ export default function ExpertDashboardPage() {
                             <Shield className="h-8 w-8 text-blue-400 flex-shrink-0" />
                             <div>
                                 <h4 className="font-bold">Become a Verified Expert</h4>
-                                <p className="text-sm text-blue-300">Unlock contact features and gain client trust by verifying your profile for a one-time fee.</p>
+                                <p className="text-sm text-blue-300">
+                                    Unlock contact features and gain client trust.
+                                    {verificationFee ? ` Your account will be marked as verified upon successful payment of ₹${verificationFee}.` : ' Verify your profile for a one-time fee.'}
+                                </p>
                             </div>
                         </div>
-                        <UpgradeDialog userProfile={userProfile} tier="Verification" />
+                        <UpgradeDialog userProfile={userProfile} tier="Verification" verificationFee={verificationFee} />
                     </div>
                 )}
                 
