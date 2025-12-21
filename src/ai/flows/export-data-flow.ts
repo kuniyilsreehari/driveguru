@@ -29,8 +29,9 @@ export type ExportDataOutput = z.infer<typeof ExportDataOutputSchema>;
 
 // Initialize Firebase Admin SDK
 function getAdminApp(): App {
-  if (getApps().length) {
-    return getApps()[0];
+  const apps = getApps();
+  if (apps.length) {
+    return apps[0];
   }
 
   const serviceAccountString = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
@@ -38,15 +39,9 @@ function getAdminApp(): App {
     throw new Error('FIREBASE_SERVICE_ACCOUNT_KEY environment variable is not set. Please check your environment configuration.');
   }
 
-  try {
-    const serviceAccount = JSON.parse(serviceAccountString);
-    return initializeApp({
-      credential: cert(serviceAccount)
-    });
-  } catch (e: any) {
-    console.error("Failed to parse service account JSON. Make sure the environment variable is set correctly.", e);
-    throw new Error("Failed to initialize Firebase Admin SDK. Please check server logs for details.");
-  }
+  return initializeApp({
+    credential: cert(JSON.parse(serviceAccountString)),
+  });
 }
 
 

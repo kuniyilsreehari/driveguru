@@ -32,8 +32,9 @@ export type CreatePaymentOrderOutput = z.infer<typeof CreatePaymentOrderOutputSc
 
 // Helper to initialize Firebase Admin SDK
 function getAdminApp(): App {
-  if (getApps().length) {
-    return getApps()[0];
+  const apps = getApps();
+  if (apps.length) {
+    return apps[0];
   }
 
   const serviceAccountString = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
@@ -41,27 +42,21 @@ function getAdminApp(): App {
     throw new Error('FIREBASE_SERVICE_ACCOUNT_KEY environment variable is not set. Please check your environment configuration.');
   }
 
-  try {
-    const serviceAccount = JSON.parse(serviceAccountString);
-    return initializeApp({
-      credential: cert(serviceAccount)
-    });
-  } catch (e: any) {
-    console.error("Failed to parse service account JSON. Make sure the environment variable is set correctly.", e);
-    throw new Error("Failed to initialize Firebase Admin SDK. Please check server logs for details.");
-  }
+  return initializeApp({
+    credential: cert(JSON.parse(serviceAccountString)),
+  });
 }
 
 
 async function createCashfreeOrder(input: CreatePaymentOrderInput & { amount: number }): Promise<{ payment_link: string }> {
     const url = 'https://api.cashfree.com/pg/orders'; // Production URL
-    const orderId = `order_${uuidv4()}`;
+    const orderId = `order_${'${uuidv4()}'}`;
     
     const appUrl = process.env.NEXT_PUBLIC_APP_URL;
     if (!appUrl) {
         throw new Error('NEXT_PUBLIC_APP_URL environment variable is not set.');
     }
-    const returnUrl = `${appUrl}/payment-status?order_id={order_id}&uid=${input.userId}&plan=${input.plan}`;
+    const returnUrl = `${'${appUrl}'}/payment-status?order_id={order_id}&uid=${'${input.userId}'}&plan=${'${input.plan}'}`;
 
     const cashfreeAppId = process.env.CASHFREE_APP_ID;
     const cashfreeSecret = process.env.CASHFREE_SECRET;
@@ -95,7 +90,7 @@ async function createCashfreeOrder(input: CreatePaymentOrderInput & { amount: nu
         order_tags: {
             whatsapp: sanitizedPhone, // Instruct Cashfree to send WhatsApp notification
         },
-        order_note: `Payment for DriveGuru: ${input.plan}`,
+        order_note: `Payment for DriveGuru: ${'${input.plan}'}`,
     };
 
     try {
@@ -108,7 +103,7 @@ async function createCashfreeOrder(input: CreatePaymentOrderInput & { amount: nu
         if (!response.ok) {
             const errorBody = await response.json();
             console.error('Cashfree API Error:', errorBody);
-            throw new Error(`Cashfree API responded with status ${response.status}: ${errorBody.message}`);
+            throw new Error(`Cashfree API responded with status ${'${response.status}'}: ${'${errorBody.message}'}`);
         }
 
         const data: any = await response.json();
@@ -168,7 +163,7 @@ const createPaymentOrderFlow = ai.defineFlow(
         if (paymentLink) {
             return { payment_link: paymentLink };
         } else {
-            throw new Error(`A static payment link for the ${input.plan} plan has not been configured. Please contact support.`);
+            throw new Error(`A static payment link for the ${'${input.plan}'} plan has not been configured. Please contact support.`);
         }
     }
 
@@ -183,7 +178,7 @@ const createPaymentOrderFlow = ai.defineFlow(
     }
 
     if (amount <= 0) {
-        throw new Error(`Invalid or missing price for ${input.plan} plan. Please set a price in the admin dashboard.`);
+        throw new Error(`Invalid or missing price for ${'${input.plan}'} plan. Please set a price in the admin dashboard.`);
     }
 
     const orderInput = { ...input, amount };
