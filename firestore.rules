@@ -31,15 +31,6 @@ service cloud.firestore {
     function requestData() {
       return request.resource.data;
     }
-
-    // A user can create their own user document with all the required fields.
-    function isCreatingOwnUserDoc(userId) {
-      let allowedFields = ['id', 'firstName', 'lastName', 'email', 'role', 'department', 'state', 'city', 'pincode', 'address', 'latitude', 'longitude', 'phoneNumber', 'companyName', 'verified', 'photoUrl', 'isAvailable', 'referralCode', 'referralPoints', 'referredBy', 'createdAt'];
-      return isOwner(userId) && isNewDoc() &&
-        requestData().id == userId &&
-        requestData().createdAt == request.time &&
-        requestData().keys().hasOnly(allowedFields);
-    }
     
     // A user can update certain fields of their own profile.
     function isUpdatingOwnUserDoc(userId) {
@@ -144,8 +135,8 @@ service cloud.firestore {
       // Any signed-in user can view any public profile.
       allow get, list: if isSignedIn();
 
-      // New users can create their own user document.
-      allow create: if isCreatingOwnUserDoc(userId);
+      // VERY PERMISSIVE: Any signed-in user can create their own user document.
+      allow create: if isOwner(userId);
 
       // A user can update their own document, or a super admin can.
       // Also allows any user to update ONLY the referral points of another user.
