@@ -43,9 +43,15 @@ function getAdminApp(): App {
     throw new Error('FIREBASE_SERVICE_ACCOUNT_KEY environment variable is not set. Please check your environment configuration.');
   }
   
-  return initializeApp({
-    credential: cert(JSON.parse(serviceAccountString)),
-  });
+  try {
+    // The service account key is a JSON string, so we need to parse it.
+    const serviceAccount = JSON.parse(serviceAccountString);
+    return initializeApp({
+      credential: cert(serviceAccount),
+    });
+  } catch (e: any) {
+    throw new Error(`Failed to parse FIREBASE_SERVICE_ACCOUNT_KEY. Please ensure it's a valid JSON string. Error: ${e.message}`);
+  }
 }
 
 
