@@ -12,7 +12,7 @@ import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { v4 as uuidv4 } from 'uuid';
 import { initializeApp, getApps, App, cert } from 'firebase-admin/app';
-import { getFirestore, runTransaction, collection, query, where, getDocs, Timestamp } from 'firebase-admin/firestore';
+import { getFirestore, runTransaction, collection, query, where, getDocs, Timestamp, doc } from 'firebase-admin/firestore';
 
 
 const CreatePaymentOrderInputSchema = z.object({
@@ -205,6 +205,7 @@ const createPaymentOrderFlow = ai.defineFlow(
             // Create new payment document
             const newPaymentRef = doc(paymentsCol);
             const paymentData = {
+                id: newPaymentRef.id,
                 userId: input.userId,
                 plan: input.plan,
                 amount,
@@ -235,5 +236,3 @@ const createPaymentOrderFlow = ai.defineFlow(
     }
   }
 );
-
-    
