@@ -92,7 +92,7 @@ function SearchResults() {
     const expertsQuery = useMemoFirebase(() => {
         if (!firestore) return null;
         
-        let constraints = [];
+        const constraints = [];
 
         if (verified) {
             constraints.push(where('verified', '==', true));
@@ -106,16 +106,19 @@ function SearchResults() {
             constraints.push(where('role', '==', roleQuery));
         }
         
-        // Enforce subscription model by default
-        constraints.push(where('tier', 'in', tiers && tiers.length > 0 ? tiers : ['Premier', 'Super Premier']));
-
-        // We will query with basic filters first, then apply text and location search on the client.
-        if (constraints.length > 0) {
-            return query(collection(firestore, 'users'), ...constraints);
+        // Enforce subscription model by default if tiers are specified
+        if (tiers && tiers.length > 0) {
+            constraints.push(where('tier', 'in', tiers));
         }
 
-        // Fallback to only subscribed users if no other filters are present
-        return query(collection(firestore, 'users'), where('tier', 'in', ['Premier', 'Super Premier']));
+        const baseCollection = collection(firestore, 'users');
+
+        if (constraints.length > 0) {
+            return query(baseCollection, ...constraints);
+        }
+
+        // Fallback to a default query if no constraints are built, e.g., all subscribed users
+        return query(baseCollection, where('tier', 'in', ['Premier', 'Super Premier']));
 
     }, [firestore, verified, available, roleQuery, tiers]);
 
@@ -306,3 +309,5 @@ export default function SearchPage() {
         </div>
     )
 }
+
+    
