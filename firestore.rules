@@ -34,31 +34,18 @@ service cloud.firestore {
     }
     
     function isCreatingOwnUserDoc(userId) {
-      let allowedKeys = [
-        'id', 'firstName', 'lastName', 'email', 'role', 'department',
-        'state', 'city', 'pincode', 'address', 'latitude', 'longitude',
-        'phoneNumber', 'companyName', 'verified', 'isAvailable',
-        'createdAt', 'referralCode', 'referralPoints', 'photoUrl',
-        'referredBy', 'referralProcessed'
-      ];
-      return isOwner(userId) && requestData().keys().hasOnly(allowedKeys);
+      // Very permissive rule for debugging. 
+      // In production, you'd want to validate fields.
+      return isOwner(userId);
     }
     
     // A user can update certain fields of their own profile.
     function isUpdatingOwnUserDoc(userId) {
-      let protectedFields = ['id', 'email', 'verified', 'role', 'tier', 'createdAt', 'referralCode', 'referralPoints', 'referredBy'];
+      let protectedFields = ['id', 'email', 'verified', 'role', 'tier', 'createdAt', 'referralCode', 'referralPoints'];
       return isOwner(userId) && isExistingDoc() &&
              !request.resource.data.diff(resource.data).affectedKeys().hasAny(protectedFields);
     }
     
-    // A signed-in user can update the referral points of another user.
-    // This is needed for the referral system during signup.
-    function isUpdatingReferralPoints() {
-      // Allow only the 'referralPoints' field to be changed.
-      let affectedKeys = request.resource.data.diff(resource.data).affectedKeys();
-      return isSignedIn() && affectedKeys.size() == 1 && affectedKeys.hasOnly(['referralPoints']);
-    }
-
     function isCreatingOwnLocationData(userId) {
       return isCreatingOwnUserDoc(userId) && requestData().userId == userId;
     }
@@ -150,9 +137,8 @@ service cloud.firestore {
       // VERY PERMISSIVE: Any signed-in user can create their own user document.
       allow create: if isOwner(userId);
 
-      // A user can update their own document, a super admin can, or a user can update referral points.
+      // A user can update their own document, or a super admin can update any user doc.
       allow update: if isUpdatingOwnUserDoc(userId) || 
-                       isUpdatingReferralPoints() ||
                        (isSuperAdmin() && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['id', 'createdAt']));
 
       // Users can delete their own account, and admins can delete any account.

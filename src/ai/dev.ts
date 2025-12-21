@@ -9,3 +9,4 @@ import '@/ai/flows/payment-flow.ts';
 import '@/ai/flows/export-data-flow.ts';
 import '@/ai/flows/import-users-flow.ts';
 import '@/ai/flows/verify-user-flow.ts';
+import '@/ai/flows/process-referral-flow.ts';

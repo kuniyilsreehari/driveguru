@@ -67,8 +67,6 @@ type ExpertUserProfile = {
     companyId?: string;
     referralCode?: string;
     referralPoints?: number;
-    referredBy?: string;
-    referralProcessed?: boolean;
     tier?: 'Standard' | 'Premier' | 'Super Premier';
 };
 
@@ -388,56 +386,6 @@ export default function ExpertDashboardPage() {
     }
   }, [user, isUserLoading, isProfileLoading, isRoleLoading, isSuperAdmin, router]);
   
-  useEffect(() => {
-    const processReferral = async () => {
-      if (!firestore || !userProfile || !appConfig) return;
-      
-      // Check if user was referred and the referral hasn't been processed yet
-      if (userProfile.referredBy && userProfile.referralProcessed === false) {
-        const referrerId = userProfile.referredBy;
-        const referralRewardPoints = appConfig.referralRewardPoints || 0;
-
-        if (referralRewardPoints > 0) {
-            try {
-                await runTransaction(firestore, async (transaction) => {
-                    const referrerRef = doc(firestore, 'users', referrerId);
-                    const newUserRef = doc(firestore, 'users', userProfile.id);
-
-                    // Ensure referrer still exists
-                    const referrerSnap = await transaction.get(referrerRef);
-                    if (!referrerSnap.exists()) {
-                        console.warn(`Referrer with ID ${referrerId} not found.`);
-                        // Mark as processed to prevent retries
-                        transaction.update(newUserRef, { referralProcessed: true });
-                        return;
-                    }
-
-                    // Award points to referrer and mark new user's referral as processed
-                    transaction.update(referrerRef, { referralPoints: increment(referralRewardPoints) });
-                    transaction.update(newUserRef, { referralProcessed: true });
-                });
-                
-                toast({
-                    title: "Referral Applied!",
-                    description: `Your referrer has been awarded ${referralRewardPoints} points. Thank you!`,
-                });
-
-            } catch (error) {
-                console.error("Failed to process referral:", error);
-                // Don't show a user-facing error, but log it. The process will retry on next login.
-            }
-        } else {
-             // If no points are awarded, just mark as processed to stop retrying.
-             await updateDocumentNonBlocking(doc(firestore, 'users', userProfile.id), { referralProcessed: true });
-        }
-      }
-    };
-
-    if (userProfile && !isProfileLoading && appConfig && !isAppConfigLoading) {
-      processReferral();
-    }
-  }, [userProfile, isProfileLoading, appConfig, isAppConfigLoading, firestore, toast]);
-
 
   const handleLogout = () => {
     if (auth) {
@@ -774,4 +722,3 @@ export default function ExpertDashboardPage() {
     </div>
   );
 }
-

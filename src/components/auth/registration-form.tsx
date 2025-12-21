@@ -31,6 +31,7 @@ import { Textarea } from "../ui/textarea";
 import { Card, CardDescription, CardHeader, CardTitle } from "../ui/card";
 import { Icons } from "../icons";
 import { Checkbox } from "../ui/checkbox";
+import { processReferral } from "@/ai/flows/process-referral-flow";
 
 const expertTypes = [
     { name: "Freelancer", icon: <UserIcon className="w-8 h-8" />, description: "Offer your individual skills and services directly to clients." },
@@ -337,16 +338,19 @@ export function RegistrationForm() {
     setIsSubmitting(true);
     
     try {
-        const referringUserDoc = await getReferringUser(values.referralCode || '');
-        if (values.referralCode && !referringUserDoc) {
-            form.setError("referralCode", {
-            type: "manual",
-            message: "This referral code is not valid.",
-            });
-            setIsSubmitting(false);
-            return;
+        // Validate referral code before creating user
+        if (values.referralCode) {
+            const referringUserDoc = await getReferringUser(values.referralCode);
+            if (!referringUserDoc) {
+                form.setError("referralCode", {
+                    type: "manual",
+                    message: "This referral code is not valid.",
+                });
+                setIsSubmitting(false);
+                return;
+            }
         }
-
+        
         const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
         const newUser = userCredential.user;
         
@@ -376,16 +380,19 @@ export function RegistrationForm() {
             referralCode: generateReferralCode(),
             referralPoints: 0,
             createdAt: serverTimestamp(),
-            // Add referral info if applicable, to be processed later
-            ...(referringUserDoc && { 
-              referredBy: referringUserDoc.id,
-              referralProcessed: false 
-            }),
         };
 
-        // Use a non-blocking set which internally handles permission errors
-        await setDocumentNonBlocking(newUserDocRef, userData);
-
+        // This is a fire-and-forget call; we don't await it to avoid blocking.
+        // It will complete in the background. Errors will be caught by the global error handler.
+        setDocumentNonBlocking(newUserDocRef, userData);
+        
+        // If a referral code was used, process it on the server
+        if (values.referralCode) {
+            // This is also fire-and-forget. We don't need to wait for it.
+            // Any server errors will be logged on the server.
+            processReferral({ referralCode: values.referralCode });
+        }
+        
         toast({
             title: "Account Created",
             description: "Your account has been successfully created. You are now logged in.",
@@ -1030,4 +1037,3 @@ export function RegistrationForm() {
     </>
   );
 }
-
