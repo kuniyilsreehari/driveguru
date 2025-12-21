@@ -7,7 +7,7 @@ import { signOut } from 'firebase/auth';
 import { doc, collection, query, where } from 'firebase/firestore';
 import { useUser, useAuth, useFirestore, useDoc, useCollection, useMemoFirebase, updateDocumentNonBlocking } from '@/firebase';
 import { Button } from '@/components/ui/button';
-import { LogOut, Briefcase, Loader, Edit, UserCheck, XCircle, MapPin, IndianRupee, Calendar, Book, GraduationCap, School, Info, User as UserIcon, Check, Power, Building, PlusCircle, Crown, Sparkles, Lock, Home, ArrowUpCircle, ShieldCheck, ExternalLink, Gift, Copy, Shield } from 'lucide-react';
+import { LogOut, Briefcase, Loader, Edit, UserCheck, XCircle, MapPin, IndianRupee, Calendar, Book, GraduationCap, School, Info, User as UserIcon, Check, Power, Building, PlusCircle, Crown, Sparkles, Lock, Home, ArrowUpCircle, ShieldCheck, ExternalLink, Gift, Copy, Shield, AlertTriangle } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import {
   Dialog,
@@ -312,7 +312,7 @@ export default function ExpertDashboardPage() {
     return doc(firestore, 'users', user.uid);
   }, [user, firestore]);
 
-  const { data: userProfile, isLoading: isProfileLoading } = useDoc<ExpertUserProfile>(userDocRef);
+  const { data: userProfile, isLoading: isProfileLoading, error: profileError } = useDoc<ExpertUserProfile>(userDocRef);
 
   useEffect(() => {
     if (!isUserLoading && !user) {
@@ -395,8 +395,33 @@ export default function ExpertDashboardPage() {
     );
   }
 
+  if (profileError) {
+    return (
+        <div className="flex h-screen w-full items-center justify-center bg-background p-4">
+            <Card className="w-full max-w-md border-destructive">
+                <CardHeader className="text-center">
+                    <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10">
+                        <AlertTriangle className="h-6 w-6 text-destructive" />
+                    </div>
+                    <CardTitle className="mt-4 text-2xl text-destructive">Error Loading Profile</CardTitle>
+                </CardHeader>
+                <CardContent className="text-center text-muted-foreground">
+                    <p>We couldn&apos;t load your dashboard. Please try again later or contact support.</p>
+                </CardContent>
+            </Card>
+        </div>
+    );
+  }
+
   if (!user || !userProfile) {
-    return null;
+    // This case should be rare due to the loading and error states above,
+    // but it's a good fallback.
+    return (
+      <div className="flex h-screen w-full items-center justify-center bg-background">
+        <Loader className="h-8 w-8 animate-spin text-primary" />
+        <p className="ml-4 text-muted-foreground">Finalizing session...</p>
+      </div>
+    );
   }
   
   const locationString = [userProfile.city, userProfile.state, userProfile.pincode].filter(Boolean).join(', ');
