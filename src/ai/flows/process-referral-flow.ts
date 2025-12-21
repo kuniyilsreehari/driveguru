@@ -9,14 +9,6 @@
  */
 import { config } from 'dotenv';
 config();
-import {genkit} from 'genkit';
-import {googleAI} from '@genkit-ai/google-genai';
-
-genkit({
-  plugins: [googleAI()],
-});
-
-
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
@@ -52,6 +44,12 @@ const processReferralFlow = ai.defineFlow(
       const adminApp = await getAdminApp();
       const firestore = getFirestore(adminApp);
       
+      // 1. Get the reward points from app config
+      const appConfigDoc = await firestore.doc('app_config/homepage').get();
+      const appConfig = appConfigDoc.data();
+      const rewardPoints = appConfig?.referralRewardPoints || 1; // Default to 1 if not set
+
+      // 2. Find the referring user
       const usersRef = firestore.collection('users');
       const q = usersRef.where('referralCode', '==', referralCode).limit(1);
       
@@ -64,12 +62,12 @@ const processReferralFlow = ai.defineFlow(
       
       const referrerDoc = querySnapshot.docs[0];
       
-      // Increment the referralPoints by 1
+      // 3. Increment the referralPoints by the configured amount
       await referrerDoc.ref.update({
-        referralPoints: FieldValue.increment(1)
+        referralPoints: FieldValue.increment(rewardPoints)
       });
 
-      return { success: true, message: `Points awarded to user ${referrerDoc.id}.` };
+      return { success: true, message: `${rewardPoints} points awarded to user ${referrerDoc.id}.` };
 
     } catch (error: any) {
       console.error("Error processing referral:", error);
