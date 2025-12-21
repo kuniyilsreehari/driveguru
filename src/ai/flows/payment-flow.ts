@@ -43,7 +43,6 @@ function getAdminApp(): App {
 
   try {
     const serviceAccount = JSON.parse(serviceAccountString);
-    console.log("Admin initialized:", getApps().length);
     return initializeApp({
       credential: cert(serviceAccount)
     });
