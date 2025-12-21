@@ -16,6 +16,7 @@ import { useToast } from '@/hooks/use-toast';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { FloatingActions } from '@/components/floating-actions';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 
 type ExpertUserProfile = {
@@ -204,7 +205,22 @@ function ExpertProfileContent() {
                                 </div>
                                  <div className="mt-4">
                                      {expert.verified ? (
-                                        <Button asChild variant="secondary"><Link href={`/expert/${expert.id}/book`}><Calendar className="mr-2 h-4 w-4" /> Book Appointment</Link></Button>
+                                        <TooltipProvider>
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <Button asChild variant="secondary" disabled={!expert.isAvailable}>
+                                                        <Link href={expert.isAvailable ? `/expert/${expert.id}/book` : '#'}>
+                                                            <Calendar className="mr-2 h-4 w-4" /> Book Appointment
+                                                        </Link>
+                                                    </Button>
+                                                </TooltipTrigger>
+                                                {!expert.isAvailable && (
+                                                    <TooltipContent>
+                                                        <p>This expert is currently unavailable for new appointments.</p>
+                                                    </TooltipContent>
+                                                )}
+                                            </Tooltip>
+                                        </TooltipProvider>
                                      ) : (
                                         <Button variant="secondary" disabled>
                                             <Lock className="mr-2 h-4 w-4" /> Appointment booking locked
