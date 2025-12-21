@@ -48,13 +48,16 @@ function SearchResults() {
     const verified = searchParams.get('verified') === 'true';
     const available = searchParams.get('available') === 'true';
     const tierParam = searchParams.get('tier');
-    const tiers = tierParam ? tierParam.split(',') : ['Premier', 'Super Premier']; // Default to subscription tiers
     const maxRateParam = searchParams.get('maxRate');
     const maxRate = maxRateParam ? parseInt(maxRateParam, 10) : null;
     const radiusParam = searchParams.get('radius');
     const radius = radiusParam ? parseInt(radiusParam, 10) : null;
     const latParam = searchParams.get('lat');
     const lonParam = searchParams.get('lon');
+
+    const tiers = useMemo(() => {
+        return tierParam ? tierParam.split(',') : ['Premier', 'Super Premier'];
+    }, [tierParam]);
 
 
     useEffect(() => {
@@ -309,5 +312,3 @@ export default function SearchPage() {
         </div>
     )
 }
-
-    
