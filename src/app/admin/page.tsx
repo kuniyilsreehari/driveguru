@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
@@ -100,6 +99,18 @@ type Review = {
     comment: string;
     createdAt: Timestamp;
     status: 'pending' | 'approved' | 'rejected';
+};
+
+type Payment = {
+    id: string;
+    userId: string;
+    plan: string;
+    amount: number;
+    currency: string;
+    orderId: string;
+    status: 'pending' | 'successful' | 'failed';
+    createdAt: Timestamp;
+    updatedAt: Timestamp;
 };
 
 type AppConfig = {
@@ -349,6 +360,64 @@ const VacancyTable = ({ vacancies, onEdit, onDelete, onVerifyToggle, onTierToggl
   );
 }
 
+const PaymentTable = ({ payments, users }: { payments: Payment[], users: ExpertUser[] }) => {
+    const getUserById = (userId: string) => users.find(u => u.id === userId);
+
+    const renderStatusBadge = (status: Payment['status']) => {
+        switch(status) {
+            case 'successful':
+                return <Badge className="bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300">Successful</Badge>;
+            case 'pending':
+                return <Badge className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-300">Pending</Badge>;
+            case 'failed':
+                return <Badge className="bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300">Failed</Badge>;
+            default:
+                return <Badge variant="secondary">{status}</Badge>;
+        }
+    };
+
+    return (
+        <Table>
+            <TableHeader>
+                <TableRow>
+                    <TableHead>User</TableHead>
+                    <TableHead>Plan</TableHead>
+                    <TableHead>Amount</TableHead>
+                    <TableHead>Order ID</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Date</TableHead>
+                </TableRow>
+            </TableHeader>
+            <TableBody>
+                {payments && payments.length > 0 ? (
+                    payments.map((payment) => {
+                        const user = getUserById(payment.userId);
+                        return (
+                            <TableRow key={payment.id}>
+                                <TableCell>
+                                    {user ? (
+                                        <Link href={`/expert/${user.id}`} className="font-medium hover:underline">{user.firstName} {user.lastName}</Link>
+                                    ) : (
+                                        <span className="text-muted-foreground">Unknown User</span>
+                                    )}
+                                    <div className="text-xs text-muted-foreground">{payment.userId}</div>
+                                </TableCell>
+                                <TableCell><Badge variant="outline">{payment.plan}</Badge></TableCell>
+                                <TableCell>₹{payment.amount.toFixed(2)}</TableCell>
+                                <TableCell className="font-mono text-xs">{payment.orderId}</TableCell>
+                                <TableCell>{renderStatusBadge(payment.status)}</TableCell>
+                                <TableCell>{payment.createdAt ? format(payment.createdAt.toDate(), 'PPp') : 'N/A'}</TableCell>
+                            </TableRow>
+                        );
+                    })
+                ) : (
+                    <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground h-24">No payments found.</TableCell></TableRow>
+                )}
+            </TableBody>
+        </Table>
+    );
+};
+
 
 export default function AdminDashboardPage() {
   const { user, isUserLoading } = useUser();
@@ -447,11 +516,17 @@ export default function AdminDashboardPage() {
     if (!firestore || !isSuperAdmin) return null;
     return query(collection(firestore, 'vacancies'), orderBy('postedAt', 'desc'));
   }, [firestore, isSuperAdmin]);
+  
+  const paymentsCollectionQuery = useMemoFirebase(() => {
+    if (!firestore || !isSuperAdmin) return null;
+    return query(collection(firestore, 'payments'), orderBy('createdAt', 'desc'));
+  }, [firestore, isSuperAdmin]);
 
 
   const { data: usersData, isLoading: isUsersLoading } = useCollection<ExpertUser>(usersCollectionRef);
   const { data: reviews, isLoading: isReviewsLoading } = useCollection<Review>(reviewsCollectionQuery);
   const { data: vacancies, isLoading: isVacanciesLoading } = useCollection<Vacancy>(vacanciesCollectionQuery);
+  const { data: payments, isLoading: isPaymentsLoading } = useCollection<Payment>(paymentsCollectionQuery);
   
   const appConfigDocRef = useMemoFirebase(() => {
       if (!firestore) return null;
@@ -790,7 +865,7 @@ export default function AdminDashboardPage() {
 
 
   const isLoading = isUserLoading || isRoleLoading;
-  const areTablesLoading = isSuperAdmin && (isUsersLoading || isReviewsLoading || isVacanciesLoading);
+  const areTablesLoading = isSuperAdmin && (isUsersLoading || isReviewsLoading || isVacanciesLoading || isPaymentsLoading);
   
   const filteredUsers = useMemo(() => {
     if (!usersData) return [];
@@ -940,10 +1015,11 @@ export default function AdminDashboardPage() {
                       </Card>
                     </div>
                      <Tabs defaultValue="users">
-                        <TabsList className="grid w-full grid-cols-3">
+                        <TabsList className="grid w-full grid-cols-4">
                             <TabsTrigger value="users">User Management</TabsTrigger>
                             <TabsTrigger value="reviews">Review Management</TabsTrigger>
                             <TabsTrigger value="vacancies">Vacancy Management</TabsTrigger>
+                            <TabsTrigger value="payments">Payment Management</TabsTrigger>
                         </TabsList>
                         <TabsContent value="users" className="mt-4">
                             <Card>
@@ -1105,6 +1181,29 @@ export default function AdminDashboardPage() {
                                         </div>
                                     ) : (
                                         <VacancyTable vacancies={vacancies || []} onEdit={openVacancyEditDialog} onDelete={openVacancyDeleteDialog} onVerifyToggle={handleVacancyVerifyToggle} onTierToggle={handleVacancyTierToggle} />
+                                    )}
+                                </CardContent>
+                            </Card>
+                        </TabsContent>
+                        <TabsContent value="payments" className="mt-4">
+                            <Card>
+                                <CardHeader>
+                                    <div className="flex items-center gap-3">
+                                        <CreditCard className="h-6 w-6" />
+                                        <div>
+                                            <CardTitle>Payment Management</CardTitle>
+                                            <CardDescription>View and manage all transactions.</CardDescription>
+                                        </div>
+                                    </div>
+                                </CardHeader>
+                                <CardContent>
+                                    {isPaymentsLoading || isUsersLoading ? (
+                                         <div className="flex justify-center items-center p-8">
+                                            <Loader className="h-6 w-6 animate-spin text-primary" />
+                                            <p className="ml-3 text-muted-foreground">Loading payments...</p>
+                                        </div>
+                                    ) : (
+                                        <PaymentTable payments={payments || []} users={usersData || []} />
                                     )}
                                 </CardContent>
                             </Card>
