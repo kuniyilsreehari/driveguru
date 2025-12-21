@@ -1471,10 +1471,10 @@ export default function AdminDashboardPage() {
                                     <div className="space-y-4">
                                         <h4 className="font-medium text-sm">Static Payment Links (Fallback)</h4>
                                         <p className="text-xs text-muted-foreground -mt-2">
-                                            If the Payment Method is set to 'Payment Link', these URLs will be used.
+                                            If the Payment Method is set to 'Payment Link', these URLs/paths will be used.
                                         </p>
                                         <div>
-                                            <Label htmlFor="verification-payment-link">Verification Payment Link</Label>
+                                            <Label htmlFor="verification-payment-link">Verification Payment Path</Label>
                                             <div className="relative mt-1 flex items-center gap-2">
                                                 <LinkIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                                                 <Input
@@ -1482,7 +1482,7 @@ export default function AdminDashboardPage() {
                                                     value={verificationPaymentLink}
                                                     onChange={(e) => setVerificationPaymentLink(e.target.value)}
                                                     className="pl-10"
-                                                    placeholder="https://payment.link/verification"
+                                                    placeholder="/payment/verification"
                                                 />
                                             </div>
                                         </div>

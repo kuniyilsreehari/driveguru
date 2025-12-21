@@ -83,6 +83,7 @@ type AppConfig = {
     superPremierPlanPrices?: PlanPrices;
     verificationFee?: number;
     referralRewardPoints?: number;
+    verificationPaymentLink?: string;
 };
 
 function CompanyVacancies({ userProfile }: { userProfile: ExpertUserProfile }) {
@@ -385,9 +386,10 @@ export default function ExpertDashboardPage() {
   const referralCount = referredUsers?.length || 0;
   
   const totalPoints = useMemo(() => {
+      if (isAppConfigLoading || !appConfig) return userProfile?.referralPoints || 0;
       const pointsPerReferral = appConfig?.referralRewardPoints || 0;
       return (userProfile?.referralPoints || 0);
-  }, [userProfile?.referralPoints]);
+  }, [userProfile?.referralPoints, appConfig, isAppConfigLoading]);
 
 
   useEffect(() => {
@@ -638,27 +640,16 @@ export default function ExpertDashboardPage() {
                                 <h4 className="font-bold">Become a Verified Expert</h4>
                                 <p className="text-sm text-blue-300">
                                     Unlock contact features and gain client trust.
-                                    {verificationFee ? ` Your account will be marked as verified upon successful payment of ₹${verificationFee}.` : ' Verify your profile for a one-time fee.'}
+                                    {verificationFee ? ` Verify your profile for a one-time fee of ₹${verificationFee}.` : ' Verify your profile for a one-time fee.'}
                                 </p>
                             </div>
                         </div>
-                        <Dialog>
-                            <DialogTrigger asChild>
-                                <Button size="default" className="mt-auto w-full sm:w-auto bg-green-600 hover:bg-green-700">
-                                    <ShieldCheck className="mr-2 h-4 w-4" />
-                                    Get Verified {verificationFee && verificationFee > 0 ? ` for ₹${verificationFee}` : ''}
-                                </Button>
-                            </DialogTrigger>
-                            <DialogContent>
-                                <DialogHeader>
-                                  <DialogTitle>Become a Verified Expert</DialogTitle>
-                                  <DialogDescription>
-                                    You will be redirected to our secure payment gateway to pay the one-time verification fee.
-                                  </DialogDescription>
-                                </DialogHeader>
-                                <UpgradeDialog userProfile={userProfile} tier="Verification" billingCycle="one-time" price={verificationFee} />
-                            </DialogContent>
-                        </Dialog>
+                        <Button asChild size="default" className="mt-auto w-full sm:w-auto bg-green-600 hover:bg-green-700">
+                            <Link href={appConfig?.verificationPaymentLink || '/payment/verification'}>
+                                <ShieldCheck className="mr-2 h-4 w-4" />
+                                Get Verified {verificationFee && verificationFee > 0 ? ` for ₹${verificationFee}` : ''}
+                            </Link>
+                        </Button>
                     </div>
                 )}
                 
@@ -765,7 +756,7 @@ export default function ExpertDashboardPage() {
                     <div className="grid grid-cols-2 gap-4 mt-4">
                         <div className="p-4 rounded-lg border text-center">
                             <p className="text-sm font-medium text-muted-foreground">Total Points Earned</p>
-                            <p className="text-3xl font-bold">{userProfile.referralPoints || 0}</p>
+                            <p className="text-3xl font-bold">{totalPoints}</p>
                         </div>
                         <div className="p-4 rounded-lg border text-center">
                             <p className="text-sm font-medium text-muted-foreground">Times Used</p>
