@@ -148,7 +148,7 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
       const fetchPincodeData = async () => {
         setIsFetchingPincode(true);
         try {
-          const response = await fetch(`https://api.postalpincode.in/pincode/${pincodeValue}`);
+          const response = await fetch(`https://api.postalpincode.in/pincode/${'${pincodeValue}'}`);
           const data = await response.json();
           if (data && data[0] && data[0].Status === 'Success') {
             const postOffice = data[0].PostOffice[0];
@@ -195,7 +195,7 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
       async (position) => {
         try {
           const { latitude, longitude } = position.coords;
-          const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
+          const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${'${latitude}'}&lon=${'${longitude}'}`);
           const data = await response.json();
           const address = data.address;
 
@@ -336,7 +336,7 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
     
     const updatedData = {
       ...values,
-      phoneNumber: values.countryCode && values.phoneNumber ? `${values.countryCode} ${values.phoneNumber}` : "",
+      phoneNumber: values.countryCode && values.phoneNumber ? `${'${values.countryCode}'} ${'${values.phoneNumber}'}` : "",
     };
 
     updateDocumentNonBlocking(userDocRef, updatedData);
@@ -351,7 +351,7 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
 
   const getInitials = (firstName?: string, lastName?: string) => {
     if (firstName && lastName) {
-        return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
+        return `${'${firstName.charAt(0)}'}${'${lastName.charAt(0)}'}`.toUpperCase();
     }
     return 'U';
   }
