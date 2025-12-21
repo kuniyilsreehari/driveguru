@@ -11,7 +11,7 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { v4 as uuidv4 } from 'uuid';
-import { initializeApp, getApps, App } from 'firebase-admin/app';
+import { initializeApp, getApps, App, cert } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 
 
@@ -35,6 +35,19 @@ function getAdminApp(): App {
     if (getApps().length) {
         return getApps()[0];
     }
+    
+    const serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
+    if (serviceAccount) {
+        try {
+            return initializeApp({
+                credential: cert(JSON.parse(serviceAccount))
+            });
+        } catch (error) {
+            console.error("Error initializing Firebase Admin SDK with service account:", error);
+        }
+    }
+    
+    console.log("Initializing Firebase Admin SDK with default credentials.");
     return initializeApp();
 }
 

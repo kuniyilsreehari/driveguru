@@ -9,7 +9,7 @@
  */
 
 import { ai } from '@/ai/genkit';
-import { z } from 'genkit';
+import { z } from 'zod';
 import { initializeApp, getApps, App, cert } from 'firebase-admin/app';
 import { getFirestore, Timestamp } from 'firebase-admin/firestore';
 import { getAuth } from 'firebase-admin/auth';
@@ -28,9 +28,22 @@ const ImportUsersOutputSchema = z.object({
 export type ImportUsersOutput = z.infer<typeof ImportUsersOutputSchema>;
 
 function getAdminApp(): App {
-    if (getApps().length > 0) {
+    if (getApps().length) {
         return getApps()[0];
     }
+    
+    const serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
+    if (serviceAccount) {
+        try {
+            return initializeApp({
+                credential: cert(JSON.parse(serviceAccount))
+            });
+        } catch (error) {
+            console.error("Error initializing Firebase Admin SDK with service account:", error);
+        }
+    }
+    
+    console.log("Initializing Firebase Admin SDK with default credentials.");
     return initializeApp();
 }
 

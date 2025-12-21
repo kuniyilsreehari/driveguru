@@ -8,10 +8,9 @@
  */
 
 import { ai } from '@/ai/genkit';
-import { z } from 'genkit';
-import { initializeApp, getApps, App } from 'firebase-admin/app';
+import { z } from 'zod';
+import { initializeApp, getApps, App, cert } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
-import { firebaseConfig } from '@/firebase/config';
 
 const UserSchema = z.any();
 const CompanySchema = z.any();
@@ -30,14 +29,23 @@ export type ExportDataOutput = z.infer<typeof ExportDataOutputSchema>;
 
 // Initialize Firebase Admin SDK
 function getAdminApp(): App {
-    // Check if the app is already initialized to prevent errors.
-    if (getApps().length > 0) {
+    if (getApps().length) {
         return getApps()[0];
     }
-    // Initialize with default credentials available in the environment.
-    return initializeApp({
-        projectId: firebaseConfig.projectId,
-    });
+    
+    const serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
+    if (serviceAccount) {
+        try {
+            return initializeApp({
+                credential: cert(JSON.parse(serviceAccount))
+            });
+        } catch (error) {
+            console.error("Error initializing Firebase Admin SDK with service account:", error);
+        }
+    }
+    
+    console.log("Initializing Firebase Admin SDK with default credentials.");
+    return initializeApp();
 }
 
 
