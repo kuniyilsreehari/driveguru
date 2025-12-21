@@ -78,8 +78,9 @@ const importUsersFlow = ai.defineFlow(
     outputSchema: ImportUsersOutputSchema,
   },
   async ({ csvData }) => {
-    const firestore = getFirestore(getAdminApp());
-    const auth = getAuth(getAdminApp());
+    const adminApp = await getAdminApp();
+    const firestore = getFirestore(adminApp);
+    const auth = getAuth(adminApp);
     const users = parseCSV(csvData);
 
     let processedCount = 0;

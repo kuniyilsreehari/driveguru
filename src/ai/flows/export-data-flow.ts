@@ -29,7 +29,7 @@ export type ExportDataOutput = z.infer<typeof ExportDataOutputSchema>;
 
 
 async function getAllFromCollection(collectionName: string) {
-    const app = getAdminApp();
+    const app = await getAdminApp();
     const firestore = getFirestore(app);
     const snapshot = await firestore.collection(collectionName).get();
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));

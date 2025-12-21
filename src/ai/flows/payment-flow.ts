@@ -120,7 +120,7 @@ const createPaymentOrderFlow = ai.defineFlow(
   },
   async (input) => {
     
-    const adminApp = getAdminApp();
+    const adminApp = await getAdminApp();
     const firestore = getFirestore(adminApp);
     const appConfigDocRef = doc(firestore, 'app_config/homepage');
     

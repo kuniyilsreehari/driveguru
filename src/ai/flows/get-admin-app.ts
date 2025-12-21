@@ -1,4 +1,6 @@
 
+'use server';
+
 import { initializeApp, getApps, App, cert } from 'firebase-admin/app';
 
 /**
@@ -6,7 +8,7 @@ import { initializeApp, getApps, App, cert } from 'firebase-admin/app';
  * It ensures that the app is initialized only once (singleton pattern).
  * This function is for server-side use only.
  */
-export function getAdminApp(): App {
+export async function getAdminApp(): Promise<App> {
   // If the app is already initialized, return the existing instance.
   const apps = getApps();
   if (apps.length) {
