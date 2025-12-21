@@ -36,7 +36,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import type { Vacancy } from '@/app/vacancies/page';
 import Link from 'next/link';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { createPaymentOrder } from '@/ai/flows/payment-flow';
 
 
@@ -65,6 +65,7 @@ type ExpertUserProfile = {
     isAvailable?: boolean;
     companyId?: string;
     referralCode?: string;
+    referralPoints?: number;
     tier?: 'Standard' | 'Premier' | 'Super Premier';
 };
 
@@ -595,23 +596,6 @@ export default function ExpertDashboardPage() {
                 </div>
 
                 <Separator className="my-6" />
-
-                {userProfile.referralCode && (
-                    <>
-                        <div className="space-y-2">
-                            <h4 className="font-semibold flex items-center gap-2"><Gift className="h-5 w-5 text-primary" /> Your Referral Code</h4>
-                            <p className="text-sm text-muted-foreground">Share this code with others to invite them to DriveGuru. You'll get rewards for every successful referral!</p>
-                            <div className="flex items-center gap-2 p-3 rounded-lg bg-secondary">
-                                <p className="text-lg font-mono tracking-widest text-secondary-foreground flex-grow">{userProfile.referralCode}</p>
-                                <Button size="sm" variant="outline" onClick={copyReferralCode}>
-                                    <Copy className="mr-2 h-4 w-4" />
-                                    Copy
-                                </Button>
-                            </div>
-                        </div>
-                        <Separator className="my-6" />
-                    </>
-                )}
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
                     <div className="flex items-center gap-3">
@@ -673,6 +657,45 @@ export default function ExpertDashboardPage() {
                 </p>
             </CardFooter>
         </Card>
+
+        {userProfile.referralCode && (
+            <Card>
+                <CardHeader>
+                    <div className="flex items-center gap-3">
+                        <Gift className="h-6 w-6 text-primary" />
+                        <div>
+                            <CardTitle>Referral Rewards</CardTitle>
+                            <CardDescription>Invite others and earn rewards.</CardDescription>
+                        </div>
+                    </div>
+                </CardHeader>
+                <CardContent>
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 rounded-lg bg-secondary">
+                        <div className="text-center sm:text-left">
+                            <p className="text-sm text-muted-foreground">Your Referral Code</p>
+                            <p className="text-2xl font-mono tracking-widest text-secondary-foreground">{userProfile.referralCode}</p>
+                        </div>
+                        <Button size="sm" variant="outline" onClick={copyReferralCode}>
+                            <Copy className="mr-2 h-4 w-4" />
+                            Copy Code
+                        </Button>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4 mt-4">
+                        <div className="p-4 rounded-lg border text-center">
+                            <p className="text-sm font-medium text-muted-foreground">Total Points</p>
+                            <p className="text-3xl font-bold">{userProfile.referralPoints || 0}</p>
+                        </div>
+                        <div className="p-4 rounded-lg border text-center">
+                            <p className="text-sm font-medium text-muted-foreground">Estimated Earnings</p>
+                            <p className="text-3xl font-bold">₹{userProfile.referralPoints || 0}</p>
+                        </div>
+                    </div>
+                </CardContent>
+                <CardFooter>
+                    <p className="text-xs text-muted-foreground">Share your code to earn points. 1 point = ₹1. Earnings can be redeemed upon request.</p>
+                </CardFooter>
+            </Card>
+        )}
 
         <PlanManagement userProfile={userProfile} appConfig={appConfig} />
         
