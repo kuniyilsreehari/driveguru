@@ -580,6 +580,12 @@ export default function ExpertDashboardPage() {
                                 </Button>
                             </DialogTrigger>
                             <DialogContent>
+                                <DialogHeader>
+                                  <DialogTitle>Become a Verified Expert</DialogTitle>
+                                  <DialogDescription>
+                                    You will be redirected to our secure payment gateway to pay the one-time verification fee.
+                                  </DialogDescription>
+                                </DialogHeader>
                                 <UpgradeDialog userProfile={userProfile} tier="Verification" billingCycle="one-time" price={verificationFee} />
                             </DialogContent>
                         </Dialog>
