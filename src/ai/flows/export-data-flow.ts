@@ -30,7 +30,6 @@ export type ExportDataOutput = z.infer<typeof ExportDataOutputSchema>;
 // Initialize Firebase Admin SDK
 function getAdminApp(): App {
   if (getApps().length) {
-    console.log("Admin initialized:", getApps().length);
     return getApps()[0];
   }
 
@@ -41,11 +40,9 @@ function getAdminApp(): App {
 
   try {
     const serviceAccount = JSON.parse(serviceAccountString);
-    const app = initializeApp({
+    return initializeApp({
       credential: cert(serviceAccount)
     });
-    console.log("Admin initialized:", getApps().length);
-    return app;
   } catch (error: any) {
     console.error("Error initializing Firebase Admin SDK with service account:", error.message);
     throw new Error("Failed to initialize Firebase Admin SDK. Please check your FIREBASE_SERVICE_ACCOUNT_KEY.");
