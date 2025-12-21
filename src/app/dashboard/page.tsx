@@ -67,6 +67,7 @@ type ExpertUserProfile = {
     companyId?: string;
     referralCode?: string;
     referralPoints?: number;
+    referredByCode?: string | null;
     tier?: 'Standard' | 'Premier' | 'Super Premier';
 };
 

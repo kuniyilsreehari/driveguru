@@ -1,0 +1,618 @@
+
+{
+  "entities": {
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
+      "type": "object",
+      "description": "Represents a user of the DriveGuru application.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the user.",
+          "format": "uuid"
+        },
+        "companyId": {
+          "type": "string",
+          "description": "Reference to the Company the user belongs to. (Relationship: Company 1:N User)"
+        },
+        "companyName": {
+          "type": "string",
+          "description": "The name of the company the user belongs to, if applicable."
+        },
+        "firstName": {
+          "type": "string",
+          "description": "The user's first name."
+        },
+        "lastName": {
+          "type": "string",
+          "description": "The user's last name."
+        },
+        "email": {
+          "type": "string",
+          "description": "The user's email address.",
+          "format": "email"
+        },
+        "role": {
+          "type": "string",
+          "description": "The user's role within the application.",
+          "enum": [
+            "Super Admin",
+            "Freelancer",
+            "Company",
+            "Authorized Pro"
+          ]
+        },
+        "department": {
+          "type": "string",
+          "description": "The department the user belongs to, if applicable."
+        },
+        "city": {
+          "type": "string",
+          "description": "The city where the user is located."
+        },
+        "state": {
+            "type": "string",
+            "description": "The state where the user is located."
+        },
+        "pincode": {
+            "type": "string",
+            "description": "The postal code of the user's location."
+        },
+        "address": {
+          "type": "string",
+          "description": "The detailed address of the company or user."
+        },
+        "latitude": {
+            "type": "number",
+            "description": "The latitude of the user's primary location."
+        },
+        "longitude": {
+            "type": "number",
+            "description": "The longitude of the user's primary location."
+        },
+        "phoneNumber": {
+          "type": "string",
+          "description": "The user's mobile number, including country code."
+        },
+        "verified": {
+          "type": "boolean",
+          "description": "Indicates if the expert has been verified by a super admin."
+        },
+        "hourlyRate": {
+          "type": "number",
+          "description": "The expert's hourly rate."
+        },
+        "yearsOfExperience": {
+          "type": "number",
+          "description": "The expert's years of professional experience."
+        },
+        "gender": {
+          "type": "string",
+          "description": "The expert's gender.",
+          "enum": ["Male", "Female", "Other", "Prefer not to say"]
+        },
+        "qualification": {
+          "type": "string",
+          "description": "The expert's highest qualification."
+        },
+        "collegeName": {
+          "type": "string",
+          "description": "The name of the college or university the expert attended."
+        },
+        "skills": {
+          "type": "string",
+          "description": "A comma-separated list of the expert's skills."
+        },
+        "aboutMe": {
+          "type": "string",
+          "description": "A brief biography about the expert."
+        },
+        "photoUrl": {
+          "type": "string",
+          "description": "URL of the user's profile photo.",
+          "format": "uri"
+        },
+        "tier": {
+          "type": "string",
+          "description": "The expert's activation tier.",
+          "enum": ["Standard", "Premier", "Super Premier"]
+        },
+        "isAvailable": {
+          "type": "boolean",
+          "description": "Indicates if the expert is currently available for work."
+        },
+        "referralCode": {
+          "type": "string",
+          "description": "A unique code for this user to refer others."
+        },
+        "referredByCode": {
+          "type": ["string", "null"],
+          "description": "The referral code of the user who referred this user. Null if not referred or if points have been awarded."
+        },
+        "referralPoints": {
+          "type": "number",
+          "description": "The total points earned by this user from referrals."
+        },
+        "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp of when the user account was created."
+        }
+      },
+      "required": [
+        "id",
+        "firstName",
+        "lastName",
+        "email",
+        "role",
+        "createdAt"
+      ]
+    },
+    "Company": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Company",
+      "type": "object",
+      "description": "Represents a company using the DriveGuru application.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the company.",
+          "format": "uuid"
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the company."
+        },
+        "address": {
+          "type": "string",
+          "description": "The address of the company."
+        },
+        "contactEmail": {
+          "type": "string",
+          "description": "The contact email address for the company.",
+          "format": "email"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "address",
+        "contactEmail"
+      ]
+    },
+    "LocationData": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "LocationData",
+      "type": "object",
+      "description": "Represents location data recorded for a user.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the location data entry.",
+          "format": "uuid"
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the User the location data belongs to. (Relationship: User 1:N LocationData)"
+        },
+        "latitude": {
+          "type": "number",
+          "description": "The latitude coordinate."
+        },
+        "longitude": {
+          "type": "number",
+          "description": "The longitude coordinate."
+        },
+        "timestamp": {
+          "type": "string",
+          "description": "The timestamp of when the location was recorded.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "latitude",
+        "longitude",
+        "timestamp"
+      ]
+    },
+    "Review": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Review",
+      "type": "object",
+      "description": "Represents a review for an expert.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the review."
+        },
+        "expertId": {
+          "type": "string",
+          "description": "The ID of the expert being reviewed."
+        },
+        "expertName": {
+          "type": "string",
+          "description": "The name of the expert being reviewed."
+        },
+        "reviewerName": {
+          "type": "string",
+          "description": "The name of the person who wrote the review."
+        },
+        "rating": {
+          "type": "number",
+          "description": "A numerical rating from 1 to 5."
+        },
+        "comment": {
+          "type": "string",
+          "description": "The text content of the review."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp of when the review was submitted."
+        },
+        "status": {
+          "type": "string",
+          "description": "The moderation status of the review.",
+          "enum": ["pending", "approved", "rejected"]
+        }
+      },
+      "required": ["id", "expertId", "reviewerName", "rating", "comment", "createdAt", "status"]
+    },
+    "Vacancy": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Vacancy",
+      "type": "object",
+      "description": "Represents a job vacancy posted by a company.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the vacancy."
+        },
+        "title": {
+          "type": "string",
+          "description": "The title of the job vacancy."
+        },
+        "description": {
+          "type": "string",
+          "description": "A detailed description of the job."
+        },
+        "companyId": {
+          "type": "string",
+          "description": "The ID of the company that posted the vacancy."
+        },
+        "companyName": {
+          "type": "string",
+          "description": "The name of the company that posted the vacancy."
+        },
+        "companyEmail": {
+          "type": "string",
+          "description": "The contact email for applications.",
+          "format": "email"
+        },
+        "contactPhone": {
+            "type": "string",
+            "description": "The contact phone number for the vacancy."
+        },
+        "location": {
+          "type": "string",
+          "description": "The location of the job."
+        },
+        "employmentType": {
+          "type": "string",
+          "description": "The type of employment (e.g., Full-time, Contract).",
+          "enum": ["Full-time", "Part-time", "Contract", "Internship"]
+        },
+        "skillsRequired": {
+          "type": "string",
+          "description": "A comma-separated list of required skills."
+        },
+        "isImmediate": {
+            "type": "boolean",
+            "description": "Indicates if the hiring is immediate."
+        },
+        "positionsAvailable": {
+            "type": "number",
+            "description": "The number of open positions for this vacancy."
+        },
+        "isCompanyVerified": {
+            "type": "boolean",
+            "description": "Indicates if the company posting the vacancy is verified."
+        },
+        "companyTier": {
+            "type": "string",
+            "description": "The tier of the company posting the vacancy.",
+            "enum": ["Standard", "Premier", "Super Premier"]
+        },
+        "postedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp of when the vacancy was posted."
+        }
+      },
+      "required": ["id", "title", "description", "companyId", "companyName", "companyEmail", "location", "employmentType", "postedAt", "positionsAvailable"]
+    },
+     "Payment": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Payment",
+      "type": "object",
+      "description": "Represents a payment transaction.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the payment."
+        },
+        "userId": {
+          "type": "string",
+          "description": "The ID of the user who made the payment."
+        },
+        "plan": {
+          "type": "string",
+          "description": "The plan or product being purchased (e.g., 'Premier', 'Verification').",
+          "enum": ["Premier", "Super Premier", "Verification"]
+        },
+        "billingCycle": {
+          "type": "string",
+          "description": "The billing cycle for the plan.",
+          "enum": ["daily", "monthly", "yearly", "one-time"]
+        },
+        "amount": {
+          "type": "number",
+          "description": "The amount paid."
+        },
+        "currency": {
+          "type": "string",
+          "description": "The currency of the payment (e.g., 'INR')."
+        },
+        "orderId": {
+          "type": "string",
+          "description": "The unique order ID generated by the payment gateway."
+        },
+        "status": {
+          "type": "string",
+          "description": "The status of the payment.",
+          "enum": ["pending", "successful", "failed"]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp of when the payment was initiated."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp of when the payment status was last updated."
+        }
+      },
+      "required": ["id", "userId", "plan", "amount", "currency", "orderId", "status", "createdAt", "updatedAt"]
+    },
+    "AppConfig": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "AppConfig",
+      "type": "object",
+      "description": "Stores global application settings.",
+      "properties": {
+        "featuredExpertsLimit": {
+          "type": "number",
+          "description": "The number of featured experts to show on the homepage."
+        },
+        "isPaymentsEnabled": {
+          "type": "boolean",
+          "description": "Globally enables or disables all payment functionalities."
+        },
+        "paymentMethod": {
+            "type": "string",
+            "description": "The selected payment method.",
+            "enum": ["API", "Link"]
+        },
+        "publicApiKey": {
+          "type": "string",
+          "description": "A public-facing API key for client-side services (e.g., a public Cashfree key)."
+        },
+        "premierPlanPrices": {
+            "type": "object",
+            "description": "Pricing for the Premier plan.",
+            "properties": {
+                "daily": { "type": "number" },
+                "monthly": { "type": "number" },
+                "yearly": { "type": "number" }
+            }
+        },
+        "superPremierPlanPrices": {
+            "type": "object",
+            "description": "Pricing for the Super Premier plan.",
+            "properties": {
+                "daily": { "type": "number" },
+                "monthly": { "type": "number" },
+                "yearly": { "type": "number" }
+            }
+        },
+        "verificationFee": {
+          "type": "number",
+          "description": "The one-time fee for expert verification."
+        },
+        "premierPaymentLink": {
+          "type": "string",
+          "description": "The payment link for the Premier plan upgrade.",
+          "format": "uri"
+        },
+        "superPremierPaymentLink": {
+          "type": "string",
+          "description": "The payment link for the Super Premier plan upgrade.",
+          "format": "uri"
+        },
+        "verificationPaymentLink": {
+          "type": "string",
+          "description": "The payment link for the one-time verification fee.",
+          "format": "uri"
+        },
+        "isAnnouncementEnabled": {
+          "type": "boolean",
+          "description": "Whether the announcement banner is currently active."
+        },
+        "announcementText": {
+          "type": "string",
+          "description": "The text to display in the scrolling announcement banner."
+        },
+        "announcementSpeed": {
+          "type": "number",
+          "description": "The scrolling duration for the announcement in seconds. A higher number means slower speed."
+        },
+        "availabilityLocationText": {
+          "type": "string",
+          "description": "The text displayed in the footer indicating the service availability location."
+        },
+        "referralRewardPoints": {
+          "type": "number",
+          "description": "The number of points awarded for a successful referral."
+        }
+      }
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous",
+      "google.com"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Stores user profiles. Includes user's companyId for association with a company.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/companies/{companyId}",
+        "definition": {
+          "entityName": "Company",
+          "schema": {
+            "$ref": "#/backend/entities/Company"
+          },
+          "description": "Stores company profiles.",
+          "params": [
+            {
+              "name": "companyId",
+              "description": "The unique identifier of the company."
+            }
+          ]
+        }
+      },
+       {
+        "path": "/payments/{paymentId}",
+        "definition": {
+          "entityName": "Payment",
+          "schema": {
+            "$ref": "#/backend/entities/Payment"
+          },
+          "description": "Stores all payment transactions. A top-level collection allows for easy querying and status updates by server-side processes.",
+          "params": [
+            {
+              "name": "paymentId",
+              "description": "The unique identifier for the payment record."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/location_data/{locationDataId}",
+        "definition": {
+          "entityName": "LocationData",
+          "schema": {
+            "$ref": "#/backend/entities/LocationData"
+          },
+          "description": "Stores location data for each user.  Path-based ownership ensures only the user can access their own location data.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user."
+            },
+            {
+              "name": "locationDataId",
+              "description": "The unique identifier of the location data entry."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/reviews/{reviewId}",
+        "definition": {
+          "entityName": "Review",
+          "schema": {
+            "$ref": "#/backend/entities/Review"
+          },
+          "description": "Stores all reviews for experts. A top-level collection makes it easy for admins to query and moderate.",
+          "params": [
+            {
+              "name": "reviewId",
+              "description": "The unique identifier of the review."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/vacancies/{vacancyId}",
+        "definition": {
+            "entityName": "Vacancy",
+            "schema": {
+                "$ref": "#/backend/entities/Vacancy"
+            },
+            "description": "Stores job vacancies posted by companies.",
+            "params": [
+                {
+                    "name": "vacancyId",
+                    "description": "The unique identifier of the vacancy."
+                }
+            ]
+        }
+      },
+      {
+        "path": "/roles_super_admin/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Collection used to assign super admin roles. The existence of a document indicates super admin privileges. This enables secure `list` operations.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/app_config/{configId}",
+        "definition": {
+          "entityName": "AppConfig",
+          "schema": {
+            "$ref": "#/backend/entities/AppConfig"
+          },
+          "description": "Stores global application settings. Use a single document, e.g., 'homepage' for homepage settings.",
+          "params": [
+            {
+              "name": "configId",
+              "description": "The unique identifier of the configuration document (e.g., 'homepage')."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure is designed to support DriveGuru's core features while adhering to the principles of Authorization Independence, Structural Segregation, and Access Modeling. User data, company information, and location data are stored in separate collections to maintain clarity and enforce consistent security rules. Crucially, authorization data is denormalized to avoid `get()` calls in security rules and ensure atomic operations.\n\n1.  **Authorization Independence:** A separate `/roles_super_admin/{userId}` collection determines super admin privileges based on document existence rather than user document content. This simplifies security rules and avoids hierarchical dependencies.\n\n2.  **Structural Segregation:**  User data, company data, location data, and reviews are stored in separate collections, each with distinct security requirements. This segregation simplifies security rule management and prevents unintended access.\n\n3.  **Access Modeling:**\n    *   User-owned location data is structured under `/users/{userId}/location_data/{locationDataId}`. This allows for path-based security rules, ensuring that only the user can access their own location data.\n    *   Companies are stored in a top-level `/companies` collection.\n    *   The super admin role is managed through the `/roles_super_admin/{userId}` collection, where the existence of a document for a user ID grants super admin privileges.\n    *   Reviews are in a top-level collection to allow admins to easily list and moderate all submitted reviews, while rules can still be written to allow users to create reviews or read approved ones."
+  }
+}

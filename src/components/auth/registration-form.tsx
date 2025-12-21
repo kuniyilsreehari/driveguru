@@ -379,19 +379,13 @@ export function RegistrationForm() {
             isAvailable: true,
             referralCode: generateReferralCode(),
             referralPoints: 0,
+            referredByCode: values.referralCode || null, // Just store the code
             createdAt: serverTimestamp(),
         };
 
         // This is a fire-and-forget call; we don't await it to avoid blocking.
         // It will complete in the background. Errors will be caught by the global error handler.
         setDocumentNonBlocking(newUserDocRef, userData);
-        
-        // If a referral code was used, process it on the server
-        if (values.referralCode) {
-            // This is also fire-and-forget. We don't need to wait for it.
-            // Any server errors will be logged on the server.
-            processReferral({ referralCode: values.referralCode });
-        }
         
         toast({
             title: "Account Created",

@@ -60,6 +60,7 @@ import { importUsers } from '@/ai/flows/import-users-flow';
 import { Slider } from '@/components/ui/slider';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { processReferral } from '@/ai/flows/process-referral-flow';
 
 type ExpertUser = {
     id: string;
@@ -87,6 +88,7 @@ type ExpertUser = {
     companyId?: string;
     tier?: 'Standard' | 'Premier' | 'Super Premier';
     referralPoints?: number;
+    referredByCode?: string | null;
     createdAt?: Timestamp;
 };
 
@@ -137,7 +139,7 @@ type AppConfig = {
     referralRewardPoints?: number;
 };
 
-const UserTable = ({ users, onTierChange, onVerificationToggle, onDelete, onEdit }: { users: ExpertUser[], onTierChange: (expert: ExpertUser, tier: ExpertUser['tier']) => void, onVerificationToggle: (expert: ExpertUser) => void, onDelete: (expert: ExpertUser) => void, onEdit: (expert: ExpertUser) => void }) => {
+const UserTable = ({ users, onTierChange, onVerificationToggle, onDelete, onEdit, onAwardReferral }: { users: ExpertUser[], onTierChange: (expert: ExpertUser, tier: ExpertUser['tier']) => void, onVerificationToggle: (expert: ExpertUser) => void, onDelete: (expert: ExpertUser) => void, onEdit: (expert: ExpertUser) => void, onAwardReferral: (user: ExpertUser) => void }) => {
     const getInitials = (firstName?: string, lastName?: string) => {
         if (firstName && lastName) {
             return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
@@ -162,8 +164,7 @@ const UserTable = ({ users, onTierChange, onVerificationToggle, onDelete, onEdit
                 <TableRow>
                 <TableHead className="w-[80px]">Avatar</TableHead>
                 <TableHead>Full Name</TableHead>
-                <TableHead>Contact</TableHead>
-                <TableHead>Referral Points</TableHead>
+                <TableHead>Referral</TableHead>
                 <TableHead>Role</TableHead>
                 <TableHead className="text-center">Tier</TableHead>
                 <TableHead className="text-center">Verified</TableHead>
@@ -182,20 +183,22 @@ const UserTable = ({ users, onTierChange, onVerificationToggle, onDelete, onEdit
                     </TableCell>
                     <TableCell>
                         <div className="font-medium">{expert.firstName} {expert.lastName}</div>
-                        {expert.createdAt && (
-                            <div className="text-xs text-muted-foreground">
-                                {format(expert.createdAt.toDate(), 'PPP')}
+                        <div className="text-xs text-muted-foreground">{expert.email}</div>
+                    </TableCell>
+                    <TableCell>
+                        {expert.referredByCode ? (
+                            <div className="flex items-center gap-2">
+                                <Badge variant="outline">{expert.referredByCode}</Badge>
+                                <Button size="sm" variant="outline" onClick={() => onAwardReferral(expert)}>
+                                    <Gift className="mr-2 h-4 w-4" /> Award
+                                </Button>
+                            </div>
+                        ) : (
+                            <div className="flex items-center gap-1">
+                                <Badge variant="outline">{expert.referralPoints || 0}</Badge>
+                                <span className="text-muted-foreground text-xs">Points</span>
                             </div>
                         )}
-                    </TableCell>
-                    <TableCell>
-                        <div>{expert.email}</div>
-                        <div className="text-xs text-muted-foreground">{expert.phoneNumber}</div>
-                    </TableCell>
-                    <TableCell>
-                        <Badge variant="outline" className="flex items-center gap-1 w-fit">
-                            <Gift className="h-3 w-3" /> {expert.referralPoints || 0}
-                        </Badge>
                     </TableCell>
                     <TableCell><Badge variant="secondary">{expert.role}</Badge></TableCell>
                     <TableCell className="text-center">{renderTierBadge(expert.tier)}</TableCell>
@@ -785,6 +788,33 @@ export default function AdminDashboardPage() {
     }
   };
 
+  const handleAwardReferral = async (userToReward: ExpertUser) => {
+    if (!userToReward.referredByCode) return;
+
+    try {
+      const result = await processReferral({
+        newUserUid: userToReward.id,
+        referralCode: userToReward.referredByCode
+      });
+
+      if (result.success) {
+        toast({
+          title: "Referral Points Awarded",
+          description: result.message,
+        });
+      } else {
+        throw new Error(result.message);
+      }
+    } catch (error: any) {
+      console.error("Failed to award referral points:", error);
+      toast({
+        variant: "destructive",
+        title: "Award Failed",
+        description: error.message || "Could not award points. Please check the referral code and try again.",
+      });
+    }
+  };
+
   const handleExportData = async () => {
     setIsExporting(true);
     try {
@@ -816,7 +846,7 @@ export default function AdminDashboardPage() {
             return;
         }
 
-        const headers = ['id', 'firstName', 'lastName', 'email', 'role', 'companyName', 'department', 'phoneNumber', 'city', 'state', 'pincode', 'address', 'verified', 'tier', 'isAvailable', 'hourlyRate', 'yearsOfExperience', 'qualification', 'skills', 'aboutMe', 'referralCode', 'referredBy'];
+        const headers = ['id', 'firstName', 'lastName', 'email', 'role', 'companyName', 'department', 'phoneNumber', 'city', 'state', 'pincode', 'address', 'verified', 'tier', 'isAvailable', 'hourlyRate', 'yearsOfExperience', 'qualification', 'skills', 'aboutMe', 'referralCode', 'referredByCode'];
         const csvRows = [headers.join(',')];
 
         for (const user of usersData) {
@@ -1084,19 +1114,19 @@ export default function AdminDashboardPage() {
                                             <TabsTrigger value="superAdmins">Super Admins</TabsTrigger>
                                         </TabsList>
                                         <TabsContent value="all" className="mt-4">
-                                            <UserTable users={filteredUsers} onTierChange={handleTierChange} onVerificationToggle={handleVerificationToggle} onDelete={openDeleteDialog} onEdit={openEditDialog} />
+                                            <UserTable users={filteredUsers} onTierChange={handleTierChange} onVerificationToggle={handleVerificationToggle} onDelete={openDeleteDialog} onEdit={openEditDialog} onAwardReferral={handleAwardReferral} />
                                         </TabsContent>
                                         <TabsContent value="freelancers" className="mt-4">
-                                            <UserTable users={freelancers || []} onTierChange={handleTierChange} onVerificationToggle={handleVerificationToggle} onDelete={openDeleteDialog} onEdit={openEditDialog} />
+                                            <UserTable users={freelancers || []} onTierChange={handleTierChange} onVerificationToggle={handleVerificationToggle} onDelete={openDeleteDialog} onEdit={openEditDialog} onAwardReferral={handleAwardReferral} />
                                         </TabsContent>
                                         <TabsContent value="companies" className="mt-4">
-                                            <UserTable users={companies || []} onTierChange={handleTierChange} onVerificationToggle={handleVerificationToggle} onDelete={openDeleteDialog} onEdit={openEditDialog} />
+                                            <UserTable users={companies || []} onTierChange={handleTierChange} onVerificationToggle={handleVerificationToggle} onDelete={openDeleteDialog} onEdit={openEditDialog} onAwardReferral={handleAwardReferral} />
                                         </TabsContent>
                                         <TabsContent value="authorizedPros" className="mt-4">
-                                            <UserTable users={authorizedPros || []} onTierChange={handleTierChange} onVerificationToggle={handleVerificationToggle} onDelete={openDeleteDialog} onEdit={openEditDialog} />
+                                            <UserTable users={authorizedPros || []} onTierChange={handleTierChange} onVerificationToggle={handleVerificationToggle} onDelete={openDeleteDialog} onEdit={openEditDialog} onAwardReferral={handleAwardReferral} />
                                         </TabsContent>
                                         <TabsContent value="superAdmins" className="mt-4">
-                                            <UserTable users={superAdmins || []} onTierChange={handleTierChange} onVerificationToggle={handleVerificationToggle} onDelete={openDeleteDialog} onEdit={openEditDialog} />
+                                            <UserTable users={superAdmins || []} onTierChange={handleTierChange} onVerificationToggle={handleVerificationToggle} onDelete={openDeleteDialog} onEdit={openEditDialog} onAwardReferral={handleAwardReferral} />
                                         </TabsContent>
                                     </Tabs>
                                 )}
