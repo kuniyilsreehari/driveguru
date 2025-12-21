@@ -357,7 +357,8 @@ export function RegistrationForm() {
         const appConfigDocRef = doc(firestore, 'app_config', 'homepage');
 
         const appConfigSnap = await transaction.get(appConfigDocRef);
-        const referralRewardPoints = appConfigSnap.data()?.referralRewardPoints || 0;
+        const appConfigData = appConfigSnap.data();
+        const referralRewardPoints = appConfigData?.referralRewardPoints || 0;
         
         const userData: any = {
             id: newUser.uid,
