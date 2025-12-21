@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
@@ -1088,7 +1089,7 @@ export default function AdminDashboardPage() {
                       </Card>
                       <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                          <CardTitle className="text-sm font-medium">Total Points</CardTitle>
+                          <CardTitle className="text-sm font-medium">Total Awarded Points</CardTitle>
                           <Gift className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
@@ -1381,7 +1382,7 @@ export default function AdminDashboardPage() {
                         </CardHeader>
                         <CardContent>
                             <div>
-                                <Label htmlFor="referral-points">Points per Referral</Label>
+                                <Label htmlFor="referral-points">Points Awarded per Referral</Label>
                                 <div className="relative mt-1">
                                     <Input
                                         id="referral-points"
@@ -1744,3 +1745,4 @@ export default function AdminDashboardPage() {
     </>
   );
 }
+
