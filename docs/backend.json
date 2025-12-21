@@ -130,6 +130,10 @@
           "type": "string",
           "description": "The ID of the user who referred this user."
         },
+        "referralPoints": {
+          "type": "number",
+          "description": "The total points earned by this user from referrals."
+        },
         "createdAt": {
             "type": "string",
             "format": "date-time",
@@ -432,6 +436,10 @@
         "availabilityLocationText": {
           "type": "string",
           "description": "The text displayed in the footer indicating the service availability location."
+        },
+        "referralRewardPoints": {
+          "type": "number",
+          "description": "The number of points awarded for a successful referral."
         }
       }
     }
@@ -582,4 +590,5 @@
   }
 }
 
+    
     

@@ -10,7 +10,7 @@ import { useUser, useFirestore, useDoc, useMemoFirebase, useAuth, useCollection 
 import { deleteDocumentNonBlocking, updateDocumentNonBlocking, setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, CheckCircle2, UserCheck, UserX, Crown, Sparkles, User as UserIcon, Settings, Save, Briefcase, Building, MessageSquare, ThumbsUp, ThumbsDown, Star, Search, PlusCircle, Mail, Edit3, Link as LinkIcon, Download, ExternalLink, IndianRupee, X, Upload, HardDriveDownload, Megaphone, Phone, MapPinIcon, CreditCard, AlertTriangle, Key } from 'lucide-react';
+import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, CheckCircle2, UserCheck, UserX, Crown, Sparkles, User as UserIcon, Settings, Save, Briefcase, Building, MessageSquare, ThumbsUp, ThumbsDown, Star, Search, PlusCircle, Mail, Edit3, Link as LinkIcon, Download, ExternalLink, IndianRupee, X, Upload, HardDriveDownload, Megaphone, Phone, MapPinIcon, CreditCard, AlertTriangle, Key, Gift } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -87,6 +87,7 @@ type ExpertUser = {
     isAvailable?: boolean;
     companyId?: string;
     tier?: 'Standard' | 'Premier' | 'Super Premier';
+    referralPoints?: number;
     createdAt?: Timestamp;
 };
 
@@ -116,6 +117,7 @@ type AppConfig = {
     isPaymentsEnabled?: boolean;
     paymentMethod?: 'API' | 'Link';
     publicApiKey?: string;
+    referralRewardPoints?: number;
 };
 
 const UserTable = ({ users, onTierChange, onVerificationToggle, onDelete, onEdit }: { users: ExpertUser[], onTierChange: (expert: ExpertUser, tier: ExpertUser['tier']) => void, onVerificationToggle: (expert: ExpertUser) => void, onDelete: (expert: ExpertUser) => void, onEdit: (expert: ExpertUser) => void }) => {
@@ -144,7 +146,7 @@ const UserTable = ({ users, onTierChange, onVerificationToggle, onDelete, onEdit
                 <TableHead className="w-[80px]">Avatar</TableHead>
                 <TableHead>Full Name</TableHead>
                 <TableHead>Email</TableHead>
-                <TableHead>Mobile Number</TableHead>
+                <TableHead>Referral Points</TableHead>
                 <TableHead>Role</TableHead>
                 <TableHead className="text-center">Tier</TableHead>
                 <TableHead className="text-center">Verified</TableHead>
@@ -170,7 +172,11 @@ const UserTable = ({ users, onTierChange, onVerificationToggle, onDelete, onEdit
                         )}
                     </TableCell>
                     <TableCell>{expert.email}</TableCell>
-                    <TableCell>{expert.phoneNumber || 'N/A'}</TableCell>
+                    <TableCell>
+                        <Badge variant="outline" className="flex items-center gap-1 w-fit">
+                            <Gift className="h-3 w-3" /> {expert.referralPoints || 0}
+                        </Badge>
+                    </TableCell>
                     <TableCell><Badge variant="secondary">{expert.role}</Badge></TableCell>
                     <TableCell className="text-center">{renderTierBadge(expert.tier)}</TableCell>
                     <TableCell className="text-center">
@@ -399,6 +405,7 @@ export default function AdminDashboardPage() {
   const [verificationFee, setVerificationFee] = useState(0);
   const [availabilityLocationText, setAvailabilityLocationText] = useState('');
   const [publicApiKey, setPublicApiKey] = useState('');
+  const [referralRewardPoints, setReferralRewardPoints] = useState(0);
 
   const [isAnnouncementEnabled, setIsAnnouncementEnabled] = useState(false);
   const [announcementText, setAnnouncementText] = useState('');
@@ -461,6 +468,7 @@ export default function AdminDashboardPage() {
         setVerificationFee(appConfig.verificationFee || 0);
         setAvailabilityLocationText(appConfig.availabilityLocationText || '');
         setPublicApiKey(appConfig.publicApiKey || '');
+        setReferralRewardPoints(appConfig.referralRewardPoints || 0);
         setIsAnnouncementEnabled(appConfig.isAnnouncementEnabled || false);
         setAnnouncementText(appConfig.announcementText || '');
         setAnnouncementSpeed(appConfig.announcementSpeed || 20);
@@ -560,6 +568,7 @@ export default function AdminDashboardPage() {
             verificationFee: Number(verificationFee),
             availabilityLocationText: availabilityLocationText,
             publicApiKey: publicApiKey,
+            referralRewardPoints: Number(referralRewardPoints),
             isAnnouncementEnabled: isAnnouncementEnabled,
             announcementText: announcementText,
             announcementSpeed: Number(announcementSpeed),
@@ -1175,6 +1184,33 @@ export default function AdminDashboardPage() {
                              </div>
                         </CardContent>
                     </Card>
+                     <Card>
+                        <CardHeader>
+                            <div className="flex items-center gap-3">
+                                <Gift className="h-6 w-6" />
+                                <div>
+                                    <CardTitle>Referral Settings</CardTitle>
+                                    <CardDescription>Configure points for successful referrals.</CardDescription>
+                                </div>
+                            </div>
+                        </CardHeader>
+                        <CardContent>
+                            <div>
+                                <Label htmlFor="referral-points">Points per Referral</Label>
+                                <div className="relative mt-1">
+                                    <Input
+                                        id="referral-points"
+                                        type="number"
+                                        value={referralRewardPoints}
+                                        onChange={(e) => setReferralRewardPoints(Number(e.target.value))}
+                                        className="pl-4"
+                                        placeholder="e.g., 100"
+                                    />
+                                </div>
+                                <p className="text-xs text-muted-foreground mt-1">Set the number of points awarded to a user for each successful referral.</p>
+                            </div>
+                        </CardContent>
+                    </Card>
                     <Card>
                         <CardHeader>
                             <div className="flex items-center gap-3">
@@ -1535,3 +1571,5 @@ export default function AdminDashboardPage() {
     </>
   );
 }
+
+    

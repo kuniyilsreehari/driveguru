@@ -9,7 +9,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { User as UserIcon, Mail, Lock, Eye, EyeOff, Briefcase, MapPin, Phone, LocateIcon, Loader2, Building, Home, GraduationCap, Book, ArrowRight, MessageSquare, Gift } from "lucide-react";
 import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, getAdditionalUserInfo, RecaptchaVerifier, signInWithPhoneNumber } from 'firebase/auth';
-import { doc, serverTimestamp, collection, query, where, getDocs } from 'firebase/firestore';
+import { doc, serverTimestamp, collection, query, where, getDocs, runTransaction, increment } from 'firebase/firestore';
 
 import { Button } from "@/components/ui/button";
 import {
@@ -289,6 +289,7 @@ export function RegistrationForm() {
                 verified: false,
                 isAvailable: true,
                 referralCode: generateReferralCode(),
+                referralPoints: 0,
                 createdAt: serverTimestamp(),
             };
             setDocumentNonBlocking(userDocRef, userData, { merge: true });
@@ -318,7 +319,7 @@ export function RegistrationForm() {
     const q = query(usersRef, where('referralCode', '==', referralCode), limit(1));
     const querySnapshot = await getDocs(q);
     if (!querySnapshot.empty) {
-        return querySnapshot.docs[0].id;
+        return querySnapshot.docs[0];
     }
     return null;
   }
@@ -334,8 +335,8 @@ export function RegistrationForm() {
     }
     setIsSubmitting(true);
     try {
-      const referringUserId = await getReferringUser(values.referralCode || '');
-      if (values.referralCode && !referringUserId) {
+      const referringUserDoc = await getReferringUser(values.referralCode || '');
+      if (values.referralCode && !referringUserDoc) {
         toast({
           variant: "destructive",
           title: "Invalid Referral Code",
@@ -347,39 +348,50 @@ export function RegistrationForm() {
 
       const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
       const newUser = userCredential.user;
-
-      const userDocRef = doc(firestore, "users", newUser.uid);
       
       const fullAddress = [values.address, values.city, values.state, values.pincode].filter(Boolean).join(', ');
       const coords = await getCoordinates(fullAddress);
       
-      const userData: any = {
-        id: newUser.uid,
-        firstName: values.firstName,
-        lastName: values.lastName,
-        email: values.email,
-        role: values.role,
-        department: values.department,
-        state: values.state,
-        city: values.city,
-        pincode: values.pincode,
-        address: values.address,
-        latitude: coords?.lat || null,
-        longitude: coords?.lon || null,
-        phoneNumber: values.countryCode && values.phoneNumber ? `${values.countryCode} ${values.phoneNumber}` : "",
-        companyName: values.companyName,
-        verified: false,
-        photoUrl: '',
-        isAvailable: true,
-        referralCode: generateReferralCode(),
-        createdAt: serverTimestamp(),
-      };
-      
-      if (referringUserId) {
-          userData.referredBy = referringUserId;
-      }
+      await runTransaction(firestore, async (transaction) => {
+        const newUserDocRef = doc(firestore, "users", newUser.uid);
+        const appConfigDocRef = doc(firestore, 'app_config', 'homepage');
 
-      setDocumentNonBlocking(userDocRef, userData, { merge: true });
+        const appConfigSnap = await transaction.get(appConfigDocRef);
+        const referralRewardPoints = appConfigSnap.data()?.referralRewardPoints || 0;
+        
+        const userData: any = {
+            id: newUser.uid,
+            firstName: values.firstName,
+            lastName: values.lastName,
+            email: values.email,
+            role: values.role,
+            department: values.department,
+            state: values.state,
+            city: values.city,
+            pincode: values.pincode,
+            address: values.address,
+            latitude: coords?.lat || null,
+            longitude: coords?.lon || null,
+            phoneNumber: values.countryCode && values.phoneNumber ? `${values.countryCode} ${values.phoneNumber}` : "",
+            companyName: values.companyName,
+            verified: false,
+            photoUrl: '',
+            isAvailable: true,
+            referralCode: generateReferralCode(),
+            referralPoints: 0,
+            createdAt: serverTimestamp(),
+        };
+        
+        if (referringUserDoc) {
+            userData.referredBy = referringUserDoc.id;
+            const referrerRef = doc(firestore, 'users', referringUserDoc.id);
+            transaction.update(referrerRef, {
+                referralPoints: increment(referralRewardPoints)
+            });
+        }
+        
+        transaction.set(newUserDocRef, userData);
+      });
 
       toast({
         title: "Account Created",
@@ -449,6 +461,7 @@ export function RegistrationForm() {
                 verified: false,
                 isAvailable: true,
                 referralCode: generateReferralCode(),
+                referralPoints: 0,
                 createdAt: serverTimestamp(),
             };
             await setDocumentNonBlocking(userDocRef, userData, { merge: true });
@@ -1101,3 +1114,5 @@ export function RegistrationForm() {
     </>
   );
 }
+
+    
