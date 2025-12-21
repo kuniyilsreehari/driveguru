@@ -176,7 +176,7 @@ function CompanyVacancies({ userProfile }: { userProfile: ExpertUserProfile }) {
 }
 
 
-function UpgradeDialog({ userProfile, tier, billingCycle, price }: { userProfile: ExpertUserProfile, tier: 'Premier' | 'Super Premier' | 'Verification', billingCycle: 'daily' | 'monthly' | 'yearly' | 'one-time', price?: number }) {
+function UpgradeDialog({ userProfile, tier, billingCycle, price, children }: { userProfile: ExpertUserProfile, tier: 'Premier' | 'Super Premier' | 'Verification', billingCycle: 'daily' | 'monthly' | 'yearly' | 'one-time', price?: number, children: React.ReactNode }) {
     const [isCreatingOrder, setIsCreatingOrder] = useState(false);
     const { toast } = useToast();
     const router = useRouter();
@@ -209,16 +209,7 @@ function UpgradeDialog({ userProfile, tier, billingCycle, price }: { userProfile
             setIsCreatingOrder(false);
         }
     }
-
-    let buttonText = `Upgrade to ${tier}`;
-    if (tier === 'Verification') {
-        buttonText = 'Get Verified';
-    }
-    if (price && price > 0) {
-        buttonText += ` for ₹${price}`;
-    }
-
-
+    
     const dialogTitle = tier === 'Verification' ? 'Become a Verified Expert' : `Upgrade to ${tier}`;
     
     let dialogDescription = "You will be redirected to our secure payment gateway to complete your purchase. Your account will be upgraded automatically upon successful payment.";
@@ -233,9 +224,7 @@ function UpgradeDialog({ userProfile, tier, billingCycle, price }: { userProfile
     return (
         <Dialog>
             <DialogTrigger asChild>
-                 <Button className="w-full justify-start" variant="ghost" size="sm">
-                    {billingCycle.charAt(0).toUpperCase() + billingCycle.slice(1)} - ₹{price}
-                </Button>
+                 {children}
             </DialogTrigger>
             <DialogContent>
                 <DialogHeader>
@@ -284,7 +273,7 @@ function PlanManagement({ userProfile, appConfig }: { userProfile: ExpertUserPro
                     ))}
                 </ul>
             </CardContent>
-            <CardFooter className="flex-col">
+            <CardFooter className="flex-col !pt-4 gap-2">
                 {current ? (
                     <Button variant="outline" disabled className="w-full"><ShieldCheck className="mr-2 h-4 w-4" /> Current Plan</Button>
                 ) : link ? (
@@ -314,16 +303,50 @@ function PlanManagement({ userProfile, appConfig }: { userProfile: ExpertUserPro
                         description="Get noticed and build trust."
                         features={["Public profile listing", "AI-Powered Search access", "Post job vacancies", "Downloadable PDF profile"]}
                         current={userProfile.tier === 'Premier'}
-                        link={appConfig?.premierPaymentLink}
-                     />
+                     >
+                        <div className="w-full space-y-1">
+                            {appConfig?.premierPlanPrices?.daily && (
+                                <UpgradeDialog userProfile={userProfile} tier="Premier" billingCycle="daily" price={appConfig.premierPlanPrices.daily}>
+                                    <Button className="w-full justify-start" variant="ghost" size="sm">Daily - ₹{appConfig.premierPlanPrices.daily}</Button>
+                                </UpgradeDialog>
+                            )}
+                             {appConfig?.premierPlanPrices?.monthly && (
+                                <UpgradeDialog userProfile={userProfile} tier="Premier" billingCycle="monthly" price={appConfig.premierPlanPrices.monthly}>
+                                    <Button className="w-full justify-start" variant="ghost" size="sm">Monthly - ₹{appConfig.premierPlanPrices.monthly}</Button>
+                                </UpgradeDialog>
+                            )}
+                             {appConfig?.premierPlanPrices?.yearly && (
+                                <UpgradeDialog userProfile={userProfile} tier="Premier" billingCycle="yearly" price={appConfig.premierPlanPrices.yearly}>
+                                    <Button className="w-full justify-start" variant="ghost" size="sm">Yearly - ₹{appConfig.premierPlanPrices.yearly}</Button>
+                                </UpgradeDialog>
+                            )}
+                        </div>
+                     </PlanCard>
                      <PlanCard
                         title="Super Premier"
                         icon={<Sparkles className="h-6 w-6" />}
                         description="Maximum visibility and tools."
                         features={["All Premier features", "Top placement in search results", "Featured expert listing"]}
                         current={userProfile.tier === 'Super Premier'}
-                        link={appConfig?.superPremierPaymentLink}
-                    />
+                     >
+                        <div className="w-full space-y-1">
+                           {appConfig?.superPremierPlanPrices?.daily && (
+                                <UpgradeDialog userProfile={userProfile} tier="Super Premier" billingCycle="daily" price={appConfig.superPremierPlanPrices.daily}>
+                                    <Button className="w-full justify-start" variant="ghost" size="sm">Daily - ₹{appConfig.superPremierPlanPrices.daily}</Button>
+                                </UpgradeDialog>
+                            )}
+                             {appConfig?.superPremierPlanPrices?.monthly && (
+                                <UpgradeDialog userProfile={userProfile} tier="Super Premier" billingCycle="monthly" price={appConfig.superPremierPlanPrices.monthly}>
+                                    <Button className="w-full justify-start" variant="ghost" size="sm">Monthly - ₹{appConfig.superPremierPlanPrices.monthly}</Button>
+                                </UpgradeDialog>
+                            )}
+                             {appConfig?.superPremierPlanPrices?.yearly && (
+                                <UpgradeDialog userProfile={userProfile} tier="Super Premier" billingCycle="yearly" price={appConfig.superPremierPlanPrices.yearly}>
+                                    <Button className="w-full justify-start" variant="ghost" size="sm">Yearly - ₹{appConfig.superPremierPlanPrices.yearly}</Button>
+                                </UpgradeDialog>
+                            )}
+                        </div>
+                    </PlanCard>
                 </div>
             </CardContent>
         </Card>
@@ -369,10 +392,10 @@ export default function ExpertDashboardPage() {
   const referralCount = referredUsers?.length || 0;
   
   const totalPoints = useMemo(() => {
-      if (isAppConfigLoading || !appConfig) return userProfile?.referralPoints || 0;
-      const pointsPerReferral = appConfig?.referralRewardPoints || 0;
-      return (userProfile?.referralPoints || 0);
-  }, [userProfile?.referralPoints, appConfig, isAppConfigLoading]);
+      if (isAppConfigLoading || !appConfig || !appConfig.referralRewardPoints) return userProfile?.referralPoints || 0;
+      const pointsPerReferral = appConfig.referralRewardPoints;
+      return referralCount * pointsPerReferral;
+  }, [referralCount, userProfile?.referralPoints, appConfig, isAppConfigLoading]);
 
 
   useEffect(() => {
