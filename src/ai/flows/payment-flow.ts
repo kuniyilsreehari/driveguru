@@ -32,8 +32,9 @@ export type CreatePaymentOrderOutput = z.infer<typeof CreatePaymentOrderOutputSc
 
 // Helper to initialize Firebase Admin SDK
 function getAdminApp(): App {
-  if (getApps().length) {
-    return getApps()[0];
+  const apps = getApps();
+  if (apps.length) {
+    return apps[0];
   }
 
   const serviceAccountString = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
@@ -41,15 +42,10 @@ function getAdminApp(): App {
     throw new Error('FIREBASE_SERVICE_ACCOUNT_KEY environment variable is not set.');
   }
 
-  try {
-    const serviceAccount = JSON.parse(serviceAccountString);
-    return initializeApp({
-      credential: cert(serviceAccount)
-    });
-  } catch (error: any) {
-    console.error("Error initializing Firebase Admin SDK with service account:", error.message);
-    throw new Error("Failed to initialize Firebase Admin SDK. Please check your FIREBASE_SERVICE_ACCOUNT_KEY.");
-  }
+  const serviceAccount = serviceAccountString;
+  return initializeApp({
+    credential: cert(serviceAccount)
+  });
 }
 
 
