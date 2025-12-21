@@ -11,7 +11,7 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { v4 as uuidv4 } from 'uuid';
-import { initializeApp, getApps, App } from 'firebase-admin/app';
+import { initializeApp, getApps, App, cert } from 'firebase-admin/app';
 import { getFirestore, runTransaction, collection, query, where, getDocs, Timestamp, doc } from 'firebase-admin/firestore';
 
 
@@ -44,17 +44,14 @@ function getAdminApp(): App {
   }
   
   return initializeApp({
-    credential: {
-        projectId: JSON.parse(serviceAccountString).project_id,
-        privateKey: JSON.parse(serviceAccountString).private_key,
-        clientEmail: JSON.parse(serviceAccountString).client_email,
-    }
+    credential: cert(JSON.parse(serviceAccountString)),
   });
 }
 
 
 async function createCashfreeOrder(input: CreatePaymentOrderInput & { amount: number, orderId: string }): Promise<{ payment_link: string }> {
-    const url = 'https://api.cashfree.com/pg/orders'; // Production URL
+    const baseUrl = process.env.CASHFREE_API_URL || 'https://api.cashfree.com/pg';
+    const url = `${baseUrl}/orders`;
     
     const appUrl = process.env.NEXT_PUBLIC_APP_URL;
     if (!appUrl) {
