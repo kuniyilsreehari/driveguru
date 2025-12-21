@@ -11,7 +11,7 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { v4 as uuidv4 } from 'uuid';
-import { getFirestore, runTransaction, collection, query, where, getDocs, Timestamp, doc } from 'firebase-admin/firestore';
+import { getFirestore } from 'firebase-admin/firestore';
 import { getAdminApp } from './get-admin-app';
 
 
@@ -122,7 +122,7 @@ const createPaymentOrderFlow = ai.defineFlow(
     
     const adminApp = await getAdminApp();
     const firestore = getFirestore(adminApp);
-    const appConfigDocRef = doc(firestore, 'app_config/homepage');
+    const appConfigDocRef = firestore.doc('app_config/homepage');
     
     const appConfigSnap = await appConfigDocRef.get();
     
@@ -170,26 +170,25 @@ const createPaymentOrderFlow = ai.defineFlow(
     }
 
     // 4. Create payment record in a transaction
-    const paymentsCol = collection(firestore, 'payments');
+    const paymentsCol = firestore.collection('payments');
     const orderId = `order_${uuidv4()}`;
 
     try {
-        const payment_link = await runTransaction(firestore, async (transaction) => {
+        const payment_link = await firestore.runTransaction(async (transaction) => {
             // Check if there is already a pending payment for this user and plan
-            const pendingPaymentQuery = query(
-                paymentsCol,
-                where('userId', '==', input.userId),
-                where('plan', '==', input.plan),
-                where('status', '==', 'pending')
-            );
-            const pendingPayments = await getDocs(pendingPaymentQuery);
+            const pendingPaymentQuery = paymentsCol
+                .where('userId', '==', input.userId)
+                .where('plan', '==', input.plan)
+                .where('status', '==', 'pending');
+            
+            const pendingPayments = await transaction.get(pendingPaymentQuery);
 
             if (!pendingPayments.empty) {
                 throw new Error(`You already have a pending payment for the ${input.plan} plan. Please complete or cancel it before creating a new one.`);
             }
 
             // Create new payment document
-            const newPaymentRef = doc(paymentsCol);
+            const newPaymentRef = paymentsCol.doc();
             const paymentData = {
                 id: newPaymentRef.id,
                 userId: input.userId,
@@ -199,8 +198,8 @@ const createPaymentOrderFlow = ai.defineFlow(
                 currency: 'INR',
                 orderId,
                 status: 'pending',
-                createdAt: Timestamp.now(),
-                updatedAt: Timestamp.now(),
+                createdAt: new Date(),
+                updatedAt: new Date(),
             };
             transaction.set(newPaymentRef, paymentData);
 
