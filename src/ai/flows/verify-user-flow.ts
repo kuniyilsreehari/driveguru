@@ -1,15 +1,17 @@
+
 'use server';
 /**
- * @fileOverview An AI flow for handling user verification via Cashfree's Verification Suite.
+ * @fileOverview An AI flow for handling user verification via Cashfree's Liveliness Check.
  *
- * - verifyUser - A function that initiates a verification process for a user.
- * - VerifyUserInput - The input type for the verifyUser function.
- * - VerifyUserOutput - The return type for the verifyUser function.
+ * - verifyUserLiveliness - A function that initiates a liveliness check for a user using a photo.
+ * - VerifyLivelinessInput - The input type for the verifyUserLiveliness function.
+ * - VerifyLivelinessOutput - The return type for the verifyUserLiveliness function.
  */
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 import axios from 'axios';
+import FormData from 'form-data';
 
 // Define the base URL for the Cashfree Verification API
 const getBaseUrl = () => {
@@ -20,60 +22,82 @@ const getBaseUrl = () => {
     return 'https://sandbox.cashfree.com/verification';
 };
 
-const getHeaders = async () => {
+const getHeaders = async (form?: FormData) => {
     const clientId = process.env.CASHFREE_VERIFICATION_CLIENT_ID;
     const clientSecret = process.env.CASHFREE_VERIFICATION_CLIENT_SECRET;
 
     if (!clientId || !clientSecret) {
         throw new Error('Cashfree Verification credentials (CLIENT_ID or CLIENT_SECRET) are not set in environment variables.');
     }
-
-    return {
+    
+    const baseHeaders: Record<string, string> = {
         'x-client-id': clientId,
         'x-client-secret': clientSecret,
-        'x-api-version': '2023-03-01', // Example version, check Cashfree docs for the latest
+        'x-api-version': '2023-10-26', 
+    };
+
+    if (form) {
+        return {
+            ...baseHeaders,
+            ...form.getHeaders(),
+        };
+    }
+
+    return {
+        ...baseHeaders,
         'Content-Type': 'application/json',
     };
 };
 
-const VerifyUserInputSchema = z.object({
+const VerifyLivelinessInputSchema = z.object({
   userId: z.string().describe('The ID of the user to be verified.'),
-  panNumber: z.string().regex(/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/, "Invalid PAN format.").describe('The PAN number to be verified.'),
+  photoDataUri: z.string().describe("A photo of the user, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."),
 });
-export type VerifyUserInput = z.infer<typeof VerifyUserInputSchema>;
+export type VerifyLivelinessInput = z.infer<typeof VerifyLivelinessInputSchema>;
 
-const VerifyUserOutputSchema = z.object({
+const VerifyLivelinessOutputSchema = z.object({
   status: z.string().describe('The status of the verification request.'),
   referenceId: z.number().optional().describe('Cashfree reference ID for the verification.'),
-  panStatus: z.string().optional().describe('The status of the PAN from the source (e.g., VALID).'),
-  fullName: z.string().optional().describe('Full name associated with the PAN.'),
+  livelinessScore: z.number().optional().describe('The calculated score for liveliness.'),
   message: z.string().describe('A message detailing the result of the verification.'),
 });
-export type VerifyUserOutput = z.infer<typeof VerifyUserOutputSchema>;
+export type VerifyLivelinessOutput = z.infer<typeof VerifyLivelinessOutputSchema>;
 
-export async function verifyUser(input: VerifyUserInput): Promise<VerifyUserOutput> {
-  return verifyUserFlow(input);
+export async function verifyUserLiveliness(input: VerifyLivelinessInput): Promise<VerifyLivelinessOutput> {
+  return verifyUserLivelinessFlow(input);
 }
 
-const verifyUserFlow = ai.defineFlow(
+const verifyUserLivelinessFlow = ai.defineFlow(
   {
-    name: 'verifyUserFlow',
-    inputSchema: VerifyUserInputSchema,
-    outputSchema: VerifyUserOutputSchema,
+    name: 'verifyUserLivelinessFlow',
+    inputSchema: VerifyLivelinessInputSchema,
+    outputSchema: VerifyLivelinessOutputSchema,
   },
   async (input) => {
-    console.log(`Starting PAN verification for user: ${input.userId}`);
+    console.log(`Starting Liveliness Check for user: ${input.userId}`);
     
     try {
-        const headers = await getHeaders();
         const baseUrl = getBaseUrl();
-        const url = `${baseUrl}/pan`;
+        const url = `${baseUrl}/liveliness`;
 
-        const response = await axios.post(url, {
-            pan: input.panNumber,
-            // verification_id is a unique ID you generate for the transaction
-            verification_id: `verify_${input.userId}_${Date.now()}` 
-        }, { headers });
+        const verificationId = `lively_${input.userId}_${Date.now()}`;
+        
+        // Convert data URI to Buffer
+        const base64Data = input.photoDataUri.split(',')[1];
+        const imageBuffer = Buffer.from(base64Data, 'base64');
+        const mimeType = input.photoDataUri.match(/data:(.*);base64/)?.[1] || 'image/jpeg';
+        const fileExtension = mimeType.split('/')[1] || 'jpg';
+        
+        const form = new FormData();
+        form.append('verification_id', verificationId);
+        form.append('image', imageBuffer, {
+            filename: `liveliness.${fileExtension}`,
+            contentType: mimeType,
+        });
+
+        const headers = await getHeaders(form);
+        
+        const response = await axios.post(url, form, { headers });
 
         const { data } = response;
         
@@ -81,19 +105,18 @@ const verifyUserFlow = ai.defineFlow(
              return {
                 status: 'success',
                 referenceId: data.reference_id,
-                panStatus: data.pan_status,
-                fullName: data.full_name,
-                message: 'PAN verification successful.',
+                livelinessScore: data.liveliness_score,
+                message: data.message || 'Liveliness check successful.',
             };
         } else {
              throw new Error(data.message || 'Unknown error from Cashfree API');
         }
 
     } catch (error: any) {
-        console.error("Cashfree PAN Verification Error:", error.response?.data || error.message);
+        console.error("Cashfree Liveliness Check Error:", error.response?.data || error.message);
         return {
             status: 'failed',
-            message: error.response?.data?.message || error.message || 'An unexpected error occurred during PAN verification.',
+            message: error.response?.data?.message || error.message || 'An unexpected error occurred during liveliness check.',
         };
     }
   }
