@@ -190,7 +190,10 @@ function UpgradeDialog({ userProfile, tier, verificationFee }: { userProfile: Ex
         }
     }
 
-    const buttonText = tier === 'Verification' ? 'Get Verified' : `Upgrade to ${tier}`;
+    const buttonText = tier === 'Verification' 
+        ? `Get Verified ${verificationFee ? `for ₹${verificationFee}` : ''}`
+        : `Upgrade to ${tier}`;
+
     const dialogTitle = tier === 'Verification' ? 'Become a Verified Expert' : `Upgrade to ${tier}`;
     
     let dialogDescription = "You will be redirected to our secure payment gateway to complete your purchase. Your account will be upgraded automatically upon successful payment.";
