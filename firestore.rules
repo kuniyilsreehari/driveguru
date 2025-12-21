@@ -29,16 +29,18 @@ service cloud.firestore {
     }
 
     function isCreatingOwnUserDoc(userId) {
+      // Ensures the new document's ID matches the user's auth UID and createdAt is a server timestamp.
       return isOwner(userId) && isNewDoc() &&
-        request.resource.data.id == userId;
+        request.resource.data.id == userId &&
+        request.resource.data.createdAt == request.time;
     }
-
-    function isUpdatingOwnUserDoc() {
+    
+    function isUpdatingOwnUserDoc(userId) {
       // Users can only update specific, non-critical fields on their own profile.
-      // Critical fields like 'verified', 'role', 'tier' must be managed by an admin.
-      let nonUpdatableFields = ['id', 'email', 'verified', 'role', 'tier', 'createdAt'];
-      return isOwner(request.resource.data.id) &&
-             !request.resource.data.diff(resource.data).affectedKeys().hasAny(nonUpdatableFields);
+      // This list defines fields that a user CANNOT change themselves.
+      let protectedFields = ['id', 'email', 'verified', 'role', 'tier', 'createdAt', 'referralCode', 'referredBy'];
+      return isOwner(userId) && isExistingDoc() &&
+             !request.resource.data.diff(resource.data).affectedKeys().hasAny(protectedFields);
     }
     
     function isCreatingOwnLocationData(userId) {
@@ -70,6 +72,12 @@ service cloud.firestore {
         let userDoc = get(/databases/$(database)/documents/users/$(request.auth.uid));
         return isCompanyUser() && vacancy.companyId == userDoc.data.companyId;
     }
+    
+    function isCreatingCorrectVacancy() {
+        let userDoc = get(/databases/$(database)/documents/users/$(request.auth.uid));
+        // The companyId in the new vacancy must match the companyId of the user creating it.
+        return request.resource.data.companyId == userDoc.data.companyId;
+    }
 
 
     /* =====================================================
@@ -77,7 +85,7 @@ service cloud.firestore {
      * ===================================================== */
 
     match /roles_super_admin/{userId} {
-      allow get: if isOwner(userId);
+      allow get: if isOwner(userId) || isSuperAdmin();
       allow list, create, update, delete: if isSuperAdmin();
     }
 
@@ -111,7 +119,9 @@ service cloud.firestore {
       allow create: if isCreatingOwnUserDoc(userId);
 
       // Users can update their own profile, but admins can update anything.
-      allow update: if isUpdatingOwnUserDoc() || isSuperAdmin();
+      // Admins cannot change the ID or creation timestamp.
+      allow update: if isUpdatingOwnUserDoc(userId) || 
+                       (isSuperAdmin() && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['id', 'createdAt']));
 
       // Users can delete their own account, and admins can delete any account.
       allow delete: if isOwner(userId) || isSuperAdmin();
@@ -150,7 +160,7 @@ service cloud.firestore {
         // Anyone can read and list job vacancies.
         allow get, list: if true;
         // Only premium company users or super admins can create vacancies.
-        allow create: if isPremiumCompanyUser() || isSuperAdmin();
+        allow create: if (isPremiumCompanyUser() && isCreatingCorrectVacancy()) || isSuperAdmin();
         // Only the company that owns the vacancy (and is premium) or a super admin can update it.
         allow update: if (isPremiumCompanyUser() && isVacancyOwner(request.resource.data)) || isSuperAdmin();
         // Only the company that owns the vacancy (and is premium) or a super admin can delete it.
