@@ -44,7 +44,7 @@ function getAdminApp(): App {
   }
   
   return initializeApp({
-    credential: cert(JSON.parse(serviceAccountString)),
+    credential: cert(serviceAccountString),
   });
 }
 
