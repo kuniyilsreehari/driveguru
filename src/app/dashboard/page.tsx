@@ -39,6 +39,7 @@ import type { Vacancy } from '@/app/vacancies/page';
 import Link from 'next/link';
 import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { createPaymentOrder } from '@/ai/flows/payment-flow';
+import { processReferral } from '@/ai/flows/process-referral-flow';
 
 
 type ExpertUserProfile = {
@@ -378,7 +379,7 @@ export default function ExpertDashboardPage() {
   useEffect(() => {
     if (!isUserLoading && !user) {
       router.push('/login');
-    } else if (!isUserLoading && user && !isRoleLoading && isSuperAdmin) {
+    } else if (!isUserLoading && user && !isRoleLoading && isSuperAdmin && router.pathname !== '/admin') {
       router.push('/admin');
     }
   }, [user, isUserLoading, isRoleLoading, isSuperAdmin, router]);
@@ -446,6 +447,40 @@ export default function ExpertDashboardPage() {
     });
   };
 
+  const handleAwardReferral = async (userToReward: ExpertUserProfile) => {
+    if (!userToReward.referredByCode) {
+      toast({
+        variant: "destructive",
+        title: "No Referral Code",
+        description: "This user did not sign up with a referral code.",
+      });
+      return;
+    }
+  
+    try {
+      const result = await processReferral({
+        newUserUid: userToReward.id,
+        referralCode: userToReward.referredByCode
+      });
+  
+      if (result.success) {
+        toast({
+          title: "Referral Points Awarded",
+          description: result.message,
+        });
+      } else {
+        throw new Error(result.message);
+      }
+    } catch (error: any) {
+      console.error("Failed to award referral points:", error);
+      toast({
+        variant: "destructive",
+        title: "Award Failed",
+        description: error.message || "Could not award points. Please check the referral code and try again.",
+      });
+    }
+  };
+
   const profileCompletion = calculateProfileCompletion(userProfile);
   
   const isLoading = isUserLoading || isProfileLoading || isAppConfigLoading || isRoleLoading;
@@ -477,9 +512,9 @@ export default function ExpertDashboardPage() {
     );
   }
 
-  if (!user || !userProfile || isSuperAdmin) {
+  if (!user || !userProfile) {
     // This case should be rare due to the loading and error states above,
-    // but it's a good fallback. Also handles the brief moment before admin redirect.
+    // but it's a good fallback.
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
         <Loader className="h-8 w-8 animate-spin text-primary" />
@@ -708,6 +743,31 @@ export default function ExpertDashboardPage() {
                 <CardFooter>
                     <p className="text-xs text-muted-foreground">Share your code to earn points. 1 point = ₹1. Earnings can be redeemed upon request.</p>
                 </CardFooter>
+            </Card>
+        )}
+
+        {isSuperAdmin && userProfile.referredByCode && (
+            <Card>
+                <CardHeader>
+                    <div className="flex items-center gap-3">
+                        <Gift className="h-6 w-6 text-primary" />
+                        <div>
+                            <CardTitle>Admin: Referral Action</CardTitle>
+                            <CardDescription>This user was referred. Award points to the referrer.</CardDescription>
+                        </div>
+                    </div>
+                </CardHeader>
+                <CardContent>
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 rounded-lg bg-secondary">
+                        <div>
+                            <p className="text-sm text-muted-foreground">Used Referral Code</p>
+                            <p className="text-2xl font-mono tracking-widest text-secondary-foreground">{userProfile.referredByCode}</p>
+                        </div>
+                        <Button onClick={() => handleAwardReferral(userProfile)}>
+                            <Gift className="mr-2 h-4 w-4" /> Award Points
+                        </Button>
+                    </div>
+                </CardContent>
             </Card>
         )}
 
