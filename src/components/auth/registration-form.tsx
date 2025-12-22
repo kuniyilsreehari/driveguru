@@ -507,7 +507,7 @@ export function RegistrationForm() {
               <Icons.google className="mr-2 h-4 w-4" />
               Google
             </Button>
-             <Button onClick={() => setView('phone')} type="button" className="bg-green-600 hover:bg-green-700">
+             <Button onClick={() => setView('phone')} type="button" className="bg-green-600 text-white hover:bg-green-700 transition-transform duration-150 ease-in-out hover:scale-[1.02] active:scale-[0.98]">
                 <Phone className="mr-2 h-4 w-4" />
                 Phone
             </Button>

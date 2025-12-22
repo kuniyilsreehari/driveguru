@@ -317,7 +317,7 @@ export function LoginForm() {
             </>}
           </Button>
 
-           <Button variant="outline" className="w-full bg-green-600 text-white hover:bg-green-700" onClick={() => setView('phone')}>
+           <Button variant="outline" className="w-full bg-green-600 text-white hover:bg-green-700 transition-transform duration-150 ease-in-out hover:scale-[1.02] active:scale-[0.98]" onClick={() => setView('phone')}>
                 <Phone className="mr-2 h-4 w-4" />
                 Sign in with Phone
             </Button>
