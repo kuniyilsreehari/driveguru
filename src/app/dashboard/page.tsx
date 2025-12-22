@@ -562,6 +562,7 @@ export default function ExpertDashboardPage() {
   
   const locationString = [userProfile.city, userProfile.state, userProfile.pincode].filter(Boolean).join(', ');
   const verificationFee = appConfig?.verificationFee;
+  const isPremiumUser = userProfile.tier === 'Premier' || userProfile.tier === 'Super Premier';
 
   return (
     <div className="min-h-screen bg-background p-4 sm:p-8">
@@ -632,32 +633,44 @@ export default function ExpertDashboardPage() {
                                 />
                             </DialogContent>
                         </Dialog>
-                         <Button variant="outline" asChild>
-                            <Link href="/dashboard/bookings">
-                                <Calendar className="mr-2 h-4 w-4" />
-                                Booking System
-                            </Link>
-                        </Button>
-                        <Dialog open={isBookingDialogOpen} onOpenChange={setIsBookingDialogOpen}>
-                            <DialogTrigger asChild>
-                                <Button variant="outline">
-                                    <Calendar className="mr-2 h-4 w-4" />
-                                    Log Booking
-                                </Button>
-                            </DialogTrigger>
-                            <DialogContent className="sm:max-w-[600px]">
-                                <DialogHeader>
-                                    <DialogTitle>Log a New Booking</DialogTitle>
-                                    <DialogDescription>
-                                        Manually log a booking that you have confirmed with a client.
-                                    </DialogDescription>
-                                </DialogHeader>
-                                <LogBookingForm 
-                                    expertId={userProfile.id}
-                                    onSuccess={() => setIsBookingDialogOpen(false)}
-                                />
-                            </DialogContent>
-                        </Dialog>
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button variant="outline" asChild={isPremiumUser} disabled={!isPremiumUser}>
+                                        <Link href="/dashboard/bookings">
+                                            <Calendar className="mr-2 h-4 w-4" />
+                                            Booking System
+                                        </Link>
+                                    </Button>
+                                </TooltipTrigger>
+                                {!isPremiumUser && <TooltipContent><p>Upgrade to Premier to use the Booking System.</p></TooltipContent>}
+                            </Tooltip>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Dialog open={isBookingDialogOpen} onOpenChange={setIsBookingDialogOpen}>
+                                        <DialogTrigger asChild>
+                                            <Button variant="outline" disabled={!isPremiumUser}>
+                                                <Calendar className="mr-2 h-4 w-4" />
+                                                Log Booking
+                                            </Button>
+                                        </DialogTrigger>
+                                        <DialogContent className="sm:max-w-[600px]">
+                                            <DialogHeader>
+                                                <DialogTitle>Log a New Booking</DialogTitle>
+                                                <DialogDescription>
+                                                    Manually log a booking that you have confirmed with a client.
+                                                </DialogDescription>
+                                            </DialogHeader>
+                                            <LogBookingForm 
+                                                expertId={userProfile.id}
+                                                onSuccess={() => setIsBookingDialogOpen(false)}
+                                            />
+                                        </DialogContent>
+                                    </Dialog>
+                                </TooltipTrigger>
+                                {!isPremiumUser && <TooltipContent><p>Upgrade to Premier to log new bookings.</p></TooltipContent>}
+                            </Tooltip>
+                        </TooltipProvider>
                         <Button variant="outline" onClick={handleLogout}>
                             <LogOut className="mr-2 h-4 w-4" />
                             Log Out
