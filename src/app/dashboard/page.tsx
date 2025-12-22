@@ -530,7 +530,7 @@ export default function ExpertDashboardPage() {
   const copyReferralLink = () => {
     if (!userProfile?.referralCode) return;
     const baseUrl = window.location.origin;
-    const signupUrl = new URL('/signup/role', baseUrl);
+    const signupUrl = new URL('/signup', baseUrl);
     signupUrl.searchParams.set('ref', userProfile.referralCode);
     navigator.clipboard.writeText(signupUrl.toString());
     toast({
@@ -542,7 +542,7 @@ export default function ExpertDashboardPage() {
   const shareOnWhatsApp = () => {
     if (!userProfile?.referralCode) return;
     const baseUrl = window.location.origin;
-    const signupUrl = new URL('/signup/role', baseUrl);
+    const signupUrl = new URL('/signup', baseUrl);
     signupUrl.searchParams.set('ref', userProfile.referralCode);
     const text = `Join me on DriveGuru! Use my referral code to sign up: ${signupUrl.toString()}`;
     const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(text)}`;
