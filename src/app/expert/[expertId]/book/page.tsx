@@ -8,7 +8,8 @@ import { doc } from 'firebase/firestore';
 import { useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Loader2, ChevronLeft, Calendar, Construction } from 'lucide-react';
+import { Loader2, ChevronLeft, Calendar } from 'lucide-react';
+import { ClientBookingForm } from '@/components/auth/client-booking-form';
 
 type ExpertUserProfile = {
     id: string;
@@ -21,7 +22,6 @@ function BookingPageContent() {
     const params = useParams();
     const expertId = params.expertId as string;
     const firestore = useFirestore();
-    const [date, setDate] = useState<Date | undefined>(new Date());
 
 
     const expertDocRef = useMemoFirebase(() => {
@@ -41,6 +41,15 @@ function BookingPageContent() {
             </div>
         );
     }
+    
+    if (!expert) {
+        return (
+             <div className="text-center py-16">
+                <h2 className="text-2xl font-semibold">Expert Not Found</h2>
+                <p className="text-muted-foreground mt-2">The expert you are trying to book does not exist.</p>
+            </div>
+        )
+    }
 
     return (
         <div className="space-y-6">
@@ -50,17 +59,10 @@ function BookingPageContent() {
             <Card>
                 <CardHeader>
                     <CardTitle className="text-2xl sm:text-3xl">Book an Appointment</CardTitle>
-                    <CardDescription>Select a date to book an appointment with {displayName}.</CardDescription>
+                    <CardDescription>Select a date and fill out the form to book an appointment with {displayName}.</CardDescription>
                 </CardHeader>
-                <CardContent className="flex flex-col sm:flex-row items-center justify-center gap-8 p-8 text-center">
-                   <Construction className="h-24 w-24 text-primary" />
-                   <div className='text-left'>
-                    <h3 className="text-xl font-bold">Feature Under Construction</h3>
-                    <p className="text-muted-foreground mt-2">
-                        The ability to book appointments directly is coming soon! <br/>
-                        For now, please contact the expert via phone or WhatsApp.
-                    </p>
-                   </div>
+                <CardContent>
+                   <ClientBookingForm expertId={expertId} />
                 </CardContent>
             </Card>
         </div>
