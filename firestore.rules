@@ -96,8 +96,8 @@ service cloud.firestore {
      * App Configuration
      * ===================================================== */
     match /app_config/{configId} {
-      // Any signed-in user can read config for dashboard/signup purposes.
-      allow read: if isSignedIn();
+      // Anyone can read the app config.
+      allow read: if true;
       allow write: if isSuperAdmin();
     }
 
@@ -132,7 +132,7 @@ service cloud.firestore {
 
     match /users/{userId} {
       // Any signed-in user can view any public profile.
-      allow get, list: if isSignedIn();
+      allow get, list: if true;
 
       // VERY PERMISSIVE: Any signed-in user can create their own user document.
       allow create: if isOwner(userId);
@@ -163,7 +163,7 @@ service cloud.firestore {
         // Anyone can read approved reviews. Super admins can read all reviews.
         allow get: if resource.data.status == 'approved' || isSuperAdmin();
         // Logged in users can list approved reviews. Super admins can list all.
-        allow list: if isSignedIn() || isSuperAdmin(); 
+        allow list: if true; 
         // Any signed-in user can create a review, which starts as 'pending'. Admins can bypass this.
         allow create: if (isSignedIn() && requestData().status == 'pending') || isSuperAdmin();
         // Only super admins can change the status of a review.
