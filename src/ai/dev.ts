@@ -11,3 +11,4 @@ import '@/aiflows/import-users-flow.ts';
 import '@/ai/flows/verify-user-flow.ts';
 import '@/ai/flows/process-referral-flow.ts';
 import '@/ai/flows/update-profile-photo-flow.ts';
+import '@/ai/flows/chat-assistant-flow.ts';
