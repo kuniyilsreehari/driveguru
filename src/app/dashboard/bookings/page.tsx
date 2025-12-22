@@ -147,7 +147,7 @@ export default function BookingSystemPage() {
                             <CardDescription>A complete log of all your scheduled appointments.</CardDescription>
                         </CardHeader>
                         <CardContent>
-                            {isLoading ? (
+                            {isBookingsLoading ? (
                                 <div className="flex items-center justify-center p-8">
                                     <Loader2 className="mr-2 h-6 w-6 animate-spin" /> Loading your bookings...
                                 </div>
@@ -180,11 +180,27 @@ export default function BookingSystemPage() {
                                                             <Button size="sm" variant="outline" onClick={() => handleUpdateStatus(booking.id, 'completed')}>
                                                                 <CheckCircle className="mr-2 h-4 w-4 text-green-500"/> Complete
                                                             </Button>
-                                                            <AlertDialogTrigger asChild>
-                                                                <Button size="sm" variant="destructive" onClick={() => setBookingToCancel(booking)}>
-                                                                    <XCircle className="mr-2 h-4 w-4"/> Cancel
-                                                                </Button>
-                                                            </AlertDialogTrigger>
+                                                            <AlertDialog>
+                                                                <AlertDialogTrigger asChild>
+                                                                    <Button size="sm" variant="destructive" onClick={() => setBookingToCancel(booking)}>
+                                                                        <XCircle className="mr-2 h-4 w-4"/> Cancel
+                                                                    </Button>
+                                                                </AlertDialogTrigger>
+                                                                <AlertDialogContent>
+                                                                    <AlertDialogHeader>
+                                                                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                                        <AlertDialogDescription>
+                                                                            This will cancel the booking with {bookingToCancel?.clientName}. This action cannot be undone.
+                                                                        </AlertDialogDescription>
+                                                                    </AlertDialogHeader>
+                                                                    <AlertDialogFooter>
+                                                                        <AlertDialogCancel onClick={() => setBookingToCancel(null)}>Back</AlertDialogCancel>
+                                                                        <AlertDialogAction onClick={() => bookingToCancel && handleUpdateStatus(bookingToCancel.id, 'cancelled')} className="bg-destructive hover:bg-destructive/90">
+                                                                            Yes, Cancel Booking
+                                                                        </AlertDialogAction>
+                                                                    </AlertDialogFooter>
+                                                                </AlertDialogContent>
+                                                            </AlertDialog>
                                                         </div>
                                                     )}
                                                 </TableCell>
@@ -200,22 +216,6 @@ export default function BookingSystemPage() {
                         </CardContent>
                     </Card>
                 </main>
-                <AlertDialog>
-                    <AlertDialogContent>
-                        <AlertDialogHeader>
-                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                                This will cancel the booking with {bookingToCancel?.clientName}. This action cannot be undone.
-                            </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                            <AlertDialogCancel onClick={() => setBookingToCancel(null)}>Back</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => bookingToCancel && handleUpdateStatus(bookingToCancel.id, 'cancelled')} className="bg-destructive hover:bg-destructive/90">
-                                Yes, Cancel Booking
-                            </AlertDialogAction>
-                        </AlertDialogFooter>
-                    </AlertDialogContent>
-                </AlertDialog>
             </div>
         </div>
     );
