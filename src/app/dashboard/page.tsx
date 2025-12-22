@@ -632,11 +632,17 @@ export default function ExpertDashboardPage() {
                                 />
                             </DialogContent>
                         </Dialog>
+                         <Button variant="outline" asChild>
+                            <Link href="/dashboard/bookings">
+                                <Calendar className="mr-2 h-4 w-4" />
+                                Booking System
+                            </Link>
+                        </Button>
                         <Dialog open={isBookingDialogOpen} onOpenChange={setIsBookingDialogOpen}>
                             <DialogTrigger asChild>
                                 <Button variant="outline">
                                     <Calendar className="mr-2 h-4 w-4" />
-                                    Booking
+                                    Log Booking
                                 </Button>
                             </DialogTrigger>
                             <DialogContent className="sm:max-w-[600px]">
