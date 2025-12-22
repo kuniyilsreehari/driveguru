@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { collection, serverTimestamp } from 'firebase/firestore';
+import { format } from "date-fns";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -21,8 +22,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useFirestore, useUser } from "@/firebase";
 import { addDocumentNonBlocking } from "@/firebase/non-blocking-updates";
-import { User, Phone, MapPin, Briefcase, Send } from "lucide-react";
+import { User, Phone, MapPin, Briefcase, Send, Calendar as CalendarIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
+import { cn } from "@/lib/utils";
+import { Calendar } from "../ui/calendar";
 
 
 const formSchema = z.object({
@@ -33,6 +37,7 @@ const formSchema = z.object({
   bookingDate: z.date({
     required_error: "A date for the booking is required.",
   }),
+  bookingTime: z.string().min(1, { message: "A time for the booking is required." }),
 });
 
 interface ClientBookingFormProps {
@@ -52,6 +57,7 @@ export function ClientBookingForm({ expertId }: ClientBookingFormProps) {
       clientContact: "",
       place: "",
       workDescription: "",
+      bookingTime: "",
     },
   });
 
@@ -68,10 +74,19 @@ export function ClientBookingForm({ expertId }: ClientBookingFormProps) {
         return;
     }
 
+    const [hours, minutes] = values.bookingTime.split(':').map(Number);
+    const combinedDateTime = new Date(values.bookingDate);
+    combinedDateTime.setHours(hours);
+    combinedDateTime.setMinutes(minutes);
+
     const bookingsCollectionRef = collection(firestore, 'bookings');
     
     const newBookingData = {
-      ...values,
+      clientName: values.clientName,
+      clientContact: values.clientContact,
+      place: values.place,
+      workDescription: values.workDescription,
+      bookingDate: combinedDateTime,
       expertId: expertId,
       clientId: user?.uid,
       status: "confirmed",
@@ -163,23 +178,65 @@ export function ClientBookingForm({ expertId }: ClientBookingFormProps) {
             </FormItem>
           )}
         />
-        <FormField
-          control={form.control}
-          name="bookingDate"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Requested Date</FormLabel>
-                <FormControl>
-                    <Input 
-                      type="date"
-                      onChange={(e) => field.onChange(e.target.valueAsDate)}
-                      className="w-full"
-                    />
-                </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <div className="grid grid-cols-2 gap-4">
+            <FormField
+            control={form.control}
+            name="bookingDate"
+            render={({ field }) => (
+                <FormItem className="flex flex-col">
+                    <FormLabel>Requested Date</FormLabel>
+                    <Popover>
+                        <PopoverTrigger asChild>
+                            <FormControl>
+                                <Button
+                                    variant={"outline"}
+                                    className={cn(
+                                        "pl-3 text-left font-normal",
+                                        !field.value && "text-muted-foreground"
+                                    )}
+                                >
+                                    {field.value ? (
+                                        format(field.value, "PPP")
+                                    ) : (
+                                        <span>Pick a date</span>
+                                    )}
+                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                </Button>
+                            </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                                mode="single"
+                                selected={field.value}
+                                onSelect={field.onChange}
+                                disabled={(date) =>
+                                    date < new Date(new Date().setHours(0,0,0,0))
+                                }
+                                initialFocus
+                            />
+                        </PopoverContent>
+                    </Popover>
+                    <FormMessage />
+                </FormItem>
+            )}
+            />
+            <FormField
+                control={form.control}
+                name="bookingTime"
+                render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                        <FormLabel>Requested Time</FormLabel>
+                        <FormControl>
+                            <Input 
+                            type="time"
+                            {...field}
+                            />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
+        </div>
         
         <Button type="submit" className="w-full" disabled={form.formState.isSubmitting || isUserLoading}>
           {form.formState.isSubmitting ? (
