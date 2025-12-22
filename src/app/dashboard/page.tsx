@@ -392,6 +392,14 @@ export default function ExpertDashboardPage() {
 
   const { data: referredUsers, isLoading: isReferralsLoading } = useCollection(referralsQuery);
   const referralCount = referredUsers?.length || 0;
+
+  const bookingsQuery = useMemoFirebase(() => {
+    if (!firestore || !userProfile) return null;
+    return query(collection(firestore, 'bookings'), where('expertId', '==', userProfile.id));
+  }, [firestore, userProfile]);
+
+  const { data: bookingsData, isLoading: isBookingsLoading } = useCollection(bookingsQuery);
+  const totalBookings = bookingsData?.length || 0;
   
   const totalPoints = useMemo(() => {
       if (isAppConfigLoading || !appConfig || !appConfig.referralRewardPoints) return userProfile?.referralPoints || 0;
@@ -520,7 +528,7 @@ export default function ExpertDashboardPage() {
 
   const profileCompletion = calculateProfileCompletion(userProfile);
   
-  const isLoading = isUserLoading || isProfileLoading || isAppConfigLoading || isRoleLoading || isReferralsLoading;
+  const isLoading = isUserLoading || isProfileLoading || isAppConfigLoading || isRoleLoading || isReferralsLoading || isBookingsLoading;
 
   if (isLoading) {
     return (
@@ -773,48 +781,71 @@ export default function ExpertDashboardPage() {
         </Card>
 
         {userProfile.referralCode && (
-            <Card>
-                <CardHeader>
-                    <div className="flex items-center gap-3">
-                        <Gift className="h-6 w-6 text-primary" />
-                        <div>
-                            <CardTitle>Referral Rewards</CardTitle>
-                            <CardDescription>Invite others and earn rewards.</CardDescription>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <Card>
+                    <CardHeader>
+                        <div className="flex items-center gap-3">
+                            <Gift className="h-6 w-6 text-primary" />
+                            <div>
+                                <CardTitle>Referral Rewards</CardTitle>
+                                <CardDescription>Invite others and earn rewards.</CardDescription>
+                            </div>
                         </div>
-                    </div>
-                </CardHeader>
-                <CardContent>
-                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 rounded-lg bg-secondary">
-                        <div className="text-center sm:text-left">
-                            <p className="text-sm text-muted-foreground">Your Referral Code</p>
-                            <p className="text-2xl font-mono tracking-widest text-secondary-foreground">{userProfile.referralCode}</p>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 rounded-lg bg-secondary">
+                            <div className="text-center sm:text-left">
+                                <p className="text-sm text-muted-foreground">Your Referral Code</p>
+                                <p className="text-2xl font-mono tracking-widest text-secondary-foreground">{userProfile.referralCode}</p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <Button size="sm" variant="outline" onClick={copyReferralLink}>
+                                    <LinkIcon className="mr-2 h-4 w-4" />
+                                    Copy Link
+                                </Button>
+                                 <Button size="sm" variant="outline" onClick={shareOnWhatsApp} className="bg-green-500/10 border-green-500/50 text-green-500 hover:bg-green-500/20 hover:text-green-500">
+                                    <MessageCircle className="mr-2 h-4 w-4" />
+                                    WhatsApp
+                                </Button>
+                            </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                            <Button size="sm" variant="outline" onClick={copyReferralLink}>
-                                <LinkIcon className="mr-2 h-4 w-4" />
-                                Copy Link
-                            </Button>
-                             <Button size="sm" variant="outline" onClick={shareOnWhatsApp} className="bg-green-500/10 border-green-500/50 text-green-500 hover:bg-green-500/20 hover:text-green-500">
-                                <MessageCircle className="mr-2 h-4 w-4" />
-                                WhatsApp
-                            </Button>
+                        <div className="grid grid-cols-2 gap-4 mt-4">
+                            <div className="p-4 rounded-lg border text-center">
+                                <p className="text-sm font-medium text-muted-foreground">Total Points Earned</p>
+                                <p className="text-3xl font-bold">{totalPoints}</p>
+                            </div>
+                            <div className="p-4 rounded-lg border text-center">
+                                <p className="text-sm font-medium text-muted-foreground">Times Used</p>
+                                <p className="text-3xl font-bold">{referralCount}</p>
+                            </div>
                         </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4 mt-4">
-                        <div className="p-4 rounded-lg border text-center">
-                            <p className="text-sm font-medium text-muted-foreground">Total Points Earned</p>
-                            <p className="text-3xl font-bold">{totalPoints}</p>
+                    </CardContent>
+                    <CardFooter>
+                        <p className="text-xs text-muted-foreground">Share your link to earn points. Each referral earns you {appConfig?.referralRewardPoints || 0} points. 1 point = ₹1. Earnings can be redeemed upon request.</p>
+                    </CardFooter>
+                </Card>
+                
+                <Card>
+                    <CardHeader>
+                         <div className="flex items-center gap-3">
+                            <Calendar className="h-6 w-6 text-primary" />
+                            <div>
+                                <CardTitle>Total Bookings</CardTitle>
+                                <CardDescription>A count of all your logged appointments.</CardDescription>
+                            </div>
                         </div>
-                        <div className="p-4 rounded-lg border text-center">
-                            <p className="text-sm font-medium text-muted-foreground">Times Used</p>
-                            <p className="text-3xl font-bold">{referralCount}</p>
-                        </div>
-                    </div>
-                </CardContent>
-                <CardFooter>
-                    <p className="text-xs text-muted-foreground">Share your link to earn points. Each referral earns you {appConfig?.referralRewardPoints || 0} points. 1 point = ₹1. Earnings can be redeemed upon request.</p>
-                </CardFooter>
-            </Card>
+                    </CardHeader>
+                    <CardContent className="flex flex-col items-center justify-center p-8 text-center">
+                        <p className="text-6xl font-bold">{totalBookings}</p>
+                        <p className="text-muted-foreground mt-2">Appointments Logged</p>
+                    </CardContent>
+                    <CardFooter>
+                        <Button asChild variant="outline" className="w-full">
+                            <Link href="/dashboard/bookings">View Booking System</Link>
+                        </Button>
+                    </CardFooter>
+                </Card>
+            </div>
         )}
 
         {isSuperAdmin && userProfile.referredByCode && (
