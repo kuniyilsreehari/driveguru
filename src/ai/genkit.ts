@@ -1,6 +1,14 @@
+
 import {genkit} from 'genkit';
 import {googleAI} from '@genkit-ai/google-genai';
 
+// Conditionally initialize the googleAI plugin only if the API key is provided.
+// This prevents server crashes during local development or builds when the key is not set.
+const genkitPlugins = [];
+if (process.env.GEMINI_API_KEY) {
+  genkitPlugins.push(googleAI());
+}
+
 export const ai = genkit({
-  plugins: [googleAI()],
+  plugins: genkitPlugins,
 });
