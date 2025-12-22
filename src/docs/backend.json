@@ -163,6 +163,10 @@
           "type": "string",
           "description": "The ID of the expert who is booked."
         },
+        "clientId": {
+          "type": "string",
+          "description": "The ID of the client who created the booking."
+        },
         "clientName": {
           "type": "string",
           "description": "The name of the client who made the booking."
@@ -198,6 +202,7 @@
       "required": [
         "id",
         "expertId",
+        "clientId",
         "clientName",
         "clientContact",
         "place",

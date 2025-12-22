@@ -51,7 +51,7 @@ const processReferralFlow = ai.defineFlow(
       const rewardPoints = appConfig?.referralRewardPoints || 1; // Default to 1 if not set
 
       // Use a transaction to ensure atomicity
-      await firestore.runTransaction(async (transaction) => {
+      const message = await firestore.runTransaction(async (transaction) => {
         // 2. Find the referring user
         const usersRef = firestore.collection('users');
         const q = usersRef.where('referralCode', '==', referralCode).limit(1);
@@ -76,9 +76,11 @@ const processReferralFlow = ai.defineFlow(
         transaction.update(newUserDocRef, {
           referredByCode: null
         });
+        
+        return `${rewardPoints} points awarded to user ${referrerDoc.data().firstName}.`;
       });
 
-      return { success: true, message: `${rewardPoints} points awarded to user ${referrerDoc.data().firstName}.` };
+      return { success: true, message };
 
     } catch (error: any) {
       console.error("Error processing referral:", error);
