@@ -40,26 +40,6 @@ export async function parseSearchQuery(input: ParseSearchQueryInput): Promise<Pa
   return result;
 }
 
-const prompt = ai.definePrompt({
-  name: 'parseSearchQueryPrompt',
-  input: { schema: ParseSearchQueryInputSchema },
-  output: { schema: ParseSearchQueryOutputSchema },
-  prompt: `You are an intelligent search assistant for a talent marketplace. Your job is to parse a user's natural language query and extract structured search parameters.
-
-  User Query: "{{{query}}}"
-  
-  Analyze the query and extract the following information:
-  - The core profession, skill, qualification, or name the user is looking for (searchQuery).
-  - Any specified location (location).
-  - If the user mentions affordability (e.g., "cheap", "affordable", "low cost"), set a reasonable maxRate (e.g., 500).
-  - If the user asks for "verified" or "trusted" experts, set isVerified to true.
-  - If the user asks for someone "available now" or "immediately", set isAvailable to true.
-  - If the user mentions a search radius like "within 10km" or "in a 5 km range", extract the number and set it as 'radius'. If they just say "nearby" or "near me", set 'useUserLocation' to true and set 'radius' to 20.
-  
-  Return the extracted parameters in the specified JSON format. If a parameter is not mentioned, omit it.
-  `,
-});
-
 const parseSearchQueryFlow = ai.defineFlow(
   {
     name: 'parseSearchQueryFlow',
@@ -68,7 +48,7 @@ const parseSearchQueryFlow = ai.defineFlow(
   },
   async (input) => {
     const llmResponse = await ai.generate({
-      model: 'googleai/gemini-2.5-flash',
+      model: 'gemini-1.5-flash',
       prompt: `You are an intelligent search assistant for a talent marketplace. Your job is to parse a user's natural language query and extract structured search parameters.
 
       User Query: "${input.query}"
@@ -85,6 +65,6 @@ const parseSearchQueryFlow = ai.defineFlow(
       output: { schema: ParseSearchQueryOutputSchema },
     });
     
-    return llmResponse.output()!;
+    return llmResponse.output!;
   }
 );

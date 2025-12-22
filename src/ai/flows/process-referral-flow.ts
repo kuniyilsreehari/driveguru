@@ -78,7 +78,7 @@ const processReferralFlow = ai.defineFlow(
         });
       });
 
-      return { success: true, message: `${rewardPoints} points awarded to user ${newUserUid}.` };
+      return { success: true, message: `${rewardPoints} points awarded to user ${referrerDoc.data().firstName}.` };
 
     } catch (error: any) {
       console.error("Error processing referral:", error);

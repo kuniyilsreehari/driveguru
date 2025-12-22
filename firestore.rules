@@ -41,7 +41,7 @@ service cloud.firestore {
     
     // A user can update certain fields of their own profile.
     function isUpdatingOwnUserDoc(userId) {
-      let protectedFields = ['id', 'email', 'verified', 'role', 'tier', 'createdAt', 'referralCode', 'referralPoints'];
+      let protectedFields = ['id', 'email', 'verified', 'role', 'tier', 'createdAt', 'referralCode', 'referralPoints', 'referredByCode'];
       return isOwner(userId) && isExistingDoc() &&
              !request.resource.data.diff(resource.data).affectedKeys().hasAny(protectedFields);
     }
@@ -82,6 +82,12 @@ service cloud.firestore {
         return requestData().companyId == userDoc.data.companyId;
     }
 
+    function isPremiumExpert() {
+        let userDoc = get(/databases/$(database)/documents/users/$(request.auth.uid));
+        return isSignedIn() && 
+               (userDoc.data.tier == 'Premier' || userDoc.data.tier == 'Super Premier');
+    }
+
 
     /* =====================================================
      * Super Admin Roles
@@ -104,12 +110,22 @@ service cloud.firestore {
      * Bookings
      * ===================================================== */
     match /bookings/{bookingId} {
-        // An expert can create a booking for themselves.
-        allow create: if isSignedIn() && requestData().expertId == request.auth.uid;
-        // An expert can manage their own bookings. A client can view their booking.
-        allow get, update, delete: if isSignedIn() && resource.data.expertId == request.auth.uid;
+        // A signed-in user can create a booking for an expert. The expert can log their own bookings.
+        allow create: if isSignedIn() && (
+                            // Client booking: clientId must be the person making the request.
+                            requestData().clientId == request.auth.uid ||
+                            // Expert logging a booking: expertId must be the person making the request.
+                            (isPremiumExpert() && requestData().expertId == request.auth.uid)
+                        );
+        
+        // The expert can manage their own bookings. The client who made it can also view it.
+        allow get: if (isPremiumExpert() && resource.data.expertId == request.auth.uid) || 
+                      (isSignedIn() && resource.data.clientId == request.auth.uid);
+        
+        allow update, delete: if isPremiumExpert() && resource.data.expertId == request.auth.uid;
+        
         // An expert can list their own bookings.
-        allow list: if isSignedIn() && request.query.where.expertId == request.auth.uid;
+        allow list: if isPremiumExpert() && request.query.where.expertId == request.auth.uid;
     }
 
     /* =====================================================
@@ -174,7 +190,7 @@ service cloud.firestore {
         // Anyone can read approved reviews. Super admins can read all reviews.
         allow get: if resource.data.status == 'approved' || isSuperAdmin();
         // Anyone can list approved reviews. Super admins can list all.
-        allow list: if request.query.where.status == 'approved' || isSuperAdmin() || isSignedIn();
+        allow list: if request.query.where.status == 'approved' || isSuperAdmin();
         // Any signed-in user can create a review, which starts as 'pending'. Admins can bypass this.
         allow create: if (isSignedIn() && requestData().status == 'pending') || isSuperAdmin();
         // Only super admins can change the status of a review.

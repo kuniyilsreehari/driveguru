@@ -77,7 +77,7 @@ function ReviewsList() {
                         </div>
                     </CardHeader>
                     <CardContent>
-                        <p className="text-muted-foreground mb-4">&quot;{review.comment}&quot;</p>
+                        <p className="text-muted-foreground mb-4">"{review.comment}"</p>
                         <div className="flex justify-between items-center text-xs text-muted-foreground">
                             <span>{review.createdAt ? formatDistanceToNow(new Date(review.createdAt.seconds * 1000), { addSuffix: true }) : ''}</span>
                             <Badge variant="secondary">Approved</Badge>
