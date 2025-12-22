@@ -40,6 +40,7 @@ import Link from 'next/link';
 import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { createPaymentOrder } from '@/ai/flows/payment-flow';
 import { processReferral } from '@/ai/flows/process-referral-flow';
+import { LogBookingForm } from '@/components/auth/log-booking-form';
 
 
 type ExpertUserProfile = {
@@ -359,6 +360,7 @@ export default function ExpertDashboardPage() {
   const firestore = useFirestore();
   const router = useRouter();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isBookingDialogOpen, setIsBookingDialogOpen] = useState(false);
   const { toast } = useToast();
 
   const userDocRef = useMemoFirebase(() => {
@@ -630,10 +632,26 @@ export default function ExpertDashboardPage() {
                                 />
                             </DialogContent>
                         </Dialog>
-                        <Button variant="outline">
-                            <Calendar className="mr-2 h-4 w-4" />
-                            Booking
-                        </Button>
+                        <Dialog open={isBookingDialogOpen} onOpenChange={setIsBookingDialogOpen}>
+                            <DialogTrigger asChild>
+                                <Button variant="outline">
+                                    <Calendar className="mr-2 h-4 w-4" />
+                                    Booking
+                                </Button>
+                            </DialogTrigger>
+                            <DialogContent className="sm:max-w-[600px]">
+                                <DialogHeader>
+                                    <DialogTitle>Log a New Booking</DialogTitle>
+                                    <DialogDescription>
+                                        Manually log a booking that you have confirmed with a client.
+                                    </DialogDescription>
+                                </DialogHeader>
+                                <LogBookingForm 
+                                    expertId={userProfile.id}
+                                    onSuccess={() => setIsBookingDialogOpen(false)}
+                                />
+                            </DialogContent>
+                        </Dialog>
                         <Button variant="outline" onClick={handleLogout}>
                             <LogOut className="mr-2 h-4 w-4" />
                             Log Out

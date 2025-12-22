@@ -149,6 +149,64 @@
         "createdAt"
       ]
     },
+    "Booking": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Booking",
+      "type": "object",
+      "description": "Represents a booking made by a client with an expert.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the booking."
+        },
+        "expertId": {
+          "type": "string",
+          "description": "The ID of the expert who is booked."
+        },
+        "clientName": {
+          "type": "string",
+          "description": "The name of the client who made the booking."
+        },
+        "clientContact": {
+          "type": "string",
+          "description": "The contact number of the client."
+        },
+        "place": {
+          "type": "string",
+          "description": "The location where the work will be done."
+        },
+        "workDescription": {
+          "type": "string",
+          "description": "A brief description of the work to be done."
+        },
+        "bookingDate": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The scheduled date and time for the booking."
+        },
+        "status": {
+          "type": "string",
+          "description": "The current status of the booking.",
+          "enum": ["confirmed", "completed", "cancelled"]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp of when the booking was logged."
+        }
+      },
+      "required": [
+        "id",
+        "expertId",
+        "clientName",
+        "clientContact",
+        "place",
+        "workDescription",
+        "bookingDate",
+        "status",
+        "createdAt"
+      ]
+    },
     "Company": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Company",
@@ -492,6 +550,22 @@
             {
               "name": "userId",
               "description": "The unique identifier of the user."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/bookings/{bookingId}",
+        "definition": {
+          "entityName": "Booking",
+          "schema": {
+            "$ref": "#/backend/entities/Booking"
+          },
+          "description": "Stores appointments logged by experts.",
+          "params": [
+            {
+              "name": "bookingId",
+              "description": "The unique identifier of the booking."
             }
           ]
         }
