@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { Suspense, useState, useRef } from 'react';
@@ -149,7 +150,7 @@ function ExpertProfileContent() {
     }
     const formattedPhoneNumber = cleanPhoneNumber(expert.phoneNumber);
     const whatsappLink = `https://wa.me/${formattedPhoneNumber}`;
-    const canContact = expert.verified && formattedPhoneNumber;
+    const canContact = expert.verified && formattedPhoneNumber && isPremium;
 
     return (
         <div className="min-h-screen bg-background p-4 sm:p-8">
@@ -300,7 +301,7 @@ function ExpertProfileContent() {
                                             </div>
                                         </TooltipTrigger>
                                         <TooltipContent>
-                                            <p>This expert is not verified. Contact is only available for verified experts.</p>
+                                            <p>Contact is only available for verified Premier or Super Premier experts.</p>
                                         </TooltipContent>
                                     </Tooltip>
                                 </TooltipProvider>
