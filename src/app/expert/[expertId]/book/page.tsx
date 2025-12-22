@@ -16,6 +16,7 @@ type ExpertUserProfile = {
     firstName: string;
     lastName: string;
     companyName?: string;
+    phoneNumber?: string;
 };
 
 function BookingPageContent() {
@@ -62,7 +63,7 @@ function BookingPageContent() {
                     <CardDescription>Select a date and fill out the form to book an appointment with {displayName}.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                   <ClientBookingForm expertId={expertId} />
+                   <ClientBookingForm expert={expert} />
                 </CardContent>
             </Card>
         </div>

@@ -40,11 +40,15 @@ const formSchema = z.object({
   bookingTime: z.string().min(1, { message: "A time for the booking is required." }),
 });
 
+type Expert = {
+    id: string;
+    phoneNumber?: string;
+}
 interface ClientBookingFormProps {
-    expertId: string;
+    expert: Expert;
 }
 
-export function ClientBookingForm({ expertId }: ClientBookingFormProps) {
+export function ClientBookingForm({ expert }: ClientBookingFormProps) {
   const { toast } = useToast();
   const firestore = useFirestore();
   const { user, isUserLoading } = useUser();
@@ -87,7 +91,7 @@ export function ClientBookingForm({ expertId }: ClientBookingFormProps) {
       place: values.place,
       workDescription: values.workDescription,
       bookingDate: combinedDateTime,
-      expertId: expertId,
+      expertId: expert.id,
       clientId: user?.uid,
       status: "confirmed",
       createdAt: serverTimestamp(),
@@ -96,10 +100,36 @@ export function ClientBookingForm({ expertId }: ClientBookingFormProps) {
     addDocumentNonBlocking(bookingsCollectionRef, newBookingData).then(() => {
         toast({
             title: "Booking Submitted!",
-            description: "Your appointment request has been sent to the expert.",
+            description: "Your appointment request has been saved. You will now be redirected to WhatsApp.",
         });
         form.reset();
-        router.push(`/expert/${expertId}`);
+        
+        // WhatsApp redirection logic
+        if (expert.phoneNumber) {
+            const cleanPhoneNumber = expert.phoneNumber.replace(/[^0-9]/g, '');
+            const message = `
+*New Booking Request*
+
+*Client:* ${values.clientName}
+*Contact:* ${values.clientContact}
+*Date:* ${format(combinedDateTime, "PPP")}
+*Time:* ${format(combinedDateTime, "p")}
+*Location:* ${values.place}
+
+*Work Description:*
+${values.workDescription}
+            `.trim();
+
+            const whatsappUrl = `https://wa.me/${cleanPhoneNumber}?text=${encodeURIComponent(message)}`;
+            window.location.href = whatsappUrl;
+        } else {
+             toast({
+                variant: 'destructive',
+                title: "Could not send WhatsApp message.",
+                description: "The expert has not provided a phone number.",
+            });
+             router.push(`/expert/${expert.id}`);
+        }
     }).catch(error => {
         if (error.name !== 'FirebaseError') {
              toast({
