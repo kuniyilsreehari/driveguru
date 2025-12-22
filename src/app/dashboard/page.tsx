@@ -83,6 +83,20 @@ type ExpertUserProfile = {
     tier?: 'Standard' | 'Premier' | 'Super Premier';
 };
 
+type Booking = {
+    id: string;
+    clientId: string;
+    clientName: string;
+    expertId: string;
+    expertName: string;
+    requestedDateTime: string;
+    workDescription: string;
+    location: string;
+    status: 'confirmed' | 'completed' | 'cancelled';
+    createdAt: Timestamp;
+};
+
+
 type PlanPrices = {
     daily?: number;
     monthly?: number;
@@ -314,24 +328,8 @@ function PlanManagement({ userProfile, appConfig }: { userProfile: ExpertUserPro
                         description="Get noticed and build trust."
                         features={["Public profile listing", "AI-Powered Search access", "Post job vacancies", "Downloadable PDF profile"]}
                         current={userProfile.tier === 'Premier'}
+                        link={appConfig?.premierPaymentLink || '/payment/premier'}
                      >
-                        <div className="w-full space-y-1">
-                            {appConfig?.premierPlanPrices?.daily && (
-                                <UpgradeDialog userProfile={userProfile} tier="Premier" billingCycle="daily" price={appConfig.premierPlanPrices.daily}>
-                                    <Button className="w-full justify-start" variant="ghost" size="sm">Daily - ₹{appConfig.premierPlanPrices.daily}</Button>
-                                </UpgradeDialog>
-                            )}
-                             {appConfig?.premierPlanPrices?.monthly && (
-                                <UpgradeDialog userProfile={userProfile} tier="Premier" billingCycle="monthly" price={appConfig.premierPlanPrices.monthly}>
-                                    <Button className="w-full justify-start" variant="ghost" size="sm">Monthly - ₹{appConfig.premierPlanPrices.monthly}</Button>
-                                </UpgradeDialog>
-                            )}
-                             {appConfig?.premierPlanPrices?.yearly && (
-                                <UpgradeDialog userProfile={userProfile} tier="Premier" billingCycle="yearly" price={appConfig.premierPlanPrices.yearly}>
-                                    <Button className="w-full justify-start" variant="ghost" size="sm">Yearly - ₹{appConfig.premierPlanPrices.yearly}</Button>
-                                </UpgradeDialog>
-                            )}
-                        </div>
                      </PlanCard>
                      <PlanCard
                         title="Super Premier"
@@ -339,29 +337,87 @@ function PlanManagement({ userProfile, appConfig }: { userProfile: ExpertUserPro
                         description="Maximum visibility and tools."
                         features={["All Premier features", "Top placement in search results", "Featured expert listing"]}
                         current={userProfile.tier === 'Super Premier'}
+                        link={appConfig?.superPremierPaymentLink || '/payment/super-premier'}
                      >
-                        <div className="w-full space-y-1">
-                           {appConfig?.superPremierPlanPrices?.daily && (
-                                <UpgradeDialog userProfile={userProfile} tier="Super Premier" billingCycle="daily" price={appConfig.superPremierPlanPrices.daily}>
-                                    <Button className="w-full justify-start" variant="ghost" size="sm">Daily - ₹{appConfig.superPremierPlanPrices.daily}</Button>
-                                </UpgradeDialog>
-                            )}
-                             {appConfig?.superPremierPlanPrices?.monthly && (
-                                <UpgradeDialog userProfile={userProfile} tier="Super Premier" billingCycle="monthly" price={appConfig.superPremierPlanPrices.monthly}>
-                                    <Button className="w-full justify-start" variant="ghost" size="sm">Monthly - ₹{appConfig.superPremierPlanPrices.monthly}</Button>
-                                </UpgradeDialog>
-                            )}
-                             {appConfig?.superPremierPlanPrices?.yearly && (
-                                <UpgradeDialog userProfile={userProfile} tier="Super Premier" billingCycle="yearly" price={appConfig.superPremierPlanPrices.yearly}>
-                                    <Button className="w-full justify-start" variant="ghost" size="sm">Yearly - ₹{appConfig.superPremierPlanPrices.yearly}</Button>
-                                </UpgradeDialog>
-                            )}
-                        </div>
                     </PlanCard>
                 </div>
             </CardContent>
         </Card>
     )
+}
+
+function MyBookingsCard({ userProfile }: { userProfile: ExpertUserProfile }) {
+    const firestore = useFirestore();
+
+    const bookingsQuery = useMemoFirebase(() => {
+        if (!firestore) return null;
+        return query(
+            collection(firestore, 'bookings'),
+            where('expertId', '==', userProfile.id),
+            orderBy('createdAt', 'desc')
+        );
+    }, [firestore, userProfile.id]);
+
+    const { data: bookings, isLoading } = useCollection<Booking>(bookingsQuery);
+
+    const handleStatusChange = (bookingId: string, status: 'completed' | 'cancelled') => {
+        if (!firestore) return;
+        const bookingDocRef = doc(firestore, 'bookings', bookingId);
+        updateDocumentNonBlocking(bookingDocRef, { status: status });
+        toast({
+            title: `Booking ${status.charAt(0).toUpperCase() + status.slice(1)}`,
+            description: `The appointment has been marked as ${status}.`,
+        });
+    };
+    
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle>My Bookings</CardTitle>
+                <CardDescription>View and manage your upcoming and past appointments.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                {isLoading ? (
+                    <div className="flex items-center justify-center p-8">
+                        <Loader className="h-6 w-6 animate-spin" />
+                    </div>
+                ) : bookings && bookings.length > 0 ? (
+                    <div className="space-y-4">
+                        {bookings.map((booking) => (
+                            <div key={booking.id} className="p-4 border rounded-lg">
+                                <div className="flex flex-col sm:flex-row justify-between sm:items-start">
+                                    <div>
+                                        <p className="font-semibold">{booking.clientName}</p>
+                                        <p className="text-sm text-muted-foreground">{booking.requestedDateTime ? new Date(booking.requestedDateTime).toLocaleString() : 'Date not set'}</p>
+                                        <p className="text-sm text-muted-foreground mt-2">{booking.workDescription}</p>
+                                    </div>
+                                    <div className="mt-2 sm:mt-0">
+                                        <Badge variant={booking.status === 'completed' ? 'default' : booking.status === 'cancelled' ? 'destructive' : 'secondary'}>
+                                            {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
+                                        </Badge>
+                                    </div>
+                                </div>
+                                {booking.status === 'confirmed' && (
+                                    <div className="flex gap-2 mt-4 pt-4 border-t">
+                                        <Button size="sm" variant="outline" onClick={() => handleStatusChange(booking.id, 'completed')}>
+                                            <CheckCircle className="mr-2 h-4 w-4" /> Complete
+                                        </Button>
+                                        <Button size="sm" variant="destructive" onClick={() => handleStatusChange(booking.id, 'cancelled')}>
+                                            <XCircle className="mr-2 h-4 w-4" /> Cancel
+                                        </Button>
+                                    </div>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <div className="text-center p-8 border-2 border-dashed rounded-lg">
+                        <p className="text-muted-foreground">You don't have any bookings yet.</p>
+                    </div>
+                )}
+            </CardContent>
+        </Card>
+    );
 }
 
 export default function ExpertDashboardPage() {
@@ -812,6 +868,10 @@ export default function ExpertDashboardPage() {
             </Card>
         )}
 
+        {userProfile.tier === 'Premier' || userProfile.tier === 'Super Premier' ? (
+             <MyBookingsCard userProfile={userProfile} />
+        ) : null}
+
         <PlanManagement userProfile={userProfile} appConfig={appConfig} />
         
         {userProfile.role === 'Company' && <CompanyVacancies userProfile={userProfile} />}
@@ -820,5 +880,3 @@ export default function ExpertDashboardPage() {
     </div>
   );
 }
-
-    
