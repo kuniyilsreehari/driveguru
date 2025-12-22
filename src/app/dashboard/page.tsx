@@ -5,10 +5,10 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { signOut } from 'firebase/auth';
-import { doc, collection, query, where, getDoc, runTransaction, increment, getDocs } from 'firebase/firestore';
+import { doc, collection, query, where, getDoc, runTransaction, increment, getDocs, orderBy, Timestamp } from 'firebase/firestore';
 import { useUser, useAuth, useFirestore, useDoc, useCollection, useMemoFirebase, updateDocumentNonBlocking } from '@/firebase';
 import { Button } from '@/components/ui/button';
-import { LogOut, Briefcase, Loader, Edit, UserCheck, XCircle, MapPin, IndianRupee, Calendar, Book, GraduationCap, School, Info, User as UserIcon, Check, Power, Building, PlusCircle, Crown, Sparkles, Lock, Home, ArrowUpCircle, ShieldCheck, ExternalLink, Gift, Copy, Shield, AlertTriangle, ChevronDown, Link as LinkIcon, MessageCircle, BookOpen } from 'lucide-react';
+import { LogOut, Briefcase, Loader, Edit, UserCheck, XCircle, MapPin, IndianRupee, Calendar, Book, GraduationCap, School, Info, User as UserIcon, Check, Power, Building, PlusCircle, Crown, Sparkles, Lock, Home, ArrowUpCircle, ShieldCheck, ExternalLink, Gift, Copy, Shield, AlertTriangle, ChevronDown, Link as LinkIcon, MessageCircle, BookOpen, CheckCircle } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import {
   Dialog,
@@ -25,6 +25,17 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { AlertDialogTrigger } from '@radix-ui/react-alert-dialog';
 import { EditProfileForm } from '@/components/auth/edit-profile-form';
 import { PostVacancyForm } from '@/components/auth/post-vacancy-form';
 import { Badge } from '@/components/ui/badge';
@@ -41,6 +52,8 @@ import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from '@/comp
 import { createPaymentOrder } from '@/ai/flows/payment-flow';
 import { processReferral } from '@/ai/flows/process-referral-flow';
 import { LogBookingForm } from '@/components/auth/log-booking-form';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { format } from 'date-fns';
 
 
 type ExpertUserProfile = {
@@ -75,6 +88,14 @@ type ExpertUserProfile = {
 
 type Booking = {
     id: string;
+    expertId: string;
+    clientName: string;
+    clientContact: string;
+    place: string;
+    workDescription: string;
+    bookingDate: Timestamp;
+    status: 'confirmed' | 'completed' | 'cancelled';
+    createdAt: Timestamp;
 };
 
 type PlanPrices = {
@@ -92,6 +113,130 @@ type AppConfig = {
     premierPaymentLink?: string;
     superPremierPaymentLink?: string;
 };
+
+function MyBookingsCard({ userProfile }: { userProfile: ExpertUserProfile }) {
+    const firestore = useFirestore();
+    const { toast } = useToast();
+    const [bookingToCancel, setBookingToCancel] = useState<Booking | null>(null);
+
+    const bookingsQuery = useMemoFirebase(() => {
+        if (!firestore || !userProfile) return null;
+        return query(
+            collection(firestore, 'bookings'),
+            where('expertId', '==', userProfile.id),
+            orderBy('bookingDate', 'desc')
+        );
+    }, [firestore, userProfile]);
+
+    const { data: bookings, isLoading: isBookingsLoading } = useCollection<Booking>(bookingsQuery);
+
+    const isPremiumUser = userProfile.tier === 'Premier' || userProfile.tier === 'Super Premier';
+
+    const handleUpdateStatus = (bookingId: string, status: 'completed' | 'cancelled') => {
+        if (!firestore) return;
+        const bookingDocRef = doc(firestore, 'bookings', bookingId);
+        updateDocumentNonBlocking(bookingDocRef, { status });
+        toast({
+            title: `Booking ${status.charAt(0).toUpperCase() + status.slice(1)}`,
+            description: `The booking has been marked as ${status}.`,
+        });
+        if (bookingToCancel) {
+            setBookingToCancel(null);
+        }
+    };
+    
+    if (!isPremiumUser) {
+        return (
+            <Card>
+                <CardHeader>
+                    <CardTitle>My Bookings</CardTitle>
+                    <CardDescription>View and manage your client appointments.</CardDescription>
+                </CardHeader>
+                <CardContent className="text-center p-8 border-2 border-dashed rounded-lg m-6 mt-0">
+                    <Lock className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+                    <h3 className="font-semibold">This is a Premium Feature</h3>
+                    <p className="text-sm text-muted-foreground mb-4">Upgrade your plan to manage appointments and track your schedule.</p>
+                    <Button onClick={() => document.getElementById('plan-management')?.scrollIntoView({ behavior: 'smooth'})}>
+                         <Crown className="mr-2 h-4 w-4"/> View Upgrade Options
+                    </Button>
+                </CardContent>
+            </Card>
+        )
+    }
+
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle>My Bookings</CardTitle>
+                <CardDescription>A complete log of all your scheduled appointments.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                {isBookingsLoading ? (
+                    <div className="flex items-center justify-center p-8">
+                        <Loader className="mr-2 h-6 w-6 animate-spin" /> Loading your bookings...
+                    </div>
+                ) : bookings && bookings.length > 0 ? (
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Client</TableHead>
+                                <TableHead>Date</TableHead>
+                                <TableHead>Status</TableHead>
+                                <TableHead className="text-right">Actions</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {bookings.map((booking) => (
+                                <TableRow key={booking.id}>
+                                    <TableCell>
+                                        <div className="font-medium">{booking.clientName}</div>
+                                        <div className="text-xs text-muted-foreground">{booking.clientContact}</div>
+                                    </TableCell>
+                                    <TableCell>{booking.bookingDate ? format(booking.bookingDate.toDate(), 'PPp') : 'N/A'}</TableCell>
+                                    <TableCell><Badge variant={booking.status === 'completed' ? 'default' : 'secondary'}>{booking.status}</Badge></TableCell>
+                                    <TableCell className="text-right">
+                                        {booking.status === 'confirmed' && (
+                                            <div className="flex gap-2 justify-end">
+                                                <Button size="sm" variant="outline" onClick={() => handleUpdateStatus(booking.id, 'completed')}>
+                                                    <CheckCircle className="mr-2 h-4 w-4 text-green-500"/> Complete
+                                                </Button>
+                                                <AlertDialog>
+                                                    <AlertDialogTrigger asChild>
+                                                        <Button size="sm" variant="destructive" onClick={() => setBookingToCancel(booking)}>
+                                                            <XCircle className="mr-2 h-4 w-4"/> Cancel
+                                                        </Button>
+                                                    </AlertDialogTrigger>
+                                                    <AlertDialogContent>
+                                                        <AlertDialogHeader>
+                                                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                            <AlertDialogDescription>
+                                                                This will cancel the booking with {bookingToCancel?.clientName}. This action cannot be undone.
+                                                            </AlertDialogDescription>
+                                                        </AlertDialogHeader>
+                                                        <AlertDialogFooter>
+                                                            <AlertDialogCancel onClick={() => setBookingToCancel(null)}>Back</AlertDialogCancel>
+                                                            <AlertDialogAction onClick={() => bookingToCancel && handleUpdateStatus(bookingToCancel.id, 'cancelled')} className="bg-destructive hover:bg-destructive/90">
+                                                                Yes, Cancel Booking
+                                                            </AlertDialogAction>
+                                                        </AlertDialogFooter>
+                                                    </AlertDialogContent>
+                                                </AlertDialog>
+                                            </div>
+                                        )}
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                ) : (
+                    <div className="text-center p-8 border-2 border-dashed rounded-lg">
+                        <p className="text-muted-foreground">You have not logged any bookings yet.</p>
+                    </div>
+                )}
+            </CardContent>
+        </Card>
+    )
+}
 
 function CompanyVacancies({ userProfile }: { userProfile: ExpertUserProfile }) {
   const firestore = useFirestore();
@@ -295,7 +440,7 @@ function PlanManagement({ userProfile, appConfig }: { userProfile: ExpertUserPro
     );
 
     return (
-        <Card>
+        <Card id="plan-management">
             <CardHeader>
                 <CardTitle>Manage Your Plan</CardTitle>
                 <CardDescription>Upgrade your plan to unlock powerful new features and increase your visibility.</CardDescription>
@@ -566,7 +711,6 @@ export default function ExpertDashboardPage() {
   
   const locationString = [userProfile.city, userProfile.state, userProfile.pincode].filter(Boolean).join(', ');
   const verificationFee = appConfig?.verificationFee;
-  const isPremiumUser = userProfile.tier === 'Premier' || userProfile.tier === 'Super Premier';
 
   return (
     <div className="min-h-screen bg-background p-4 sm:p-8">
@@ -807,6 +951,8 @@ export default function ExpertDashboardPage() {
                 </CardContent>
             </Card>
         )}
+
+        <MyBookingsCard userProfile={userProfile} />
 
         <PlanManagement userProfile={userProfile} appConfig={appConfig} />
         
