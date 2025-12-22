@@ -20,8 +20,8 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import { AlertDialogTrigger } from '@radix-ui/react-alert-dialog';
 
 type Booking = {
     id: string;
