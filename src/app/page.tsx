@@ -49,6 +49,14 @@ function HomePageContent() {
     
     const { user, isUserLoading } = useUser();
 
+    useEffect(() => {
+        const hasVisited = localStorage.getItem('hasVisitedWelcome');
+        if (!hasVisited) {
+            localStorage.setItem('hasVisitedWelcome', 'true');
+            router.push('/welcome');
+        }
+    }, [router]);
+
     const userProfileDocRef = useMemoFirebase(() => {
         if (!firestore || !user) return null;
         return doc(firestore, 'users', user.uid);

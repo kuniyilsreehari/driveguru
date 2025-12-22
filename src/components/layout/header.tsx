@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import Link from 'next/link';
@@ -17,7 +18,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { User as UserIcon, LogOut, LayoutDashboard, MessageSquare, Home, Award, Briefcase, Moon, Sun, Menu, Download } from 'lucide-react';
+import { User as UserIcon, LogOut, LayoutDashboard, MessageSquare, Home, Award, Briefcase, Moon, Sun, Menu, Download, Info } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useTheme } from 'next-themes';
@@ -120,6 +121,12 @@ export function Header() {
                   Featured
                 </Link>
               </Button>
+               <Button asChild variant="ghost">
+                <Link href="/welcome">
+                  <Info className="mr-2 h-4 w-4" />
+                  Welcome
+                </Link>
+              </Button>
               <div className="h-8 w-20" />
             </nav>
           </div>
@@ -162,6 +169,11 @@ export function Header() {
                             <Award className="mr-2 h-4 w-4" /> Featured
                         </Link>
                     </Button>
+                     <Button asChild variant="ghost" className="justify-start" onClick={() => setIsMobileMenuOpen(false)}>
+                        <Link href="/welcome">
+                            <Info className="mr-2 h-4 w-4" /> Welcome
+                        </Link>
+                    </Button>
                     {installPrompt && (
                       <Button onClick={() => setShowInstallDialog(true)} variant="ghost" className="justify-start">
                         <Download className="mr-2 h-4 w-4" />
@@ -196,6 +208,12 @@ export function Header() {
                   Featured
                 </Link>
             </Button>
+            <Button asChild variant="ghost">
+                <Link href="/welcome">
+                  <Info className="mr-2 h-4 w-4" />
+                  Welcome
+                </Link>
+              </Button>
              {installPrompt && (
                 <Button onClick={() => setShowInstallDialog(true)} variant="outline" size="sm" className="mr-2">
                     <Download className="mr-2 h-4 w-4" />
