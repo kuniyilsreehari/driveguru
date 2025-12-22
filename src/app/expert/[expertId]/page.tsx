@@ -6,8 +6,8 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { doc } from 'firebase/firestore';
 import { useFirestore, useDoc, useMemoFirebase, useUser } from '@/firebase';
-import { Loader2, Star, ChevronLeft, MapPin, IndianRupee, Briefcase, Calendar, Info, Book, GraduationCap, School, User as UserIcon, UserCheck, XCircle, Crown, Sparkles, LogIn, Lock, Building, FileDown, Home } from 'lucide-react';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Loader2, Star, ChevronLeft, MapPin, IndianRupee, Briefcase, Calendar, Info, Book, GraduationCap, School, User as UserIcon, UserCheck, XCircle, Crown, Sparkles, LogIn, Lock, Building, FileDown, Home, MessageSquare } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardFooter } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -142,6 +142,14 @@ function ExpertProfileContent() {
 
     const isPremium = expert.tier === 'Premier' || expert.tier === 'Super Premier';
     const locationString = [expert.city, expert.state, expert.pincode].filter(Boolean).join(', ');
+    
+    const cleanPhoneNumber = (phoneNumber?: string) => {
+        if (!phoneNumber) return '';
+        return phoneNumber.replace(/\s+/g, '');
+    }
+    const formattedPhoneNumber = cleanPhoneNumber(expert.phoneNumber);
+    const whatsappLink = `https://wa.me/${formattedPhoneNumber}`;
+    const canContact = expert.verified && formattedPhoneNumber;
 
     return (
         <div className="min-h-screen bg-background p-4 sm:p-8">
@@ -266,6 +274,39 @@ function ExpertProfileContent() {
                             </div>
                         </div>
                     </CardContent>
+                    <CardFooter className="p-6 mt-4">
+                        <div className="flex flex-col sm:flex-row w-full gap-2">
+                            {canContact ? (
+                                <>
+                                    <Button asChild className="flex-1" size="lg">
+                                        <Link href={`/expert/${expertId}/book`}>
+                                            <Calendar className="mr-2 h-4 w-4" /> Book an Appointment
+                                        </Link>
+                                    </Button>
+                                    <Button asChild variant="outline" className="flex-1 bg-green-500/10 border-green-500/50 text-green-500 hover:bg-green-500/20 hover:text-green-500" size="lg">
+                                        <a href={whatsappLink} target="_blank" rel="noopener noreferrer">
+                                            <MessageSquare className="mr-2 h-4 w-4" /> WhatsApp
+                                        </a>
+                                    </Button>
+                                </>
+                            ) : (
+                                <TooltipProvider>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <div className="w-full">
+                                                <Button disabled className="w-full" size="lg">
+                                                    <Lock className="mr-2 h-4 w-4" /> Contact is locked
+                                                </Button>
+                                            </div>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            <p>This expert is not verified. Contact is only available for verified experts.</p>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
+                            )}
+                        </div>
+                    </CardFooter>
                 </Card>
                 <FloatingActions 
                     expert={expert}
