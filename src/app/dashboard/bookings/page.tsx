@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Calendar, ChevronLeft, Loader2, CheckCircle, XCircle, Crown, Lock } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { useUser, useFirestore, useCollection, useMemoFirebase, updateDocumentNonBlocking } from '@/firebase';
+import { useUser, useFirestore, useCollection, useDoc, useMemoFirebase, updateDocumentNonBlocking } from '@/firebase';
 import { collection, query, where, orderBy, doc, Timestamp } from 'firebase/firestore';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { format } from 'date-fns';
@@ -50,7 +50,7 @@ export default function BookingSystemPage() {
         return doc(firestore, 'users', user.uid);
     }, [firestore, user]);
 
-    const { data: userProfile, isLoading: isProfileLoading } = useCollection<ExpertUser>(userDocRef as any);
+    const { data: userProfile, isLoading: isProfileLoading } = useDoc<ExpertUser>(userDocRef);
 
     const bookingsQuery = useMemoFirebase(() => {
         if (!firestore || !user) return null;
