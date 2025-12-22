@@ -229,18 +229,30 @@ function HomePageContent() {
         }
     };
 
+    const categories = [
+        { name: 'IT & Software', icon: 'Laptop' },
+        { name: 'Home Services', icon: 'Wrench' },
+        { name: 'Creative & Design', icon: 'Briefcase' },
+        { name: 'Mobile Tech', icon: 'Smartphone' }
+    ];
+
+    const getIcon = (name: string) => {
+        const Icon = (LucideIcons as any)[name];
+        return Icon ? <Icon className="w-8 h-8 text-primary" /> : null;
+    };
+
     return (
-        <div className="dark min-h-screen bg-background text-foreground p-4 sm:p-8">
-            <div className="max-w-4xl mx-auto">
+        <div className="dark min-h-screen bg-background text-foreground">
+            <div className="max-w-4xl mx-auto p-4 sm:p-8">
                 <header className="text-center py-8 sm:py-12">
-                    <h1 className="text-4xl sm:text-5xl font-bold text-primary">DriveGuru</h1>
-                    <p className="mt-4 text-muted-foreground max-w-2xl mx-auto">
+                    <h1 className="text-4xl sm:text-6xl font-bold text-primary tracking-tight">DriveGuru</h1>
+                    <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
                         Your one-stop platform for finding trusted local service professionals and kickstarting your career.
                     </p>
                 </header>
 
-                <main>
-                    <Card className="transition-all hover:border-orange-500/50 hover:shadow-orange-500/10 focus-within:border-orange-500/50 focus-within:shadow-orange-500/10">
+                <main className="space-y-12">
+                    <Card className="transition-all border-2 border-transparent hover:border-orange-500/50 hover:shadow-2xl hover:shadow-orange-500/10 focus-within:border-orange-500/50 focus-within:shadow-orange-500/10">
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2 text-2xl">
                                 <Bot /> AI-Powered Search
@@ -282,15 +294,19 @@ function HomePageContent() {
                         </CardContent>
                     </Card>
 
-                    <div className="text-center my-4 font-semibold text-muted-foreground">OR</div>
+                    <div className="relative text-center">
+                        <div className="absolute inset-0 flex items-center">
+                            <span className="w-full border-t" />
+                        </div>
+                        <div className="relative inline-block bg-background px-4 text-sm font-semibold uppercase text-muted-foreground">
+                            Or Use Manual Search
+                        </div>
+                    </div>
 
                     <Card className="p-6 sm:p-8">
-                        <CardHeader className="p-0 mb-6">
-                            <CardTitle className="text-2xl">Manual Search</CardTitle>
-                        </CardHeader>
                         <CardContent className="p-0">
-                             <div className="mb-4">
-                                <Label htmlFor="search">I&apos;m looking for...</Label>
+                             <div className="mb-6">
+                                <Label htmlFor="search" className="text-base font-semibold">I&apos;m looking for...</Label>
                                 <div className="relative mt-2">
                                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                     <Input
@@ -303,9 +319,9 @@ function HomePageContent() {
                                 </div>
                             </div>
                             
-                            <div className="space-y-4">
+                            <div className="space-y-4 mb-6">
                                 <div>
-                                    <Label>Location</Label>
+                                    <Label className="text-base font-semibold">Location</Label>
                                     <Button variant="outline" size="sm" onClick={handleDetectLocation} disabled={isDetecting} className="float-right">
                                         {isDetecting ? (
                                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -325,24 +341,20 @@ function HomePageContent() {
                                         <Input id="state" placeholder="e.g., Kerala" value={state} onChange={(e) => setState(e.target.value)} />
                                     </div>
                                 </div>
-                                <div>
-                                    <Label htmlFor="pincode" className="text-xs text-muted-foreground">Pincode</Label>
-                                    <Input id="pincode" placeholder="e.g., 679587" value={pincode} onChange={(e) => setPincode(e.target.value)} />
-                                </div>
                             </div>
 
                             <div className='my-6'>
-                                <Label>User Type</Label>
+                                <Label className="text-base font-semibold">User Type</Label>
                                 <Tabs defaultValue="experts" className="mt-2">
                                     <TabsList className="grid w-full grid-cols-2">
-                                        <TabsTrigger value="experts"><Briefcase className="mr-2" />Experts</TabsTrigger>
-                                        <TabsTrigger value="freshers"><Icons.graduate className="mr-2" />Freshers</TabsTrigger>
+                                        <TabsTrigger value="experts"><Briefcase className="mr-2 h-4 w-4" />Experts</TabsTrigger>
+                                        <TabsTrigger value="freshers"><Icons.graduate className="mr-2 h-4 w-4" />Freshers</TabsTrigger>
                                     </TabsList>
                                 </Tabs>
                             </div>
                             
                             <div className="mt-6">
-                                <Label htmlFor="hourly-rate">
+                                <Label htmlFor="hourly-rate" className="text-base font-semibold">
                                     Max Hourly Rate: {maxRate ? <span className="text-primary font-bold">up to ₹{maxRate}/hr</span> : <span className="text-primary font-bold">Any</span>}
                                 </Label>
                                 <Slider 
@@ -373,12 +385,25 @@ function HomePageContent() {
                         </CardContent>
                     </Card>
 
-                     <div className="mt-12">
+                    <div className="mt-12 text-center">
+                        <h2 className="text-3xl font-bold mb-2">Explore Categories</h2>
+                        <p className="text-muted-foreground mb-8">Find professionals by their area of expertise.</p>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            {categories.map((category) => (
+                                <Card key={category.name} className="flex flex-col items-center justify-center p-6 hover:bg-accent/50 hover:border-primary/50 transition-colors cursor-pointer">
+                                    {getIcon(category.icon)}
+                                    <p className="mt-2 font-semibold text-sm">{category.name}</p>
+                                </Card>
+                            ))}
+                        </div>
+                    </div>
+
+                     <div className="mt-16">
                         <h2 className="text-3xl font-bold text-center mb-8">Featured Experts</h2>
                         {isLoadingExperts ? (
-                             <div className="flex justify-center items-center p-8">
-                                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                                <p className="ml-3 text-muted-foreground">Loading experts...</p>
+                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <Skeleton className="h-48 w-full" />
+                                <Skeleton className="h-48 w-full" />
                             </div>
                         ) : (
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -387,7 +412,7 @@ function HomePageContent() {
                                         <ExpertCard key={expert.id} expert={expert} />
                                     ))
                                 ) : (
-                                    <p className="text-center text-muted-foreground">No featured experts available right now.</p>
+                                    <p className="text-center text-muted-foreground col-span-2">No featured experts available right now.</p>
                                 )}
                             </div>
                         )}
@@ -410,3 +435,5 @@ export default function TalentSearchPage() {
         </Suspense>
     );
 }
+
+    
