@@ -5,10 +5,10 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { signOut } from 'firebase/auth';
-import { doc, collection, query, where, getDoc, runTransaction, increment } from 'firebase/firestore';
+import { doc, collection, query, where, getDoc, runTransaction, increment, getDocs } from 'firebase/firestore';
 import { useUser, useAuth, useFirestore, useDoc, useCollection, useMemoFirebase, updateDocumentNonBlocking } from '@/firebase';
 import { Button } from '@/components/ui/button';
-import { LogOut, Briefcase, Loader, Edit, UserCheck, XCircle, MapPin, IndianRupee, Calendar, Book, GraduationCap, School, Info, User as UserIcon, Check, Power, Building, PlusCircle, Crown, Sparkles, Lock, Home, ArrowUpCircle, ShieldCheck, ExternalLink, Gift, Copy, Shield, AlertTriangle, ChevronDown, Link as LinkIcon, MessageCircle } from 'lucide-react';
+import { LogOut, Briefcase, Loader, Edit, UserCheck, XCircle, MapPin, IndianRupee, Calendar, Book, GraduationCap, School, Info, User as UserIcon, Check, Power, Building, PlusCircle, Crown, Sparkles, Lock, Home, ArrowUpCircle, ShieldCheck, ExternalLink, Gift, Copy, Shield, AlertTriangle, ChevronDown, Link as LinkIcon, MessageCircle, BookOpen } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import {
   Dialog,
@@ -71,6 +71,10 @@ type ExpertUserProfile = {
     referralPoints?: number;
     referredByCode?: string | null;
     tier?: 'Standard' | 'Premier' | 'Super Premier';
+};
+
+type Booking = {
+    id: string;
 };
 
 type PlanPrices = {
@@ -188,7 +192,7 @@ function UpgradeDialog({ userProfile, tier, billingCycle, price, children }: { u
             const { payment_link } = await createPaymentOrder({
                 userId: userProfile.id,
                 userEmail: userProfile.email,
-                userName: `${'${userProfile.firstName}'} ${'${userProfile.lastName}'}`,
+                userName: `${userProfile.firstName} ${userProfile.lastName}`,
                 userPhone: userProfile.phoneNumber || '',
                 plan: tier,
                 billingCycle: billingCycle,
@@ -426,7 +430,7 @@ export default function ExpertDashboardPage() {
 
   const getInitials = (firstName?: string, lastName?: string) => {
     if (firstName && lastName) {
-      return `${'${firstName.charAt(0)}'}${'${lastName.charAt(0)}'}`.toUpperCase();
+      return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
     }
     return 'U';
   };
@@ -572,7 +576,7 @@ export default function ExpertDashboardPage() {
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                     <div className="flex items-start gap-4">
                         <Avatar className="h-16 w-16 sm:h-24 sm:w-24 text-3xl">
-                          <AvatarImage src={userProfile.photoUrl} alt={`${'${userProfile.firstName}'} ${'${userProfile.lastName}'}`} />
+                          <AvatarImage src={userProfile.photoUrl} alt={`${userProfile.firstName} ${userProfile.lastName}`} />
                           <AvatarFallback>{getInitials(userProfile.firstName, userProfile.lastName)}</AvatarFallback>
                         </Avatar>
                         <div>
@@ -638,12 +642,12 @@ export default function ExpertDashboardPage() {
                                 <TooltipTrigger asChild>
                                     <Button variant="outline" asChild={isPremiumUser} disabled={!isPremiumUser}>
                                         <Link href="/dashboard/bookings">
-                                            <Calendar className="mr-2 h-4 w-4" />
-                                            Booking System
+                                            <BookOpen className="mr-2 h-4 w-4" />
+                                            View Logged Bookings
                                         </Link>
                                     </Button>
                                 </TooltipTrigger>
-                                {!isPremiumUser && <TooltipContent><p>Upgrade to Premier to use the Booking System.</p></TooltipContent>}
+                                {!isPremiumUser && <TooltipContent><p>Upgrade to Premier to view your bookings.</p></TooltipContent>}
                             </Tooltip>
                             <Tooltip>
                                 <TooltipTrigger asChild>
@@ -850,3 +854,4 @@ export default function ExpertDashboardPage() {
     </div>
   );
 }
+
