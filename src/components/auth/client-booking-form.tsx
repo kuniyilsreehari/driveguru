@@ -6,7 +6,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { useRouter } from 'next/navigation';
-import { collection, serverTimestamp, addDoc } from 'firebase/firestore';
 import { format } from 'date-fns';
 import { User } from 'firebase/auth';
 
@@ -15,12 +14,10 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { useFirestore } from '@/firebase';
 import { Calendar as CalendarIcon, Clock, User as UserIcon, Mail, MapPin, FileText, Send } from 'lucide-react';
 import { Calendar } from '../ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { cn } from '@/lib/utils';
-import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 
 type ExpertProfile = {
   id: string;
@@ -46,7 +43,6 @@ interface ClientBookingFormProps {
 
 export function ClientBookingForm({ client, expert }: ClientBookingFormProps) {
   const { toast } = useToast();
-  const firestore = useFirestore();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -62,71 +58,63 @@ export function ClientBookingForm({ client, expert }: ClientBookingFormProps) {
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    if (!firestore) return;
     setIsSubmitting(true);
-
+    
     const expertName = expert.companyName || `${expert.firstName} ${expert.lastName}`;
+    const expertPhoneNumber = expert.phoneNumber?.replace(/[^0-9]/g, '');
 
-    const bookingData = {
-      clientId: client.uid,
-      clientName: values.clientName,
-      clientEmail: values.clientEmail,
-      expertId: expert.id,
-      expertName: expertName,
-      requestedDateTime: new Date(`${format(values.requestedDate, 'yyyy-MM-dd')}T${values.requestedTime}`),
-      workDescription: values.workDescription,
-      location: values.location,
-      status: 'confirmed',
-      createdAt: serverTimestamp(),
-    };
+    if (!expertPhoneNumber) {
+        toast({
+            variant: 'destructive',
+            title: 'Action Failed',
+            description: 'This expert has not provided a contact number.',
+        });
+        setIsSubmitting(false);
+        return;
+    }
 
     try {
-      const docRef = await addDocumentNonBlocking(collection(firestore, 'bookings'), bookingData);
-      const newBookingId = docRef.id;
-
-      toast({
-        title: 'Booking Request Sent!',
-        description: 'Your appointment has been logged. You will be redirected to WhatsApp to notify the expert.',
-      });
-
-      // WhatsApp Integration
-      const expertPhoneNumber = expert.phoneNumber?.replace(/[^0-9]/g, '');
-      if (expertPhoneNumber) {
         const message = `
+*New Booking Request from DriveGuru*
+
 Hello ${expertName},
 
-I have booked an appointment through DriveGuru.
+A new appointment has been requested. Please review the details below and reply to the client.
 
-*Booking Details:*
-*Client Name:* ${values.clientName}
-*Date:* ${format(values.requestedDate, 'PPP')}
-*Time:* ${values.requestedTime}
-*Location:* ${values.location}
-*Work:* ${values.workDescription}
-*Booking ID:* ${newBookingId}
+*Client Details:*
+- *Name:* ${values.clientName}
+- *Email:* ${values.clientEmail}
 
-Please confirm this appointment.
+*Appointment Details:*
+- *Date:* ${format(values.requestedDate, 'PPP')}
+- *Time:* ${values.requestedTime}
+- *Location:* ${values.location}
+- *Work Required:* ${values.workDescription}
 
-Thank you,
-${values.clientName}
-        `.trim();
-        
+-------------------
+*To the Expert:* Please reply to confirm this appointment time or suggest a new one.
+        `.trim().replace(/\n\s*\n/g, '\n\n'); // Clean up extra whitespace for better formatting
+
         const whatsappUrl = `https://wa.me/${expertPhoneNumber}?text=${encodeURIComponent(message)}`;
-        window.open(whatsappUrl, '_blank');
-      }
+        
+        toast({
+            title: 'Redirecting to WhatsApp',
+            description: 'Please send the pre-filled message to the expert.',
+        });
 
-      form.reset();
-      router.push(`/expert/${expert.id}`);
+        // Open WhatsApp in a new tab
+        window.open(whatsappUrl, '_blank');
+        
+        // Redirect the user back to the expert's profile
+        router.push(`/expert/${expert.id}`);
 
     } catch (error) {
-      console.error('Booking failed:', error);
-      if ((error as any).name !== 'FirebaseError') {
-        toast({
+      console.error('Failed to generate WhatsApp link:', error);
+      toast({
           variant: 'destructive',
-          title: 'Booking Failed',
-          description: 'Could not save your appointment. Please try again.',
-        });
-      }
+          title: 'Failed',
+          description: 'Could not prepare the WhatsApp message. Please try again.',
+      });
     } finally {
         setIsSubmitting(false);
     }
@@ -264,7 +252,7 @@ ${values.clientName}
 
         <Button type="submit" className="w-full" disabled={isSubmitting}>
           <Send className="mr-2 h-4 w-4" />
-          {isSubmitting ? 'Submitting...' : 'Submit Booking Request'}
+          {isSubmitting ? 'Processing...' : 'Send Request via WhatsApp'}
         </Button>
       </form>
     </Form>
