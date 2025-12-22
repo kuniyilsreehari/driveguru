@@ -118,19 +118,20 @@ function MyBookingsCard({ userProfile }: { userProfile: ExpertUserProfile }) {
     const firestore = useFirestore();
     const { toast } = useToast();
     const [bookingToCancel, setBookingToCancel] = useState<Booking | null>(null);
+    const [isBookingDialogOpen, setIsBookingDialogOpen] = useState(false);
+
+    const isPremiumUser = userProfile.tier === 'Premier' || userProfile.tier === 'Super Premier';
 
     const bookingsQuery = useMemoFirebase(() => {
-        if (!firestore || !userProfile) return null;
+        if (!firestore || !userProfile.id || !isPremiumUser) return null;
         return query(
             collection(firestore, 'bookings'),
             where('expertId', '==', userProfile.id),
             orderBy('bookingDate', 'desc')
         );
-    }, [firestore, userProfile]);
+    }, [firestore, userProfile.id, isPremiumUser]);
 
     const { data: bookings, isLoading: isBookingsLoading } = useCollection<Booking>(bookingsQuery);
-
-    const isPremiumUser = userProfile.tier === 'Premier' || userProfile.tier === 'Super Premier';
 
     const handleUpdateStatus = (bookingId: string, status: 'completed' | 'cancelled') => {
         if (!firestore) return;
@@ -166,9 +167,23 @@ function MyBookingsCard({ userProfile }: { userProfile: ExpertUserProfile }) {
 
     return (
         <Card>
-            <CardHeader>
-                <CardTitle>My Bookings</CardTitle>
-                <CardDescription>A complete log of all your scheduled appointments.</CardDescription>
+            <CardHeader className="flex flex-row items-start justify-between">
+                <div>
+                    <CardTitle>My Bookings</CardTitle>
+                    <CardDescription>A complete log of all your scheduled appointments.</CardDescription>
+                </div>
+                <Dialog open={isBookingDialogOpen} onOpenChange={setIsBookingDialogOpen}>
+                    <DialogTrigger asChild>
+                        <Button variant="outline"><PlusCircle className="mr-2 h-4 w-4" /> Log Booking</Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>Log a New Booking</DialogTitle>
+                            <DialogDescription>Manually add an offline booking to your records.</DialogDescription>
+                        </DialogHeader>
+                        <LogBookingForm expertId={userProfile.id} onSuccess={() => setIsBookingDialogOpen(false)} />
+                    </DialogContent>
+                </Dialog>
             </CardHeader>
             <CardContent>
                 {isBookingsLoading ? (
@@ -509,7 +524,6 @@ export default function ExpertDashboardPage() {
   const firestore = useFirestore();
   const router = useRouter();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [isBookingDialogOpen, setIsBookingDialogOpen] = useState(false);
   const { toast } = useToast();
 
   const userDocRef = useMemoFirebase(() => {
@@ -962,3 +976,5 @@ export default function ExpertDashboardPage() {
     </div>
   );
 }
+
+    
