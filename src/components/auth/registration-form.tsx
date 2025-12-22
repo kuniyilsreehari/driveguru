@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useState, useEffect, useRef } from "react";
@@ -8,9 +7,9 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { User as UserIcon, Mail, Lock, Eye, EyeOff, Briefcase, MapPin, Phone, LocateIcon, Loader2, Building, Home, GraduationCap, Book, ArrowRight, MessageSquare, Gift } from "lucide-react";
+import { User as UserIcon, Mail, Lock, Eye, EyeOff, Briefcase, MapPin, Phone, LocateIcon, Loader2, Building, Home, ArrowRight, MessageSquare, Gift } from "lucide-react";
 import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, getAdditionalUserInfo, RecaptchaVerifier, signInWithPhoneNumber } from 'firebase/auth';
-import { doc, serverTimestamp, collection, query, where, getDocs, runTransaction, increment, limit, getDoc } from 'firebase/firestore';
+import { doc, serverTimestamp, collection, query, where, getDocs, limit } from 'firebase/firestore';
 
 import { Button } from "@/components/ui/button";
 import {
@@ -31,7 +30,6 @@ import { Textarea } from "../ui/textarea";
 import { Card, CardDescription, CardHeader, CardTitle } from "../ui/card";
 import { Icons } from "../icons";
 import { Checkbox } from "../ui/checkbox";
-import { processReferral } from "@/ai/flows/process-referral-flow";
 
 const expertTypes = [
     { name: "Freelancer", icon: <UserIcon className="w-8 h-8" />, description: "Offer your individual skills and services directly to clients." },
@@ -664,260 +662,159 @@ export function RegistrationForm() {
           )}
         />
         
-        {selectedRole === 'Freelancer' && (
-          <div className="space-y-4">
-            <FormItem>
-                <FormLabel>Phone Number</FormLabel>
-                <div className="flex items-center gap-2">
-                    <FormField
-                        control={form.control}
-                        name="countryCode"
-                        render={({ field: countryCodeField }) => (
-                        <Select
-                            onValueChange={countryCodeField.onChange}
-                            defaultValue={countryCodeField.value}
-                        >
-                            <FormControl>
-                            <SelectTrigger className="w-[80px]">
-                                <SelectValue placeholder="Code" />
-                            </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                            <SelectItem value="+91">IN</SelectItem>
-                            <SelectItem value="+1">USA</SelectItem>
-                            <SelectItem value="+44">UK</SelectItem>
-                            </SelectContent>
-                        </Select>
-                        )}
-                    />
-                    <FormField
-                        control={form.control}
-                        name="phoneNumber"
-                        render={({ field }) => (
-                        <div className="relative flex-grow">
-                            <FormControl>
-                            <Input placeholder="555 123 4567" {...field} />
-                            </FormControl>
-                        </div>
-                        )}
-                    />
-                </div>
-                <FormMessage />
-            </FormItem>
-            
-            <div className="space-y-2">
-                <div className="flex items-center justify-between mb-2">
-                    <FormLabel>Location</FormLabel>
-                    <Button type="button" variant="outline" size="sm" onClick={handleDetectLocation} disabled={isDetectingLocation}>
-                    {isDetectingLocation ? (
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    ) : (
-                        <LocateIcon className="mr-2 h-4 w-4" />
-                    )}
-                    Detect
-                    </Button>
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                    <FormField
-                        control={form.control}
-                        name="city"
-                        render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>District / City</FormLabel>
-                            <FormControl><Input placeholder="e.g., Kozhikode" {...field} /></FormControl>
-                            <FormMessage />
-                        </FormItem>
-                        )}
-                    />
-                    <FormField
-                        control={form.control}
-                        name="state"
-                        render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>State</FormLabel>
-                            <FormControl><Input placeholder="e.g. Kerala" {...field} /></FormControl>
-                            <FormMessage />
-                        </FormItem>
-                        )}
-                    />
-                </div>
-                <FormField
-                  control={form.control}
-                  name="pincode"
-                  render={({ field }) => (
-                    <FormItem className="mt-2 text-center">
-                      <div className="relative">
-                        <FormControl><Input placeholder="Pincode" {...field} /></FormControl>
-                        {isFetchingPincode && <Loader2 className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin" />}
-                      </div>
-                      <FormLabel className="text-xs text-muted-foreground">Pincode</FormLabel>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-            </div>
-          </div>
-        )}
-        
-        {(selectedRole === 'Company' || selectedRole === 'Authorized Pro') && (
-          <div className="space-y-4">
-            <FormField
-              control={form.control}
-              name="companyName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Company Name</FormLabel>
-                  <div className="relative">
-                    <Building className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <FormControl>
-                      <Input placeholder="Your Company Inc." {...field} className="pl-10" />
-                    </FormControl>
-                  </div>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-             <FormField
-              control={form.control}
-              name="department"
-              render={({ field }) => (
-                <FormItem>
-                    <FormLabel>Department</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select a department" />
-                            </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                            <SelectItem value="Engineering">Engineering</SelectItem>
-                            <SelectItem value="Sales">Sales</SelectItem>
-                            <SelectItem value="Marketing">Marketing</SelectItem>
-                            <SelectItem value="HR">Human Resources</SelectItem>
-                            <SelectItem value="Support">Support</SelectItem>
-                            <SelectItem value="Other">Other</SelectItem>
-                        </SelectContent>
-                    </Select>
-                    <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="address"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Address & Building Details</FormLabel>
-                   <div className="relative">
-                    <Home className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <FormControl>
-                      <Textarea placeholder="Enter the full company address" {...field} className="pl-10" />
-                    </FormControl>
-                  </div>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-        )}
-        
         {selectedRole && (
             <div className="space-y-4">
-                {(selectedRole === 'Freelancer' ? (
-                <></>
-                ) : (
-                <div className="space-y-4">
-                    <FormItem>
-                        <FormLabel>Phone Number</FormLabel>
-                        <div className="flex items-center gap-2">
-                            <FormField
-                                control={form.control}
-                                name="countryCode"
-                                render={({ field: countryCodeField }) => (
-                                <Select
-                                    onValueChange={countryCodeField.onChange}
-                                    defaultValue={countryCodeField.value}
-                                >
-                                    <FormControl>
-                                    <SelectTrigger className="w-[80px]">
-                                        <SelectValue placeholder="Code" />
-                                    </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                    <SelectItem value="+91">IN</SelectItem>
-                                    <SelectItem value="+1">USA</SelectItem>
-                                    <SelectItem value="+44">UK</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                                )}
-                            />
-                            <FormField
-                                control={form.control}
-                                name="phoneNumber"
-                                render={({ field }) => (
-                                <div className="relative flex-grow">
-                                    <FormControl>
-                                    <Input placeholder="555 123 4567" {...field} />
-                                    </FormControl>
-                                </div>
-                                )}
-                            />
+              <FormItem>
+                  <FormLabel>Phone Number</FormLabel>
+                  <div className="flex items-center gap-2">
+                      <FormField
+                          control={form.control}
+                          name="countryCode"
+                          render={({ field: countryCodeField }) => (
+                          <Select
+                              onValueChange={countryCodeField.onChange}
+                              defaultValue={countryCodeField.value}
+                          >
+                              <FormControl>
+                              <SelectTrigger className="w-[80px]">
+                                  <SelectValue placeholder="Code" />
+                              </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                              <SelectItem value="+91">IN</SelectItem>
+                              <SelectItem value="+1">USA</SelectItem>
+                              <SelectItem value="+44">UK</SelectItem>
+                              </SelectContent>
+                          </Select>
+                          )}
+                      />
+                      <FormField
+                          control={form.control}
+                          name="phoneNumber"
+                          render={({ field }) => (
+                          <div className="relative flex-grow">
+                              <FormControl>
+                              <Input placeholder="555 123 4567" {...field} />
+                              </FormControl>
+                          </div>
+                          )}
+                      />
+                  </div>
+                  <FormMessage />
+              </FormItem>
+              <div className="space-y-2">
+                  <div className="flex items-center justify-between mb-2">
+                      <FormLabel>Location</FormLabel>
+                      <Button type="button" variant="outline" size="sm" onClick={handleDetectLocation} disabled={isDetectingLocation}>
+                      {isDetectingLocation ? (
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : (
+                          <LocateIcon className="mr-2 h-4 w-4" />
+                      )}
+                      Detect
+                      </Button>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                      <FormField
+                          control={form.control}
+                          name="city"
+                          render={({ field }) => (
+                          <FormItem>
+                              <FormLabel>District / City</FormLabel>
+                              <FormControl><Input placeholder="e.g., Kozhikode" {...field} /></FormControl>
+                              <FormMessage />
+                          </FormItem>
+                          )}
+                      />
+                      <FormField
+                          control={form.control}
+                          name="state"
+                          render={({ field }) => (
+                          <FormItem>
+                              <FormLabel>State</FormLabel>
+                              <FormControl><Input placeholder="e.g. Kerala" {...field} /></FormControl>
+                              <FormMessage />
+                          </FormItem>
+                          )}
+                      />
+                  </div>
+                  <FormField
+                    control={form.control}
+                    name="pincode"
+                    render={({ field }) => (
+                    <FormItem className="mt-2 text-center">
+                        <div className="relative">
+                        <FormControl><Input placeholder="Pincode" {...field} /></FormControl>
+                        {isFetchingPincode && <Loader2 className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin" />}
                         </div>
+                        <FormLabel className="text-xs text-muted-foreground">Pincode</FormLabel>
                         <FormMessage />
                     </FormItem>
-                    <div className="space-y-2">
-                        <div className="flex items-center justify-between mb-2">
-                            <FormLabel>Location</FormLabel>
-                            <Button type="button" variant="outline" size="sm" onClick={handleDetectLocation} disabled={isDetectingLocation}>
-                            {isDetectingLocation ? (
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            ) : (
-                                <LocateIcon className="mr-2 h-4 w-4" />
-                            )}
-                            Detect
-                            </Button>
+                    )}
+                  />
+              </div>
+
+              {(selectedRole === 'Company' || selectedRole === 'Authorized Pro') && (
+                <div className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="companyName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Company Name</FormLabel>
+                        <div className="relative">
+                          <Building className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                          <FormControl>
+                            <Input placeholder="Your Company Inc." {...field} className="pl-10" />
+                          </FormControl>
                         </div>
-                        <div className="grid grid-cols-2 gap-2">
-                            <FormField
-                                control={form.control}
-                                name="city"
-                                render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>District / City</FormLabel>
-                                    <FormControl><Input placeholder="e.g., Kozhikode" {...field} /></FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                                )}
-                            />
-                            <FormField
-                                control={form.control}
-                                name="state"
-                                render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>State</FormLabel>
-                                    <FormControl><Input placeholder="e.g. Kerala" {...field} /></FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                                )}
-                            />
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="department"
+                    render={({ field }) => (
+                      <FormItem>
+                          <FormLabel>Department</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                  <SelectTrigger>
+                                      <SelectValue placeholder="Select a department" />
+                                  </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                  <SelectItem value="Engineering">Engineering</SelectItem>
+                                  <SelectItem value="Sales">Sales</SelectItem>
+                                  <SelectItem value="Marketing">Marketing</SelectItem>
+                                  <SelectItem value="HR">Human Resources</SelectItem>
+                                  <SelectItem value="Support">Support</SelectItem>
+                                  <SelectItem value="Other">Other</SelectItem>
+                              </SelectContent>
+                          </Select>
+                          <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="address"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Address & Building Details</FormLabel>
+                        <div className="relative">
+                          <Home className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                          <FormControl>
+                            <Textarea placeholder="Enter the full company address" {...field} className="pl-10" />
+                          </FormControl>
                         </div>
-                        <FormField
-                        control={form.control}
-                        name="pincode"
-                        render={({ field }) => (
-                        <FormItem className="mt-2 text-center">
-                            <div className="relative">
-                            <FormControl><Input placeholder="Pincode" {...field} /></FormControl>
-                            {isFetchingPincode && <Loader2 className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin" />}
-                            </div>
-                            <FormLabel className="text-xs text-muted-foreground">Pincode</FormLabel>
-                            <FormMessage />
-                        </FormItem>
-                        )}
-                        />
-                    </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </div>
-                ))}
+              )}
                 
                 <FormField
                   control={form.control}
