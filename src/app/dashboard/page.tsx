@@ -630,6 +630,10 @@ export default function ExpertDashboardPage() {
                                 />
                             </DialogContent>
                         </Dialog>
+                        <Button variant="outline">
+                            <Calendar className="mr-2 h-4 w-4" />
+                            Booking
+                        </Button>
                         <Button variant="outline" onClick={handleLogout}>
                             <LogOut className="mr-2 h-4 w-4" />
                             Log Out
