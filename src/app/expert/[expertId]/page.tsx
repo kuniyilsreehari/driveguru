@@ -203,30 +203,6 @@ function ExpertProfileContent() {
                                     {expert.tier === 'Premier' && <Badge variant="outline" className="border-purple-500 text-purple-500"><Crown className="mr-1 h-3 w-3" /> Premier</Badge>}
                                     {expert.tier === 'Super Premier' && <Badge variant="outline" className="border-blue-500 text-blue-500"><Sparkles className="mr-1 h-3 w-3" /> Super Premier</Badge>}
                                 </div>
-                                 <div className="mt-4">
-                                     {expert.verified ? (
-                                        <TooltipProvider>
-                                            <Tooltip>
-                                                <TooltipTrigger asChild>
-                                                    <Button asChild variant="secondary" disabled={!expert.isAvailable}>
-                                                        <Link href={expert.isAvailable ? `/expert/${expert.id}/book` : '#'}>
-                                                            <Calendar className="mr-2 h-4 w-4" /> Book Appointment
-                                                        </Link>
-                                                    </Button>
-                                                </TooltipTrigger>
-                                                {!expert.isAvailable && (
-                                                    <TooltipContent>
-                                                        <p>This expert is currently unavailable for new appointments.</p>
-                                                    </TooltipContent>
-                                                )}
-                                            </Tooltip>
-                                        </TooltipProvider>
-                                     ) : (
-                                        <Button variant="secondary" disabled>
-                                            <Lock className="mr-2 h-4 w-4" /> Appointment booking locked
-                                        </Button>
-                                     )}
-                                </div>
                             </div>
                         </div>
                     </CardHeader>

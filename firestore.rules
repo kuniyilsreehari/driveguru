@@ -106,24 +106,6 @@ service cloud.firestore {
     }
     
     /* =====================================================
-     * Bookings
-     * ===================================================== */
-    match /bookings/{bookingId} {
-        // A signed-in user can create a booking for an expert. The expert can log their own bookings.
-        allow create: if isSignedIn() && (
-                            // Client booking: clientId must be the person making the request.
-                            requestData().clientId == request.auth.uid ||
-                            // Expert logging a booking: expertId must be the person making the request.
-                            (isPremiumExpert() && requestData().expertId == request.auth.uid)
-                        );
-        
-        // The expert can manage their own bookings. The client who made it can also view it.
-        allow get, update, delete: if (isPremiumExpert() && resource.data.expertId == request.auth.uid) || (isSignedIn() && resource.data.clientId == request.auth.uid);
-        // An expert can list their own bookings.
-        allow list: if isPremiumExpert() && request.query.where.expertId == request.auth.uid;
-    }
-
-    /* =====================================================
      * Companies
      * ===================================================== */
 
