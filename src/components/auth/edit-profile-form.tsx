@@ -27,6 +27,7 @@ import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
 import { generateAboutMe } from "@/ai/flows/generate-about-me-flow";
 import { suggestSkills } from "@/ai/flows/suggest-skills-flow";
+import { updateUserPhoto } from "@/ai/flows/update-profile-photo-flow";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 
 const expertTypes = [
@@ -39,6 +40,7 @@ const formSchema = z.object({
   firstName: z.string().min(1, { message: "First name is required." }),
   lastName: z.string().min(1, { message: "Last name is required." }),
   photoUrl: z.string().optional().or(z.literal('')),
+  photoDataUri: z.string().optional(), // For holding the new image data
   state: z.string().optional(),
   city: z.string().optional(),
   pincode: z.string().optional(),
@@ -120,6 +122,7 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
       firstName: userProfile.firstName || "",
       lastName: userProfile.lastName || "",
       photoUrl: userProfile.photoUrl || "",
+      photoDataUri: "",
       state: userProfile.state || "",
       city: userProfile.city || "",
       pincode: userProfile.pincode || "",
@@ -141,6 +144,7 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
 
   const selectedRole = form.watch("role");
   const photoUrl = form.watch("photoUrl");
+  const photoDataUri = form.watch("photoDataUri");
   const pincodeValue = form.watch("pincode");
 
   useEffect(() => {
@@ -310,7 +314,8 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
       const reader = new FileReader();
       reader.onload = (e) => {
         const dataUrl = e.target?.result as string;
-        form.setValue('photoUrl', dataUrl, { shouldValidate: true });
+        form.setValue('photoDataUri', dataUrl, { shouldValidate: true });
+        form.setValue('photoUrl', dataUrl, { shouldValidate: true }); // Also update photoUrl for instant preview
         toast({
             title: "Image Ready",
             description: "Your new profile picture is ready. Click 'Save Changes' to apply it.",
@@ -330,23 +335,53 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
   };
 
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
+  async function onSubmit(values: z.infer<typeof formSchema>) {
     if (!firestore) return;
-    const userDocRef = doc(firestore, "users", userProfile.id);
     
-    const updatedData = {
-      ...values,
-      phoneNumber: values.countryCode && values.phoneNumber ? `${'${values.countryCode}'} ${'${values.phoneNumber}'}` : "",
-    };
+    form.formState.isSubmitting = true;
 
-    updateDocumentNonBlocking(userDocRef, updatedData);
+    try {
+        let finalPhotoUrl = values.photoUrl;
 
-    toast({
-      title: "Profile Updated",
-      description: "Your information has been successfully saved.",
-    });
+        // If a new photo was uploaded, process it through the flow
+        if (values.photoDataUri) {
+            const photoResult = await updateUserPhoto({
+                userId: userProfile.id,
+                photoDataUri: values.photoDataUri,
+            });
+            finalPhotoUrl = photoResult.photoUrl;
+        }
 
-    onSuccess();
+        const userDocRef = doc(firestore, "users", userProfile.id);
+        
+        const { photoDataUri, ...restOfValues } = values;
+
+        const updatedData = {
+          ...restOfValues,
+          photoUrl: finalPhotoUrl,
+          phoneNumber: values.countryCode && values.phoneNumber ? `${'${values.countryCode}'} ${'${values.phoneNumber}'}` : "",
+        };
+
+        await updateDocumentNonBlocking(userDocRef, updatedData);
+
+        toast({
+          title: "Profile Updated",
+          description: "Your information has been successfully saved.",
+        });
+
+        onSuccess();
+    } catch (error) {
+        console.error("Profile update failed:", error);
+         if (error.name !== 'FirebaseError') {
+             toast({
+                variant: "destructive",
+                title: "Update Failed",
+                description: "Could not save profile. Please try again.",
+            });
+        }
+    } finally {
+        form.formState.isSubmitting = false;
+    }
   }
 
   const getInitials = (firstName?: string, lastName?: string) => {
@@ -782,5 +817,3 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
     </Form>
   );
 }
-
-    
