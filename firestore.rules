@@ -87,6 +87,11 @@ service cloud.firestore {
                (userDoc.data.tier == 'Premier' || userDoc.data.tier == 'Super Premier');
     }
 
+    function isTargetExpertPremium(expertId) {
+      let expertDoc = get(/databases/$(database)/documents/users/$(expertId));
+      return expertDoc.data.tier == 'Premier' || expertDoc.data.tier == 'Super Premier';
+    }
+
 
     /* =====================================================
      * Super Admin Roles
@@ -109,18 +114,18 @@ service cloud.firestore {
      * Bookings
      * ===================================================== */
     match /bookings/{bookingId} {
-        // A signed-in user can create a booking for an expert. The expert can log their own bookings.
-        allow create: if isSignedIn() && (
-                            // Client booking: clientId must be the person making the request.
-                            (requestData().clientId == request.auth.uid && requestData().status == 'confirmed') ||
-                            // Expert logging a booking: expertId must be the person making the request.
-                            (isPremiumExpert() && requestData().expertId == request.auth.uid)
-                        );
+        // A signed-in user can create a booking, but only for a premium expert.
+        allow create: if isSignedIn() &&
+                        isOwner(requestData().clientId) && 
+                        isTargetExpertPremium(requestData().expertId);
         
         // The expert can manage their own bookings. The client who made it can also view it.
         allow get, update: if (isPremiumExpert() && resource.data.expertId == request.auth.uid) || isOwner(resource.data.clientId);
-        // An expert can list their own bookings. A client can list their bookings.
-        allow list: if (isPremiumExpert() && request.query.where.expertId == request.auth.uid) || (isSignedIn() && request.query.where.clientId == request.auth.uid);
+        
+        // An expert can list their own bookings. A client can list bookings they have made.
+        allow list: if (isPremiumExpert() && request.query.where[0][2] == request.auth.uid) || 
+                      (isSignedIn() && request.query.where[0][2] == request.auth.uid);
+        
         // Only the expert can delete their bookings.
         allow delete: if isPremiumExpert() && resource.data.expertId == request.auth.uid;
     }
@@ -213,3 +218,5 @@ service cloud.firestore {
      * ===================================================== */
   }
 }
+
+    

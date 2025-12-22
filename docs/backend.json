@@ -126,9 +126,9 @@
           "type": "string",
           "description": "A unique code for this user to refer others."
         },
-        "referredBy": {
-          "type": "string",
-          "description": "The ID of the user who referred this user."
+        "referredByCode": {
+          "type": ["string", "null"],
+          "description": "The referral code of the user who referred this user. Null if not referred or if points have been awarded."
         },
         "referralPoints": {
           "type": "number",
@@ -148,6 +148,58 @@
         "role",
         "createdAt"
       ]
+    },
+    "Booking": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Booking",
+      "type": "object",
+      "description": "Represents a booking or appointment.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the booking."
+        },
+        "clientId": {
+          "type": "string",
+          "description": "The ID of the user who made the booking."
+        },
+        "clientName": {
+          "type": "string",
+          "description": "The name of the client."
+        },
+        "expertId": {
+          "type": "string",
+          "description": "The ID of the expert being booked."
+        },
+        "expertName": {
+          "type": "string",
+          "description": "The name of the expert."
+        },
+        "requestedDateTime": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The requested date and time for the appointment."
+        },
+        "workDescription": {
+          "type": "string",
+          "description": "A description of the work to be done."
+        },
+        "location": {
+          "type": "string",
+          "description": "The location for the appointment."
+        },
+        "status": {
+          "type": "string",
+          "description": "The status of the booking.",
+          "enum": ["confirmed", "completed", "cancelled"]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp of when the booking was created."
+        }
+      },
+      "required": ["id", "clientId", "clientName", "expertId", "expertName", "requestedDateTime", "status", "createdAt"]
     },
     "Company": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -512,6 +564,22 @@
           ]
         }
       },
+      {
+        "path": "/bookings/{bookingId}",
+        "definition": {
+          "entityName": "Booking",
+          "schema": {
+            "$ref": "#/backend/entities/Booking"
+          },
+          "description": "Stores all appointment bookings.",
+          "params": [
+            {
+              "name": "bookingId",
+              "description": "The unique identifier for the booking."
+            }
+          ]
+        }
+      },
        {
         "path": "/payments/{paymentId}",
         "definition": {
@@ -616,3 +684,5 @@
     "reasoning": "The Firestore structure is designed to support DriveGuru's core features while adhering to the principles of Authorization Independence, Structural Segregation, and Access Modeling. User data, company information, and location data are stored in separate collections to maintain clarity and enforce consistent security rules. Crucially, authorization data is denormalized to avoid `get()` calls in security rules and ensure atomic operations.\n\n1.  **Authorization Independence:** A separate `/roles_super_admin/{userId}` collection determines super admin privileges based on document existence rather than user document content. This simplifies security rules and avoids hierarchical dependencies.\n\n2.  **Structural Segregation:**  User data, company data, location data, and reviews are stored in separate collections, each with distinct security requirements. This segregation simplifies security rule management and prevents unintended access.\n\n3.  **Access Modeling:**\n    *   User-owned location data is structured under `/users/{userId}/location_data/{locationDataId}`. This allows for path-based security rules, ensuring that only the user can access their own location data.\n    *   Companies are stored in a top-level `/companies` collection.\n    *   The super admin role is managed through the `/roles_super_admin/{userId}` collection, where the existence of a document for a user ID grants super admin privileges.\n    *   Reviews are in a top-level collection to allow admins to easily list and moderate all submitted reviews, while rules can still be written to allow users to create reviews or read approved ones."
   }
 }
+
+    
