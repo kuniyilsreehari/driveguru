@@ -38,7 +38,7 @@ import { suggestSkills } from "@/ai/flows/suggest-skills-flow";
 import { updateUserPhoto } from "@/ai/flows/update-profile-photo-flow";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import Link from "next/link";
-import { Card, CardContent, CardFooter, CardHeader } from "../ui/card";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "../ui/card";
 
 const expertTypes = [
     { name: "Freelancer", icon: <UserIcon className="w-8 h-8" /> },
@@ -870,3 +870,5 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
     </>
   );
 }
+
+    
