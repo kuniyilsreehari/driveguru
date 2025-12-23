@@ -6,7 +6,7 @@ import { useState, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { User as UserIcon, Mail, MapPin, Phone, LocateIcon, Loader2, Building, Briefcase, IndianRupee, Calendar, Book, School, GraduationCap, Info, Sparkles, Upload, Home } from "lucide-react";
+import { User as UserIcon, Mail, MapPin, Phone, LocateIcon, Loader2, Building, Briefcase, IndianRupee, Calendar, Book, School, GraduationCap, Info, Sparkles, Upload, Home, Lock } from "lucide-react";
 import { doc } from 'firebase/firestore';
 
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,14 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useFirestore, useUser } from "@/firebase";
@@ -29,6 +37,8 @@ import { generateAboutMe } from "@/ai/flows/generate-about-me-flow";
 import { suggestSkills } from "@/ai/flows/suggest-skills-flow";
 import { updateUserPhoto } from "@/ai/flows/update-profile-photo-flow";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import Link from "next/link";
+import { Card, CardContent, CardFooter, CardHeader } from "../ui/card";
 
 const expertTypes = [
     { name: "Freelancer", icon: <UserIcon className="w-8 h-8" /> },
@@ -80,6 +90,7 @@ type ExpertUserProfile = {
     collegeName?: string;
     skills?: string;
     aboutMe?: string;
+    tier?: 'Standard' | 'Premier' | 'Super Premier';
 };
 
 interface EditProfileFormProps {
@@ -96,6 +107,7 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [isDetectingLocation, setIsDetectingLocation] = useState(false);
   const [isFetchingPincode, setIsFetchingPincode] = useState(false);
+  const [isPremiumDialogOpen, setIsPremiumDialogOpen] = useState(false);
 
 
   const extractPhoneNumberParts = (fullNumber?: string) => {
@@ -239,17 +251,37 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
   };
 
   const handleGenerateAboutMe = async () => {
+    const isPremium = userProfile.tier === 'Premier' || userProfile.tier === 'Super Premier';
+    if (!isPremium) {
+        setIsPremiumDialogOpen(true);
+        return;
+    }
+
     setIsGeneratingAboutMe(true);
     try {
         const formData = form.getValues();
-        const result = await generateAboutMe({
-            firstName: formData.firstName,
-            role: formData.role,
-            skills: formData.skills || '',
-            yearsOfExperience: Number(formData.yearsOfExperience) || 0,
-            qualification: formData.qualification || '',
+        const llmResponse = await ai.generate({
+            model: 'gemini-1.5-flash',
+            prompt: `You are an expert at writing compelling professional bios. 
+            Generate a friendly and professional "About Me" section for an expert named ${formData.firstName}.
+            The bio should be concise (2-3 sentences) and highlight their key strengths.
+
+            Here is their information:
+            - Role: ${formData.role}
+            - Skills: ${formData.skills}
+            - Years of Experience: ${formData.yearsOfExperience}
+            - Qualification: ${formData.qualification}
+
+            Based on this, write a bio that would be appealing to potential clients.
+            Start with a strong opening statement. Mention their experience and key skills.
+            Keep the tone professional yet approachable.
+            `,
+            output: { schema: z.object({ aboutMe: z.string() }) },
         });
-        if (result.aboutMe) {
+
+        const result = llmResponse.output;
+
+        if (result?.aboutMe) {
             form.setValue('aboutMe', result.aboutMe, { shouldValidate: true });
             toast({
                 title: "AI Generated Bio",
@@ -269,6 +301,12 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
   };
 
   const handleSuggestSkills = async () => {
+    const isPremium = userProfile.tier === 'Premier' || userProfile.tier === 'Super Premier';
+    if (!isPremium) {
+        setIsPremiumDialogOpen(true);
+        return;
+    }
+    
     setIsSuggestingSkills(true);
     try {
         const formData = form.getValues();
@@ -388,6 +426,7 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
   }
 
   return (
+    <>
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         
@@ -811,5 +850,36 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
         </Button>
       </form>
     </Form>
+
+    <Dialog open={isPremiumDialogOpen} onOpenChange={setIsPremiumDialogOpen}>
+        <DialogContent>
+            <Card className="border-0 shadow-none">
+                <CardHeader className="text-center">
+                    <div className="mx-auto w-fit rounded-full p-3 mb-2 bg-primary/10">
+                        <Lock className="h-8 w-8 text-primary" />
+                    </div>
+                    <CardTitle>Premium Feature Locked</CardTitle>
+                    <CardDescription>
+                        AI-powered suggestions are only available for Premier and Super Premier members.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <p className="text-center text-sm text-muted-foreground">
+                        Upgrade your plan to unlock this and many other powerful features to enhance your profile and attract more clients.
+                    </p>
+                </CardContent>
+                <CardFooter className="flex-col gap-2">
+                    <Button asChild className="w-full">
+                        <Link href="/dashboard#plan-management">Upgrade Your Plan</Link>
+                    </Button>
+                    <Button variant="outline" className="w-full" onClick={() => setIsPremiumDialogOpen(false)}>
+                        Maybe Later
+                    </Button>
+                </CardFooter>
+            </Card>
+        </DialogContent>
+    </Dialog>
+
+    </>
   );
 }
