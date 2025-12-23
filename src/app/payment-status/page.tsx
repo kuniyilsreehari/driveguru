@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { Suspense, useEffect, useState } from 'react';
@@ -126,7 +127,9 @@ function PaymentStatusContent() {
             </CardContent>
             <CardFooter>
                 <Button className="w-full" asChild>
-                    <Link href="/dashboard">Go to Dashboard</Link>
+                    <Link href={status === 'success' ? "/dashboard?payment=success" : "/dashboard"}>
+                        Go to Dashboard
+                    </Link>
                 </Button>
             </CardFooter>
         </Card>
@@ -147,5 +150,3 @@ export default function PaymentStatusPage() {
         </div>
     );
 }
-
-    

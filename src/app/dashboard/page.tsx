@@ -2,8 +2,8 @@
 
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useState, useMemo, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { signOut } from 'firebase/auth';
 import { doc, collection, query, where, getDoc, runTransaction, increment, getDocs, orderBy, Timestamp } from 'firebase/firestore';
 import { useUser, useAuth, useFirestore, useDoc, useCollection, useMemoFirebase, updateDocumentNonBlocking } from '@/firebase';
@@ -420,11 +420,12 @@ function MyBookingsCard({ userProfile }: { userProfile: ExpertUserProfile }) {
     );
 }
 
-export default function ExpertDashboardPage() {
+function ExpertDashboardPage() {
   const { user, isUserLoading } = useUser();
   const auth = useAuth();
   const firestore = useFirestore();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const { toast } = useToast();
 
@@ -584,14 +585,18 @@ export default function ExpertDashboardPage() {
   };
 
   const profileCompletion = calculateProfileCompletion(userProfile);
-  
+  const paymentQueryParam = searchParams.get('payment');
   const isLoading = isUserLoading || isProfileLoading || isAppConfigLoading || isRoleLoading || isReferralsLoading;
 
   if (isLoading) {
+    let message = "Finalizing session...";
+    if (paymentQueryParam === 'success') {
+      message = "Payment successful! Please wait while we update your dashboard...";
+    }
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
         <Loader className="h-8 w-8 animate-spin text-primary" />
-        <p className="ml-4 text-muted-foreground">Finalizing session...</p>
+        <p className="ml-4 text-muted-foreground">{message}</p>
       </div>
     );
   }
@@ -881,4 +886,16 @@ export default function ExpertDashboardPage() {
   );
 }
 
-    
+
+export default function DashboardPageWrapper() {
+  return (
+    <Suspense fallback={
+        <div className="flex h-screen w-full items-center justify-center bg-background">
+            <Loader className="h-8 w-8 animate-spin text-primary" />
+            <p className="ml-4 text-muted-foreground">Loading Dashboard...</p>
+        </div>
+    }>
+        <ExpertDashboardPage />
+    </Suspense>
+  )
+}
