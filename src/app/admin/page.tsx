@@ -83,6 +83,8 @@ type ExpertUser = {
     collegeName?: string;
     skills?: string;
     aboutMe?: string;
+    aboutYourDream?: string;
+    associatedProjectsName?: string;
     phoneNumber?: string;
     companyName?: string;
     department?: string;

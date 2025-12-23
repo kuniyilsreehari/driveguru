@@ -6,7 +6,7 @@ import { useState, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { User as UserIcon, Mail, MapPin, Phone, LocateIcon, Loader2, Building, Briefcase, IndianRupee, Calendar, Book, School, GraduationCap, Info, Sparkles, Upload, Home, Lock } from "lucide-react";
+import { User as UserIcon, Mail, MapPin, Phone, LocateIcon, Loader2, Building, Briefcase, IndianRupee, Calendar, Book, School, GraduationCap, Info, Sparkles, Upload, Home, Lock, PenSquare, Factory } from "lucide-react";
 import { doc } from 'firebase/firestore';
 
 import { Button } from "@/components/ui/button";
@@ -67,6 +67,8 @@ const formSchema = z.object({
   collegeName: z.string().optional(),
   skills: z.string().optional(),
   aboutMe: z.string().optional(),
+  aboutYourDream: z.string().optional(),
+  associatedProjectsName: z.string().optional(),
 });
 
 type ExpertUserProfile = {
@@ -90,6 +92,8 @@ type ExpertUserProfile = {
     collegeName?: string;
     skills?: string;
     aboutMe?: string;
+    aboutYourDream?: string;
+    associatedProjectsName?: string;
     tier?: 'Standard' | 'Premier' | 'Super Premier';
 };
 
@@ -151,6 +155,8 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
       collegeName: userProfile.collegeName || "",
       skills: userProfile.skills || "",
       aboutMe: userProfile.aboutMe || "",
+      aboutYourDream: userProfile.aboutYourDream || "",
+      associatedProjectsName: userProfile.associatedProjectsName || "",
     },
   });
 
@@ -260,13 +266,26 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
     setIsGeneratingAboutMe(true);
     try {
         const formData = form.getValues();
-        const result = await generateAboutMe({
-            firstName: formData.firstName,
-            role: formData.role,
-            skills: formData.skills || '',
-            yearsOfExperience: formData.yearsOfExperience || 0,
-            qualification: formData.qualification || '',
+        const llmResponse = await ai.generate({
+          model: 'gemini-1.5-flash',
+          prompt: `You are an expert at writing compelling professional bios. 
+          Generate a friendly and professional "About Me" section for an expert named ${formData.firstName}.
+          The bio should be concise (2-3 sentences) and highlight their key strengths.
+
+          Here is their information:
+          - Role: ${formData.role}
+          - Skills: ${formData.skills}
+          - Years of Experience: ${formData.yearsOfExperience}
+          - Qualification: ${formData.qualification}
+
+          Based on this, write a bio that would be appealing to potential clients.
+          Start with a strong opening statement. Mention their experience and key skills.
+          Keep the tone professional yet approachable.
+          `,
+          output: { schema: z.object({ aboutMe: z.string().describe('A generated "About Me" bio for the expert.') }) },
         });
+        
+        const result = llmResponse.output;
 
         if (result?.aboutMe) {
             form.setValue('aboutMe', result.aboutMe, { shouldValidate: true });
@@ -817,6 +836,40 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
           )}
         />
 
+        <FormField
+          control={form.control}
+          name="aboutYourDream"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>About Your Dream</FormLabel>
+              <div className="relative">
+                <PenSquare className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <FormControl>
+                  <Textarea placeholder="Describe your professional dreams and aspirations..." {...field} className="pl-10" />
+                </FormControl>
+              </div>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="associatedProjectsName"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Associated Projects Name</FormLabel>
+              <div className="relative">
+                <Factory className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <FormControl>
+                  <Input placeholder="List names of projects you've worked on" {...field} className="pl-10" />
+                </FormControl>
+              </div>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
         <FormItem>
             <FormLabel>Email</FormLabel>
             <div className="relative">
@@ -870,5 +923,3 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
     </>
   );
 }
-
-    

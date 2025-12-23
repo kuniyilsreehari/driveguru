@@ -7,7 +7,7 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { doc } from 'firebase/firestore';
 import { useFirestore, useDoc, useMemoFirebase, useUser } from '@/firebase';
-import { Loader2, Star, ChevronLeft, MapPin, IndianRupee, Briefcase, Calendar, Info, Book, GraduationCap, School, User as UserIcon, UserCheck, XCircle, Crown, Sparkles, LogIn, Lock, Building, FileDown, Home, MessageSquare } from 'lucide-react';
+import { Loader2, Star, ChevronLeft, MapPin, IndianRupee, Briefcase, Calendar, Info, Book, GraduationCap, School, User as UserIcon, UserCheck, XCircle, Crown, Sparkles, LogIn, Lock, Building, FileDown, Home, MessageSquare, PenSquare, Factory } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardFooter } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -39,6 +39,8 @@ type ExpertUserProfile = {
     collegeName?: string;
     skills?: string;
     aboutMe?: string;
+    aboutYourDream?: string;
+    associatedProjectsName?: string;
     phoneNumber?: string;
     companyName?: string;
     department?: string;
@@ -264,6 +266,14 @@ function ExpertProfileContent() {
                             <div>
                                 <h4 className="font-semibold flex items-center gap-2 mb-3 text-lg"><Info className="h-5 w-5" /> About Me</h4>
                                 <p className="text-muted-foreground text-sm pl-7">{expert.aboutMe || 'No information provided.'}</p>
+                            </div>
+                             <div>
+                                <h4 className="font-semibold flex items-center gap-2 mb-3 text-lg"><PenSquare className="h-5 w-5" /> About My Dream</h4>
+                                <p className="text-muted-foreground text-sm pl-7">{expert.aboutYourDream || 'No information provided.'}</p>
+                            </div>
+                             <div>
+                                <h4 className="font-semibold flex items-center gap-2 mb-3 text-lg"><Factory className="h-5 w-5" /> Associated Projects</h4>
+                                <p className="text-muted-foreground text-sm pl-7">{expert.associatedProjectsName || 'No projects listed.'}</p>
                             </div>
                             <div>
                                 <h4 className="font-semibold flex items-center gap-2 mb-3 text-lg"><Book className="h-5 w-5" /> Skills</h4>

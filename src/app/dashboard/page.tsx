@@ -8,7 +8,7 @@ import { signOut } from 'firebase/auth';
 import { doc, collection, query, where, getDoc, runTransaction, increment, getDocs, orderBy, Timestamp } from 'firebase/firestore';
 import { useUser, useAuth, useFirestore, useDoc, useCollection, useMemoFirebase, updateDocumentNonBlocking } from '@/firebase';
 import { Button } from '@/components/ui/button';
-import { LogOut, Briefcase, Loader, Edit, UserCheck, XCircle, MapPin, IndianRupee, Calendar, Book, GraduationCap, School, Info, User as UserIcon, Check, Power, Building, PlusCircle, Crown, Sparkles, Lock, Home, ArrowUpCircle, ShieldCheck, ExternalLink, Gift, Copy, Shield, AlertTriangle, ChevronDown, Link as LinkIcon, MessageCircle, BookOpen, CheckCircle } from 'lucide-react';
+import { LogOut, Briefcase, Loader, Edit, UserCheck, XCircle, MapPin, IndianRupee, Calendar, Book, GraduationCap, School, Info, User as UserIcon, Check, Power, Building, PlusCircle, Crown, Sparkles, Lock, Home, ArrowUpCircle, ShieldCheck, ExternalLink, Gift, Copy, Shield, AlertTriangle, ChevronDown, Link as LinkIcon, MessageCircle, BookOpen, CheckCircle, PenSquare, Factory } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import {
   Dialog,
@@ -72,6 +72,8 @@ type ExpertUserProfile = {
     collegeName?: string;
     skills?: string;
     aboutMe?: string;
+    aboutYourDream?: string;
+    associatedProjectsName?: string;
     phoneNumber?: string;
     companyName?: string;
     department?: string;
@@ -783,16 +785,24 @@ function ExpertDashboardPage() {
                 <Separator className="my-6" />
                  <div className="space-y-4">
                     <div>
+                        <h4 className="font-semibold flex items-center gap-2 mb-2"><Info className="h-5 w-5" /> About Me</h4>
+                        <p className="text-muted-foreground text-sm">{userProfile.aboutMe || <span className="text-destructive">No information provided.</span>}</p>
+                    </div>
+                    <div>
+                        <h4 className="font-semibold flex items-center gap-2 mb-2"><PenSquare className="h-5 w-5" /> About My Dream</h4>
+                        <p className="text-muted-foreground text-sm">{userProfile.aboutYourDream || <span className="text-destructive">No information provided.</span>}</p>
+                    </div>
+                    <div>
+                        <h4 className="font-semibold flex items-center gap-2 mb-2"><Factory className="h-5 w-5" /> Associated Projects</h4>
+                        <p className="text-muted-foreground text-sm">{userProfile.associatedProjectsName || <span className="text-destructive">No projects listed.</span>}</p>
+                    </div>
+                    <div>
                         <h4 className="font-semibold flex items-center gap-2 mb-2"><Book className="h-5 w-5" /> Skills</h4>
                         <div className="flex flex-wrap gap-2">
                             {userProfile.skills ? userProfile.skills.split(',').map((skill, index) => (
                                 <Badge key={index} variant="secondary">{skill.trim()}</Badge>
                             )) : <p className="text-sm text-destructive">No skills specified.</p>}
                         </div>
-                    </div>
-                     <div>
-                        <h4 className="font-semibold flex items-center gap-2 mb-2"><Info className="h-5 w-5" /> About Me</h4>
-                        <p className="text-muted-foreground text-sm">{userProfile.aboutMe || <span className="text-destructive">No information provided.</span>}</p>
                     </div>
                 </div>
             </CardContent>
