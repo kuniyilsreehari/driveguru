@@ -86,6 +86,7 @@ const formSchema = z.object({
 
 const phoneFormSchema = z.object({
   phoneNumber: z.string().min(10, { message: "Please enter a valid 10-digit phone number." }),
+  referralCode: z.string().optional(),
 });
 
 const otpFormSchema = z.object({
@@ -101,6 +102,7 @@ export function RegistrationForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const recaptchaContainerRef = useRef<HTMLDivElement>(null);
   const [phoneNumberForSignup, setPhoneNumberForSignup] = useState('');
+  const [referralCodeForSignup, setReferralCodeForSignup] = useState('');
 
   const auth = useAuth();
   const { user, isUserLoading } = useUser();
@@ -133,7 +135,7 @@ export function RegistrationForm() {
 
    const phoneForm = useForm<z.infer<typeof phoneFormSchema>>({
     resolver: zodResolver(phoneFormSchema),
-    defaultValues: { phoneNumber: "" },
+    defaultValues: { phoneNumber: "", referralCode: searchParams.get('ref') || "" },
   });
 
   const otpForm = useForm<z.infer<typeof otpFormSchema>>({
@@ -416,8 +418,23 @@ export function RegistrationForm() {
    async function onPhoneSubmit(values: z.infer<typeof phoneFormSchema>) {
     if (!auth) return;
     setIsSubmitting(true);
+
+    if (values.referralCode) {
+        const referringUserDoc = await getReferringUser(values.referralCode);
+        if (!referringUserDoc) {
+            phoneForm.setError("referralCode", {
+                type: "manual",
+                message: "This referral code is not valid.",
+            });
+            setIsSubmitting(false);
+            return;
+        }
+    }
+
     const fullPhoneNumber = `+91${values.phoneNumber}`;
     setPhoneNumberForSignup(fullPhoneNumber);
+    setReferralCodeForSignup(values.referralCode || '');
+
     try {
         const verifier = (window as any).recaptchaVerifier;
         const result = await signInWithPhoneNumber(auth, fullPhoneNumber, verifier);
@@ -460,6 +477,7 @@ export function RegistrationForm() {
                 verified: false,
                 isAvailable: true,
                 referralCode: generateReferralCode(),
+                referredByCode: referralCodeForSignup || null,
                 referralPoints: 0,
                 createdAt: serverTimestamp(),
             };
@@ -880,6 +898,22 @@ export function RegistrationForm() {
                          <FormMessage />
                     </FormItem>
                 )}
+            />
+            <FormField
+              control={phoneForm.control}
+              name="referralCode"
+              render={({ field }) => (
+                  <FormItem>
+                      <FormLabel>Referral Code (Optional)</FormLabel>
+                      <div className="relative">
+                          <Gift className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                          <FormControl>
+                              <Input placeholder="Enter a referral code" {...field} className="pl-10" disabled={!!searchParams.get('ref')} />
+                          </FormControl>
+                      </div>
+                      <FormMessage />
+                  </FormItem>
+              )}
             />
             <Button type="submit" className="w-full" disabled={isSubmitting}>
                 {isSubmitting ? 'Sending...' : 'Send OTP'}
