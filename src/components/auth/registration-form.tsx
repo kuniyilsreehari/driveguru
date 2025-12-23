@@ -144,11 +144,15 @@ export function RegistrationForm() {
   });
 
   useEffect(() => {
-    if (view === 'phone' && auth && recaptchaContainerRef.current && !(window as any).recaptchaVerifier) {
-      (window as any).recaptchaVerifier = new RecaptchaVerifier(auth, recaptchaContainerRef.current, {
-        'size': 'invisible',
-        'callback': () => {},
-      });
+    if (view === 'phone' && auth && recaptchaContainerRef.current) {
+      if (!(window as any).recaptchaVerifier) {
+        (window as any).recaptchaVerifier = new RecaptchaVerifier(auth, recaptchaContainerRef.current, {
+          'size': 'invisible',
+          'callback': (response: any) => {
+            // reCAPTCHA solved, allow signInWithPhoneNumber.
+          }
+        });
+      }
     }
   }, [view, auth]);
 
@@ -437,6 +441,7 @@ export function RegistrationForm() {
 
     try {
         const verifier = (window as any).recaptchaVerifier;
+        await verifier.render(); // Explicitly render the verifier
         const result = await signInWithPhoneNumber(auth, fullPhoneNumber, verifier);
         setConfirmationResult(result);
         setView('otp');

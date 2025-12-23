@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect, useRef } from "react";
@@ -174,6 +175,7 @@ export function LoginForm() {
     setPhoneNumberForSignup(fullPhoneNumber); // Save for potential new user profile
     try {
         const verifier = (window as any).recaptchaVerifier;
+        await verifier.render(); // Explicitly render the verifier
         const result = await signInWithPhoneNumber(auth, fullPhoneNumber, verifier);
         setConfirmationResult(result);
         setView('otp');
