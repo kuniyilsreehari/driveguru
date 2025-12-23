@@ -260,26 +260,13 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
     setIsGeneratingAboutMe(true);
     try {
         const formData = form.getValues();
-        const llmResponse = await ai.generate({
-            model: 'gemini-1.5-flash',
-            prompt: `You are an expert at writing compelling professional bios. 
-            Generate a friendly and professional "About Me" section for an expert named ${formData.firstName}.
-            The bio should be concise (2-3 sentences) and highlight their key strengths.
-
-            Here is their information:
-            - Role: ${formData.role}
-            - Skills: ${formData.skills}
-            - Years of Experience: ${formData.yearsOfExperience}
-            - Qualification: ${formData.qualification}
-
-            Based on this, write a bio that would be appealing to potential clients.
-            Start with a strong opening statement. Mention their experience and key skills.
-            Keep the tone professional yet approachable.
-            `,
-            output: { schema: z.object({ aboutMe: z.string() }) },
+        const result = await generateAboutMe({
+            firstName: formData.firstName,
+            role: formData.role,
+            skills: formData.skills || '',
+            yearsOfExperience: formData.yearsOfExperience || 0,
+            qualification: formData.qualification || '',
         });
-
-        const result = llmResponse.output;
 
         if (result?.aboutMe) {
             form.setValue('aboutMe', result.aboutMe, { shouldValidate: true });
