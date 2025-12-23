@@ -10,7 +10,7 @@ import { useUser, useFirestore, useDoc, useMemoFirebase, useAuth, useCollection 
 import { deleteDocumentNonBlocking, updateDocumentNonBlocking, setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, CheckCircle2, UserCheck, UserX, Crown, Sparkles, User as UserIcon, Settings, Save, Briefcase, Building, MessageSquare, ThumbsUp, ThumbsDown, Star, Search, PlusCircle, Mail, Edit3, Link as LinkIcon, Download, ExternalLink, IndianRupee, X, Upload, HardDriveDownload, Megaphone, Phone, MapPinIcon, CreditCard, AlertTriangle, Key, Gift, Code, List, Grip } from 'lucide-react';
+import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, CheckCircle2, UserCheck, UserX, Crown, Sparkles, User as UserIcon, Settings, Save, Briefcase, Building, MessageSquare, ThumbsUp, ThumbsDown, Star, Search, PlusCircle, Mail, Edit3, Link as LinkIcon, Download, ExternalLink, IndianRupee, X, Upload, HardDriveDownload, Megaphone, Phone, MapPinIcon, CreditCard, AlertTriangle, Key, Gift, Code, List, Grip, ArrowUp, ArrowDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -746,6 +746,23 @@ export default function AdminDashboardPage() {
       setHomepageCategories(prev => prev.filter(cat => cat.id !== id));
   };
 
+  const handleMoveCategory = (index: number, direction: 'up' | 'down') => {
+      setHomepageCategories(prev => {
+          const newCategories = [...prev];
+          const item = newCategories[index];
+          const newIndex = direction === 'up' ? index - 1 : index + 1;
+          
+          if (newIndex < 0 || newIndex >= newCategories.length) {
+              return newCategories; // Out of bounds
+          }
+
+          newCategories.splice(index, 1); // Remove item from original position
+          newCategories.splice(newIndex, 0, item); // Insert item at new position
+
+          return newCategories;
+      });
+  };
+
 
   const handleApproveReview = (review: Review) => {
     if (!firestore) return;
@@ -1447,13 +1464,12 @@ export default function AdminDashboardPage() {
                                     <Card>
                                         <CardHeader>
                                             <CardTitle className="text-lg flex items-center gap-2"><List className="h-5 w-5" />Homepage Categories</CardTitle>
-                                            <CardDescription>Manage the categories displayed on the homepage.</CardDescription>
+                                            <CardDescription>Manage and reorder the categories displayed on the homepage.</CardDescription>
                                         </CardHeader>
                                         <CardContent className="space-y-4">
                                             <div className="space-y-2">
                                                 {homepageCategories.map((cat, index) => (
                                                     <div key={cat.id} className="flex items-center gap-2 p-2 border rounded-lg">
-                                                        <Grip className="h-5 w-5 text-muted-foreground cursor-move" />
                                                         <Input 
                                                             value={cat.name} 
                                                             onChange={(e) => handleUpdateCategory(cat.id, 'name', e.target.value)}
@@ -1466,6 +1482,14 @@ export default function AdminDashboardPage() {
                                                             placeholder="Lucide Icon Name"
                                                             className="flex-1"
                                                         />
+                                                        <div className="flex flex-col">
+                                                            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleMoveCategory(index, 'up')} disabled={index === 0}>
+                                                                <ArrowUp className="h-4 w-4" />
+                                                            </Button>
+                                                            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleMoveCategory(index, 'down')} disabled={index === homepageCategories.length - 1}>
+                                                                <ArrowDown className="h-4 w-4" />
+                                                            </Button>
+                                                        </div>
                                                         <Button variant="ghost" size="icon" onClick={() => handleDeleteCategory(cat.id)}>
                                                             <Trash2 className="h-4 w-4 text-destructive" />
                                                         </Button>
