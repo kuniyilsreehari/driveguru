@@ -30,6 +30,7 @@ export type ExpertUser = {
     photoUrl?: string;
     isAvailable?: boolean;
     phoneNumber?: string;
+    showPhoneNumberOnProfile?: boolean;
 };
 
 interface ExpertCardProps {
@@ -64,6 +65,9 @@ export function ExpertCard({ expert }: ExpertCardProps) {
     const formattedPhoneNumber = cleanPhoneNumber(expert.phoneNumber);
     const locationString = [expert.city, expert.state, expert.pincode].filter(Boolean).join(', ');
     
+    // Determine if contact actions should be shown
+    const canShowContactActions = expert.verified && expert.showPhoneNumberOnProfile && formattedPhoneNumber;
+
     return (
         <Card key={expert.id} className="relative overflow-hidden transition-all hover:shadow-lg hover:border-primary/50">
             {expert.isAvailable && (
@@ -115,12 +119,12 @@ export function ExpertCard({ expert }: ExpertCardProps) {
                         <Link href={`/expert/${expert.id}`}>View Profile</Link>
                     </Button>
                     <div className="flex flex-1 gap-2">
-                    {expert.verified ? (
+                    {canShowContactActions ? (
                         <>
-                            <Button asChild size="sm" className="flex-1 bg-orange-500 hover:bg-orange-600" disabled={!formattedPhoneNumber}>
+                            <Button asChild size="sm" className="flex-1 bg-orange-500 hover:bg-orange-600">
                                 <a href={`tel:${formattedPhoneNumber}`}><Phone className="mr-2 h-4 w-4" /> Call</a>
                             </Button>
-                            <Button asChild size="sm" className="flex-1 bg-green-500 hover:bg-green-600" disabled={!formattedPhoneNumber}>
+                            <Button asChild size="sm" className="flex-1 bg-green-500 hover:bg-green-600">
                                 <a href={`https://wa.me/${formattedPhoneNumber}`} target="_blank" rel="noopener noreferrer"><MessageCircle className="mr-2 h-4 w-4" /> WhatsApp</a>
                             </Button>
                         </>

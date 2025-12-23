@@ -41,6 +41,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import Link from "next/link";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle as UiCardTitle, CardDescription as UiCardDescription } from "../ui/card";
 import { Separator } from "../ui/separator";
+import { Switch } from "../ui/switch";
 
 const expertTypes = [
     { name: "Freelancer", icon: <UserIcon className="w-8 h-8" /> },
@@ -59,6 +60,7 @@ const formSchema = z.object({
   address: z.string().optional(),
   countryCode: z.string().optional(),
   phoneNumber: z.string().optional(),
+  showPhoneNumberOnProfile: z.boolean().default(true),
   role: z.string({ required_error: "Please select your expert type." }),
   department: z.string().optional(),
   companyName: z.string().optional(),
@@ -87,7 +89,7 @@ type ExpertUserProfile = {
     id: string;
     firstName: string;
     lastName: string;
-    email: string;
+    email: string | null;
     role: string;
     photoUrl?: string;
     state?: string;
@@ -95,6 +97,7 @@ type ExpertUserProfile = {
     pincode?: string;
     address?: string;
     phoneNumber?: string;
+    showPhoneNumberOnProfile?: boolean;
     companyName?: string;
     department?: string;
     hourlyRate?: number;
@@ -164,6 +167,7 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
       address: userProfile.address || "",
       countryCode: countryCode,
       phoneNumber: phoneNumber,
+      showPhoneNumberOnProfile: userProfile.showPhoneNumberOnProfile === undefined ? true : userProfile.showPhoneNumberOnProfile,
       role: userProfile.role || "",
       department: userProfile.department || "",
       companyName: userProfile.companyName || "",
@@ -298,15 +302,26 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
     setIsGeneratingAboutMe(true);
     try {
         const formData = form.getValues();
-        const llmResponse = await generateAboutMe({
-            firstName: formData.firstName,
-            role: formData.role,
-            skills: formData.skills || '',
-            yearsOfExperience: formData.yearsOfExperience || 0,
-            qualification: formData.qualification || '',
+        const llmResponse = await ai.generate({
+            model: 'gemini-1.5-flash',
+            prompt: `You are an expert at writing compelling professional bios. 
+      Generate a friendly and professional "About Me" section for an expert named ${formData.firstName}.
+      The bio should be concise (2-3 sentences) and highlight their key strengths.
+
+      Here is their information:
+      - Role: ${formData.role}
+      - Skills: ${formData.skills}
+      - Years of Experience: ${formData.yearsOfExperience}
+      - Qualification: ${formData.qualification}
+
+      Based on this, write a bio that would be appealing to potential clients.
+      Start with a strong opening statement. Mention their experience and key skills.
+      Keep the tone professional yet approachable.
+      `,
+            output: { schema: z.object({ aboutMe: z.string() }) },
         });
         
-        const result = llmResponse;
+        const result = llmResponse.output;
 
         if (result?.aboutMe) {
             form.setValue('aboutMe', result.aboutMe, { shouldValidate: true });
@@ -684,6 +699,26 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
                   </div>
                   <FormMessage />
               </FormItem>
+               <FormField
+                control={form.control}
+                name="showPhoneNumberOnProfile"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                    <div className="space-y-0.5">
+                      <FormLabel>Show phone number on profile</FormLabel>
+                      <FormDescription>
+                        Allow clients to see your phone number on your profile card.
+                      </FormDescription>
+                    </div>
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <FormLabel>Location</FormLabel>
@@ -1093,3 +1128,5 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
     </>
   );
 }
+
+    
