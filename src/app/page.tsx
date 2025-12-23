@@ -327,14 +327,18 @@ function HomePageContent() {
                                         Detect
                                     </Button>
                                 </div>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <div>
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                    <div className="sm:col-span-1">
                                         <Label htmlFor="city" className="text-xs text-muted-foreground">District / City</Label>
                                         <Input id="city" placeholder="e.g., Malappuram" value={city} onChange={(e) => setCity(e.target.value)} />
                                     </div>
-                                    <div>
+                                    <div className="sm:col-span-1">
                                         <Label htmlFor="state" className="text-xs text-muted-foreground">State</Label>
                                         <Input id="state" placeholder="e.g., Kerala" value={state} onChange={(e) => setState(e.target.value)} />
+                                    </div>
+                                     <div className="sm:col-span-1">
+                                        <Label htmlFor="pincode" className="text-xs text-muted-foreground">Pincode</Label>
+                                        <Input id="pincode" placeholder="e.g., 676505" value={pincode} onChange={(e) => setPincode(e.target.value)} />
                                     </div>
                                 </div>
                             </div>
