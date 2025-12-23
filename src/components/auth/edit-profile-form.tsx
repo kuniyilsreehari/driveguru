@@ -2,18 +2,19 @@
 "use client";
 
 import * as React from "react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { User as UserIcon, Mail, MapPin, Phone, LocateIcon, Loader2, Building, Briefcase, IndianRupee, Calendar, Book, School, GraduationCap, Info, Sparkles, Upload, Home, Lock, PenSquare, Factory, Shield, Save, Linkedin, Github, Globe, Twitter } from "lucide-react";
-import { doc } from 'firebase/firestore';
-import { EmailAuthProvider, linkWithCredential } from "firebase/auth";
+import { User as UserIcon, Mail, Lock, Eye, EyeOff, Briefcase, MapPin, Phone, LocateIcon, Loader2, Building, Home, ArrowRight, MessageSquare, Gift, PenSquare, Factory, Shield, Save, Linkedin, Github, Globe, Twitter } from "lucide-react";
+import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, getAdditionalUserInfo, RecaptchaVerifier, signInWithPhoneNumber, EmailAuthProvider, linkWithCredential } from 'firebase/auth';
+import { doc, serverTimestamp, collection, query, where, getDocs, limit } from 'firebase/firestore';
 
 import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -24,29 +25,33 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
-  DialogFooter,
+  DialogDescription as UiDialogDescription,
 } from '@/components/ui/dialog';
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { useFirestore, useUser, useAuth } from "@/firebase";
-import { updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
+import { useAuth, useUser, useFirestore } from "@/firebase";
+import { setDocumentNonBlocking, updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import { Textarea } from "@/components/ui/textarea";
+import { Textarea } from "../ui/textarea";
+import { Card, CardDescription, CardHeader, CardTitle } from "../ui/card";
+import { Icons } from "../icons";
+import { Checkbox } from "../ui/checkbox";
 import { generateAboutMe } from "@/ai/flows/generate-about-me-flow";
 import { suggestSkills } from "@/ai/flows/suggest-skills-flow";
 import { updateUserPhoto } from "@/ai/flows/update-profile-photo-flow";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
-import Link from "next/link";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle as UiCardTitle, CardDescription as UiCardDescription } from "../ui/card";
+import { Upload } from "lucide-react";
 import { Separator } from "../ui/separator";
 import { Switch } from "../ui/switch";
+import Link from "next/link";
+import { DialogFooter } from "../ui/dialog";
+import { IndianRupee, Calendar, GraduationCap, School, Book, Info, Pen, Factory as FactoryIcon, Sparkles } from "lucide-react";
 
 const expertTypes = [
-    { name: "Freelancer", icon: <UserIcon className="w-8 h-8" /> },
-    { name: "Company", icon: <Building className="w-8 h-8" /> },
-    { name: "Authorized Pro", icon: <Briefcase className="w-8 h-8" /> },
+    { name: "Freelancer", icon: <UserIcon className="w-8 h-8" />, description: "Offer your individual skills and services directly to clients." },
+    { name: "Company", icon: <Building className="w-8 h-8" />, description: "Represent your business and manage company-wide talent." },
+    { name: "Authorized Pro", icon: <Briefcase className="w-8 h-8" />, description: "A professional authorized to work for a company." },
 ]
 
 const formSchema = z.object({
@@ -301,35 +306,22 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
 
     setIsGeneratingAboutMe(true);
     try {
-        const formData = form.getValues();
-        const llmResponse = await ai.generate({
-            model: 'gemini-1.5-flash',
-            prompt: `You are an expert at writing compelling professional bios. 
-      Generate a friendly and professional "About Me" section for an expert named ${formData.firstName}.
-      The bio should be concise (2-3 sentences) and highlight their key strengths.
+      const formData = form.getValues();
+      const result = await generateAboutMe({
+        firstName: formData.firstName,
+        role: formData.role,
+        skills: formData.skills || '',
+        yearsOfExperience: formData.yearsOfExperience || 0,
+        qualification: formData.qualification || '',
+      });
 
-      Here is their information:
-      - Role: ${formData.role}
-      - Skills: ${formData.skills}
-      - Years of Experience: ${formData.yearsOfExperience}
-      - Qualification: ${formData.qualification}
-
-      Based on this, write a bio that would be appealing to potential clients.
-      Start with a strong opening statement. Mention their experience and key skills.
-      Keep the tone professional yet approachable.
-      `,
-            output: { schema: z.object({ aboutMe: z.string() }) },
-        });
-        
-        const result = llmResponse.output;
-
-        if (result?.aboutMe) {
-            form.setValue('aboutMe', result.aboutMe, { shouldValidate: true });
-            toast({
-                title: "AI Generated Bio",
-                description: "Your 'About Me' has been populated. Feel free to edit it.",
-            });
-        }
+      if (result?.aboutMe) {
+          form.setValue('aboutMe', result.aboutMe, { shouldValidate: true });
+          toast({
+              title: "AI Generated Bio",
+              description: "Your 'About Me' has been populated. Feel free to edit it.",
+          });
+      }
     } catch (error) {
         console.error("Failed to generate 'About Me'", error);
         toast({
@@ -956,7 +948,7 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
               <FormItem>
                 <FormLabel>Associated Projects Name</FormLabel>
                 <div className="relative">
-                  <Factory className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <FactoryIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <FormControl>
                     <Input placeholder="List names of projects you've worked on" {...field} className="pl-10" />
                   </FormControl>
@@ -1049,8 +1041,8 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
       {!userProfile.email && (
         <Card>
           <CardHeader>
-            <UiCardTitle>Account Security</UiCardTitle>
-            <UiCardDescription>Link an email and password to your account for easier login and better security.</UiCardDescription>
+            <CardTitle>Account Security</CardTitle>
+            <CardDescription>Link an email and password to your account for easier login and better security.</CardDescription>
           </CardHeader>
           <CardContent>
             <Form {...linkForm}>
@@ -1103,9 +1095,9 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Premium Feature Locked</DialogTitle>
-          <DialogDescription>
+          <UiDialogDescription>
             AI-powered suggestions are only available for Premier and Super Premier members.
-          </DialogDescription>
+          </UiDialogDescription>
         </DialogHeader>
         <div className="text-center">
             <div className="mx-auto w-fit rounded-full p-3 mb-2 bg-primary/10">
