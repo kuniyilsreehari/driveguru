@@ -24,10 +24,12 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { parseSearchQuery } from '@/ai/flows/ai-search-flow';
 import Link from 'next/link';
 import { FloatingActions } from '@/components/floating-actions';
+import type { HomepageCategory } from '@/app/admin/page';
 
 
 type AppConfig = {
     featuredExpertsLimit?: number;
+    homepageCategories?: HomepageCategory[];
 };
 
 
@@ -74,6 +76,7 @@ function HomePageContent() {
     
     const { data: appConfig, isLoading: isAppConfigLoading } = useDoc<AppConfig>(appConfigDocRef);
     const featuredExpertsLimit = appConfig?.featuredExpertsLimit || 3;
+    const homepageCategories = appConfig?.homepageCategories || [];
 
 
     const expertsQuery = useMemoFirebase(() => {
@@ -229,16 +232,9 @@ function HomePageContent() {
         }
     };
 
-    const categories = [
-        { name: 'IT & Software', icon: 'Laptop' },
-        { name: 'Home Services', icon: 'Wrench' },
-        { name: 'Creative & Design', icon: 'Briefcase' },
-        { name: 'Mobile Tech', icon: 'Smartphone' }
-    ];
-
     const getIcon = (name: string) => {
         const Icon = (LucideIcons as any)[name];
-        return Icon ? <Icon className="w-8 h-8 text-primary" /> : null;
+        return Icon ? <Icon className="w-8 h-8 text-primary" /> : <Briefcase className="w-8 h-8 text-primary" />;
     };
 
     return (
@@ -388,16 +384,27 @@ function HomePageContent() {
                     <div className="mt-12 text-center">
                         <h2 className="text-3xl font-bold mb-2">Explore Categories</h2>
                         <p className="text-muted-foreground mb-8">Find professionals by their area of expertise.</p>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                            {categories.map((category) => (
-                                <Link key={category.name} href={`/search?q=${encodeURIComponent(category.name)}`} passHref>
-                                    <Card className="flex flex-col items-center justify-center p-6 h-full hover:bg-accent/50 hover:border-primary/50 transition-colors cursor-pointer">
-                                        {getIcon(category.icon)}
-                                        <p className="mt-2 font-semibold text-sm">{category.name}</p>
-                                    </Card>
-                                </Link>
-                            ))}
-                        </div>
+                         {isAppConfigLoading ? (
+                             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                <Skeleton className="h-28 w-full" />
+                                <Skeleton className="h-28 w-full" />
+                                <Skeleton className="h-28 w-full" />
+                                <Skeleton className="h-28 w-full" />
+                            </div>
+                         ) : homepageCategories.length > 0 ? (
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                {homepageCategories.map((category) => (
+                                    <Link key={category.id} href={`/search?q=${encodeURIComponent(category.name)}`} passHref>
+                                        <Card className="flex flex-col items-center justify-center p-6 h-full hover:bg-accent/50 hover:border-primary/50 transition-colors cursor-pointer">
+                                            {getIcon(category.icon)}
+                                            <p className="mt-2 font-semibold text-sm text-center">{category.name}</p>
+                                        </Card>
+                                    </Link>
+                                ))}
+                            </div>
+                        ) : (
+                            <p className="text-sm text-muted-foreground">Categories are being configured by the admin.</p>
+                        )}
                     </div>
 
                      <div className="mt-16">

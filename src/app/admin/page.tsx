@@ -10,7 +10,7 @@ import { useUser, useFirestore, useDoc, useMemoFirebase, useAuth, useCollection 
 import { deleteDocumentNonBlocking, updateDocumentNonBlocking, setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, CheckCircle2, UserCheck, UserX, Crown, Sparkles, User as UserIcon, Settings, Save, Briefcase, Building, MessageSquare, ThumbsUp, ThumbsDown, Star, Search, PlusCircle, Mail, Edit3, Link as LinkIcon, Download, ExternalLink, IndianRupee, X, Upload, HardDriveDownload, Megaphone, Phone, MapPinIcon, CreditCard, AlertTriangle, Key, Gift, Code } from 'lucide-react';
+import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, CheckCircle2, UserCheck, UserX, Crown, Sparkles, User as UserIcon, Settings, Save, Briefcase, Building, MessageSquare, ThumbsUp, ThumbsDown, Star, Search, PlusCircle, Mail, Edit3, Link as LinkIcon, Download, ExternalLink, IndianRupee, X, Upload, HardDriveDownload, Megaphone, Phone, MapPinIcon, CreditCard, AlertTriangle, Key, Gift, Code, List, Grip } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -62,6 +62,7 @@ import { Slider } from '@/components/ui/slider';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { processReferral } from '@/ai/flows/process-referral-flow';
+import { v4 as uuidv4 } from 'uuid';
 
 type ExpertUser = {
     id: string;
@@ -123,8 +124,15 @@ type PlanPrices = {
     yearly?: number;
 };
 
+export type HomepageCategory = {
+    id: string;
+    name: string;
+    icon: string;
+};
+
 type AppConfig = {
     featuredExpertsLimit?: number;
+    homepageCategories?: HomepageCategory[];
     premierPaymentLink?: string;
     superPremierPaymentLink?: string;
     verificationPaymentLink?: string;
@@ -514,6 +522,11 @@ export default function AdminDashboardPage() {
 
   const [isPaymentsEnabled, setIsPaymentsEnabled] = useState(true);
   const [paymentMethod, setPaymentMethod] = useState<'API' | 'Link'>('API');
+  
+  const [homepageCategories, setHomepageCategories] = useState<HomepageCategory[]>([]);
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [newCategoryIcon, setNewCategoryIcon] = useState('');
+
 
   const [isSavingSettings, setIsSavingSettings] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
@@ -567,6 +580,7 @@ export default function AdminDashboardPage() {
   useEffect(() => {
     if (!isAppConfigLoading && appConfig) {
         setFeaturedExpertsLimit(appConfig.featuredExpertsLimit || 3);
+        setHomepageCategories(appConfig.homepageCategories || []);
         setPremierPaymentLink(appConfig.premierPaymentLink || '');
         setSuperPremierPaymentLink(appConfig.superPremierPaymentLink || '');
         setVerificationPaymentLink(appConfig.verificationPaymentLink || '');
@@ -667,6 +681,7 @@ export default function AdminDashboardPage() {
 
     const settingsToSave: AppConfig = {
         featuredExpertsLimit: Number(featuredExpertsLimit),
+        homepageCategories,
         premierPaymentLink,
         superPremierPaymentLink,
         verificationPaymentLink,
@@ -708,6 +723,29 @@ export default function AdminDashboardPage() {
         setIsSavingSettings(false);
     });
   }
+  
+  const handleAddCategory = () => {
+      if (newCategoryName.trim() && newCategoryIcon.trim()) {
+          setHomepageCategories(prev => [...prev, { id: uuidv4(), name: newCategoryName, icon: newCategoryIcon }]);
+          setNewCategoryName('');
+          setNewCategoryIcon('');
+      } else {
+          toast({
+              variant: 'destructive',
+              title: 'Missing Information',
+              description: 'Please provide both a name and a Lucide icon name for the new category.'
+          });
+      }
+  };
+
+  const handleUpdateCategory = (id: string, field: 'name' | 'icon', value: string) => {
+      setHomepageCategories(prev => prev.map(cat => cat.id === id ? { ...cat, [field]: value } : cat));
+  };
+  
+  const handleDeleteCategory = (id: string) => {
+      setHomepageCategories(prev => prev.filter(cat => cat.id !== id));
+  };
+
 
   const handleApproveReview = (review: Review) => {
     if (!firestore) return;
@@ -1406,6 +1444,50 @@ export default function AdminDashboardPage() {
                                 </div>
                             ) : (
                                 <div className="space-y-6">
+                                    <Card>
+                                        <CardHeader>
+                                            <CardTitle className="text-lg flex items-center gap-2"><List className="h-5 w-5" />Homepage Categories</CardTitle>
+                                            <CardDescription>Manage the categories displayed on the homepage.</CardDescription>
+                                        </CardHeader>
+                                        <CardContent className="space-y-4">
+                                            <div className="space-y-2">
+                                                {homepageCategories.map((cat, index) => (
+                                                    <div key={cat.id} className="flex items-center gap-2 p-2 border rounded-lg">
+                                                        <Grip className="h-5 w-5 text-muted-foreground cursor-move" />
+                                                        <Input 
+                                                            value={cat.name} 
+                                                            onChange={(e) => handleUpdateCategory(cat.id, 'name', e.target.value)}
+                                                            placeholder="Category Name"
+                                                            className="flex-1"
+                                                        />
+                                                        <Input 
+                                                            value={cat.icon} 
+                                                            onChange={(e) => handleUpdateCategory(cat.id, 'icon', e.target.value)}
+                                                            placeholder="Lucide Icon Name"
+                                                            className="flex-1"
+                                                        />
+                                                        <Button variant="ghost" size="icon" onClick={() => handleDeleteCategory(cat.id)}>
+                                                            <Trash2 className="h-4 w-4 text-destructive" />
+                                                        </Button>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                            <div className="flex items-end gap-2">
+                                                <div className="flex-1">
+                                                    <Label htmlFor="new-cat-name">New Category Name</Label>
+                                                    <Input id="new-cat-name" value={newCategoryName} onChange={(e) => setNewCategoryName(e.target.value)} placeholder="e.g. 'Marketing'" />
+                                                </div>
+                                                <div className="flex-1">
+                                                    <Label htmlFor="new-cat-icon">Icon Name</Label>
+                                                    <Input id="new-cat-icon" value={newCategoryIcon} onChange={(e) => setNewCategoryIcon(e.target.value)} placeholder="e.g. 'Megaphone'" />
+                                                </div>
+                                                <Button onClick={handleAddCategory}>
+                                                    <PlusCircle className="mr-2 h-4 w-4" /> Add
+                                                </Button>
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+
                                     <div>
                                         <Label htmlFor="availability-location">Footer Location Text</Label>
                                         <div className="relative mt-1">

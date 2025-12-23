@@ -450,6 +450,19 @@
           "type": "number",
           "description": "The number of featured experts to show on the homepage."
         },
+        "homepageCategories": {
+            "type": "array",
+            "description": "A list of categories to display on the homepage for quick search.",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "id": { "type": "string", "description": "Unique ID for the category." },
+                    "name": { "type": "string", "description": "The display name of the category." },
+                    "icon": { "type": "string", "description": "The name of the lucide-react icon to use." }
+                },
+                "required": ["id", "name", "icon"]
+            }
+        },
         "isPaymentsEnabled": {
           "type": "boolean",
           "description": "Globally enables or disables all payment functionalities."
