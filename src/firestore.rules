@@ -1,5 +1,4 @@
 
-
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -42,8 +41,16 @@ service cloud.firestore {
     // A user can update certain fields of their own profile.
     function isUpdatingOwnUserDoc(userId) {
       let protectedFields = ['id', 'email', 'verified', 'role', 'tier', 'createdAt', 'referralCode', 'referralPoints'];
-      return isOwner(userId) && isExistingDoc() &&
-             !request.resource.data.diff(resource.data).affectedKeys().hasAny(protectedFields);
+      let updatableFields = ['following'];
+      let allAffectedKeys = request.resource.data.diff(resource.data).affectedKeys();
+
+      // Check that no protected fields are being modified
+      let protectedCheck = !allAffectedKeys.hasAny(protectedFields);
+
+      // Check if ONLY updatable fields are being modified
+      let onlyUpdatableCheck = allAffectedKeys.hasOnly(updatableFields);
+      
+      return isOwner(userId) && isExistingDoc() && (protectedCheck || onlyUpdatableCheck);
     }
     
     function isCreatingOwnLocationData(userId) {

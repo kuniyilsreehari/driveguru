@@ -8,7 +8,7 @@ import { signOut } from 'firebase/auth';
 import { doc, collection, query, where, getDoc, runTransaction, increment, getDocs, orderBy, Timestamp } from 'firebase/firestore';
 import { useUser, useAuth, useFirestore, useDoc, useCollection, useMemoFirebase, updateDocumentNonBlocking } from '@/firebase';
 import { Button } from '@/components/ui/button';
-import { LogOut, Briefcase, Loader, Edit, UserCheck, XCircle, MapPin, IndianRupee, Calendar, Book, GraduationCap, School, Info, User as UserIcon, Check, Power, Building, PlusCircle, Crown, Sparkles, Lock, Home, ArrowUpCircle, ShieldCheck, ExternalLink, Gift, Copy, Shield, AlertTriangle, ChevronDown, Link as LinkIcon, MessageCircle, BookOpen, CheckCircle, PenSquare, Factory } from 'lucide-react';
+import { LogOut, Briefcase, Loader, Edit, UserCheck, XCircle, MapPin, IndianRupee, Calendar, Book, GraduationCap, School, Info, User as UserIcon, Check, Power, Building, PlusCircle, Crown, Sparkles, Lock, Home, ArrowUpCircle, ShieldCheck, ExternalLink, Gift, Copy, Shield, AlertTriangle, ChevronDown, Link as LinkIcon, MessageCircle, BookOpen, CheckCircle, PenSquare, Factory, Users } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import {
   Dialog,
@@ -83,6 +83,7 @@ type ExpertUserProfile = {
     referralPoints?: number;
     referredByCode?: string | null;
     tier?: 'Standard' | 'Premier' | 'Super Premier';
+    following?: string[];
 };
 
 type Booking = {
@@ -414,13 +415,33 @@ function MyBookingsCard({ userProfile }: { userProfile: ExpertUserProfile }) {
                     </div>
                 ) : (
                     <div className="text-center p-8 border-2 border-dashed rounded-lg">
-                        <p className="text-muted-foreground">You don't have any bookings yet.</p>
+                        <p className="text-muted-foreground">You don&apos;t have any bookings yet.</p>
                     </div>
                 )}
             </CardContent>
         </Card>
     );
 }
+
+function FollowerStats({ userId }: { userId: string }) {
+    const firestore = useFirestore();
+
+    const followersQuery = useMemoFirebase(() => {
+        if (!firestore) return null;
+        return query(collection(firestore, 'users'), where('following', 'array-contains', userId));
+    }, [firestore, userId]);
+
+    const { data: followers, isLoading: isLoadingFollowers } = useCollection(followersQuery);
+
+    if (isLoadingFollowers) {
+        return <p className="text-sm text-muted-foreground">Loading stats...</p>;
+    }
+
+    return (
+        <p className="text-sm text-muted-foreground">{followers?.length || 0} Followers</p>
+    );
+}
+
 
 function ExpertDashboardPage() {
   const { user, isUserLoading } = useUser();
@@ -649,6 +670,15 @@ function ExpertDashboardPage() {
                         <div>
                             <CardTitle className="text-2xl sm:text-4xl font-bold">Expert Dashboard</CardTitle>
                             <CardDescription>Welcome, {userProfile.firstName} {userProfile.lastName}.</CardDescription>
+                            <div className="flex items-center gap-4 mt-2">
+                                <div className="flex items-center gap-1">
+                                    <Users className="h-4 w-4 text-muted-foreground" />
+                                    <FollowerStats userId={userProfile.id} />
+                                </div>
+                                <div className="flex items-center gap-1">
+                                    <p className="text-sm text-muted-foreground">{userProfile.following?.length || 0} Following</p>
+                                </div>
+                            </div>
                             <div className="flex items-center gap-2 mt-2 flex-wrap">
                                 {userProfile.verified ? (
                                     <Badge variant="outline" className="border-green-500 text-green-500">

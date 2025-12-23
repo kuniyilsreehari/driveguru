@@ -2,12 +2,12 @@
 
 'use client';
 
-import { Suspense, useState, useRef } from 'react';
+import { Suspense, useState, useRef, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { doc } from 'firebase/firestore';
-import { useFirestore, useDoc, useMemoFirebase, useUser } from '@/firebase';
-import { Loader2, Star, ChevronLeft, MapPin, IndianRupee, Briefcase, Calendar, Info, Book, GraduationCap, School, User as UserIcon, UserCheck, XCircle, Crown, Sparkles, LogIn, Lock, Building, FileDown, Home, MessageSquare, PenSquare, Factory, Linkedin, Twitter, Github, Globe } from 'lucide-react';
+import { doc, arrayUnion, arrayRemove } from 'firebase/firestore';
+import { useFirestore, useDoc, useMemoFirebase, useUser, updateDocumentNonBlocking } from '@/firebase';
+import { Loader2, Star, ChevronLeft, MapPin, IndianRupee, Briefcase, Calendar, Info, Book, GraduationCap, School, User as UserIcon, UserCheck, XCircle, Crown, Sparkles, LogIn, Lock, Building, FileDown, Home, MessageSquare, PenSquare, Factory, Linkedin, Twitter, Github, Globe, UserPlus, UserMinus } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardFooter } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -50,6 +50,7 @@ type ExpertUserProfile = {
     twitterUrl?: string;
     githubUrl?: string;
     portfolioUrl?: string;
+    following?: string[];
 };
 
 function ExpertProfileContent() {
@@ -60,14 +61,49 @@ function ExpertProfileContent() {
     const { toast } = useToast();
     const profileCardRef = useRef<HTMLDivElement>(null);
     const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+    const [isFollowing, setIsFollowing] = useState(false);
+    const [isFollowLoading, setIsFollowLoading] = useState(false);
 
     const expertDocRef = useMemoFirebase(() => {
         if (!firestore || !expertId) return null;
         return doc(firestore, 'users', expertId);
     }, [firestore, expertId]);
 
+    const currentUserDocRef = useMemoFirebase(() => {
+        if (!firestore || !user) return null;
+        return doc(firestore, 'users', user.uid);
+    }, [firestore, user]);
+
 
     const { data: expert, isLoading: isLoadingExpert } = useDoc<ExpertUserProfile>(expertDocRef);
+    const { data: currentUserProfile } = useDoc<ExpertUserProfile>(currentUserDocRef);
+
+    useEffect(() => {
+        if (currentUserProfile && expert) {
+            setIsFollowing(currentUserProfile.following?.includes(expert.id) || false);
+        }
+    }, [currentUserProfile, expert]);
+
+    const handleToggleFollow = async () => {
+        if (!currentUserDocRef || !expert) return;
+
+        setIsFollowLoading(true);
+        try {
+            const updateAction = isFollowing ? arrayRemove(expert.id) : arrayUnion(expert.id);
+            await updateDocumentNonBlocking(currentUserDocRef, { following: updateAction });
+            setIsFollowing(!isFollowing);
+            toast({
+                title: isFollowing ? 'Unfollowed' : 'Followed',
+                description: `You are no longer following ${getDisplayName(expert)}.`,
+            });
+        } catch (error) {
+            console.error("Failed to toggle follow", error);
+            toast({ variant: 'destructive', title: 'Error', description: 'Could not update your follow status.' });
+        } finally {
+            setIsFollowLoading(false);
+        }
+    }
+
 
     const getInitials = (firstName?: string, lastName?: string) => {
         if (firstName && lastName) {
@@ -158,6 +194,11 @@ function ExpertProfileContent() {
     const whatsappLink = `https://wa.me/${formattedPhoneNumber}`;
     const canContact = expert.verified && formattedPhoneNumber && isPremium;
 
+    const getDisplayName = (expert?: ExpertUserProfile) => {
+        if (!expert) return '';
+        return expert.companyName || `${expert.firstName} ${expert.lastName}`;
+    }
+
     return (
         <div className="min-h-screen bg-background p-4 sm:p-8">
             <div className="mx-auto max-w-4xl space-y-8">
@@ -165,6 +206,12 @@ function ExpertProfileContent() {
                     <Button variant="outline" asChild>
                         <Link href="/"><ChevronLeft className="mr-2 h-4 w-4" /> Back to Home</Link>
                     </Button>
+                    {user && user.uid !== expert.id && (
+                        <Button variant={isFollowing ? 'secondary' : 'default'} onClick={handleToggleFollow} disabled={isFollowLoading}>
+                            {isFollowLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : isFollowing ? <UserMinus className="mr-2 h-4 w-4" /> : <UserPlus className="mr-2 h-4 w-4" />}
+                            {isFollowing ? 'Unfollow' : 'Follow'}
+                        </Button>
+                    )}
                 </div>
                 
                 {!user && (
