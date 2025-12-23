@@ -6,7 +6,7 @@ import { useState, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { User as UserIcon, Mail, MapPin, Phone, LocateIcon, Loader2, Building, Briefcase, IndianRupee, Calendar, Book, School, GraduationCap, Info, Sparkles, Upload, Home, Lock, PenSquare, Factory, Shield, Save } from "lucide-react";
+import { User as UserIcon, Mail, MapPin, Phone, LocateIcon, Loader2, Building, Briefcase, IndianRupee, Calendar, Book, School, GraduationCap, Info, Sparkles, Upload, Home, Lock, PenSquare, Factory, Shield, Save, Linkedin, Github, Globe, Twitter } from "lucide-react";
 import { doc } from 'firebase/firestore';
 import { EmailAuthProvider, linkWithCredential } from "firebase/auth";
 
@@ -71,6 +71,10 @@ const formSchema = z.object({
   aboutMe: z.string().optional(),
   aboutYourDream: z.string().optional(),
   associatedProjectsName: z.string().optional(),
+  linkedinUrl: z.string().url().optional().or(z.literal('')),
+  twitterUrl: z.string().url().optional().or(z.literal('')),
+  githubUrl: z.string().url().optional().or(z.literal('')),
+  portfolioUrl: z.string().url().optional().or(z.literal('')),
 });
 
 const linkEmailSchema = z.object({
@@ -102,6 +106,10 @@ type ExpertUserProfile = {
     aboutMe?: string;
     aboutYourDream?: string;
     associatedProjectsName?: string;
+    linkedinUrl?: string;
+    twitterUrl?: string;
+    githubUrl?: string;
+    portfolioUrl?: string;
     tier?: 'Standard' | 'Premier' | 'Super Premier';
 };
 
@@ -168,6 +176,10 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
       aboutMe: userProfile.aboutMe || "",
       aboutYourDream: userProfile.aboutYourDream || "",
       associatedProjectsName: userProfile.associatedProjectsName || "",
+      linkedinUrl: userProfile.linkedinUrl || "",
+      twitterUrl: userProfile.twitterUrl || "",
+      githubUrl: userProfile.githubUrl || "",
+      portfolioUrl: userProfile.portfolioUrl || "",
     },
   });
 
@@ -919,6 +931,77 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
             )}
           />
           
+          <Separator />
+          
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium">Social Profiles</h3>
+            <FormField
+              control={form.control}
+              name="linkedinUrl"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>LinkedIn</FormLabel>
+                  <div className="relative">
+                    <Linkedin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <FormControl>
+                      <Input placeholder="https://linkedin.com/in/yourprofile" {...field} className="pl-10" />
+                    </FormControl>
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+             <FormField
+              control={form.control}
+              name="twitterUrl"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Twitter / X</FormLabel>
+                  <div className="relative">
+                    <Twitter className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <FormControl>
+                      <Input placeholder="https://x.com/yourprofile" {...field} className="pl-10" />
+                    </FormControl>
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+             <FormField
+              control={form.control}
+              name="githubUrl"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>GitHub</FormLabel>
+                  <div className="relative">
+                    <Github className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <FormControl>
+                      <Input placeholder="https://github.com/yourprofile" {...field} className="pl-10" />
+                    </FormControl>
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+             <FormField
+              control={form.control}
+              name="portfolioUrl"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Portfolio/Website</FormLabel>
+                  <div className="relative">
+                    <Globe className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <FormControl>
+                      <Input placeholder="https://yourwebsite.com" {...field} className="pl-10" />
+                    </FormControl>
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
+
           <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
             <Save className="mr-2 h-4 w-4" />
             {form.formState.isSubmitting ? 'Saving...' : 'Save Changes'}
@@ -982,30 +1065,30 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
 
     </div>
     <Dialog open={isPremiumDialogOpen} onOpenChange={setIsPremiumDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Premium Feature Locked</DialogTitle>
-            <DialogDescription>
-              AI-powered suggestions are only available for Premier and Super Premier members.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="text-center">
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Premium Feature Locked</DialogTitle>
+          <DialogDescription>
+            AI-powered suggestions are only available for Premier and Super Premier members.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="text-center">
             <div className="mx-auto w-fit rounded-full p-3 mb-2 bg-primary/10">
               <Lock className="h-8 w-8 text-primary" />
             </div>
             <p className="text-center text-sm text-muted-foreground">
               Upgrade your plan to unlock this and many other powerful features to enhance your profile and attract more clients.
             </p>
-          </div>
-          <DialogFooter className="flex-col gap-2 pt-4">
-              <Button asChild className="w-full">
-                  <Link href="/dashboard#plan-management">Upgrade Your Plan</Link>
-              </Button>
-              <Button variant="outline" className="w-full" onClick={() => setIsPremiumDialogOpen(false)}>
-                  Maybe Later
-              </Button>
-          </DialogFooter>
-        </DialogContent>
+        </div>
+        <DialogFooter className="flex-col gap-2 pt-4">
+            <Button asChild className="w-full">
+                <Link href="/dashboard#plan-management">Upgrade Your Plan</Link>
+            </Button>
+            <Button variant="outline" className="w-full" onClick={() => setIsPremiumDialogOpen(false)}>
+                Maybe Later
+            </Button>
+        </DialogFooter>
+      </DialogContent>
     </Dialog>
     </>
   );

@@ -108,10 +108,38 @@
           "type": "string",
           "description": "A brief biography about the expert."
         },
+        "aboutYourDream": {
+          "type": "string",
+          "description": "A description of the expert's professional dreams or aspirations."
+        },
+        "associatedProjectsName": {
+            "type": "string",
+            "description": "Names of associated projects the expert has worked on."
+        },
         "photoUrl": {
           "type": "string",
           "description": "URL of the user's profile photo.",
           "format": "uri"
+        },
+        "linkedinUrl": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL to the user's LinkedIn profile."
+        },
+        "twitterUrl": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL to the user's Twitter/X profile."
+        },
+        "githubUrl": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL to the user's GitHub profile."
+        },
+        "portfolioUrl": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL to the user's personal portfolio or website."
         },
         "tier": {
           "type": "string",
