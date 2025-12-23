@@ -5,9 +5,9 @@
 import { Suspense, useState, useRef, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { doc, arrayUnion, arrayRemove } from 'firebase/firestore';
-import { useFirestore, useDoc, useMemoFirebase, useUser, updateDocumentNonBlocking } from '@/firebase';
-import { Loader2, Star, ChevronLeft, MapPin, IndianRupee, Briefcase, Calendar, Info, Book, GraduationCap, School, User as UserIcon, UserCheck, XCircle, Crown, Sparkles, LogIn, Lock, Building, FileDown, Home, MessageSquare, PenSquare, Factory, Linkedin, Twitter, Github, Globe, UserPlus, UserMinus } from 'lucide-react';
+import { doc, arrayUnion, arrayRemove, query, collection, where } from 'firebase/firestore';
+import { useFirestore, useDoc, useMemoFirebase, useUser, updateDocumentNonBlocking, useCollection } from '@/firebase';
+import { Loader2, Star, ChevronLeft, MapPin, IndianRupee, Briefcase, Calendar, Info, Book, GraduationCap, School, User as UserIcon, UserCheck, XCircle, Crown, Sparkles, LogIn, Lock, Building, FileDown, Home, MessageSquare, PenSquare, Factory, Linkedin, Twitter, Github, Globe, UserPlus, UserMinus, Users } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardFooter } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -52,6 +52,36 @@ type ExpertUserProfile = {
     portfolioUrl?: string;
     following?: string[];
 };
+
+function FollowerStats({ expert }: { expert: ExpertUserProfile }) {
+    const firestore = useFirestore();
+
+    const followersQuery = useMemoFirebase(() => {
+        if (!firestore) return null;
+        return query(collection(firestore, 'users'), where('following', 'array-contains', expert.id));
+    }, [firestore, expert.id]);
+
+    const { data: followers, isLoading: isLoadingFollowers } = useCollection(followersQuery);
+    
+    const followingCount = expert.following?.length || 0;
+
+    if (isLoadingFollowers) {
+        return <p className="text-sm text-muted-foreground">Loading stats...</p>;
+    }
+
+    return (
+        <div className="flex items-center gap-4 mt-2">
+            <div className="flex items-center gap-1">
+                <Users className="h-4 w-4 text-muted-foreground" />
+                <p className="text-sm text-muted-foreground">{followers?.length || 0} Followers</p>
+            </div>
+            <div className="flex items-center gap-1">
+                <p className="text-sm text-muted-foreground">{followingCount} Following</p>
+            </div>
+        </div>
+    );
+}
+
 
 function ExpertProfileContent() {
     const params = useParams();
@@ -248,6 +278,7 @@ function ExpertProfileContent() {
                                         <Badge variant="secondary">Unavailable</Badge>
                                     )}
                                 </div>
+                                <FollowerStats expert={expert} />
                                 <div className="flex items-center gap-2 mt-3 flex-wrap">
                                     {expert.verified ? (
                                         <Badge variant="outline" className="border-green-500 text-green-500">
