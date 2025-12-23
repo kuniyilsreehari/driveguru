@@ -3,7 +3,7 @@
 'use client';
 
 import { Suspense, useEffect, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -14,6 +14,7 @@ import { doc, collection, query, where, getDocs, writeBatch } from 'firebase/fir
 function PaymentStatusContent() {
     const searchParams = useSearchParams();
     const firestore = useFirestore();
+    const router = useRouter();
     const [isLoading, setIsLoading] = useState(true);
     const [status, setStatus] = useState<'processing' | 'success' | 'failed' | 'cancelled' | 'error'>('processing');
     const [message, setMessage] = useState('Please wait while we confirm your payment status. Do not refresh this page.');
@@ -44,6 +45,7 @@ function PaymentStatusContent() {
                     if (!successSnapshot.empty) {
                         setStatus('success');
                         setMessage('Your payment was already confirmed and your account has been updated.');
+                        router.push('/success'); // Already processed, go to success page
                     } else {
                         setStatus('error');
                         setMessage('Payment record not found or already processed. If you have been charged, please contact support.');
@@ -76,44 +78,60 @@ function PaymentStatusContent() {
                     await batch.commit();
                     setStatus('success');
                     setMessage('Your payment was successful and your account has been updated.');
+                    router.push('/success'); // Redirect to new success page
                 } else if (orderStatus === 'CANCELLED') {
                     batch.update(paymentDoc.ref, { status: 'failed', updatedAt: new Date() });
                     await batch.commit();
                     setStatus('cancelled');
                     setMessage('Your payment was cancelled.');
+                    setIsLoading(false);
                 } else { // FAILED or other status
                     batch.update(paymentDoc.ref, { status: 'failed', updatedAt: new Date() });
                     await batch.commit();
                     setStatus('failed');
-                    setMessage('There was an issue with your payment. Please try again.');
+setMessage('There was an issue with your payment. Please try again.');
+                    setIsLoading(false);
                 }
             } catch (error) {
                 console.error("Error processing payment status:", error);
                 setStatus('error');
                 setMessage('An error occurred while updating your status. Please contact support.');
-            } finally {
                 setIsLoading(false);
             }
         };
 
         finalizePayment();
 
-    }, [orderId, orderStatus, firestore]);
+    }, [orderId, orderStatus, firestore, router]);
 
+    // This component will show a loading state until redirection happens.
+    if (isLoading || status === 'processing' || status === 'success') {
+        return (
+            <Card className="w-full max-w-md">
+                <CardHeader className="text-center">
+                    <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 mb-4">
+                       <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                    </div>
+                    <CardTitle className="text-2xl">
+                        Processing Payment
+                    </CardTitle>
+                    <CardDescription>
+                        {message}
+                    </CardDescription>
+                </CardHeader>
+            </Card>
+        );
+    }
+    
+    // This will show for failed/cancelled states
     return (
         <Card className="w-full max-w-md">
             <CardHeader className="text-center">
                 <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 mb-4">
-                    {isLoading || status === 'processing' ? (
-                        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                    ) : status === 'success' ? (
-                         <CheckCircle className="h-8 w-8 text-green-500" />
-                    ) : (
-                        <XCircle className="h-8 w-8 text-destructive" />
-                    )}
+                    <XCircle className="h-8 w-8 text-destructive" />
                 </div>
                 <CardTitle className="text-2xl">
-                     {isLoading || status === 'processing' ? 'Processing Payment' : status === 'success' ? 'Payment Successful' : status === 'cancelled' ? 'Payment Cancelled' : 'Payment Failed'}
+                     {status === 'cancelled' ? 'Payment Cancelled' : 'Payment Failed'}
                 </CardTitle>
                 <CardDescription>
                     {message}
@@ -127,7 +145,7 @@ function PaymentStatusContent() {
             </CardContent>
             <CardFooter>
                 <Button className="w-full" asChild>
-                    <Link href={status === 'success' ? "/dashboard?payment=success" : "/dashboard"}>
+                    <Link href="/dashboard">
                         Go to Dashboard
                     </Link>
                 </Button>
