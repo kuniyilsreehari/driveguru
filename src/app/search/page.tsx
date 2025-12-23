@@ -5,7 +5,7 @@
 import { Suspense, useMemo, useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { collection, query, where, limit, or } from 'firebase/firestore';
+import { collection, query, where, limit, or, and } from 'firebase/firestore';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -55,11 +55,6 @@ function SearchResults() {
     const latParam = searchParams.get('lat');
     const lonParam = searchParams.get('lon');
 
-    const tiers = useMemo(() => {
-        return tierParam ? tierParam.split(',') : ['Premier', 'Super Premier'];
-    }, [tierParam]);
-
-
     useEffect(() => {
         const geocodeLocation = async () => {
             // Priority: lat/lon params > location query > city/state/pincode
@@ -94,36 +89,32 @@ function SearchResults() {
 
     const expertsQuery = useMemoFirebase(() => {
         if (!firestore) return null;
-        
+
+        const baseCollection = collection(firestore, 'users');
         const constraints = [];
 
         if (verified) {
             constraints.push(where('verified', '==', true));
         }
-
         if (available) {
             constraints.push(where('isAvailable', '==', true));
         }
-        
         if (roleQuery) {
             constraints.push(where('role', '==', roleQuery));
         }
         
-        // Enforce subscription model by default if tiers are specified
-        if (tiers && tiers.length > 0) {
-            constraints.push(where('tier', 'in', tiers));
+        // If a tier is specified in the URL, use it. Otherwise, don't filter by tier.
+        if (tierParam) {
+            const tiers = tierParam.split(',').filter(t => t);
+            if (tiers.length > 0) {
+                constraints.push(where('tier', 'in', tiers));
+            }
         }
 
-        const baseCollection = collection(firestore, 'users');
+        return query(baseCollection, ...constraints);
 
-        if (constraints.length > 0) {
-            return query(baseCollection, ...constraints);
-        }
+    }, [firestore, verified, available, roleQuery, tierParam]);
 
-        // Fallback to a default query if no constraints are built, e.g., all subscribed users
-        return query(baseCollection, where('tier', 'in', ['Premier', 'Super Premier']));
-
-    }, [firestore, verified, available, roleQuery, tiers]);
 
     const { data: allExperts, isLoading } = useCollection<ExpertUser>(expertsQuery);
     
