@@ -29,26 +29,6 @@ export async function generateAboutMe(input: GenerateAboutMeInput): Promise<Gene
   return generateAboutMeFlow(input);
 }
 
-const prompt = ai.definePrompt({
-  name: 'generateAboutMePrompt',
-  input: { schema: GenerateAboutMeInputSchema },
-  output: { schema: GenerateAboutMeOutputSchema },
-  prompt: `You are an expert at writing compelling professional bios. 
-  Generate a friendly and professional "About Me" section for an expert named {{{firstName}}}.
-  The bio should be concise (2-3 sentences) and highlight their key strengths.
-
-  Here is their information:
-  - Role: {{{role}}}
-  - Skills: {{{skills}}}
-  - Years of Experience: {{{yearsOfExperience}}}
-  - Qualification: {{{qualification}}}
-
-  Based on this, write a bio that would be appealing to potential clients.
-  Start with a strong opening statement. Mention their experience and key skills.
-  Keep the tone professional yet approachable.
-  `,
-});
-
 const generateAboutMeFlow = ai.defineFlow(
   {
     name: 'generateAboutMeFlow',
@@ -56,7 +36,25 @@ const generateAboutMeFlow = ai.defineFlow(
     outputSchema: GenerateAboutMeOutputSchema,
   },
   async (input) => {
-    const { output } = await prompt(input);
-    return output!;
+    const llmResponse = await ai.generate({
+      model: 'gemini-1.5-flash',
+      prompt: `You are an expert at writing compelling professional bios. 
+      Generate a friendly and professional "About Me" section for an expert named ${input.firstName}.
+      The bio should be concise (2-3 sentences) and highlight their key strengths.
+
+      Here is their information:
+      - Role: ${input.role}
+      - Skills: ${input.skills}
+      - Years of Experience: ${input.yearsOfExperience}
+      - Qualification: ${input.qualification}
+
+      Based on this, write a bio that would be appealing to potential clients.
+      Start with a strong opening statement. Mention their experience and key skills.
+      Keep the tone professional yet approachable.
+      `,
+      output: { schema: GenerateAboutMeOutputSchema },
+    });
+    
+    return llmResponse.output!;
   }
 );
