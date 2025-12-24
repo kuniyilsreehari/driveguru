@@ -6,7 +6,7 @@ import { useState, useEffect, useRef } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { User as UserIcon, Mail, Lock, Eye, EyeOff, Briefcase, MapPin, Phone, LocateIcon, Loader2, Building, Home, ArrowRight, MessageSquare, Gift, PenSquare, Factory, Shield, Save, Linkedin, Github, Globe, Twitter, Type } from "lucide-react";
+import { User as UserIcon, Mail, Lock, Eye, EyeOff, Briefcase, MapPin, Phone, LocateIcon, Loader2, Building, Home, ArrowRight, MessageSquare, Gift, PenSquare, Factory, Shield, Save, Linkedin, Github, Globe, Twitter, Type, List } from "lucide-react";
 import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, getAdditionalUserInfo, RecaptchaVerifier, signInWithPhoneNumber, EmailAuthProvider, linkWithCredential } from 'firebase/auth';
 import { doc, serverTimestamp, collection, query, where, getDocs, limit } from 'firebase/firestore';
 
@@ -29,7 +29,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth, useUser, useFirestore } from "@/firebase";
+import { useAuth, useUser, useFirestore, useDoc, useMemoFirebase } from "@/firebase";
 import { setDocumentNonBlocking, updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
@@ -47,6 +47,7 @@ import { Switch } from "../ui/switch";
 import Link from "next/link";
 import { DialogFooter } from "../ui/dialog";
 import { IndianRupee, Calendar, GraduationCap, School, Book, Info, Pen, Factory as FactoryIcon, Sparkles } from "lucide-react";
+import type { HomepageCategory } from "@/app/admin/page";
 
 const expertTypes = [
     { name: "Freelancer", icon: <UserIcon className="w-8 h-8" />, description: "Offer your individual skills and services directly to clients." },
@@ -70,6 +71,7 @@ const formSchema = z.object({
   department: z.string().optional(),
   companyName: z.string().optional(),
   businessDescription: z.string().optional(),
+  category: z.string().optional(),
   hourlyRate: z.coerce.number().min(0, "Hourly rate cannot be negative.").optional(),
   yearsOfExperience: z.coerce.number().min(0, "Years of experience cannot be negative.").optional(),
   gender: z.string().optional(),
@@ -107,6 +109,7 @@ type ExpertUserProfile = {
     companyName?: string;
     department?: string;
     businessDescription?: string;
+    category?: string;
     hourlyRate?: number;
     yearsOfExperience?: number;
     gender?: string;
@@ -121,6 +124,10 @@ type ExpertUserProfile = {
     githubUrl?: string;
     portfolioUrl?: string;
     tier?: 'Standard' | 'Premier' | 'Super Premier';
+};
+
+type AppConfig = {
+    homepageCategories?: HomepageCategory[];
 };
 
 interface EditProfileFormProps {
@@ -141,6 +148,14 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
   const [isFetchingPincode, setIsFetchingPincode] = useState(false);
   const [isPremiumDialogOpen, setIsPremiumDialogOpen] = useState(false);
   const [isLinking, setIsLinking] = useState(false);
+
+  const appConfigDocRef = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return doc(firestore, 'app_config', 'homepage');
+  }, [firestore]);
+  
+  const { data: appConfig } = useDoc<AppConfig>(appConfigDocRef);
+  const homepageCategories = appConfig?.homepageCategories || [];
 
 
   const extractPhoneNumberParts = (fullNumber?: string) => {
@@ -179,6 +194,7 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
       department: userProfile.department || "",
       companyName: userProfile.companyName || "",
       businessDescription: userProfile.businessDescription || "",
+      category: userProfile.category || "",
       hourlyRate: userProfile.hourlyRate || 0,
       yearsOfExperience: userProfile.yearsOfExperience || 0,
       gender: userProfile.gender || "",
@@ -636,6 +652,33 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
               />
             </>
           )}
+
+            <FormField
+                control={form.control}
+                name="category"
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Service Category</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select a primary category" />
+                                </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                                {homepageCategories.map(cat => (
+                                    <SelectItem key={cat.id} value={cat.name}>
+                                        {cat.name}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        <FormDescription>This helps clients find you in the right category.</FormDescription>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
+
           <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}

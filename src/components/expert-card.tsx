@@ -7,7 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { Star, IndianRupee, Briefcase, Calendar, Phone, MessageCircle, UserCheck, Crown, Sparkles, MapPin, Lock } from 'lucide-react';
+import { Star, IndianRupee, Briefcase, Calendar, Phone, MessageCircle, UserCheck, Crown, Sparkles, MapPin, Lock, List } from 'lucide-react';
 import { useUser } from '@/firebase';
 import { FollowerStats } from './follower-stats';
 
@@ -24,6 +24,7 @@ export type ExpertUser = {
     latitude?: number;
     longitude?: number;
     role?: string;
+    category?: string;
     verified?: boolean;
     hourlyRate?: number;
     yearsOfExperience?: number;
@@ -101,6 +102,7 @@ export function ExpertCard({ expert }: ExpertCardProps) {
                                 )}
                                 {expert.tier === 'Premier' && <Badge variant="outline" className="border-purple-500 text-purple-500"><Crown className="mr-1 h-3 w-3" /> Premier</Badge>}
                                 {expert.tier === 'Super Premier' && <Badge variant="outline" className="border-blue-500 text-blue-500"><Sparkles className="mr-1 h-3 w-3" /> Super Premier</Badge>}
+                                {expert.category && <Badge variant="secondary"><List className="mr-1 h-3 w-3" />{expert.category}</Badge>}
                             </div>
                         </Link>
 
