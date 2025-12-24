@@ -68,14 +68,6 @@ const formSchema = z.object({
     path: ["companyName"],
 }).refine(data => {
     if (data.role === 'Company' || data.role === 'Authorized Pro') {
-        return !!data.department;
-    }
-    return true;
-}, {
-    message: "Department is required.",
-    path: ["department"],
-}).refine(data => {
-    if (data.role === 'Company' || data.role === 'Authorized Pro') {
         return !!data.address;
     }
     return true;
@@ -800,24 +792,15 @@ export function RegistrationForm() {
                     control={form.control}
                     name="department"
                     render={({ field }) => (
-                      <FormItem>
-                          <FormLabel>Department</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
-                              <FormControl>
-                                  <SelectTrigger>
-                                      <SelectValue placeholder="Select a department" />
-                                  </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                  <SelectItem value="Engineering">Engineering</SelectItem>
-                                  <SelectItem value="Sales">Sales</SelectItem>
-                                  <SelectItem value="Marketing">Marketing</SelectItem>
-                                  <SelectItem value="HR">Human Resources</SelectItem>
-                                  <SelectItem value="Support">Support</SelectItem>
-                                  <SelectItem value="Other">Other</SelectItem>
-                              </SelectContent>
-                          </Select>
-                          <FormMessage />
+                        <FormItem>
+                        <FormLabel>Department</FormLabel>
+                        <div className="relative">
+                          <Briefcase className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                          <FormControl>
+                            <Input placeholder="e.g. Engineering, Sales" {...field} className="pl-10" />
+                          </FormControl>
+                        </div>
+                        <FormMessage />
                       </FormItem>
                     )}
                   />
