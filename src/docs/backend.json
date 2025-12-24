@@ -456,6 +456,11 @@
                 "required": ["id", "name", "icon"]
             }
         },
+        "departments": {
+          "type": "array",
+          "description": "A list of available company departments.",
+          "items": { "type": "string" }
+        },
         "isPaymentsEnabled": {
           "type": "boolean",
           "description": "Globally enables or disables all payment functionalities."

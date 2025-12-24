@@ -129,6 +129,7 @@ type ExpertUserProfile = {
 
 type AppConfig = {
     homepageCategories?: HomepageCategory[];
+    departments?: string[];
 };
 
 interface EditProfileFormProps {
@@ -157,6 +158,7 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
   
   const { data: appConfig } = useDoc<AppConfig>(appConfigDocRef);
   const homepageCategories = appConfig?.homepageCategories || [];
+  const departments = appConfig?.departments || [];
 
 
   const extractPhoneNumberParts = (fullNumber?: string) => {
@@ -616,12 +618,18 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Department</FormLabel>
-                     <div className="relative">
-                      <Briefcase className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                      <FormControl>
-                        <Input placeholder="e.g., Marketing, Engineering" {...field} className="pl-10" />
-                      </FormControl>
-                    </div>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select a department" />
+                        </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                        {departments.map((dep) => (
+                            <SelectItem key={dep} value={dep}>{dep}</SelectItem>
+                        ))}
+                        </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}

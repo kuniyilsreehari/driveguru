@@ -135,6 +135,7 @@ export type HomepageCategory = {
 type AppConfig = {
     featuredExpertsLimit?: number;
     homepageCategories?: HomepageCategory[];
+    departments?: string[];
     premierPaymentLink?: string;
     superPremierPaymentLink?: string;
     verificationPaymentLink?: string;
@@ -529,6 +530,8 @@ export default function AdminDashboardPage() {
   const [newCategoryName, setNewCategoryName] = useState('');
   const [newCategoryIcon, setNewCategoryIcon] = useState('');
 
+  const [departments, setDepartments] = useState<string[]>([]);
+  const [newDepartment, setNewDepartment] = useState('');
 
   const [isSavingSettings, setIsSavingSettings] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
@@ -583,6 +586,7 @@ export default function AdminDashboardPage() {
     if (!isAppConfigLoading && appConfig) {
         setFeaturedExpertsLimit(appConfig.featuredExpertsLimit || 3);
         setHomepageCategories(appConfig.homepageCategories || []);
+        setDepartments(appConfig.departments || []);
         setPremierPaymentLink(appConfig.premierPaymentLink || '');
         setSuperPremierPaymentLink(appConfig.superPremierPaymentLink || '');
         setVerificationPaymentLink(appConfig.verificationPaymentLink || '');
@@ -684,6 +688,7 @@ export default function AdminDashboardPage() {
     const settingsToSave: AppConfig = {
         featuredExpertsLimit: Number(featuredExpertsLimit),
         homepageCategories,
+        departments,
         premierPaymentLink,
         superPremierPaymentLink,
         verificationPaymentLink,
@@ -765,6 +770,22 @@ export default function AdminDashboardPage() {
       });
   };
 
+  const handleAddDepartment = () => {
+      if (newDepartment.trim() && !departments.includes(newDepartment.trim())) {
+          setDepartments(prev => [...prev, newDepartment.trim()]);
+          setNewDepartment('');
+      } else {
+          toast({
+              variant: 'destructive',
+              title: 'Invalid Department',
+              description: 'Please enter a unique department name.'
+          });
+      }
+  };
+  
+  const handleDeleteDepartment = (departmentToDelete: string) => {
+      setDepartments(prev => prev.filter(dep => dep !== departmentToDelete));
+  };
 
   const handleApproveReview = (review: Review) => {
     if (!firestore) return;
@@ -1508,6 +1529,34 @@ export default function AdminDashboardPage() {
                                                     <Input id="new-cat-icon" value={newCategoryIcon} onChange={(e) => setNewCategoryIcon(e.target.value)} placeholder="e.g. 'Megaphone'" />
                                                 </div>
                                                 <Button onClick={handleAddCategory}>
+                                                    <PlusCircle className="mr-2 h-4 w-4" /> Add
+                                                </Button>
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+
+                                    <Card>
+                                        <CardHeader>
+                                            <CardTitle className="text-lg flex items-center gap-2"><Building className="h-5 w-5" />Department Management</CardTitle>
+                                            <CardDescription>Create and manage company departments.</CardDescription>
+                                        </CardHeader>
+                                        <CardContent className="space-y-4">
+                                            <div className="space-y-2">
+                                                {departments.map((dep, index) => (
+                                                    <div key={index} className="flex items-center gap-2 p-2 border rounded-lg">
+                                                        <p className="flex-1 text-sm">{dep}</p>
+                                                        <Button variant="ghost" size="icon" onClick={() => handleDeleteDepartment(dep)}>
+                                                            <Trash2 className="h-4 w-4 text-destructive" />
+                                                        </Button>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                            <div className="flex items-end gap-2">
+                                                <div className="flex-1">
+                                                    <Label htmlFor="new-department">New Department Name</Label>
+                                                    <Input id="new-department" value={newDepartment} onChange={(e) => setNewDepartment(e.target.value)} placeholder="e.g., 'Human Resources'" />
+                                                </div>
+                                                <Button onClick={handleAddDepartment}>
                                                     <PlusCircle className="mr-2 h-4 w-4" /> Add
                                                 </Button>
                                             </div>

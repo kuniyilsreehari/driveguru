@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth, useUser, useFirestore } from "@/firebase";
+import { useAuth, useUser, useFirestore, useDoc, useMemoFirebase } from "@/firebase";
 import { setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
@@ -85,6 +85,10 @@ const otpFormSchema = z.object({
   otp: z.string().length(6, { message: "OTP must be 6 digits." }),
 });
 
+type AppConfig = {
+    departments?: string[];
+};
+
 
 export function RegistrationForm() {
   const { toast } = useToast();
@@ -103,6 +107,14 @@ export function RegistrationForm() {
   const searchParams = useSearchParams();
   const [isDetectingLocation, setIsDetectingLocation] = useState(false);
   const [isFetchingPincode, setIsFetchingPincode] = useState(false);
+
+  const appConfigDocRef = useMemoFirebase(() => {
+    if (!firestore) return null;
+    return doc(firestore, 'app_config', 'homepage');
+  }, [firestore]);
+  
+  const { data: appConfig } = useDoc<AppConfig>(appConfigDocRef);
+  const departments = appConfig?.departments || [];
 
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -792,14 +804,20 @@ export function RegistrationForm() {
                     control={form.control}
                     name="department"
                     render={({ field }) => (
-                        <FormItem>
+                      <FormItem>
                         <FormLabel>Department</FormLabel>
-                        <div className="relative">
-                          <Briefcase className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                          <FormControl>
-                            <Input placeholder="e.g. Engineering, Sales" {...field} className="pl-10" />
-                          </FormControl>
-                        </div>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select a department" />
+                            </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                            {departments.map((dep) => (
+                                <SelectItem key={dep} value={dep}>{dep}</SelectItem>
+                            ))}
+                            </SelectContent>
+                        </Select>
                         <FormMessage />
                       </FormItem>
                     )}
