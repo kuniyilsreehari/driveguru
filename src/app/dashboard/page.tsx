@@ -324,16 +324,7 @@ function PlanManagement({ userProfile, appConfig }: { userProfile: ExpertUserPro
                 <CardDescription>Upgrade your plan to unlock powerful new features and increase your visibility.</CardDescription>
             </CardHeader>
             <CardContent>
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                     <PlanCard
-                        title="Premier"
-                        icon={<Crown className="h-6 w-6" />}
-                        description="Get noticed and build trust."
-                        features={["Public profile listing", "AI-Powered Search access", "Post job vacancies", "Downloadable PDF profile"]}
-                        current={userProfile.tier === 'Premier'}
-                        link={appConfig?.premierPaymentLink || '/payment/premier'}
-                     >
-                     </PlanCard>
+                 <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
                      <PlanCard
                         title="Super Premier"
                         icon={<Sparkles className="h-6 w-6" />}
