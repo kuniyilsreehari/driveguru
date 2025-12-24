@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Star, IndianRupee, Briefcase, Calendar, Phone, MessageCircle, UserCheck, Crown, Sparkles, MapPin, Lock } from 'lucide-react';
 import { useUser } from '@/firebase';
+import { FollowerStats } from './follower-stats';
 
 export type ExpertUser = {
     id: string;
@@ -31,6 +32,7 @@ export type ExpertUser = {
     isAvailable?: boolean;
     phoneNumber?: string;
     showPhoneNumberOnProfile?: boolean;
+    following?: string[];
 };
 
 interface ExpertCardProps {
@@ -85,7 +87,10 @@ export function ExpertCard({ expert }: ExpertCardProps) {
                     <div className="flex-1">
                         <Link href={`/expert/${expert.id}`} className="block cursor-pointer">
                             <h3 className="text-xl font-bold">{getDisplayName(expert)}</h3>
-                            <div className="flex flex-wrap items-center gap-2 mt-1">
+                            <div className="mt-1">
+                                <FollowerStats expert={expert} />
+                            </div>
+                            <div className="flex flex-wrap items-center gap-2 mt-2">
                                 {expert.verified ? (
                                     <Badge variant="outline" className="border-green-500 text-green-500">
                                         <UserCheck className="mr-1 h-3 w-3" />
@@ -139,5 +144,3 @@ export function ExpertCard({ expert }: ExpertCardProps) {
         </Card>
     )
 }
-
-    
