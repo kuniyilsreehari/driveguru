@@ -7,7 +7,7 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { doc, arrayUnion, arrayRemove, query, collection, where } from 'firebase/firestore';
 import { useFirestore, useDoc, useMemoFirebase, useUser, updateDocumentNonBlocking, useCollection } from '@/firebase';
-import { Loader2, Star, ChevronLeft, MapPin, IndianRupee, Briefcase, Calendar, Info, Book, GraduationCap, School, User as UserIcon, UserCheck, XCircle, Crown, Sparkles, LogIn, Lock, Building, FileDown, Home, MessageSquare, PenSquare, Factory, Linkedin, Twitter, Github, Globe, UserPlus, UserMinus, Users, List } from 'lucide-react';
+import { Loader2, Star, ChevronLeft, MapPin, IndianRupee, Briefcase, Calendar, Info, Book, GraduationCap, School, User as UserIcon, UserCheck, XCircle, Crown, Sparkles, LogIn, Lock, Building, FileDown, Home, MessageSquare, PenSquare, Factory, Linkedin, Twitter, Github, Globe, UserPlus, UserMinus, Users, List, Phone } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardFooter } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -222,8 +222,17 @@ function ExpertProfileContent() {
         return phoneNumber.replace(/\s+/g, '');
     }
     const formattedPhoneNumber = cleanPhoneNumber(expert.phoneNumber);
-    const whatsappLink = `https://wa.me/${formattedPhoneNumber}`;
     const canContact = expert.verified && formattedPhoneNumber && isPremium;
+
+    const createWhatsAppMessage = () => {
+        const expertName = getDisplayName(expert);
+        const clientName = user?.displayName || "a potential client";
+        const message = `Hello ${expertName}, I found your profile on DriveGuru and I'm interested in your services.`;
+        return `https://wa.me/${formattedPhoneNumber}?text=${encodeURIComponent(message)}`;
+    };
+    
+    const whatsappLink = createWhatsAppMessage();
+    
 
     const getDisplayName = (expert?: ExpertUserProfile) => {
         if (!expert) return '';
@@ -380,14 +389,12 @@ function ExpertProfileContent() {
                             {canContact ? (
                                 <>
                                     <Button asChild className="flex-1" size="lg">
-                                        <Link href={`/expert/${expertId}/book`}>
-                                            <Calendar className="mr-2 h-4 w-4" /> Book an Appointment
-                                        </Link>
+                                        <a href={whatsappLink} target="_blank" rel="noopener noreferrer">
+                                            <MessageSquare className="mr-2 h-4 w-4" /> Book via WhatsApp
+                                        </a>
                                     </Button>
                                     <Button asChild variant="outline" className="flex-1 bg-green-500/10 border-green-500/50 text-green-500 hover:bg-green-500/20 hover:text-green-500" size="lg">
-                                        <a href={whatsappLink} target="_blank" rel="noopener noreferrer">
-                                            <MessageSquare className="mr-2 h-4 w-4" /> WhatsApp
-                                        </a>
+                                        <a href={`tel:${formattedPhoneNumber}`}><Phone className="mr-2 h-4 w-4" /> Call</a>
                                     </Button>
                                 </>
                             ) : (

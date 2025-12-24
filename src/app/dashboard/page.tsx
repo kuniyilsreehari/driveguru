@@ -87,20 +87,6 @@ type ExpertUserProfile = {
     following?: string[];
 };
 
-type Booking = {
-    id: string;
-    clientId: string;
-    clientName: string;
-    expertId: string;
-    expertName: string;
-    requestedDateTime: string;
-    workDescription: string;
-    location: string;
-    status: 'confirmed' | 'completed' | 'cancelled';
-    createdAt: Timestamp;
-};
-
-
 type PlanPrices = {
     daily?: number;
     monthly?: number;
@@ -339,80 +325,6 @@ function PlanManagement({ userProfile, appConfig }: { userProfile: ExpertUserPro
             </CardContent>
         </Card>
     )
-}
-
-function MyBookingsCard({ userProfile }: { userProfile: ExpertUserProfile }) {
-    const firestore = useFirestore();
-
-    const bookingsQuery = useMemoFirebase(() => {
-        if (!firestore) return null;
-        return query(
-            collection(firestore, 'bookings'),
-            where('expertId', '==', userProfile.id),
-            orderBy('createdAt', 'desc')
-        );
-    }, [firestore, userProfile.id]);
-
-    const { data: bookings, isLoading } = useCollection<Booking>(bookingsQuery);
-
-    const handleStatusChange = (bookingId: string, status: 'completed' | 'cancelled') => {
-        if (!firestore) return;
-        const bookingDocRef = doc(firestore, 'bookings', bookingId);
-        updateDocumentNonBlocking(bookingDocRef, { status: status });
-        toast({
-            title: `Booking ${status.charAt(0).toUpperCase() + status.slice(1)}`,
-            description: `The appointment has been marked as ${status}.`,
-        });
-    };
-    
-    return (
-        <Card>
-            <CardHeader>
-                <CardTitle>My Bookings</CardTitle>
-                <CardDescription>View and manage your upcoming and past appointments.</CardDescription>
-            </CardHeader>
-            <CardContent>
-                {isLoading ? (
-                    <div className="flex items-center justify-center p-8">
-                        <Loader className="h-6 w-6 animate-spin" />
-                    </div>
-                ) : bookings && bookings.length > 0 ? (
-                    <div className="space-y-4">
-                        {bookings.map((booking) => (
-                            <div key={booking.id} className="p-4 border rounded-lg">
-                                <div className="flex flex-col sm:flex-row justify-between sm:items-start">
-                                    <div>
-                                        <p className="font-semibold">{booking.clientName}</p>
-                                        <p className="text-sm text-muted-foreground">{booking.requestedDateTime ? new Date(booking.requestedDateTime).toLocaleString() : 'Date not set'}</p>
-                                        <p className="text-sm text-muted-foreground mt-2">{booking.workDescription}</p>
-                                    </div>
-                                    <div className="mt-2 sm:mt-0">
-                                        <Badge variant={booking.status === 'completed' ? 'default' : booking.status === 'cancelled' ? 'destructive' : 'secondary'}>
-                                            {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
-                                        </Badge>
-                                    </div>
-                                </div>
-                                {booking.status === 'confirmed' && (
-                                    <div className="flex gap-2 mt-4 pt-4 border-t">
-                                        <Button size="sm" variant="outline" onClick={() => handleStatusChange(booking.id, 'completed')}>
-                                            <CheckCircle className="mr-2 h-4 w-4" /> Complete
-                                        </Button>
-                                        <Button size="sm" variant="destructive" onClick={() => handleStatusChange(booking.id, 'cancelled')}>
-                                            <XCircle className="mr-2 h-4 w-4" /> Cancel
-                                        </Button>
-                                    </div>
-                                )}
-                            </div>
-                        ))}
-                    </div>
-                ) : (
-                    <div className="text-center p-8 border-2 border-dashed rounded-lg">
-                        <p className="text-muted-foreground">You don&apos;t have any bookings yet.</p>
-                    </div>
-                )}
-            </CardContent>
-        </Card>
-    );
 }
 
 function FollowerStats({ userId }: { userId: string }) {
@@ -910,10 +822,6 @@ function ExpertDashboardPage() {
                 </CardContent>
             </Card>
         )}
-
-        {userProfile.tier === 'Premier' || userProfile.tier === 'Super Premier' ? (
-             <MyBookingsCard userProfile={userProfile} />
-        ) : null}
 
         <PlanManagement userProfile={userProfile} appConfig={appConfig} />
         

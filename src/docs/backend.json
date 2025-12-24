@@ -194,58 +194,6 @@
         "createdAt"
       ]
     },
-    "Booking": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Booking",
-      "type": "object",
-      "description": "Represents a booking or appointment.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the booking."
-        },
-        "clientId": {
-          "type": "string",
-          "description": "The ID of the user who made the booking."
-        },
-        "clientName": {
-          "type": "string",
-          "description": "The name of the client."
-        },
-        "expertId": {
-          "type": "string",
-          "description": "The ID of the expert being booked."
-        },
-        "expertName": {
-          "type": "string",
-          "description": "The name of the expert."
-        },
-        "requestedDateTime": {
-          "type": "string",
-          "format": "date-time",
-          "description": "The requested date and time for the appointment."
-        },
-        "workDescription": {
-          "type": "string",
-          "description": "A description of the work to be done."
-        },
-        "location": {
-          "type": "string",
-          "description": "The location for the appointment."
-        },
-        "status": {
-          "type": "string",
-          "description": "The status of the booking.",
-          "enum": ["confirmed", "completed", "cancelled"]
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Timestamp of when the booking was created."
-        }
-      },
-      "required": ["id", "clientId", "clientName", "expertId", "expertName", "requestedDateTime", "status", "createdAt"]
-    },
     "Company": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Company",
@@ -618,22 +566,6 @@
             {
               "name": "companyId",
               "description": "The unique identifier of the company."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/bookings/{bookingId}",
-        "definition": {
-          "entityName": "Booking",
-          "schema": {
-            "$ref": "#/backend/entities/Booking"
-          },
-          "description": "Stores all appointment bookings.",
-          "params": [
-            {
-              "name": "bookingId",
-              "description": "The unique identifier for the booking."
             }
           ]
         }
