@@ -81,36 +81,16 @@ function HomePageContent() {
 
     const expertsQuery = useMemoFirebase(() => {
         if (!firestore) return null;
-        // Fetch all users who are not super admins to sort them on the client
-        return query(collection(firestore, 'users'), where('role', '!=', 'Super Admin'));
-    }, [firestore]);
+        return query(
+            collection(firestore, 'users'), 
+            where('tier', '==', 'Super Premier'),
+            limit(featuredExpertsLimit)
+        );
+    }, [firestore, featuredExpertsLimit]);
     
     const { data: experts, isLoading: isLoadingExperts } = useCollection<ExpertUser>(expertsQuery);
     
-    const sortedExperts = useMemo(() => {
-        if (!experts) return [];
-        const tierOrder = { 'Super Premier': 0, 'Premier': 1, 'Standard': 2 };
-
-        const sorted = [...experts].sort((a, b) => {
-            const tierA = a.tier || 'Standard';
-            const tierB = b.tier || 'Standard';
-
-            // Primary sort: by tier
-            if (tierOrder[tierA] !== tierOrder[tierB]) {
-                return tierOrder[tierA] - tierOrder[tierB];
-            }
-
-            // Secondary sort: by verification status (verified first)
-            if ((a.verified ?? false) !== (b.verified ?? false)) {
-                return (b.verified ?? false) ? 1 : -1;
-            }
-            
-            return 0;
-        });
-
-        return sorted.slice(0, featuredExpertsLimit);
-        
-    }, [experts, featuredExpertsLimit]);
+    const sortedExperts = experts;
 
 
     const getCurrentPosition = (): Promise<GeolocationPosition> => {
