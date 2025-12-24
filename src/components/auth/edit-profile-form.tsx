@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import * as React from "react";
@@ -614,23 +615,14 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
                 name="department"
                 render={({ field }) => (
                   <FormItem>
-                      <FormLabel>Department</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                              <SelectTrigger>
-                                  <SelectValue placeholder="Select a department" />
-                              </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                              <SelectItem value="Engineering">Engineering</SelectItem>
-                              <SelectItem value="Sales">Sales</SelectItem>
-                              <SelectItem value="Marketing">Marketing</SelectItem>
-                              <SelectItem value="HR">Human Resources</SelectItem>
-                              <SelectItem value="Support">Support</SelectItem>
-                              <SelectItem value="Other">Other</SelectItem>
-                          </SelectContent>
-                      </Select>
-                      <FormMessage />
+                    <FormLabel>Department</FormLabel>
+                     <div className="relative">
+                      <Briefcase className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                      <FormControl>
+                        <Input placeholder="e.g., Marketing, Engineering" {...field} className="pl-10" />
+                      </FormControl>
+                    </div>
+                    <FormMessage />
                   </FormItem>
                 )}
               />
