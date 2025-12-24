@@ -137,7 +137,14 @@ function SearchResults() {
                 const role = expert.role?.toLowerCase() || '';
                 const skills = expert.skills?.toLowerCase() || '';
                 const qualification = expert.qualification?.toLowerCase() || '';
+                const category = expert.category?.toLowerCase() || '';
 
+                // Prioritize matching the category field directly
+                if (category.includes(lowercasedQuery)) {
+                    return true;
+                }
+                
+                // Then check other relevant fields
                 return name.includes(lowercasedQuery) ||
                        company.includes(lowercasedQuery) ||
                        role.includes(lowercasedQuery) ||
