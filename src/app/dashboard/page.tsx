@@ -8,7 +8,7 @@ import { signOut } from 'firebase/auth';
 import { doc, collection, query, where, getDoc, runTransaction, increment, getDocs, orderBy, Timestamp } from 'firebase/firestore';
 import { useUser, useAuth, useFirestore, useDoc, useCollection, useMemoFirebase, updateDocumentNonBlocking } from '@/firebase';
 import { Button } from '@/components/ui/button';
-import { LogOut, Briefcase, Loader, Edit, UserCheck, XCircle, MapPin, IndianRupee, Calendar, Book, GraduationCap, School, Info, User as UserIcon, Check, Power, Building, PlusCircle, Crown, Sparkles, Lock, Home, ArrowUpCircle, ShieldCheck, ExternalLink, Gift, Copy, Shield, AlertTriangle, ChevronDown, Link as LinkIcon, MessageCircle, BookOpen, CheckCircle, PenSquare, Factory, Users } from 'lucide-react';
+import { LogOut, Briefcase, Loader, Edit, UserCheck, XCircle, MapPin, IndianRupee, Calendar, Book, GraduationCap, School, Info, User as UserIcon, Check, Power, Building, PlusCircle, Crown, Sparkles, Lock, Home, ArrowUpCircle, ShieldCheck, ExternalLink, Gift, Copy, Shield, AlertTriangle, ChevronDown, Link as LinkIcon, MessageCircle, BookOpen, CheckCircle, PenSquare, Factory, Users, Type } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import {
   Dialog,
@@ -76,6 +76,7 @@ type ExpertUserProfile = {
     associatedProjectsName?: string;
     phoneNumber?: string;
     companyName?: string;
+    businessDescription?: string;
     department?: string;
     isAvailable?: boolean;
     companyId?: string;
@@ -792,6 +793,12 @@ function ExpertDashboardPage() {
                     </div>
                     {(userProfile.role === 'Company' || userProfile.role === 'Authorized Pro') && (
                         <>
+                            {userProfile.businessDescription && (
+                                <div className="flex items-start gap-3 md:col-span-2">
+                                    <Type className="h-5 w-5 text-muted-foreground mt-1 flex-shrink-0" />
+                                    <p><span className="font-semibold">Business:</span> {userProfile.businessDescription}</p>
+                                </div>
+                            )}
                             <div className="flex items-center gap-3">
                                 <Building className="h-5 w-5 text-muted-foreground" />
                                 <p><span className="font-semibold">Department:</span> {userProfile.department || <span className="text-destructive">Not specified</span>}</p>

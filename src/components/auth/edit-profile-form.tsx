@@ -6,7 +6,7 @@ import { useState, useEffect, useRef } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { User as UserIcon, Mail, Lock, Eye, EyeOff, Briefcase, MapPin, Phone, LocateIcon, Loader2, Building, Home, ArrowRight, MessageSquare, Gift, PenSquare, Factory, Shield, Save, Linkedin, Github, Globe, Twitter } from "lucide-react";
+import { User as UserIcon, Mail, Lock, Eye, EyeOff, Briefcase, MapPin, Phone, LocateIcon, Loader2, Building, Home, ArrowRight, MessageSquare, Gift, PenSquare, Factory, Shield, Save, Linkedin, Github, Globe, Twitter, Type } from "lucide-react";
 import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, getAdditionalUserInfo, RecaptchaVerifier, signInWithPhoneNumber, EmailAuthProvider, linkWithCredential } from 'firebase/auth';
 import { doc, serverTimestamp, collection, query, where, getDocs, limit } from 'firebase/firestore';
 
@@ -69,6 +69,7 @@ const formSchema = z.object({
   role: z.string({ required_error: "Please select your expert type." }),
   department: z.string().optional(),
   companyName: z.string().optional(),
+  businessDescription: z.string().optional(),
   hourlyRate: z.coerce.number().min(0, "Hourly rate cannot be negative.").optional(),
   yearsOfExperience: z.coerce.number().min(0, "Years of experience cannot be negative.").optional(),
   gender: z.string().optional(),
@@ -105,6 +106,7 @@ type ExpertUserProfile = {
     showPhoneNumberOnProfile?: boolean;
     companyName?: string;
     department?: string;
+    businessDescription?: string;
     hourlyRate?: number;
     yearsOfExperience?: number;
     gender?: string;
@@ -176,6 +178,7 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
       role: userProfile.role || "",
       department: userProfile.department || "",
       companyName: userProfile.companyName || "",
+      businessDescription: userProfile.businessDescription || "",
       hourlyRate: userProfile.hourlyRate || 0,
       yearsOfExperience: userProfile.yearsOfExperience || 0,
       gender: userProfile.gender || "",
@@ -568,6 +571,22 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
                       <Building className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                       <FormControl>
                         <Input placeholder="Your Company Inc." {...field} className="pl-10" />
+                      </FormControl>
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="businessDescription"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Short Business Description</FormLabel>
+                    <div className="relative">
+                      <Type className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                      <FormControl>
+                        <Input placeholder="e.g., We build amazing web apps." {...field} className="pl-10" />
                       </FormControl>
                     </div>
                     <FormMessage />
@@ -1120,5 +1139,3 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
     </>
   );
 }
-
-    
