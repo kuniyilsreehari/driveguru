@@ -40,9 +40,11 @@ service cloud.firestore {
     
     // A user can update certain fields of their own profile.
     function isUpdatingOwnUserDoc(userId) {
-      let protectedFields = ['id', 'email', 'verified', 'role', 'tier', 'createdAt', 'referralCode', 'referralPoints'];
-      return isOwner(userId) && isExistingDoc() &&
-             !request.resource.data.diff(resource.data).affectedKeys().hasAny(protectedFields);
+      let protectedFields = ['id', 'email', 'verified', 'role', 'tier', 'createdAt', 'referralCode', 'referralPoints', 'referredByCode'];
+      let allAffectedKeys = request.resource.data.diff(resource.data).affectedKeys();
+
+      // The rule allows the update if the user is the owner and is not trying to change any of the protected fields.
+      return isOwner(userId) && isExistingDoc() && !allAffectedKeys.hasAny(protectedFields);
     }
     
     function isCreatingOwnLocationData(userId) {
@@ -122,8 +124,9 @@ service cloud.firestore {
         // The expert can manage their own bookings. The client who made it can also view it.
         allow get, update: if (isPremiumExpert() && resource.data.expertId == request.auth.uid) || isOwner(resource.data.clientId);
         
-        // An expert can list their own bookings. A client can list bookings they have made.
-        allow list: if (isPremiumExpert() && request.query.where[0][2] == request.auth.uid) || 
+        // An expert can list their own bookings. A client can list bookings they have made. Super admins can list all.
+        allow list: if isSuperAdmin() ||
+                      (isPremiumExpert() && request.query.where[0][2] == request.auth.uid) || 
                       (isSignedIn() && request.query.where[0][2] == request.auth.uid);
         
         // Only the expert can delete their bookings.
