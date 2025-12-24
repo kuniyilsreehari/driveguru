@@ -2,7 +2,7 @@
 
 'use client';
 
-import { Suspense, useState, useEffect } from 'react';
+import { Suspense, useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { Briefcase, Building, ChevronDown, Laptop, LocateIcon, MapPin, Search, Smartphone, Wrench, Loader2, Star, UserCheck, Crown, Sparkles, HelpCircle, Bot, Lock } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -80,12 +80,38 @@ function HomePageContent() {
 
 
     const expertsQuery = useMemoFirebase(() => {
-        if (!firestore || isAppConfigLoading) return null;
-        return query(collection(firestore, 'users'), where('tier', '==', 'Super Premier'), limit(featuredExpertsLimit));
-    }, [firestore, isAppConfigLoading, featuredExpertsLimit]);
+        if (!firestore) return null;
+        // Fetch all users who are not super admins to sort them on the client
+        return query(collection(firestore, 'users'), where('role', '!=', 'Super Admin'));
+    }, [firestore]);
     
-
     const { data: experts, isLoading: isLoadingExperts } = useCollection<ExpertUser>(expertsQuery);
+    
+    const sortedExperts = useMemo(() => {
+        if (!experts) return [];
+        const tierOrder = { 'Super Premier': 0, 'Premier': 1, 'Standard': 2 };
+
+        const sorted = [...experts].sort((a, b) => {
+            const tierA = a.tier || 'Standard';
+            const tierB = b.tier || 'Standard';
+
+            // Primary sort: by tier
+            if (tierOrder[tierA] !== tierOrder[tierB]) {
+                return tierOrder[tierA] - tierOrder[tierB];
+            }
+
+            // Secondary sort: by verification status (verified first)
+            if ((a.verified ?? false) !== (b.verified ?? false)) {
+                return (b.verified ?? false) ? 1 : -1;
+            }
+            
+            return 0;
+        });
+
+        return sorted.slice(0, featuredExpertsLimit);
+        
+    }, [experts, featuredExpertsLimit]);
+
 
     const getCurrentPosition = (): Promise<GeolocationPosition> => {
         return new Promise((resolve, reject) => {
@@ -420,8 +446,8 @@ function HomePageContent() {
                             </div>
                         ) : (
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                {experts && experts.length > 0 ? (
-                                    experts.map(expert => (
+                                {sortedExperts && sortedExperts.length > 0 ? (
+                                    sortedExperts.map(expert => (
                                         <ExpertCard key={expert.id} expert={expert} />
                                     ))
                                 ) : (
@@ -448,3 +474,5 @@ export default function TalentSearchPage() {
         </Suspense>
     );
 }
+
+    
