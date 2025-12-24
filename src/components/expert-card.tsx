@@ -16,6 +16,7 @@ export type ExpertUser = {
     firstName?: string;
     lastName?: string;
     companyName?: string;
+    businessDescription?: string;
     email?: string;
     city?: string;
     state?: string;
@@ -88,6 +89,7 @@ export function ExpertCard({ expert }: ExpertCardProps) {
                     <div className="flex-1">
                         <Link href={`/expert/${expert.id}`} className="block cursor-pointer">
                             <h3 className="text-xl font-bold">{getDisplayName(expert)}</h3>
+                            {expert.businessDescription && <p className="text-sm text-muted-foreground mt-1">{expert.businessDescription}</p>}
                             <div className="mt-1">
                                 <FollowerStats expert={expert} />
                             </div>
