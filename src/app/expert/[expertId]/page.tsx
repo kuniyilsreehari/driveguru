@@ -143,7 +143,12 @@ function ExpertProfileContent() {
         return 'U';
     };
     
-    const displayName = expert?.companyName || `${expert?.firstName} ${expert?.lastName}`;
+    const getDisplayName = (expert?: ExpertUserProfile) => {
+        if (!expert) return '';
+        return expert.companyName || `${expert.firstName} ${expert.lastName}`;
+    }
+
+    const displayName = getDisplayName(expert);
     
     const handleDownloadPdf = async () => {
         const element = profileCardRef.current;
@@ -233,11 +238,6 @@ function ExpertProfileContent() {
     
     const whatsappLink = createWhatsAppMessage();
     
-
-    const getDisplayName = (expert?: ExpertUserProfile) => {
-        if (!expert) return '';
-        return expert.companyName || `${expert.firstName} ${expert.lastName}`;
-    }
 
     return (
         <div className="min-h-screen bg-background p-4 sm:p-8">
