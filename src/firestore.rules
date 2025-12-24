@@ -40,17 +40,11 @@ service cloud.firestore {
     
     // A user can update certain fields of their own profile.
     function isUpdatingOwnUserDoc(userId) {
-      let protectedFields = ['id', 'email', 'verified', 'role', 'tier', 'createdAt', 'referralCode', 'referralPoints'];
-      let updatableFields = ['following'];
+      let protectedFields = ['id', 'email', 'verified', 'role', 'tier', 'createdAt', 'referralCode', 'referralPoints', 'referredByCode'];
       let allAffectedKeys = request.resource.data.diff(resource.data).affectedKeys();
 
-      // Check that no protected fields are being modified
-      let protectedCheck = !allAffectedKeys.hasAny(protectedFields);
-
-      // Check if ONLY updatable fields are being modified
-      let onlyUpdatableCheck = allAffectedKeys.hasOnly(updatableFields);
-      
-      return isOwner(userId) && isExistingDoc() && (protectedCheck || onlyUpdatableCheck);
+      // The rule allows the update if the user is the owner and is not trying to change any of the protected fields.
+      return isOwner(userId) && isExistingDoc() && !allAffectedKeys.hasAny(protectedFields);
     }
     
     function isCreatingOwnLocationData(userId) {
