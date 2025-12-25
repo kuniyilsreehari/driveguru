@@ -60,29 +60,26 @@ export function WhatsAppBookingDialog({ expert, children }: WhatsAppBookingDialo
     const clientName = currentUser?.displayName || 'a potential client';
     const formattedDate = format(values.date, 'MMMM do, yyyy');
 
-    const message = `*New Booking Request from DriveGuru*
+    const message = `*New Booking Request – DriveGuru*
+
 Hello ${expertName},
 
-A new appointment has been requested by *${clientName}*.
+A new appointment has been requested. Please review the details below and respond to the client.
 
-*Client Details:*
-• Name: ${clientName}
-• Email: ${currentUser?.email || 'not provided'}
+*Client Details*
+Name: ${clientName}
+Email: ${currentUser?.email || 'Not Provided'}
 
-*Appointment Details:*
-• Date: ${formattedDate}
-• Time: ${values.time}
-• Location: ${values.location}
-• Work Required: ${values.workRequired}
-
---------------------
-*To the Expert:* Please reply to confirm this appointment time or to suggest a new one.
-*Simply reply with "Confirm" or "Cancel".*`;
+*Appointment Details*
+Date: ${formattedDate}
+Time: ${values.time}
+Location: ${values.location}
+Work Required: ${values.workRequired}`;
     
     const formattedPhoneNumber = cleanPhoneNumber(expert.phoneNumber);
     const whatsappUrl = `https://wa.me/${formattedPhoneNumber}?text=${encodeURIComponent(message)}`;
     
-    router.push(whatsappUrl);
+    window.open(whatsappUrl, '_blank');
   }
 
   return (
