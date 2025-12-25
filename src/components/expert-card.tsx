@@ -7,9 +7,10 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { Star, IndianRupee, Briefcase, Calendar, Phone, MessageCircle, UserCheck, Crown, Sparkles, MapPin, Lock, List } from 'lucide-react';
+import { Star, IndianRupee, Briefcase, Calendar, Phone, MessageCircle, UserCheck, Crown, Sparkles, MapPin, Lock, List, Share2 } from 'lucide-react';
 import { useUser } from '@/firebase';
 import { FollowerStats } from './follower-stats';
+import { useToast } from '@/hooks/use-toast';
 
 export type ExpertUser = {
     id: string;
@@ -43,6 +44,7 @@ interface ExpertCardProps {
 
 export function ExpertCard({ expert }: ExpertCardProps) {
     const { user } = useUser();
+    const { toast } = useToast();
 
     const getInitials = (expert: ExpertUser) => {
         if (expert.companyName) {
@@ -66,6 +68,33 @@ export function ExpertCard({ expert }: ExpertCardProps) {
         return phoneNumber.replace(/\s+/g, '');
     }
 
+    const handleShare = async () => {
+        const shareData = {
+            title: `Check out ${getDisplayName(expert)} on DriveGuru`,
+            text: `I found this expert, ${getDisplayName(expert)}, on DriveGuru. Here's their profile:`,
+            url: `${window.location.origin}/expert/${expert.id}`
+        };
+        try {
+            if (navigator.share) {
+                await navigator.share(shareData);
+            } else {
+                // Fallback for browsers that don't support Web Share API
+                await navigator.clipboard.writeText(shareData.url);
+                toast({
+                    title: "Link Copied",
+                    description: "The link to this expert's profile has been copied to your clipboard.",
+                });
+            }
+        } catch (err) {
+            console.error("Share failed:", err);
+            toast({
+                variant: 'destructive',
+                title: "Share Failed",
+                description: "Could not share the profile at this time.",
+            });
+        }
+    };
+
     const formattedPhoneNumber = cleanPhoneNumber(expert.phoneNumber);
     const locationString = [expert.city, expert.state, expert.pincode].filter(Boolean).join(', ');
     
@@ -88,8 +117,8 @@ export function ExpertCard({ expert }: ExpertCardProps) {
 
                     <div className="flex-1">
                         <Link href={`/expert/${expert.id}`} className="block cursor-pointer">
-                             <h3 className="text-xl font-bold">{expert.companyName || `${expert.firstName} ${expert.lastName}`}</h3>
-                            {expert.companyName && (
+                             <h3 className="text-xl font-bold">{getDisplayName(expert)}</h3>
+                             {expert.companyName && (
                                 <p className="text-sm text-muted-foreground">{`${expert.firstName} ${expert.lastName}`}</p>
                             )}
                             {expert.businessDescription && <p className="text-sm text-muted-foreground mt-1">{expert.businessDescription}</p>}
@@ -129,6 +158,9 @@ export function ExpertCard({ expert }: ExpertCardProps) {
                 <div className="flex flex-wrap items-center gap-2">
                     <Button asChild size="sm" variant="outline" className="flex-1">
                         <Link href={`/expert/${expert.id}`}>View Profile</Link>
+                    </Button>
+                     <Button size="sm" variant="outline" className="flex-1" onClick={handleShare}>
+                        <Share2 className="mr-2 h-4 w-4" /> Share
                     </Button>
                     <div className="flex flex-1 gap-2">
                     {canShowContactActions ? (
