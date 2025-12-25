@@ -6,7 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { format } from 'date-fns';
-import { CalendarIcon, MapPin, MessageSquare, Send, User } from 'lucide-react';
+import { CalendarIcon, MapPin, MessageSquare, Send, User, Mail } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 import { Button } from '@/components/ui/button';
@@ -21,6 +21,8 @@ import type { ExpertUser } from './expert-card';
 import { useUser } from '@/firebase';
 
 const formSchema = z.object({
+  clientName: z.string().min(2, { message: 'Name is required.' }),
+  clientEmail: z.string().email({ message: 'A valid email is required.' }),
   date: z.date({ required_error: 'A date is required.' }),
   time: z.string().min(1, 'A time is required.'),
   location: z.string().min(1, 'A location is required.'),
@@ -49,6 +51,8 @@ export function WhatsAppBookingDialog({ expert, children }: WhatsAppBookingDialo
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      clientName: currentUser?.displayName || '',
+      clientEmail: currentUser?.email || '',
       time: format(new Date(), 'HH:mm'),
       location: '',
       workRequired: '',
@@ -57,7 +61,6 @@ export function WhatsAppBookingDialog({ expert, children }: WhatsAppBookingDialo
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     const expertName = getDisplayName(expert);
-    const clientName = currentUser?.displayName || 'a potential client';
     const formattedDate = format(values.date, 'MMMM do, yyyy');
 
     const message = `*New Booking Request – DriveGuru*
@@ -67,8 +70,8 @@ Hello ${expertName},
 A new appointment has been requested. Please review the details below and respond to the client.
 
 *Client Details*
-Name: ${clientName}
-Email: ${currentUser?.email || 'Not Provided'}
+Name: ${values.clientName}
+Email: ${values.clientEmail}
 
 *Appointment Details*
 Date: ${formattedDate}
@@ -92,6 +95,37 @@ Work Required: ${values.workRequired}`;
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
+            <FormField
+              control={form.control}
+              name="clientName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Your Name</FormLabel>
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <FormControl><Input placeholder="e.g. John Doe" {...field} className="pl-10" /></FormControl>
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="clientEmail"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Your Email</FormLabel>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <FormControl><Input type="email" placeholder="e.g. john@example.com" {...field} className="pl-10" /></FormControl>
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+             <h4 className="text-sm font-medium text-muted-foreground pt-2">Appointment Details</h4>
+            
             <div className="grid grid-cols-2 gap-4">
                 <FormField
                 control={form.control}
