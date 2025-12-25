@@ -138,18 +138,15 @@ function SearchResults() {
                 const skills = expert.skills?.toLowerCase() || '';
                 const qualification = expert.qualification?.toLowerCase() || '';
                 const category = expert.category?.toLowerCase() || '';
+                const profession = expert.profession?.toLowerCase() || '';
 
-                // Prioritize matching the category field directly
-                if (category.includes(lowercasedQuery)) {
-                    return true;
-                }
-                
-                // Then check other relevant fields
                 return name.includes(lowercasedQuery) ||
                        company.includes(lowercasedQuery) ||
                        role.includes(lowercasedQuery) ||
                        skills.includes(lowercasedQuery) ||
-                       qualification.includes(lowercasedQuery);
+                       qualification.includes(lowercasedQuery) ||
+                       category.includes(lowercasedQuery) ||
+                       profession.includes(lowercasedQuery);
             });
         }
         
