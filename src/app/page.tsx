@@ -32,6 +32,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
+import { Switch } from '@/components/ui/switch';
 
 
 type AppConfig = {
@@ -56,6 +57,7 @@ function HomePageContent() {
 
     const [aiSearchQuery, setAiSearchQuery] = useState('');
     const [isParsingQuery, setIsParsingQuery] = useState(false);
+    const [useAiSearch, setUseAiSearch] = useState(false);
     
     const { user, isUserLoading } = useUser();
 
@@ -160,7 +162,45 @@ function HomePageContent() {
     
     const handleAiSearch = async () => {
         const queryParams = new URLSearchParams();
-        if (aiSearchQuery) queryParams.set('q', aiSearchQuery);
+
+        if (useAiSearch) {
+             if (!isPremiumUser && !isLoadingUserData) {
+                toast({
+                    variant: 'destructive',
+                    title: 'Premium Feature',
+                    description: 'AI-Powered Search is available for Premier members. Please upgrade your plan.',
+                });
+                return;
+            }
+            setIsParsingQuery(true);
+            try {
+                const result = await parseSearchQuery({ query: aiSearchQuery });
+                if (result.searchQuery) queryParams.set('q', result.searchQuery);
+                if (result.location) queryParams.set('location', result.location);
+                if (result.maxRate) queryParams.set('maxRate', result.maxRate.toString());
+                if (result.isVerified) queryParams.set('verified', 'true');
+                if (result.isAvailable) queryParams.set('available', 'true');
+                if (result.radius) queryParams.set('radius', result.radius.toString());
+                if (result.useUserLocation) {
+                     const position = await getCurrentPosition();
+                     queryParams.set('lat', position.coords.latitude.toString());
+                     queryParams.set('lon', position.coords.longitude.toString());
+                }
+            } catch (e) {
+                console.error("AI search parsing failed", e);
+                toast({
+                    variant: "destructive",
+                    title: "AI Search Error",
+                    description: "Could not understand your query. Please try rephrasing or use manual search.",
+                });
+                setIsParsingQuery(false);
+                return;
+            }
+            setIsParsingQuery(false);
+        } else {
+             if (aiSearchQuery) queryParams.set('q', aiSearchQuery);
+        }
+
         if (role && role !== 'all') queryParams.set('role', role);
         router.push(`/search?${queryParams.toString()}`);
     };
@@ -192,9 +232,18 @@ function HomePageContent() {
                 <main className="space-y-12">
                     <Card className="transition-all border-2 border-transparent hover:border-orange-500/50 hover:shadow-2xl hover:shadow-orange-500/10 focus-within:border-orange-500/50 focus-within:shadow-orange-500/10">
                         <CardHeader>
-                            <CardTitle className="flex items-center gap-2 text-2xl">
-                                <Bot /> AI-Powered Search
-                            </CardTitle>
+                             <div className="flex items-center justify-between">
+                                <CardTitle className="flex items-center gap-2 text-2xl">
+                                    <Search /> Main Search
+                                </CardTitle>
+                                <div className="flex items-center space-x-2">
+                                    <Switch id="ai-mode" checked={useAiSearch} onCheckedChange={setUseAiSearch} />
+                                    <Label htmlFor="ai-mode" className="flex items-center gap-1">
+                                        <Bot className={cn("h-4 w-4 transition-colors", useAiSearch ? "text-primary" : "text-muted-foreground")} />
+                                        AI Mode
+                                    </Label>
+                                </div>
+                            </div>
                         </CardHeader>
                         <CardContent>
                             <div className="flex flex-col sm:flex-row items-stretch gap-2">
@@ -207,7 +256,7 @@ function HomePageContent() {
                                     </DialogTrigger>
                                     <DialogContent>
                                         <DialogHeader>
-                                            <DialogTitle>Select User Type for AI Search</DialogTitle>
+                                            <DialogTitle>Select User Type for Search</DialogTitle>
                                         </DialogHeader>
                                         <div className="grid grid-cols-1 gap-4 pt-4">
                                             {userTypes.map((type) => (
@@ -243,7 +292,7 @@ function HomePageContent() {
                                 <div className="relative flex-grow">
                                     <Input
                                         id="ai-search"
-                                        placeholder={`Search for a ${role !== 'all' ? role.toLowerCase() : 'professional'}...`}
+                                        placeholder={useAiSearch ? `e.g. 'available verified plumber in Mumbai'` : `Search by keyword, name, profession...`}
                                         className={cn("text-base")}
                                         value={aiSearchQuery}
                                         onChange={(e) => setAiSearchQuery(e.target.value)}
@@ -259,6 +308,11 @@ function HomePageContent() {
                                     Search
                                 </Button>
                             </div>
+                             {useAiSearch && (
+                                <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
+                                    <Lock className="h-3 w-3" /> AI Mode is a premium feature.
+                                </p>
+                            )}
                         </CardContent>
                     </Card>
 
