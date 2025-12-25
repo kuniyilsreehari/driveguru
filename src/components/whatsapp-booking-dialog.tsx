@@ -145,47 +145,45 @@ To proceed, please reply with "Confirm" or "Cancel".`;
 
              <h4 className="text-sm font-medium text-muted-foreground pt-4">Appointment Details</h4>
             
-            <div className="grid grid-cols-2 gap-4">
-                <FormField
+            <FormField
+              control={form.control}
+              name="date"
+              render={({ field }) => (
+                <FormItem className="flex flex-col">
+                  <FormLabel>Date</FormLabel>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant={'outline'}
+                          className={cn('w-full pl-3 text-left font-normal', !field.value && 'text-muted-foreground')}
+                        >
+                          {field.value ? format(field.value, 'PPP') : <span>Pick a date</span>}
+                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus />
+                    </PopoverContent>
+                  </Popover>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
                 control={form.control}
-                name="date"
+                name="time"
                 render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                    <FormLabel>Date</FormLabel>
-                    <Popover>
-                        <PopoverTrigger asChild>
+                    <FormItem>
+                        <FormLabel>Time</FormLabel>
                         <FormControl>
-                            <Button
-                            variant={'outline'}
-                            className={cn('w-full pl-3 text-left font-normal', !field.value && 'text-muted-foreground')}
-                            >
-                            {field.value ? format(field.value, 'PPP') : <span>Pick a date</span>}
-                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                            </Button>
+                            <Input type="time" {...field} />
                         </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus />
-                        </PopoverContent>
-                    </Popover>
-                    <FormMessage />
+                        <FormMessage />
                     </FormItem>
                 )}
-                />
-                <FormField
-                    control={form.control}
-                    name="time"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Time</FormLabel>
-                            <FormControl>
-                                <Input type="time" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-            </div>
+            />
             <FormField
               control={form.control}
               name="location"
