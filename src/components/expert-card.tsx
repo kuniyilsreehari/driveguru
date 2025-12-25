@@ -98,18 +98,15 @@ export function ExpertCard({ expert }: ExpertCardProps) {
     const createWhatsAppMessage = () => {
         const expertName = getDisplayName(expert);
         const clientName = user?.displayName || "a potential client";
-        const clientEmail = user?.email || "not provided";
-        const today = new Date();
         
         const message = `*New Booking Request from DriveGuru*
-
 Hello ${expertName},
 
-A new appointment has been requested. Please review the details below and reply to the client.
+A new appointment has been requested by *${clientName}*.
 
 *Client Details:*
 • Name: ${clientName}
-• Email: ${clientEmail}
+• Email: ${user?.email || "not provided"}
 
 *Appointment Details:*
 • Date: [Please enter desired date]
@@ -118,7 +115,8 @@ A new appointment has been requested. Please review the details below and reply 
 • Work Required: [Please describe the work]
 
 --------------------
-*To the Expert:* Please reply to confirm this appointment or suggest a new time.`;
+*To the Expert:* Please reply to confirm or cancel this appointment.
+*Simply reply with "Confirm" or "Cancel".*`;
         
         return `https://wa.me/${formattedPhoneNumber}?text=${encodeURIComponent(message)}`;
     };
