@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { Suspense, useState, useEffect, useMemo } from 'react';
@@ -46,7 +47,7 @@ function HomePageContent() {
     const [state, setState] = useState('');
     const [pincode, setPincode] = useState('');
     const [maxRate, setMaxRate] = useState<number | null>(null);
-    const [role, setRole] = useState<string>('');
+    const [role, setRole] = useState<string>('all');
     const [isDetecting, setIsDetecting] = useState(false);
     const [showVerifiedOnly, setShowVerifiedOnly] = useState(false);
     const [showAvailableOnly, setShowAvailableOnly] = useState(false);
@@ -150,7 +151,7 @@ function HomePageContent() {
         if (city) queryParams.set('city', city);
         if (state) queryParams.set('state', state);
         if (pincode) queryParams.set('pincode', pincode);
-        if (role) queryParams.set('role', role);
+        if (role && role !== 'all') queryParams.set('role', role);
         if (showVerifiedOnly) queryParams.set('verified', 'true');
         if (showAvailableOnly) queryParams.set('available', 'true');
         if (maxRate !== null) queryParams.set('maxRate', maxRate.toString());
@@ -358,7 +359,7 @@ function HomePageContent() {
                                         <SelectValue placeholder="Select a user type" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="">All User Types</SelectItem>
+                                        <SelectItem value="all">All User Types</SelectItem>
                                         <SelectItem value="Freelancer">Freelancers</SelectItem>
                                         <SelectItem value="Company">Companies</SelectItem>
                                     </SelectContent>

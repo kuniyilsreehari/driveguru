@@ -99,7 +99,7 @@ function SearchResults() {
         if (available) {
             constraints.push(where('isAvailable', '==', true));
         }
-        if (roleQuery) {
+        if (roleQuery && roleQuery !== 'all') {
             constraints.push(where('role', '==', roleQuery));
         }
         
@@ -189,7 +189,7 @@ function SearchResults() {
         // Filter by max rate
         if (maxRate !== null) {
             experts = experts.filter(expert =>
-                expert.hourlyRate !== undefined && expert.hourlyRate <= maxRate
+                expert.pricingValue !== undefined && expert.pricingValue <= maxRate
             );
         }
         
@@ -260,7 +260,7 @@ function SearchResults() {
             if (pincode) locationParts.push(pincode);
         }
         
-        if (roleQuery) {
+        if (roleQuery && roleQuery !== 'all') {
             titleParts.push(<span key="role" className="text-primary">{roleQuery}s</span>);
         } else if (searchQueryParam) {
              titleParts.push(<span key="query">Results for &quot;<span className="text-primary">{searchQueryParam}</span>&quot;</span>);
