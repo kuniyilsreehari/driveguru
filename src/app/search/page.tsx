@@ -135,6 +135,7 @@ function SearchResults() {
                 // All keywords must be found in the expert's profile
                 return keywords.every(keyword => {
                     const name = `${expert.firstName || ''} ${expert.lastName || ''}`.toLowerCase();
+                    const joinedName = `${expert.firstName || ''}${expert.lastName || ''}`.toLowerCase();
                     const company = expert.companyName?.toLowerCase() || '';
                     const role = expert.role?.toLowerCase() || '';
                     const skills = expert.skills?.toLowerCase() || '';
@@ -149,6 +150,7 @@ function SearchResults() {
                     const expertIsVerified = expert.verified ? 'verified' : '';
 
                     return name.includes(keyword) ||
+                           joinedName.includes(keyword) ||
                            company.includes(keyword) ||
                            role.includes(keyword) ||
                            skills.includes(keyword) ||
