@@ -7,11 +7,20 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { Star, IndianRupee, Briefcase, Calendar, Phone, MessageSquare, UserCheck, Crown, Sparkles, MapPin, Lock, List, Share2 } from 'lucide-react';
+import { Star, IndianRupee, Briefcase, Calendar, Phone, MessageSquare, UserCheck, Crown, Sparkles, MapPin, Lock, List, Share2, Copy, Link as LinkIcon } from 'lucide-react';
 import { useUser } from '@/firebase';
 import { FollowerStats } from './follower-stats';
 import { useToast } from '@/hooks/use-toast';
 import { WhatsAppBookingDialog } from './whatsapp-booking-dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 
 export type ExpertUser = {
     id: string;
@@ -43,6 +52,64 @@ interface ExpertCardProps {
     expert: ExpertUser;
 }
 
+const ShareDialog = ({ expert, children }: { expert: ExpertUser, children: React.ReactNode }) => {
+    const { toast } = useToast();
+    const getDisplayName = (expert: ExpertUser) => {
+        return expert.companyName || `${expert.firstName} ${expert.lastName}`;
+    }
+    const profileUrl = `${window.location.origin}/expert/${expert.id}`;
+
+    const handleNativeShare = async () => {
+        const shareData = {
+            title: `Check out ${getDisplayName(expert)} on DriveGuru`,
+            text: `I found this expert, ${getDisplayName(expert)}, on DriveGuru. Here's their profile:`,
+            url: profileUrl
+        };
+        try {
+            await navigator.share(shareData);
+        } catch (err: any) {
+            if (err.name !== 'AbortError') {
+                console.error("Share failed:", err);
+                toast({
+                    variant: 'destructive',
+                    title: "Share Failed",
+                    description: "Could not share the profile at this time.",
+                });
+            }
+        }
+    };
+    
+    const handleCopyLink = () => {
+        navigator.clipboard.writeText(profileUrl);
+        toast({
+            title: "Link Copied",
+            description: "The link to this expert's profile has been copied to your clipboard.",
+        });
+    }
+
+    return (
+        <Dialog>
+            <DialogTrigger asChild>{children}</DialogTrigger>
+            <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                    <DialogTitle>Share Profile</DialogTitle>
+                    <DialogDescription>
+                        Share this expert's profile with others.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="flex flex-col gap-4 py-4">
+                    <Button onClick={handleNativeShare} disabled={!navigator.share}>
+                        <Share2 className="mr-2 h-4 w-4" /> Share via...
+                    </Button>
+                    <Button variant="outline" onClick={handleCopyLink}>
+                        <Copy className="mr-2 h-4 w-4" /> Copy Link
+                    </Button>
+                </div>
+            </DialogContent>
+        </Dialog>
+    )
+}
+
 export function ExpertCard({ expert }: ExpertCardProps) {
     const { user } = useUser();
     const { toast } = useToast();
@@ -63,38 +130,6 @@ export function ExpertCard({ expert }: ExpertCardProps) {
     const getDisplayName = (expert: ExpertUser) => {
         return expert.companyName || `${expert.firstName} ${expert.lastName}`;
     }
-
-    const handleShare = async () => {
-        const shareData = {
-            title: `Check out ${getDisplayName(expert)} on DriveGuru`,
-            text: `I found this expert, ${getDisplayName(expert)}, on DriveGuru. Here's their profile:`,
-            url: `${window.location.origin}/expert/${expert.id}`
-        };
-        try {
-            if (navigator.share) {
-                await navigator.share(shareData);
-            } else {
-                // Fallback for browsers that don't support Web Share API
-                await navigator.clipboard.writeText(shareData.url);
-                toast({
-                    title: "Link Copied",
-                    description: "The link to this expert's profile has been copied to your clipboard.",
-                });
-            }
-        } catch (err: any) {
-            // Gracefully handle NotAllowedError if the user cancels the share dialog.
-            if (err.name === 'NotAllowedError' || err.name === 'AbortError') {
-                console.log('Share action was cancelled by the user.');
-            } else {
-                console.error("Share failed:", err);
-                toast({
-                    variant: 'destructive',
-                    title: "Share Failed",
-                    description: "Could not share the profile at this time.",
-                });
-            }
-        }
-    };
 
     const locationString = [expert.city, expert.state, expert.pincode].filter(Boolean).join(', ');
     
@@ -159,9 +194,11 @@ export function ExpertCard({ expert }: ExpertCardProps) {
                     <Button asChild size="sm" variant="outline" className="flex-1">
                         <Link href={`/expert/${expert.id}`}>View Profile</Link>
                     </Button>
-                     <Button size="sm" variant="outline" className="flex-1" onClick={handleShare}>
-                        <Share2 className="mr-2 h-4 w-4" /> Share
-                    </Button>
+                     <ShareDialog expert={expert}>
+                        <Button size="sm" variant="outline" className="flex-1">
+                            <Share2 className="mr-2 h-4 w-4" /> Share
+                        </Button>
+                    </ShareDialog>
                     <div className="flex flex-1 gap-2">
                     {canShowContactActions ? (
                         <WhatsAppBookingDialog expert={expert}>
