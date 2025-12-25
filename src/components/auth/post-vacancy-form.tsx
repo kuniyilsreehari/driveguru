@@ -135,7 +135,7 @@ export function PostVacancyForm({
       
       const newVacancyData = {
         ...values,
-        companyId: isAdmin ? values.companyId || uuidv4() : propCompanyId,
+        companyId: isAdmin ? (values.companyId || uuidv4()) : (propCompanyId || user?.uid),
         companyName: values.companyName,
         companyEmail: values.companyEmail,
         contactPhone: values.contactPhone,
