@@ -4,7 +4,7 @@
 
 import { Suspense, useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { Briefcase, Building, ChevronDown, Laptop, LocateIcon, MapPin, Search, Smartphone, Wrench, Loader2, Star, UserCheck, Crown, Sparkles, HelpCircle, Bot, Lock, Users, User, Check } from "lucide-react"
+import { Briefcase, Building, ChevronDown, Laptop, LocateIcon, MapPin, Search, Smartphone, Wrench, Loader2, Star, UserCheck, Crown, Sparkles, HelpCircle, Bot, Lock, Users, User, Check, GraduationCap } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
@@ -249,6 +249,7 @@ function HomePageContent() {
         { value: 'Freelancer', label: 'Freelancers', icon: User },
         { value: 'Company', label: 'Companies', icon: Building },
         { value: 'Authorized Pro', label: 'Authorized Pros', icon: Briefcase },
+        { value: 'Fresher', label: 'Freshers (Find Jobs)', icon: GraduationCap, href: '/vacancies' },
     ];
 
     return (
@@ -377,18 +378,24 @@ function HomePageContent() {
                                                     <Card 
                                                         className={cn(
                                                             "cursor-pointer transition-all duration-300 transform hover:-translate-y-1",
-                                                            role === type.value 
+                                                            role === type.value && !type.href
                                                                 ? "border-primary ring-2 ring-primary" 
                                                                 : "hover:border-primary/50"
                                                         )}
-                                                        onClick={() => setRole(type.value)}
+                                                        onClick={() => {
+                                                            if (type.href) {
+                                                                router.push(type.href);
+                                                            } else {
+                                                                setRole(type.value)
+                                                            }
+                                                        }}
                                                     >
                                                         <CardHeader className="flex flex-row items-center justify-between p-4">
                                                             <div className="flex items-center gap-4">
                                                                 <type.icon className="h-6 w-6 text-primary" />
                                                                 <CardTitle className="text-base">{type.label}</CardTitle>
                                                             </div>
-                                                            {role === type.value && <Check className="h-5 w-5 text-primary" />}
+                                                            {role === type.value && !type.href && <Check className="h-5 w-5 text-primary" />}
                                                         </CardHeader>
                                                     </Card>
                                                 </DialogTrigger>
