@@ -7,12 +7,12 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { collection, query, where, limit, or, and } from 'firebase/firestore';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { Loader2, User, MapPin, Star, IndianRupee, Briefcase, Calendar, Phone, MessageCircle, ChevronLeft, ChevronDown, UserCheck, Crown, Sparkles } from 'lucide-react';
+import { Loader2, User, MapPin, Star, IndianRupee, Briefcase, Calendar, Phone, MessageCircle, ChevronLeft, ChevronDown, UserCheck, Crown, Sparkles, SearchX } from 'lucide-react';
 import { ExpertCard } from '@/components/expert-card';
 import type { ExpertUser } from '@/components/expert-card';
 
@@ -230,10 +230,22 @@ function SearchResults() {
 
     if (experts.length === 0) {
         return (
-            <div className="text-center py-16">
-                <h2 className="text-2xl font-semibold">No Experts Found</h2>
-                <p className="text-muted-foreground mt-2">Try adjusting your search filters or check back later.</p>
-            </div>
+            <Card className="w-full text-center p-8 sm:p-12">
+                <CardHeader>
+                    <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-secondary mb-4">
+                        <SearchX className="h-8 w-8 text-secondary-foreground" />
+                    </div>
+                    <CardTitle className="text-2xl font-semibold">No Experts Found</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <p className="text-muted-foreground">
+                        We couldn&apos;t find any experts matching your search criteria.
+                    </p>
+                    <p className="text-muted-foreground mt-2">
+                        Try adjusting your filters or broadening your search query.
+                    </p>
+                </CardContent>
+            </Card>
         );
     }
 
