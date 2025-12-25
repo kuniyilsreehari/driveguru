@@ -43,8 +43,8 @@ service cloud.firestore {
       // All fields a user is allowed to edit on their own.
       let editableFields = [
         'firstName', 'lastName', 'photoUrl', 'state', 'city', 'pincode', 'address',
-        'phoneNumber', 'showPhoneNumberOnProfile', 'department', 'companyName', 'businessDescription', 'category',
-        'pricingModel', 'pricingValue', // Added pricing fields
+        'phoneNumber', 'showPhoneNumberOnProfile', 'department', 'companyName', 'businessDescription', 'category', 'profession',
+        'pricingModel', 'pricingValue',
         'yearsOfExperience', 'gender', 'qualification', 'collegeName',
         'skills', 'aboutMe', 'aboutYourDream', 'associatedProjectsName',
         'linkedinUrl', 'twitterUrl', 'githubUrl', 'portfolioUrl', 'isAvailable', 'following'

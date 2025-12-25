@@ -72,6 +72,7 @@ const formSchema = z.object({
   companyName: z.string().optional(),
   businessDescription: z.string().optional(),
   category: z.string().optional(),
+  profession: z.string().optional(),
   pricingModel: z.string().optional(),
   pricingValue: z.coerce.number().min(0, "Price value cannot be negative.").optional(),
   yearsOfExperience: z.coerce.number().min(0, "Years of experience cannot be negative.").optional(),
@@ -111,6 +112,7 @@ type ExpertUserProfile = {
     department?: string;
     businessDescription?: string;
     category?: string;
+    profession?: string;
     pricingModel?: string;
     pricingValue?: number;
     yearsOfExperience?: number;
@@ -201,6 +203,7 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
       companyName: userProfile.companyName || "",
       businessDescription: userProfile.businessDescription || "",
       category: userProfile.category || "",
+      profession: userProfile.profession || "",
       pricingModel: userProfile.pricingModel || "",
       pricingValue: userProfile.pricingValue || 0,
       yearsOfExperience: userProfile.yearsOfExperience || 0,
@@ -682,6 +685,24 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
                     </FormItem>
                 )}
             />
+            
+            <FormField
+                control={form.control}
+                name="profession"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Profession</FormLabel>
+                    <div className="relative">
+                      <Briefcase className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                      <FormControl>
+                        <Input placeholder="e.g., Plumber, Electrician" {...field} className="pl-10" />
+                      </FormControl>
+                    </div>
+                     <FormDescription>Your specific job title or profession.</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
           <div className="grid grid-cols-2 gap-4">
               <FormField

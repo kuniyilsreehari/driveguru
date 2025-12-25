@@ -55,6 +55,10 @@
           "type": "string",
           "description": "The primary service category the expert belongs to."
         },
+        "profession": {
+          "type": "string",
+          "description": "The specific profession of the expert (e.g., Plumber, Electrician)."
+        },
         "city": {
           "type": "string",
           "description": "The city where the user is located."
