@@ -67,7 +67,8 @@ type ExpertUserProfile = {
     verified?: boolean;
     pricingModel?: string;
     pricingValue?: number;
-    yearsOfExperience?: number;
+    experienceYears?: number;
+    experienceMonths?: number;
     gender?: string;
     qualification?: string;
     collegeName?: string;
@@ -452,7 +453,7 @@ function ExpertDashboardPage() {
         profile.pincode,
         profile.phoneNumber,
         profile.pricingValue,
-        profile.yearsOfExperience,
+        profile.experienceYears,
         profile.gender,
         profile.qualification,
         profile.skills,
@@ -578,6 +579,10 @@ function ExpertDashboardPage() {
   
   const locationString = [userProfile.city, userProfile.state, userProfile.pincode].filter(Boolean).join(', ');
   const verificationFee = appConfig?.verificationFee;
+  const experienceString = [
+    userProfile.experienceYears ? `${userProfile.experienceYears} years` : null,
+    userProfile.experienceMonths ? `${userProfile.experienceMonths} months` : null,
+  ].filter(Boolean).join(', ') || 'Not specified';
 
   return (
     <div className="min-h-screen bg-background p-4 sm:p-8">
@@ -700,7 +705,7 @@ function ExpertDashboardPage() {
                     </div>
                     <div className="flex items-center gap-3">
                         <Calendar className="h-5 w-5 text-muted-foreground" />
-                        <p><span className="font-semibold">Experience:</span> {userProfile.yearsOfExperience ? `${userProfile.yearsOfExperience} years` : <span className="text-destructive">Not specified</span>}</p>
+                        <p><span className="font-semibold">Experience:</span> {experienceString}</p>
                     </div>
                     <div className="flex items-center gap-3">
                         <MapPin className="h-5 w-5 text-muted-foreground" />

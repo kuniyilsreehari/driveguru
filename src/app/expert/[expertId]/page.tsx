@@ -38,7 +38,8 @@ type ExpertUserProfile = {
     verified?: boolean;
     pricingModel?: string;
     pricingValue?: number;
-    yearsOfExperience?: number;
+    experienceYears?: number;
+    experienceMonths?: number;
     gender?: string;
     qualification?: string;
     collegeName?: string;
@@ -229,6 +230,10 @@ function ExpertProfileContent() {
 
     const isPremium = expert.tier === 'Premier' || expert.tier === 'Super Premier';
     const locationString = [expert.city, expert.state, expert.pincode].filter(Boolean).join(', ');
+    const experienceString = [
+      expert.experienceYears ? `${expert.experienceYears} years` : null,
+      expert.experienceMonths ? `${expert.experienceMonths} months` : null,
+    ].filter(Boolean).join(', ') || 'Not specified';
     
     const cleanPhoneNumber = (phoneNumber?: string) => {
         if (!phoneNumber) return '';
@@ -341,7 +346,7 @@ function ExpertProfileContent() {
                             </div>
                             <div className="flex items-start gap-3">
                                 <Calendar className="h-5 w-5 text-muted-foreground mt-1" />
-                                <p><span className="font-semibold">Experience:</span> {expert.yearsOfExperience ? `${expert.yearsOfExperience} years` : 'Not specified'}</p>
+                                <p><span className="font-semibold">Experience:</span> {experienceString}</p>
                             </div>
                             <div className="flex items-start gap-3">
                                 <MapPin className="h-5 w-5 text-muted-foreground mt-1" />

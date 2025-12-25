@@ -75,7 +75,8 @@ const formSchema = z.object({
   profession: z.string().optional(),
   pricingModel: z.string().optional(),
   pricingValue: z.coerce.number().min(0, "Price value cannot be negative.").optional(),
-  yearsOfExperience: z.coerce.number().min(0, "Years of experience cannot be negative.").optional(),
+  experienceYears: z.coerce.number().optional(),
+  experienceMonths: z.coerce.number().optional(),
   gender: z.string().optional(),
   qualification: z.string().optional(),
   collegeName: z.string().optional(),
@@ -118,7 +119,8 @@ type ExpertUserProfile = {
     profession?: string;
     pricingModel?: string;
     pricingValue?: number;
-    yearsOfExperience?: number;
+    experienceYears?: number;
+    experienceMonths?: number;
     gender?: string;
     qualification?: string;
     collegeName?: string;
@@ -212,7 +214,8 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
       profession: userProfile.profession || "",
       pricingModel: userProfile.pricingModel || "",
       pricingValue: userProfile.pricingValue || 0,
-      yearsOfExperience: userProfile.yearsOfExperience || 0,
+      experienceYears: userProfile.experienceYears || 0,
+      experienceMonths: userProfile.experienceMonths || 0,
       gender: userProfile.gender || "",
       qualification: userProfile.qualification || "",
       collegeName: userProfile.collegeName || "",
@@ -349,7 +352,7 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
         firstName: formData.firstName,
         role: formData.role,
         skills: formData.skills || '',
-        yearsOfExperience: formData.yearsOfExperience || 0,
+        yearsOfExperience: formData.experienceYears || 0,
         qualification: formData.qualification || '',
       });
 
@@ -900,22 +903,50 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
                 )}
               />
           </div>
-          <FormField
-            control={form.control}
-            name="yearsOfExperience"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Years of Experience</FormLabel>
-                <div className="relative">
-                  <Calendar className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <FormControl>
-                    <Input type="number" placeholder="5" {...field} className="pl-10" />
-                  </FormControl>
-                </div>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          
+            <FormItem>
+              <FormLabel>Years of Experience</FormLabel>
+              <div className="flex items-center gap-2">
+                <FormField
+                  control={form.control}
+                  name="experienceYears"
+                  render={({ field }) => (
+                    <FormItem className="flex-1">
+                      <Select onValueChange={(value) => field.onChange(Number(value))} value={String(field.value || 0)}>
+                          <FormControl>
+                          <SelectTrigger>
+                              <SelectValue placeholder="Years" />
+                          </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                          {[...Array(51).keys()].map(i => <SelectItem key={i} value={String(i)}>{i} years</SelectItem>)}
+                          </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="experienceMonths"
+                  render={({ field }) => (
+                    <FormItem className="flex-1">
+                      <Select onValueChange={(value) => field.onChange(Number(value))} value={String(field.value || 0)}>
+                           <FormControl>
+                          <SelectTrigger>
+                              <SelectValue placeholder="Months" />
+                          </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                          {[...Array(12).keys()].map(i => <SelectItem key={i} value={String(i)}>{i} months</SelectItem>)}
+                          </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </FormItem>
 
           <FormField
             control={form.control}

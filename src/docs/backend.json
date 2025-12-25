@@ -103,9 +103,13 @@
             "type": "number",
             "description": "The numerical value associated with the selected pricing model."
         },
-        "yearsOfExperience": {
+        "experienceYears": {
           "type": "number",
-          "description": "The expert's years of professional experience."
+          "description": "The number of years of professional experience."
+        },
+        "experienceMonths": {
+          "type": "number",
+          "description": "The number of months of professional experience."
         },
         "gender": {
           "type": "string",
