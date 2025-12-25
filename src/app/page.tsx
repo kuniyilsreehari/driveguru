@@ -320,7 +320,7 @@ function HomePageContent() {
                             </div>
                              {useAiSearch && (
                                 <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
-                                    <Lock className="h-3 w-3" /> AI Mode is a premium feature.
+                                    <Lock className="h-3 w-3" /> This is a premium feature. <Link href="/dashboard#plan-management" className="underline hover:text-primary">Upgrade your plan</Link> to activate.
                                 </p>
                             )}
                         </CardContent>
