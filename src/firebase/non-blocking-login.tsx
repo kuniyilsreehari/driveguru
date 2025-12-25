@@ -1,10 +1,14 @@
 
+
 'use client';
 import {
   Auth, // Import Auth type for type hinting
   signInAnonymously,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
+  setPersistence,
+  browserLocalPersistence,
+  browserSessionPersistence,
   // Assume getAuth and app are initialized elsewhere
 } from 'firebase/auth';
 import { toast } from '@/hooks/use-toast';
@@ -24,13 +28,20 @@ export function initiateEmailSignUp(authInstance: Auth, email: string, password:
 }
 
 /** Initiate email/password sign-in (non-blocking). */
-export function initiateEmailSignIn(authInstance: Auth, email: string, password: string): void {
-  signInWithEmailAndPassword(authInstance, email, password)
+export function initiateEmailSignIn(authInstance: Auth, email: string, password: string, rememberMe: boolean = false): void {
+  const persistence = rememberMe ? browserLocalPersistence : browserSessionPersistence;
+  
+  setPersistence(authInstance, persistence)
+    .then(() => {
+      return signInWithEmailAndPassword(authInstance, email, password);
+    })
     .catch((error) => {
         let errorMessage = "An unexpected error occurred. Please try again.";
         // Check for specific Firebase auth error codes
         if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
             errorMessage = "Invalid email or password. Please check your credentials and try again.";
+        } else if (error.code === 'auth/operation-not-allowed') {
+            errorMessage = "Email/password accounts are not enabled.";
         }
         toast({
             variant: "destructive",

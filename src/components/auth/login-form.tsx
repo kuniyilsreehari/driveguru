@@ -15,7 +15,10 @@ import {
   signInWithPopup, 
   getAdditionalUserInfo,
   RecaptchaVerifier,
-  signInWithPhoneNumber
+  signInWithPhoneNumber,
+  setPersistence,
+  browserSessionPersistence,
+  browserLocalPersistence,
 } from 'firebase/auth';
 import { doc, getDoc, serverTimestamp } from 'firebase/firestore';
 
@@ -33,12 +36,14 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth, useUser, useFirestore, setDocumentNonBlocking } from "@/firebase";
 import { Icons } from "../icons";
 import { Separator } from "../ui/separator";
+import { Checkbox } from "../ui/checkbox";
 
 const emailFormSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address." }),
   password: z
     .string()
     .min(1, { message: "Password is required." }),
+  rememberMe: z.boolean().default(false),
 });
 
 const phoneFormSchema = z.object({
@@ -66,7 +71,7 @@ export function LoginForm() {
 
   const emailForm = useForm<z.infer<typeof emailFormSchema>>({
     resolver: zodResolver(emailFormSchema),
-    defaultValues: { email: "", password: "" },
+    defaultValues: { email: "", password: "", rememberMe: true },
   });
 
   const phoneForm = useForm<z.infer<typeof phoneFormSchema>>({
@@ -150,6 +155,8 @@ export function LoginForm() {
     if(!auth) return;
     setIsSubmitting(true);
     try {
+      const persistence = values.rememberMe ? browserLocalPersistence : browserSessionPersistence;
+      await setPersistence(auth, persistence);
       await signInWithEmailAndPassword(auth, values.email, values.password);
       // The useEffect above will handle the redirect after the user state is updated.
     } catch (error: any) {
@@ -289,12 +296,6 @@ export function LoginForm() {
               <FormItem>
                   <div className="flex items-center">
                       <FormLabel>Password</FormLabel>
-                      <Link
-                          href="/forgot-password"
-                          className="ml-auto inline-block text-sm underline"
-                      >
-                          Forgot password?
-                      </Link>
                   </div>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -313,6 +314,36 @@ export function LoginForm() {
               </FormItem>
             )}
           />
+
+          <div className="flex items-center justify-between">
+            <FormField
+              control={emailForm.control}
+              name="rememberMe"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                  <FormControl>
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                  <div className="space-y-1 leading-none">
+                    <FormLabel>
+                      Remember me
+                    </FormLabel>
+                  </div>
+                </FormItem>
+              )}
+            />
+             <Link
+                href="/forgot-password"
+                className="inline-block text-sm underline"
+            >
+                Forgot password?
+            </Link>
+          </div>
+
+
           <Button type="submit" className="w-full" disabled={isSubmitting}>
             {isSubmitting ? 'Signing In...' : <>
               <LogIn className="mr-2 h-4 w-4" /> Sign In
