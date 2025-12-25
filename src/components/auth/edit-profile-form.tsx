@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import * as React from "react";
@@ -136,6 +137,7 @@ type ExpertUserProfile = {
     instagramUrl?: string;
     youtubeUrl?: string;
     tier?: 'Standard' | 'Premier' | 'Super Premier';
+    following?: string[];
 };
 
 type AppConfig = {

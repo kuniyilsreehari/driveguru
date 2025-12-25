@@ -5,10 +5,10 @@
 import { useEffect, useState, useMemo, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { signOut } from 'firebase/auth';
-import { doc, collection, query, where, getDoc, runTransaction, increment, getDocs, orderBy, Timestamp } from 'firebase/firestore';
+import { doc, collection, query, where, getDoc, runTransaction, increment, getDocs, orderBy, Timestamp, limit, arrayUnion, arrayRemove } from 'firebase/firestore';
 import { useUser, useAuth, useFirestore, useDoc, useCollection, useMemoFirebase, updateDocumentNonBlocking } from '@/firebase';
 import { Button } from '@/components/ui/button';
-import { LogOut, Briefcase, Loader, Edit, UserCheck, XCircle, MapPin, IndianRupee, Calendar, Book, GraduationCap, School, Info, User as UserIcon, Check, Power, Building, PlusCircle, Crown, Sparkles, Lock, Home, ArrowUpCircle, ShieldCheck, ExternalLink, Gift, Copy, Shield, AlertTriangle, ChevronDown, Link as LinkIcon, MessageCircle, BookOpen, CheckCircle, PenSquare, Factory, Users, Type } from 'lucide-react';
+import { LogOut, Briefcase, Loader, Edit, UserCheck, XCircle, MapPin, IndianRupee, Calendar, Book, GraduationCap, School, Info, User as UserIcon, Check, Power, Building, PlusCircle, Crown, Sparkles, Lock, Home, ArrowUpCircle, ShieldCheck, ExternalLink, Gift, Copy, Shield, AlertTriangle, ChevronDown, Link as LinkIcon, MessageCircle, BookOpen, CheckCircle, PenSquare, Factory, Users, Type, UserPlus, UserMinus } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import {
   Dialog,
@@ -51,6 +51,7 @@ import Link from 'next/link';
 import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { createPaymentOrder } from '@/ai/flows/payment-flow';
 import { processReferral } from '@/ai/flows/process-referral-flow';
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 
 
 type ExpertUserProfile = {
@@ -79,6 +80,7 @@ type ExpertUserProfile = {
     phoneNumber?: string;
     companyName?: string;
     businessDescription?: string;
+    profession?: string;
     department?: string;
     isAvailable?: boolean;
     companyId?: string;
@@ -104,6 +106,117 @@ type AppConfig = {
     premierPaymentLink?: string;
     superPremierPaymentLink?: string;
 };
+
+function PeopleToFollow({ currentUserProfile }: { currentUserProfile: ExpertUserProfile }) {
+    const firestore = useFirestore();
+    const { toast } = useToast();
+
+    // Query for other experts to follow. Exclude the current user.
+    const suggestionsQuery = useMemoFirebase(() => {
+        if (!firestore || !currentUserProfile) return null;
+        return query(
+            collection(firestore, 'users'),
+            where('id', '!=', currentUserProfile.id),
+            limit(10) // Limit to 10 suggestions
+        );
+    }, [firestore, currentUserProfile]);
+
+    const { data: suggestedUsers, isLoading } = useCollection<ExpertUserProfile>(suggestionsQuery);
+
+    const handleToggleFollow = async (targetUser: ExpertUserProfile) => {
+        if (!firestore || !currentUserProfile) return;
+
+        const currentUserDocRef = doc(firestore, 'users', currentUserProfile.id);
+        const isFollowing = currentUserProfile.following?.includes(targetUser.id);
+        const updateAction = isFollowing ? arrayRemove(targetUser.id) : arrayUnion(targetUser.id);
+
+        try {
+            await updateDocumentNonBlocking(currentUserDocRef, { following: updateAction });
+            toast({
+                title: isFollowing ? 'Unfollowed' : 'Followed',
+                description: `You are now ${isFollowing ? 'no longer following' : 'following'} ${targetUser.firstName} ${targetUser.lastName}.`,
+            });
+        } catch (error) {
+            console.error("Failed to toggle follow", error);
+            toast({ variant: 'destructive', title: 'Error', description: 'Could not update your follow status.' });
+        }
+    };
+    
+    const getInitials = (firstName?: string, lastName?: string) => {
+        return `${firstName?.charAt(0) || ''}${lastName?.charAt(0) || ''}`.toUpperCase() || 'U';
+    };
+
+    if (isLoading) {
+        return (
+            <Card>
+                <CardHeader>
+                    <CardTitle>People You May Know</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <Loader className="h-6 w-6 animate-spin" />
+                </CardContent>
+            </Card>
+        );
+    }
+    
+    if (!suggestedUsers || suggestedUsers.length === 0) {
+        return null; // Don't render the card if there are no suggestions
+    }
+
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle>People You May Know</CardTitle>
+                <CardDescription>Expand your network by following other experts.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <Carousel
+                    opts={{
+                        align: "start",
+                        loop: true,
+                    }}
+                    className="w-full"
+                >
+                    <CarouselContent>
+                        {suggestedUsers.map((user) => {
+                             const isFollowing = currentUserProfile.following?.includes(user.id);
+                            return (
+                                <CarouselItem key={user.id} className="md:basis-1/2 lg:basis-1/3">
+                                    <div className="p-1">
+                                        <Card className="h-full">
+                                            <CardContent className="flex flex-col items-center justify-center gap-4 p-6 text-center">
+                                                <Link href={`/expert/${user.id}`}>
+                                                    <Avatar className="h-16 w-16 text-xl">
+                                                        <AvatarImage src={user.photoUrl} />
+                                                        <AvatarFallback>{getInitials(user.firstName, user.lastName)}</AvatarFallback>
+                                                    </Avatar>
+                                                </Link>
+                                                <div className="flex-grow">
+                                                    <h4 className="font-semibold">{user.firstName} {user.lastName}</h4>
+                                                    <p className="text-xs text-muted-foreground">{user.profession || user.role}</p>
+                                                </div>
+                                                <Button
+                                                    variant={isFollowing ? 'secondary' : 'default'}
+                                                    className="w-full"
+                                                    onClick={() => handleToggleFollow(user)}
+                                                >
+                                                    {isFollowing ? <UserMinus className="mr-2 h-4 w-4" /> : <UserPlus className="mr-2 h-4 w-4" />}
+                                                    {isFollowing ? 'Unfollow' : 'Follow'}
+                                                </Button>
+                                            </CardContent>
+                                        </Card>
+                                    </div>
+                                </CarouselItem>
+                            )
+                        })}
+                    </CarouselContent>
+                    <CarouselPrevious className="absolute left-[-1rem] top-1/2 -translate-y-1/2" />
+                    <CarouselNext className="absolute right-[-1rem] top-1/2 -translate-y-1/2" />
+                </Carousel>
+            </CardContent>
+        </Card>
+    );
+}
 
 function CompanyVacancies({ userProfile }: { userProfile: ExpertUserProfile }) {
   const firestore = useFirestore();
@@ -357,10 +470,10 @@ function FollowerStats({ userId }: { userId: string }) {
         <div className="flex items-center gap-4 mt-2">
             <div className="flex items-center gap-1">
                 <Users className="h-4 w-4 text-muted-foreground" />
-                <p className="text-sm text-muted-foreground"><span className="font-bold text-foreground">{followers?.length || 0}</span> Followers</p>
+                <p className="text-sm"><span className="font-bold text-foreground">{followers?.length || 0}</span> Followers</p>
             </div>
             <div className="flex items-center gap-1">
-                <p className="text-sm text-muted-foreground"><span className="font-bold text-foreground">{followingCount}</span> Following</p>
+                <p className="text-sm"><span className="font-bold text-foreground">{followingCount}</span> Following</p>
             </div>
         </div>
     );
@@ -840,6 +953,8 @@ function ExpertDashboardPage() {
         )}
 
         <PlanManagement userProfile={userProfile} appConfig={appConfig} />
+        
+        <PeopleToFollow currentUserProfile={userProfile} />
 
         <Card>
             <CardHeader>
