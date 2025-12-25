@@ -47,7 +47,9 @@ service cloud.firestore {
         'pricingModel', 'pricingValue',
         'yearsOfExperience', 'gender', 'qualification', 'collegeName',
         'skills', 'aboutMe', 'aboutYourDream', 'associatedProjectsName',
-        'linkedinUrl', 'twitterUrl', 'githubUrl', 'portfolioUrl', 'isAvailable', 'following'
+        'linkedinUrl', 'twitterUrl', 'githubUrl', 'portfolioUrl', 
+        'facebookUrl', 'instagramUrl', 'youtubeUrl',
+        'isAvailable', 'following'
       ];
       let allAffectedKeys = request.resource.data.diff(resource.data).affectedKeys();
       
@@ -72,14 +74,23 @@ service cloud.firestore {
         return isSignedIn() && userDoc.data.role == 'Company';
     }
 
+    function isPremiumCompanyUser() {
+      let userDoc = get(/databases/$(database)/documents/users/$(request.auth.uid));
+      return isSignedIn() &&
+             userDoc.data.role == 'Company' &&
+             (userDoc.data.tier == 'Premier' || userDoc.data.tier == 'Super Premier');
+    }
+
     function isVacancyOwner(vacancy) {
-        // A company user owns the vacancy if their user ID matches the vacancy's companyId.
-        return isCompanyUser() && vacancy.companyId == request.auth.uid;
+        let userDoc = get(/databases/$(database)/documents/users/$(request.auth.uid));
+        return isCompanyUser() && 'companyId' in userDoc.data && vacancy.companyId == userDoc.data.companyId;
     }
     
     function isCreatingCorrectVacancy() {
+        let userDoc = get(/databases/$(database)/documents/users/$(request.auth.uid));
         // The companyId in the new vacancy must match the companyId of the user creating it.
-        return isCompanyUser() && requestData().companyId == request.auth.uid;
+        // Also ensure the user document has a companyId to compare against.
+        return 'companyId' in userDoc.data && requestData().companyId == userDoc.data.companyId;
     }
 
     function isPremiumExpert() {
@@ -185,12 +196,12 @@ service cloud.firestore {
     match /vacancies/{vacancyId} {
         // Anyone can read and list job vacancies.
         allow get, list: if true;
-        // Any company user or a super admin can create vacancies.
-        allow create: if isCompanyUser() && isCreatingCorrectVacancy() || isSuperAdmin();
-        // Only the company that owns the vacancy or a super admin can update it.
-        allow update: if (isCompanyUser() && isVacancyOwner(requestData())) || isSuperAdmin();
-        // Only the company that owns the vacancy or a super admin can delete it.
-        allow delete: if (isCompanyUser() && isVacancyOwner(resource.data)) || isSuperAdmin();
+        // Only premium company users or super admins can create vacancies.
+        allow create: if (isPremiumCompanyUser() && isCreatingCorrectVacancy()) || isSuperAdmin();
+        // Only the company that owns the vacancy (and is premium) or a super admin can update it.
+        allow update: if (isPremiumCompanyUser() && isVacancyOwner(requestData())) || isSuperAdmin();
+        // Only the company that owns the vacancy (and is premium) or a super admin can delete it.
+        allow delete: if (isPremiumCompanyUser() && isVacancyOwner(resource.data)) || isSuperAdmin();
     }
 
 

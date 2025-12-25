@@ -161,6 +161,21 @@
           "format": "uri",
           "description": "URL to the user's personal portfolio or website."
         },
+        "facebookUrl": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL to the user's Facebook profile."
+        },
+        "instagramUrl": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL to the user's Instagram profile."
+        },
+        "youtubeUrl": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL to the user's YouTube channel."
+        },
         "tier": {
           "type": "string",
           "description": "The expert's activation tier.",
