@@ -80,7 +80,9 @@ Phone: ${values.clientPhone}
 Date: ${formattedDate}
 Time: ${values.time}
 Location: ${values.location}
-Work Required: ${values.workRequired}`;
+Work Required: ${values.workRequired}
+
+To proceed, please reply with "Confirm" or "Cancel".`;
     
     const formattedPhoneNumber = cleanPhoneNumber(expert.phoneNumber);
     const whatsappUrl = `https://wa.me/${formattedPhoneNumber}?text=${encodeURIComponent(message)}`;
@@ -141,7 +143,7 @@ Work Required: ${values.workRequired}`;
               )}
             />
 
-             <h4 className="text-sm font-medium text-muted-foreground pt-2">Appointment Details</h4>
+             <h4 className="text-sm font-medium text-muted-foreground pt-4">Appointment Details</h4>
             
             <div className="grid grid-cols-2 gap-4">
                 <FormField
@@ -214,7 +216,7 @@ Work Required: ${values.workRequired}`;
                 </FormItem>
               )}
             />
-             <DialogFooter>
+             <DialogFooter className="pt-4">
                 <Button type="submit" className="w-full">
                     <Send className="mr-2 h-4 w-4" />
                     Generate WhatsApp Message
