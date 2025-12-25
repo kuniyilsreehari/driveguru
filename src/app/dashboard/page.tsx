@@ -507,9 +507,16 @@ function ExpertDashboardPage() {
     if (!user) return null;
     return doc(firestore, 'roles_super_admin', user.uid);
   }, [firestore, user]);
+  
+  const managerDocRef = useMemoFirebase(() => {
+    if (!user) return null;
+    return doc(firestore, 'roles_manager', user.uid);
+  }, [firestore, user]);
 
   const { data: superAdminData, isLoading: isRoleLoading } = useDoc(superAdminDocRef);
+  const { data: managerData, isLoading: isManagerRoleLoading } = useDoc(managerDocRef);
   const isSuperAdmin = superAdminData !== null;
+  const isManager = managerData !== null;
   
   const referralsQuery = useMemoFirebase(() => {
     if (!firestore || !userProfile?.referralCode) return null;
@@ -529,10 +536,14 @@ function ExpertDashboardPage() {
   useEffect(() => {
     if (!isUserLoading && !user) {
       router.push('/login');
-    } else if (!isUserLoading && user && !isRoleLoading && isSuperAdmin && router.pathname !== '/admin') {
-      router.push('/admin');
+    } else if (!isUserLoading && user && !isRoleLoading && !isManagerRoleLoading) {
+      if (isSuperAdmin) {
+        router.push('/admin');
+      } else if (isManager) {
+        router.push('/manager');
+      }
     }
-  }, [user, isUserLoading, isRoleLoading, isSuperAdmin, router]);
+  }, [user, isUserLoading, isRoleLoading, isManagerRoleLoading, isSuperAdmin, isManager, router]);
   
 
   const handleLogout = () => {
@@ -646,7 +657,7 @@ function ExpertDashboardPage() {
 
   const profileCompletion = calculateProfileCompletion(userProfile);
   const paymentQueryParam = searchParams.get('payment');
-  const isLoading = isUserLoading || isProfileLoading || isAppConfigLoading || isRoleLoading || isReferralsLoading;
+  const isLoading = isUserLoading || isProfileLoading || isAppConfigLoading || isRoleLoading || isReferralsLoading || isManagerRoleLoading;
 
   if (isLoading) {
     let message = "Finalizing session...";
@@ -695,7 +706,7 @@ function ExpertDashboardPage() {
   const experienceString = [
     userProfile.experienceYears ? `${userProfile.experienceYears} years` : null,
     userProfile.experienceMonths ? `${userProfile.experienceMonths} months` : null,
-  ].filter(Boolean).join(', ') || 'Not specified';
+  ].filter(Boolean).join(' ') || 'Not specified';
 
   return (
     <div className="min-h-screen bg-background p-4 sm:p-8">

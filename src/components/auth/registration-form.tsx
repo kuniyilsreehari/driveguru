@@ -36,6 +36,7 @@ const expertTypes = [
     { name: "Freelancer", icon: <UserIcon className="w-8 h-8" />, description: "Offer your individual skills and services directly to clients." },
     { name: "Company", icon: <Building className="w-8 h-8" />, description: "Represent your business and manage company-wide talent." },
     { name: "Authorized Pro", icon: <Briefcase className="w-8 h-8" />, description: "A professional authorized to work for a company." },
+    { name: "Manager", icon: <UserIcon className="w-8 h-8" />, description: "Manage teams and projects within a company." },
 ]
 
 const formSchema = z.object({
@@ -59,7 +60,7 @@ const formSchema = z.object({
       message: "You must accept the terms and conditions to continue.",
   }),
 }).refine(data => {
-    if (data.role === 'Company' || data.role === 'Authorized Pro') {
+    if (data.role === 'Company' || data.role === 'Authorized Pro' || data.role === 'Manager') {
         return !!data.companyName;
     }
     return true;
@@ -782,7 +783,7 @@ export function RegistrationForm() {
                   />
               </div>
 
-              {(selectedRole === 'Company' || selectedRole === 'Authorized Pro') && (
+              {(selectedRole === 'Company' || selectedRole === 'Authorized Pro' || selectedRole === 'Manager') && (
                 <div className="space-y-4">
                   <FormField
                     control={form.control}

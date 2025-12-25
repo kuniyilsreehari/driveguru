@@ -20,6 +20,10 @@
           "type": "string",
           "description": "The name of the company the user belongs to, if applicable."
         },
+        "businessDescription": {
+          "type": "string",
+          "description": "A very short, one-line description of the user's business."
+        },
         "firstName": {
           "type": "string",
           "description": "The user's first name."
@@ -29,7 +33,7 @@
           "description": "The user's last name."
         },
         "email": {
-          "type": "string",
+          "type": ["string", "null"],
           "description": "The user's email address.",
           "format": "email"
         },
@@ -38,6 +42,7 @@
           "description": "The user's role within the application.",
           "enum": [
             "Super Admin",
+            "Manager",
             "Freelancer",
             "Company",
             "Authorized Pro"
@@ -46,6 +51,14 @@
         "department": {
           "type": "string",
           "description": "The department the user belongs to, if applicable."
+        },
+        "category": {
+          "type": "string",
+          "description": "The primary service category the expert belongs to."
+        },
+        "profession": {
+          "type": "string",
+          "description": "The specific profession of the expert (e.g., Plumber, Electrician)."
         },
         "city": {
           "type": "string",
@@ -75,17 +88,29 @@
           "type": "string",
           "description": "The user's mobile number, including country code."
         },
+        "showPhoneNumberOnProfile": {
+          "type": "boolean",
+          "description": "If true, the phone number will be visible on the public profile card."
+        },
         "verified": {
           "type": "boolean",
           "description": "Indicates if the expert has been verified by a super admin."
         },
-        "hourlyRate": {
-          "type": "number",
-          "description": "The expert's hourly rate."
+        "pricingModel": {
+            "type": "string",
+            "description": "The pricing model selected by the user (e.g., 'Hourly', 'Per Project')."
         },
-        "yearsOfExperience": {
+        "pricingValue": {
+            "type": "number",
+            "description": "The numerical value associated with the selected pricing model."
+        },
+        "experienceYears": {
           "type": "number",
-          "description": "The expert's years of professional experience."
+          "description": "The number of years of professional experience."
+        },
+        "experienceMonths": {
+          "type": "number",
+          "description": "The number of months of professional experience."
         },
         "gender": {
           "type": "string",
@@ -121,6 +146,41 @@
           "description": "URL of the user's profile photo.",
           "format": "uri"
         },
+        "linkedinUrl": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL to the user's LinkedIn profile."
+        },
+        "twitterUrl": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL to the user's Twitter/X profile."
+        },
+        "githubUrl": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL to the user's GitHub profile."
+        },
+        "portfolioUrl": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL to the user's personal portfolio or website."
+        },
+        "facebookUrl": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL to the user's Facebook profile."
+        },
+        "instagramUrl": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL to the user's Instagram profile."
+        },
+        "youtubeUrl": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL to the user's YouTube channel."
+        },
         "tier": {
           "type": "string",
           "description": "The expert's activation tier.",
@@ -142,6 +202,11 @@
           "type": "number",
           "description": "The total points earned by this user from referrals."
         },
+        "following": {
+            "type": "array",
+            "description": "An array of user IDs that this user is following.",
+            "items": { "type": "string" }
+        },
         "createdAt": {
             "type": "string",
             "format": "date-time",
@@ -156,58 +221,6 @@
         "role",
         "createdAt"
       ]
-    },
-    "Booking": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Booking",
-      "type": "object",
-      "description": "Represents a booking or appointment.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the booking."
-        },
-        "clientId": {
-          "type": "string",
-          "description": "The ID of the user who made the booking."
-        },
-        "clientName": {
-          "type": "string",
-          "description": "The name of the client."
-        },
-        "expertId": {
-          "type": "string",
-          "description": "The ID of the expert being booked."
-        },
-        "expertName": {
-          "type": "string",
-          "description": "The name of the expert."
-        },
-        "requestedDateTime": {
-          "type": "string",
-          "format": "date-time",
-          "description": "The requested date and time for the appointment."
-        },
-        "workDescription": {
-          "type": "string",
-          "description": "A description of the work to be done."
-        },
-        "location": {
-          "type": "string",
-          "description": "The location for the appointment."
-        },
-        "status": {
-          "type": "string",
-          "description": "The status of the booking.",
-          "enum": ["confirmed", "completed", "cancelled"]
-        },
-        "createdAt": {
-          "type": "string",
-          "format": "date-time",
-          "description": "Timestamp of when the booking was created."
-        }
-      },
-      "required": ["id", "clientId", "clientName", "expertId", "expertName", "requestedDateTime", "status", "createdAt"]
     },
     "Company": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -471,6 +484,16 @@
                 "required": ["id", "name", "icon"]
             }
         },
+        "departments": {
+          "type": "array",
+          "description": "A list of available company departments.",
+          "items": { "type": "string" }
+        },
+        "pricingModels": {
+            "type": "array",
+            "description": "A list of available pricing models (e.g., Hourly, Per-Day, Fixed).",
+            "items": { "type": "string" }
+        },
         "isPaymentsEnabled": {
           "type": "boolean",
           "description": "Globally enables or disables all payment functionalities."
@@ -585,22 +608,6 @@
           ]
         }
       },
-      {
-        "path": "/bookings/{bookingId}",
-        "definition": {
-          "entityName": "Booking",
-          "schema": {
-            "$ref": "#/backend/entities/Booking"
-          },
-          "description": "Stores all appointment bookings.",
-          "params": [
-            {
-              "name": "bookingId",
-              "description": "The unique identifier for the booking."
-            }
-          ]
-        }
-      },
        {
         "path": "/payments/{paymentId}",
         "definition": {
@@ -686,6 +693,22 @@
         }
       },
       {
+        "path": "/roles_manager/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Collection used to assign manager roles. The existence of a document indicates manager privileges.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user."
+            }
+          ]
+        }
+      },
+      {
         "path": "/app_config/{configId}",
         "definition": {
           "entityName": "AppConfig",
@@ -702,6 +725,7 @@
         }
       }
     ],
-    "reasoning": "The Firestore structure is designed to support DriveGuru's core features while adhering to the principles of Authorization Independence, Structural Segregation, and Access Modeling. User data, company information, and location data are stored in separate collections to maintain clarity and enforce consistent security rules. Crucially, authorization data is denormalized to avoid `get()` calls in security rules and ensure atomic operations.\n\n1.  **Authorization Independence:** A separate `/roles_super_admin/{userId}` collection determines super admin privileges based on document existence rather than user document content. This simplifies security rules and avoids hierarchical dependencies.\n\n2.  **Structural Segregation:**  User data, company data, location data, and reviews are stored in separate collections, each with distinct security requirements. This segregation simplifies security rule management and prevents unintended access.\n\n3.  **Access Modeling:**\n    *   User-owned location data is structured under `/users/{userId}/location_data/{locationDataId}`. This allows for path-based security rules, ensuring that only the user can access their own location data.\n    *   Companies are stored in a top-level `/companies` collection.\n    *   The super admin role is managed through the `/roles_super_admin/{userId}` collection, where the existence of a document for a user ID grants super admin privileges.\n    *   Reviews are in a top-level collection to allow admins to easily list and moderate all submitted reviews, while rules can still be written to allow users to create reviews or read approved ones."
+    "reasoning": "The Firestore structure is designed to support DriveGuru's core features while adhering to the principles of Authorization Independence, Structural Segregation, and Access Modeling. User data, company information, and location data are stored in separate collections to maintain clarity and enforce consistent security rules. Crucially, authorization data is denormalized to avoid `get()` calls in security rules and ensure atomic operations.\\n\\n1.  **Authorization Independence:** A separate `/roles_super_admin/{userId}` collection determines super admin privileges based on document existence rather than user document content. This simplifies security rules and avoids hierarchical dependencies.\\n\\n2.  **Structural Segregation:**  User data, company data, location data, and reviews are stored in separate collections, each with distinct security requirements. This segregation simplifies security rule management and prevents unintended access.\\n\\n3.  **Access Modeling:**\\n    *   User-owned location data is structured under `/users/{userId}/location_data/{locationDataId}`. This allows for path-based security rules, ensuring that only the user can access their own location data.\\n    *   Companies are stored in a top-level `/companies` collection.\\n    *   The super admin role is managed through the `/roles_super_admin/{userId}` collection, where the existence of a document for a user ID grants super admin privileges.\\n    *   Reviews are in a top-level collection to allow admins to easily list and moderate all submitted reviews, while rules can still be written to allow users to create reviews or read approved ones."
   }
 }
+    

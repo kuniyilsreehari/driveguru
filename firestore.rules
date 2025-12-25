@@ -19,6 +19,11 @@ service cloud.firestore {
       return isSignedIn() &&
         exists(/databases/$(database)/documents/roles_super_admin/$(request.auth.uid));
     }
+    
+    function isManager() {
+      return isSignedIn() &&
+        exists(/databases/$(database)/documents/roles_manager/$(request.auth.uid));
+    }
 
     function isExistingDoc() {
       return resource != null;
@@ -47,8 +52,7 @@ service cloud.firestore {
         'pricingModel', 'pricingValue',
         'experienceYears', 'experienceMonths', 'gender', 'qualification', 'collegeName',
         'skills', 'aboutMe', 'aboutYourDream', 'associatedProjectsName',
-        'linkedinUrl', 'twitterUrl', 'githubUrl', 'portfolioUrl', 
-        'facebookUrl', 'instagramUrl', 'youtubeUrl',
+        'linkedinUrl', 'twitterUrl', 'githubUrl', 'portfolioUrl', 'facebookUrl', 'instagramUrl', 'youtubeUrl',
         'isAvailable', 'following'
       ];
       let allAffectedKeys = request.resource.data.diff(resource.data).affectedKeys();
@@ -110,6 +114,11 @@ service cloud.firestore {
      * ===================================================== */
 
     match /roles_super_admin/{userId} {
+      allow get: if isOwner(userId) || isSuperAdmin();
+      allow list, create, update, delete: if isSuperAdmin();
+    }
+    
+    match /roles_manager/{userId} {
       allow get: if isOwner(userId) || isSuperAdmin();
       allow list, create, update, delete: if isSuperAdmin();
     }
