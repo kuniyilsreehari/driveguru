@@ -18,6 +18,7 @@ import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { FloatingActions } from '@/components/floating-actions';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { WhatsAppBookingDialog } from '@/components/whatsapp-booking-dialog';
 
 
 type ExpertUserProfile = {
@@ -229,36 +230,7 @@ function ExpertProfileContent() {
     }
     const formattedPhoneNumber = cleanPhoneNumber(expert.phoneNumber);
     const canContact = expert.verified && formattedPhoneNumber && isPremium;
-
-    const createWhatsAppMessage = () => {
-        const expertName = getDisplayName(expert);
-        const clientName = currentUserProfile ? `${currentUserProfile.firstName} ${currentUserProfile.lastName}` : "a potential client";
-        
-        const message = `*New Booking Request from DriveGuru*
-Hello ${expertName},
-
-A new appointment has been requested by *${clientName}*.
-
-*Client Details:*
-• Name: ${clientName}
-• Email: ${currentUserProfile?.email || "not provided"}
-
-*Appointment Details:*
-• Date: [Please enter desired date]
-• Time: [Please enter desired time]
-• Location: [Please enter location]
-• Work Required: [Please describe the work]
-
---------------------
-*To the Expert:* Please reply to confirm or cancel this appointment.
-*Simply reply with "Confirm" or "Cancel".*`;
-        
-        return `https://wa.me/${formattedPhoneNumber}?text=${encodeURIComponent(message)}`;
-    };
     
-    const whatsappLink = createWhatsAppMessage();
-    
-
     return (
         <div className="min-h-screen bg-background p-4 sm:p-8">
             <div className="mx-auto max-w-4xl space-y-8">
@@ -408,11 +380,11 @@ A new appointment has been requested by *${clientName}*.
                         <div className="flex flex-col sm:flex-row w-full gap-2">
                             {canContact ? (
                                 <>
-                                    <Button asChild className="flex-1" size="lg">
-                                        <a href={whatsappLink} target="_blank" rel="noopener noreferrer">
+                                    <WhatsAppBookingDialog expert={expert}>
+                                        <Button className="flex-1" size="lg">
                                             <MessageSquare className="mr-2 h-4 w-4" /> Book via WhatsApp
-                                        </a>
-                                    </Button>
+                                        </Button>
+                                    </WhatsAppBookingDialog>
                                     <Button asChild variant="outline" className="flex-1 bg-green-500/10 border-green-500/50 text-green-500 hover:bg-green-500/20 hover:text-green-500" size="lg">
                                         <a href={`tel:${formattedPhoneNumber}`}><Phone className="mr-2 h-4 w-4" /> Call</a>
                                     </Button>

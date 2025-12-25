@@ -7,10 +7,11 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { Star, IndianRupee, Briefcase, Calendar, Phone, MessageCircle, UserCheck, Crown, Sparkles, MapPin, Lock, List, Share2 } from 'lucide-react';
+import { Star, IndianRupee, Briefcase, Calendar, Phone, MessageSquare, UserCheck, Crown, Sparkles, MapPin, Lock, List, Share2 } from 'lucide-react';
 import { useUser } from '@/firebase';
 import { FollowerStats } from './follower-stats';
 import { useToast } from '@/hooks/use-toast';
+import { WhatsAppBookingDialog } from './whatsapp-booking-dialog';
 
 export type ExpertUser = {
     id: string;
@@ -63,11 +64,6 @@ export function ExpertCard({ expert }: ExpertCardProps) {
         return expert.companyName || `${expert.firstName} ${expert.lastName}`;
     }
 
-    const cleanPhoneNumber = (phoneNumber?: string) => {
-        if (!phoneNumber) return '';
-        return phoneNumber.replace(/\s+/g, '');
-    }
-
     const handleShare = async () => {
         const shareData = {
             title: `Check out ${getDisplayName(expert)} on DriveGuru`,
@@ -95,39 +91,10 @@ export function ExpertCard({ expert }: ExpertCardProps) {
         }
     };
 
-    const createWhatsAppMessage = () => {
-        const expertName = getDisplayName(expert);
-        const clientName = user?.displayName || "a potential client";
-        
-        const message = `*New Booking Request from DriveGuru*
-Hello ${expertName},
-
-A new appointment has been requested by *${clientName}*.
-
-*Client Details:*
-• Name: ${clientName}
-• Email: ${user?.email || "not provided"}
-
-*Appointment Details:*
-• Date: [Please enter desired date]
-• Time: [Please enter desired time]
-• Location: [Please enter location]
-• Work Required: [Please describe the work]
-
---------------------
-*To the Expert:* Please reply to confirm or cancel this appointment.
-*Simply reply with "Confirm" or "Cancel".*`;
-        
-        return `https://wa.me/${formattedPhoneNumber}?text=${encodeURIComponent(message)}`;
-    };
-
-    const formattedPhoneNumber = cleanPhoneNumber(expert.phoneNumber);
     const locationString = [expert.city, expert.state, expert.pincode].filter(Boolean).join(', ');
     
     // Determine if contact actions should be shown
-    const canShowContactActions = expert.verified && expert.showPhoneNumberOnProfile && formattedPhoneNumber;
-    const whatsappLink = createWhatsAppMessage();
-
+    const canShowContactActions = expert.verified && expert.showPhoneNumberOnProfile && expert.phoneNumber;
 
     return (
         <Card key={expert.id} className="relative overflow-hidden transition-all hover:shadow-lg hover:border-primary/50">
@@ -192,16 +159,14 @@ A new appointment has been requested by *${clientName}*.
                     </Button>
                     <div className="flex flex-1 gap-2">
                     {canShowContactActions ? (
-                        <>
-                            <Button asChild size="sm" className="flex-1 bg-green-500 hover:bg-green-600">
-                                <a href={whatsappLink} target="_blank" rel="noopener noreferrer">
-                                    <MessageCircle className="mr-2 h-4 w-4" /> WhatsApp
-                                </a>
+                        <WhatsAppBookingDialog expert={expert}>
+                            <Button size="sm" className="flex-1 bg-green-500 hover:bg-green-600">
+                                <MessageSquare className="mr-2 h-4 w-4" /> WhatsApp
                             </Button>
-                        </>
+                        </WhatsAppBookingDialog>
                     ) : (
                          <Button variant="secondary" disabled size="sm" className="w-full">
-                            <Lock className="mr-2 h-4 w-4" /> Contact locked
+                            <Lock className="mr-2 h-4 w-4" /> Contact
                         </Button>
                     )}
                     </div>
