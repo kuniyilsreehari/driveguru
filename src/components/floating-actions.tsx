@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils';
 import type { ExpertUser } from '@/components/expert-card';
 import { useAtom } from 'jotai';
 import { installPromptAtom } from '@/lib/store';
+import { useToast } from '@/hooks/use-toast';
 
 
 interface FloatingActionsProps {
@@ -27,10 +28,11 @@ export function FloatingActions({ expert, isPremium, isGeneratingPdf, onDownload
     const [isOpen, setIsOpen] = useState(false);
     const [installPrompt, setInstallPrompt] = useAtom(installPromptAtom);
     const [canShare, setCanShare] = useState(false);
+    const { toast } = useToast();
 
     useEffect(() => {
         // Client-side only check
-        setCanShare(navigator.share !== undefined);
+        setCanShare(navigator.share !== undefined || navigator.clipboard !== undefined);
     }, []);
 
     const handleInstallClick = () => {
@@ -43,12 +45,33 @@ export function FloatingActions({ expert, isPremium, isGeneratingPdf, onDownload
         });
     };
 
-    const handleShare = () => {
-        if (navigator.share) {
-            navigator.share({
-                title: expert ? `DriveGuru Expert: ${expert.firstName} ${expert.lastName}` : 'DriveGuru: Find Local Talent Instantly',
-                text: expert ? `Check out this expert on DriveGuru!` : 'Find trusted local service professionals and kickstart your career with DriveGuru.',
-                url: window.location.href,
+    const getDisplayName = (expert?: ExpertUser) => {
+        if (!expert) return 'DriveGuru';
+        return expert.companyName || `${expert.firstName} ${expert.lastName}`;
+    }
+
+    const handleShare = async () => {
+        const shareData = {
+            title: `Check out ${getDisplayName(expert)} on DriveGuru`,
+            text: `I found this expert, ${getDisplayName(expert)}, on DriveGuru. Here's their profile:`,
+            url: window.location.href,
+        };
+        try {
+            if (navigator.share) {
+                await navigator.share(shareData);
+            } else {
+                await navigator.clipboard.writeText(shareData.url);
+                toast({
+                    title: "Link Copied",
+                    description: "The link to the profile has been copied to your clipboard.",
+                });
+            }
+        } catch (err) {
+            console.error("Share failed:", err);
+            toast({
+                variant: 'destructive',
+                title: "Share Failed",
+                description: "Could not share the profile at this time.",
             });
         }
     };
