@@ -17,6 +17,7 @@ const CompanySchema = z.any();
 const ReviewSchema = z.any();
 const VacancySchema = z.any();
 const AppConfigSchema = z.any();
+const PaymentSchema = z.any();
 
 const ExportDataOutputSchema = z.object({
   users: z.array(UserSchema),
@@ -24,6 +25,7 @@ const ExportDataOutputSchema = z.object({
   reviews: z.array(ReviewSchema),
   vacancies: z.array(VacancySchema),
   app_config: z.array(AppConfigSchema),
+  payments: z.array(PaymentSchema),
 });
 export type ExportDataOutput = z.infer<typeof ExportDataOutputSchema>;
 
@@ -47,12 +49,13 @@ const exportDataFlow = ai.defineFlow(
   },
   async () => {
     
-    const [users, companies, reviews, vacancies, app_config] = await Promise.all([
+    const [users, companies, reviews, vacancies, app_config, payments] = await Promise.all([
         getAllFromCollection('users'),
         getAllFromCollection('companies'),
         getAllFromCollection('reviews'),
         getAllFromCollection('vacancies'),
         getAllFromCollection('app_config'),
+        getAllFromCollection('payments'),
     ]);
 
     return {
@@ -61,6 +64,7 @@ const exportDataFlow = ai.defineFlow(
       reviews,
       vacancies,
       app_config,
+      payments,
     };
   }
 );
