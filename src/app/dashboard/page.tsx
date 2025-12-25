@@ -65,7 +65,8 @@ type ExpertUserProfile = {
     pincode?: string;
     address?: string;
     verified?: boolean;
-    hourlyRate?: number;
+    pricingModel?: string;
+    pricingValue?: number;
     yearsOfExperience?: number;
     gender?: string;
     qualification?: string;
@@ -433,7 +434,7 @@ function ExpertDashboardPage() {
         profile.state,
         profile.pincode,
         profile.phoneNumber,
-        profile.hourlyRate,
+        profile.pricingValue,
         profile.yearsOfExperience,
         profile.gender,
         profile.qualification,
@@ -686,7 +687,7 @@ function ExpertDashboardPage() {
                     </div>
                      <div className="flex items-center gap-3">
                         <IndianRupee className="h-5 w-5 text-muted-foreground" />
-                        <p><span className="font-semibold">Hourly Rate:</span> {userProfile.hourlyRate ? `₹${userProfile.hourlyRate}/hr` : <span className="text-destructive">Not specified</span>}</p>
+                        <p><span className="font-semibold">Rate:</span> {userProfile.pricingValue ? `₹${userProfile.pricingValue}` : <span className="text-destructive">Not specified</span>}{userProfile.pricingModel && ` / ${userProfile.pricingModel}`}</p>
                     </div>
                     <div className="flex items-center gap-3">
                         <Calendar className="h-5 w-5 text-muted-foreground" />
