@@ -37,7 +37,7 @@ const generateAboutMeFlow = ai.defineFlow(
   },
   async (input) => {
     const llmResponse = await ai.generate({
-      model: 'gemini-1.5-flash',
+      model: 'gemini-1.5-flash-latest',
       prompt: `You are an expert at writing compelling professional bios. 
       Generate a friendly and professional "About Me" section for an expert named ${input.firstName}.
       The bio should be concise (2-3 sentences) and highlight their key strengths.
