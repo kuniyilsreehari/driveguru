@@ -1,36 +1,36 @@
-## Error Type
-Console GenkitError
+# Firebase Studio - DriveGuru
 
-## Error Message
-FAILED_PRECONDITION: Please pass in the API key or set the GEMINI_API_KEY or GOOGLE_API_KEY environment variable.
-For more details see https://genkit.dev/docs/plugins/google-genai/
+This is a Next.js starter project for DriveGuru, built in Firebase Studio.
 
+## Getting Started
 
-    at __TURBOPACK__module__evaluation__ (src/ai/genkit.ts:2:1)
-    at __TURBOPACK__module__evaluation__ (src/ai/flows/ai-search-flow.ts:11:1)
-    at __TURBOPACK__module__evaluation__ (about://React/Server/file:///home/user/studio/.next/server/chunks/ssr/%5Broot-of-the-server%5D__c3ddce67._.js?17:306:168)
-    at __TURBOPACK__module__evaluation__ (about://React/Server/file:///home/user/studio/.next/server/chunks/ssr/%5Broot-of-the-server%5D__c3ddce67._.js?18:316:373)
-    at Object.<anonymous> (.next/server/app/page.js:33:3)
+To run the application and use all its features, you need to set up your environment variables.
 
-## Code Frame
-  1 | import {genkit} from 'genkit';
-> 2 | import {googleAI} from '@genkit-ai/google-genai';
-    | ^
-  3 |
-  4 | export const ai = genkit({
-  5 |   plugins: [googleAI()],
+### 1. Create the Environment File
 
-Next.js version: 15.5.9 (Turbopack)
-FileInputStream serviceAccount =
-new FileInputStream("path/to/serviceAccountKey.json");
+In the root directory of the project, create a file named `.env`.
 
-FirebaseOptions options = new FirebaseOptions.Builder()
-  .setCredentials(GoogleCredentials.fromStream(serviceAccount))
-  .build();
+### 2. Add Your API Keys
 
-FirebaseApp.initializeApp(options);
-# Firebase Studio
+Open the `.env` file and add the following lines, replacing the placeholder text with your actual secret keys. You can get your Gemini API key from [Google AI Studio](https://aistudio.google.com/app/apikey).
 
-This is a NextJS starter in Firebase Studio.
+```
+# For Gemini AI Features (AI Search, Content Generation, etc.)
+GEMINI_API_KEY="your_gemini_api_key_here"
 
-To get started, take a look at src/app/page.tsx.
+# For Cashfree Payment Gateway (if you use the API method)
+CASHFREE_APP_ID="your_cashfree_client_id"
+CASHFREE_SECRET="your_cashfree_secret_key"
+```
+
+**IMPORTANT:** Never commit the `.env` file to a public repository. It contains sensitive information.
+
+### 3. Run the Application
+
+After saving your `.env` file, you can run the development server:
+
+```bash
+npm run dev
+```
+
+The application will now be able to connect to the Gemini API and other services you have configured.
