@@ -338,13 +338,30 @@ function FollowerStats({ userId }: { userId: string }) {
     }, [firestore, userId]);
 
     const { data: followers, isLoading: isLoadingFollowers } = useCollection(followersQuery);
+    
+    const userProfileDocRef = useMemoFirebase(() => {
+        if (!firestore) return null;
+        return doc(firestore, 'users', userId);
+    }, [firestore, userId]);
 
-    if (isLoadingFollowers) {
+    const { data: userProfile } = useDoc<ExpertUserProfile>(userProfileDocRef);
+
+    if (isLoadingFollowers || !userProfile) {
         return <p className="text-sm text-muted-foreground">Loading stats...</p>;
     }
+    
+    const followingCount = userProfile.following?.length || 0;
 
     return (
-        <p className="text-sm text-muted-foreground">{followers?.length || 0} Followers</p>
+        <div className="flex items-center gap-4 mt-2">
+            <div className="flex items-center gap-1">
+                <Users className="h-4 w-4 text-muted-foreground" />
+                <p className="text-sm text-muted-foreground"><span className="font-bold text-foreground">{followers?.length || 0}</span> Followers</p>
+            </div>
+            <div className="flex items-center gap-1">
+                <p className="text-sm text-muted-foreground"><span className="font-bold text-foreground">{followingCount}</span> Following</p>
+            </div>
+        </div>
     );
 }
 
@@ -576,15 +593,7 @@ function ExpertDashboardPage() {
                         <div>
                             <CardTitle className="text-2xl sm:text-4xl font-bold">Expert Dashboard</CardTitle>
                             <CardDescription>Welcome, {userProfile.firstName} {userProfile.lastName}.</CardDescription>
-                            <div className="flex items-center gap-4 mt-2">
-                                <div className="flex items-center gap-1">
-                                    <Users className="h-4 w-4 text-muted-foreground" />
-                                    <FollowerStats userId={userProfile.id} />
-                                </div>
-                                <div className="flex items-center gap-1">
-                                    <p className="text-sm text-muted-foreground">{userProfile.following?.length || 0} Following</p>
-                                </div>
-                            </div>
+                            <FollowerStats userId={userProfile.id} />
                             <div className="flex items-center gap-2 mt-2 flex-wrap">
                                 {userProfile.verified ? (
                                     <Badge variant="outline" className="border-green-500 text-green-500">
