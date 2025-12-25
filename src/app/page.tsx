@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { Suspense, useState, useEffect, useMemo } from 'react';
@@ -25,6 +24,7 @@ import { parseSearchQuery } from '@/ai/flows/ai-search-flow';
 import Link from 'next/link';
 import { FloatingActions } from '@/components/floating-actions';
 import type { HomepageCategory } from '@/app/admin/page';
+import { WelcomeRedirect } from '@/components/welcome-redirect';
 
 
 type AppConfig = {
@@ -50,14 +50,6 @@ function HomePageContent() {
     const [isParsingQuery, setIsParsingQuery] = useState(false);
     
     const { user, isUserLoading } = useUser();
-
-    useEffect(() => {
-        const hasVisited = localStorage.getItem('hasVisitedWelcome');
-        if (!hasVisited) {
-            localStorage.setItem('hasVisitedWelcome', 'true');
-            router.push('/welcome');
-        }
-    }, [router]);
 
     const userProfileDocRef = useMemoFirebase(() => {
         if (!firestore || !user) return null;
@@ -245,6 +237,7 @@ function HomePageContent() {
 
     return (
         <div className="min-h-screen">
+            <WelcomeRedirect />
             <div className="max-w-4xl mx-auto p-4 sm:p-8">
                 <header className="text-center py-8 sm:py-12">
                     <h1 className="text-4xl sm:text-6xl font-bold text-primary tracking-tight">DriveGuru</h1>
@@ -454,5 +447,3 @@ export default function TalentSearchPage() {
         </Suspense>
     );
 }
-
-    
