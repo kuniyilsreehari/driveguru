@@ -128,25 +128,36 @@ function SearchResults() {
         
         let experts = allExperts;
 
-        // Filter by search query
+        // Filter by search query with AND logic for multiple keywords
         if (searchQueryParam) {
-            const lowercasedQuery = searchQueryParam.toLowerCase();
+            const keywords = searchQueryParam.toLowerCase().split(' ').filter(kw => kw);
             experts = experts.filter(expert => {
-                const name = `${expert.firstName || ''} ${expert.lastName || ''}`.toLowerCase();
-                const company = expert.companyName?.toLowerCase() || '';
-                const role = expert.role?.toLowerCase() || '';
-                const skills = expert.skills?.toLowerCase() || '';
-                const qualification = expert.qualification?.toLowerCase() || '';
-                const category = expert.category?.toLowerCase() || '';
-                const profession = expert.profession?.toLowerCase() || '';
+                // All keywords must be found in the expert's profile
+                return keywords.every(keyword => {
+                    const name = `${expert.firstName || ''} ${expert.lastName || ''}`.toLowerCase();
+                    const company = expert.companyName?.toLowerCase() || '';
+                    const role = expert.role?.toLowerCase() || '';
+                    const skills = expert.skills?.toLowerCase() || '';
+                    const qualification = expert.qualification?.toLowerCase() || '';
+                    const category = expert.category?.toLowerCase() || '';
+                    const profession = expert.profession?.toLowerCase() || '';
+                    const city = expert.city?.toLowerCase() || '';
+                    const state = expert.state?.toLowerCase() || '';
+                    const tier = expert.tier?.toLowerCase() || '';
+                    const expertIsVerified = expert.verified ? 'verified' : '';
 
-                return name.includes(lowercasedQuery) ||
-                       company.includes(lowercasedQuery) ||
-                       role.includes(lowercasedQuery) ||
-                       skills.includes(lowercasedQuery) ||
-                       qualification.includes(lowercasedQuery) ||
-                       category.includes(lowercasedQuery) ||
-                       profession.includes(lowercasedQuery);
+                    return name.includes(keyword) ||
+                           company.includes(keyword) ||
+                           role.includes(keyword) ||
+                           skills.includes(keyword) ||
+                           qualification.includes(keyword) ||
+                           category.includes(keyword) ||
+                           profession.includes(keyword) ||
+                           city.includes(keyword) ||
+                           state.includes(keyword) ||
+                           tier.replace(' ', '').includes(keyword.replace(' ', '')) ||
+                           expertIsVerified.includes(keyword);
+                });
             });
         }
         
