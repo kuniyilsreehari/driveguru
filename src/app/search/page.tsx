@@ -143,6 +143,8 @@ function SearchResults() {
                     const profession = expert.profession?.toLowerCase() || '';
                     const city = expert.city?.toLowerCase() || '';
                     const state = expert.state?.toLowerCase() || '';
+                    const pincode = expert.pincode?.toLowerCase() || '';
+                    const address = expert.address?.toLowerCase() || '';
                     const tier = expert.tier?.toLowerCase() || '';
                     const expertIsVerified = expert.verified ? 'verified' : '';
 
@@ -155,6 +157,8 @@ function SearchResults() {
                            profession.includes(keyword) ||
                            city.includes(keyword) ||
                            state.includes(keyword) ||
+                           pincode.includes(keyword) ||
+                           address.includes(keyword) ||
                            tier.replace(' ', '').includes(keyword.replace(' ', '')) ||
                            expertIsVerified.includes(keyword);
                 });
