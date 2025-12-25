@@ -40,11 +40,17 @@ service cloud.firestore {
     
     // A user can update certain fields of their own profile.
     function isUpdatingOwnUserDoc(userId) {
-      let protectedFields = ['id', 'email', 'verified', 'role', 'tier', 'createdAt', 'referralCode', 'referralPoints', 'referredByCode'];
+      // All fields a user is allowed to edit on their own.
+      let editableFields = [
+        'firstName', 'lastName', 'photoUrl', 'state', 'city', 'pincode', 'address',
+        'phoneNumber', 'showPhoneNumberOnProfile', 'department', 'companyName', 'businessDescription', 'category',
+        'hourlyRate', 'yearsOfExperience', 'gender', 'qualification', 'collegeName',
+        'skills', 'aboutMe', 'aboutYourDream', 'associatedProjectsName',
+        'linkedinUrl', 'twitterUrl', 'githubUrl', 'portfolioUrl', 'isAvailable', 'following'
+      ];
       let allAffectedKeys = request.resource.data.diff(resource.data).affectedKeys();
-
-      // The rule allows the update if the user is the owner and is not trying to change any of the protected fields.
-      return isOwner(userId) && isExistingDoc() && !allAffectedKeys.hasAny(protectedFields);
+      
+      return isOwner(userId) && isExistingDoc() && allAffectedKeys.hasOnly(editableFields);
     }
     
     function isCreatingOwnLocationData(userId) {
@@ -80,7 +86,8 @@ service cloud.firestore {
     function isCreatingCorrectVacancy() {
         let userDoc = get(/databases/$(database)/documents/users/$(request.auth.uid));
         // The companyId in the new vacancy must match the companyId of the user creating it.
-        return requestData().companyId == userDoc.data.companyId;
+        // Also ensure the user document has a companyId to compare against.
+        return 'companyId' in userDoc.data && requestData().companyId == userDoc.data.companyId;
     }
 
     function isPremiumExpert() {
@@ -112,7 +119,6 @@ service cloud.firestore {
       allow write: if isSuperAdmin();
     }
     
-
     /* =====================================================
      * Companies
      * ===================================================== */
