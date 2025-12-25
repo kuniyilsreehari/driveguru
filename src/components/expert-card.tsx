@@ -88,7 +88,10 @@ export function ExpertCard({ expert }: ExpertCardProps) {
 
                     <div className="flex-1">
                         <Link href={`/expert/${expert.id}`} className="block cursor-pointer">
-                            <h3 className="text-xl font-bold">{getDisplayName(expert)}</h3>
+                             <h3 className="text-xl font-bold">{expert.companyName || `${expert.firstName} ${expert.lastName}`}</h3>
+                            {expert.companyName && (
+                                <p className="text-sm text-muted-foreground">{`${expert.firstName} ${expert.lastName}`}</p>
+                            )}
                             {expert.businessDescription && <p className="text-sm text-muted-foreground mt-1">{expert.businessDescription}</p>}
                             <div className="mt-1">
                                 <FollowerStats expert={expert} />
