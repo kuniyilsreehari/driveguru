@@ -87,13 +87,13 @@
           "type": "boolean",
           "description": "If true, the phone number will be visible on the public profile card."
         },
-        "verified": {
-          "type": "boolean",
-          "description": "Indicates if the expert has been verified by a super admin."
+        "pricingModel": {
+            "type": "string",
+            "description": "The pricing model selected by the user (e.g., 'Hourly', 'Per Project')."
         },
-        "hourlyRate": {
-          "type": "number",
-          "description": "The expert's hourly rate."
+        "pricingValue": {
+            "type": "number",
+            "description": "The numerical value associated with the selected pricing model."
         },
         "yearsOfExperience": {
           "type": "number",
@@ -460,6 +460,11 @@
           "type": "array",
           "description": "A list of available company departments.",
           "items": { "type": "string" }
+        },
+        "pricingModels": {
+            "type": "array",
+            "description": "A list of available pricing models (e.g., Hourly, Per-Day, Fixed).",
+            "items": { "type": "string" }
         },
         "isPaymentsEnabled": {
           "type": "boolean",

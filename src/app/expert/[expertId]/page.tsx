@@ -33,7 +33,8 @@ type ExpertUserProfile = {
     pincode?: string;
     address?: string;
     verified?: boolean;
-    hourlyRate?: number;
+    pricingModel?: string;
+    pricingValue?: number;
     yearsOfExperience?: number;
     gender?: string;
     qualification?: string;
@@ -325,7 +326,7 @@ function ExpertProfileContent() {
                             </div>
                             <div className="flex items-start gap-3">
                                 <IndianRupee className="h-5 w-5 text-muted-foreground mt-1" />
-                                <p><span className="font-semibold">Hourly Rate:</span> {expert.hourlyRate ? `₹${expert.hourlyRate}/hr` : 'Not specified'}</p>
+                                <p><span className="font-semibold">Rate:</span> {expert.pricingValue ? `₹${expert.pricingValue}` : 'Not specified'}{expert.pricingModel && ` / ${expert.pricingModel}`}</p>
                             </div>
                             <div className="flex items-start gap-3">
                                 <Calendar className="h-5 w-5 text-muted-foreground mt-1" />

@@ -73,7 +73,8 @@ const formSchema = z.object({
   companyName: z.string().optional(),
   businessDescription: z.string().optional(),
   category: z.string().optional(),
-  hourlyRate: z.coerce.number().min(0, "Hourly rate cannot be negative.").optional(),
+  pricingModel: z.string().optional(),
+  pricingValue: z.coerce.number().min(0, "Price value cannot be negative.").optional(),
   yearsOfExperience: z.coerce.number().min(0, "Years of experience cannot be negative.").optional(),
   gender: z.string().optional(),
   qualification: z.string().optional(),
@@ -111,7 +112,8 @@ type ExpertUserProfile = {
     department?: string;
     businessDescription?: string;
     category?: string;
-    hourlyRate?: number;
+    pricingModel?: string;
+    pricingValue?: number;
     yearsOfExperience?: number;
     gender?: string;
     qualification?: string;
@@ -130,6 +132,7 @@ type ExpertUserProfile = {
 type AppConfig = {
     homepageCategories?: HomepageCategory[];
     departments?: string[];
+    pricingModels?: string[];
 };
 
 interface EditProfileFormProps {
@@ -159,6 +162,7 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
   const { data: appConfig } = useDoc<AppConfig>(appConfigDocRef);
   const homepageCategories = appConfig?.homepageCategories || [];
   const departments = appConfig?.departments || [];
+  const pricingModels = appConfig?.pricingModels || [];
 
 
   const extractPhoneNumberParts = (fullNumber?: string) => {
@@ -198,7 +202,8 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
       companyName: userProfile.companyName || "",
       businessDescription: userProfile.businessDescription || "",
       category: userProfile.category || "",
-      hourlyRate: userProfile.hourlyRate || 0,
+      pricingModel: userProfile.pricingModel || "",
+      pricingValue: userProfile.pricingValue || 0,
       yearsOfExperience: userProfile.yearsOfExperience || 0,
       gender: userProfile.gender || "",
       qualification: userProfile.qualification || "",
@@ -761,7 +766,7 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
                     <div className="space-y-0.5">
                       <FormLabel>Show phone number on profile</FormLabel>
                       <FormDescription>
-                        Allow clients to see your phone number on your profile card.
+                        Allow clients to see your phone number on your public profile card.
                       </FormDescription>
                     </div>
                     <FormControl>
@@ -829,10 +834,32 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
           <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
-                name="hourlyRate"
+                name="pricingModel"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Hourly Rate (INR)</FormLabel>
+                    <FormLabel>Pricing Model</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select a pricing model" />
+                        </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                        {pricingModels.map((model) => (
+                            <SelectItem key={model} value={model}>{model}</SelectItem>
+                        ))}
+                        </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="pricingValue"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Price (INR)</FormLabel>
                     <div className="relative">
                       <IndianRupee className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                       <FormControl>
@@ -843,23 +870,23 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
                   </FormItem>
                 )}
               />
-              <FormField
-                control={form.control}
-                name="yearsOfExperience"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Years of Experience</FormLabel>
-                    <div className="relative">
-                      <Calendar className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                      <FormControl>
-                        <Input type="number" placeholder="5" {...field} className="pl-10" />
-                      </FormControl>
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
           </div>
+          <FormField
+            control={form.control}
+            name="yearsOfExperience"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Years of Experience</FormLabel>
+                <div className="relative">
+                  <Calendar className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <FormControl>
+                    <Input type="number" placeholder="5" {...field} className="pl-10" />
+                  </FormControl>
+                </div>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
           <FormField
             control={form.control}

@@ -76,7 +76,8 @@ type ExpertUser = {
     pincode?: string;
     address?: string;
     verified?: boolean;
-    hourlyRate?: number;
+    pricingModel?: string;
+    pricingValue?: number;
     yearsOfExperience?: number;
     gender?: string;
     qualification?: string;
@@ -136,6 +137,7 @@ type AppConfig = {
     featuredExpertsLimit?: number;
     homepageCategories?: HomepageCategory[];
     departments?: string[];
+    pricingModels?: string[];
     premierPaymentLink?: string;
     superPremierPaymentLink?: string;
     verificationPaymentLink?: string;
@@ -532,6 +534,9 @@ export default function AdminDashboardPage() {
 
   const [departments, setDepartments] = useState<string[]>([]);
   const [newDepartment, setNewDepartment] = useState('');
+  
+  const [pricingModels, setPricingModels] = useState<string[]>([]);
+  const [newPricingModel, setNewPricingModel] = useState('');
 
   const [isSavingSettings, setIsSavingSettings] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
@@ -587,6 +592,7 @@ export default function AdminDashboardPage() {
         setFeaturedExpertsLimit(appConfig.featuredExpertsLimit || 3);
         setHomepageCategories(appConfig.homepageCategories || []);
         setDepartments(appConfig.departments || []);
+        setPricingModels(appConfig.pricingModels || []);
         setPremierPaymentLink(appConfig.premierPaymentLink || '');
         setSuperPremierPaymentLink(appConfig.superPremierPaymentLink || '');
         setVerificationPaymentLink(appConfig.verificationPaymentLink || '');
@@ -689,6 +695,7 @@ export default function AdminDashboardPage() {
         featuredExpertsLimit: Number(featuredExpertsLimit),
         homepageCategories,
         departments,
+        pricingModels,
         premierPaymentLink,
         superPremierPaymentLink,
         verificationPaymentLink,
@@ -785,6 +792,23 @@ export default function AdminDashboardPage() {
   
   const handleDeleteDepartment = (departmentToDelete: string) => {
       setDepartments(prev => prev.filter(dep => dep !== departmentToDelete));
+  };
+
+  const handleAddPricingModel = () => {
+    if (newPricingModel.trim() && !pricingModels.includes(newPricingModel.trim())) {
+        setPricingModels(prev => [...prev, newPricingModel.trim()]);
+        setNewPricingModel('');
+    } else {
+        toast({
+            variant: 'destructive',
+            title: 'Invalid Pricing Model',
+            description: 'Please enter a unique pricing model name (e.g., Hourly, Per-Day).'
+        });
+    }
+  };
+
+  const handleDeletePricingModel = (modelToDelete: string) => {
+      setPricingModels(prev => prev.filter(model => model !== modelToDelete));
   };
 
   const handleApproveReview = (review: Review) => {
@@ -949,7 +973,7 @@ export default function AdminDashboardPage() {
             return;
         }
 
-        const headers = ['id', 'firstName', 'lastName', 'email', 'role', 'companyName', 'department', 'phoneNumber', 'city', 'state', 'pincode', 'address', 'verified', 'tier', 'isAvailable', 'hourlyRate', 'yearsOfExperience', 'qualification', 'skills', 'aboutMe', 'referralCode', 'referredByCode'];
+        const headers = ['id', 'firstName', 'lastName', 'email', 'role', 'companyName', 'department', 'phoneNumber', 'city', 'state', 'pincode', 'address', 'verified', 'tier', 'isAvailable', 'pricingModel', 'pricingValue', 'yearsOfExperience', 'qualification', 'skills', 'aboutMe', 'referralCode', 'referredByCode'];
         const csvRows = [headers.join(',')];
 
         for (const user of usersData) {
@@ -1558,6 +1582,34 @@ export default function AdminDashboardPage() {
                                                 </div>
                                                 <Button onClick={handleAddDepartment}>
                                                     <PlusCircle className="mr-2 h-4 w-4" /> Add
+                                                </Button>
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                    
+                                    <Card>
+                                        <CardHeader>
+                                            <CardTitle className="text-lg flex items-center gap-2"><IndianRupee className="h-5 w-5" />Pricing Model Management</CardTitle>
+                                            <CardDescription>Define the types of pricing experts can select (e.g., Hourly, Fixed).</CardDescription>
+                                        </CardHeader>
+                                        <CardContent className="space-y-4">
+                                            <div className="space-y-2">
+                                                {pricingModels.map((model, index) => (
+                                                    <div key={index} className="flex items-center gap-2 p-2 border rounded-lg">
+                                                        <p className="flex-1 text-sm">{model}</p>
+                                                        <Button variant="ghost" size="icon" onClick={() => handleDeletePricingModel(model)}>
+                                                            <Trash2 className="h-4 w-4 text-destructive" />
+                                                        </Button>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                            <div className="flex items-end gap-2">
+                                                <div className="flex-1">
+                                                    <Label htmlFor="new-pricing-model">New Pricing Model Name</Label>
+                                                    <Input id="new-pricing-model" value={newPricingModel} onChange={(e) => setNewPricingModel(e.target.value)} placeholder="e.g., Per-Day" />
+                                                </div>
+                                                <Button onClick={handleAddPricingModel}>
+                                                    <PlusCircle className="mr-2 h-4 w-4" /> Add Model
                                                 </Button>
                                             </div>
                                         </CardContent>
