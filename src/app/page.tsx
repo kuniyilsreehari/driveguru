@@ -4,13 +4,12 @@
 
 import { Suspense, useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { Briefcase, Building, ChevronDown, Laptop, LocateIcon, MapPin, Search, Smartphone, Wrench, Loader2, Star, UserCheck, Crown, Sparkles, HelpCircle, Bot, Lock, Users } from "lucide-react"
+import { Briefcase, Building, ChevronDown, Laptop, LocateIcon, MapPin, Search, Smartphone, Wrench, Loader2, Star, UserCheck, Crown, Sparkles, HelpCircle, Bot, Lock, Users, User, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Slider } from "@/components/ui/slider"
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Icons } from "@/components/icons"
 import { useToast } from '@/hooks/use-toast';
@@ -27,12 +26,12 @@ import { FloatingActions } from '@/components/floating-actions';
 import type { HomepageCategory } from '@/app/admin/page';
 import { WelcomeRedirect } from '@/components/welcome-redirect';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
 
 
 type AppConfig = {
@@ -244,6 +243,12 @@ function HomePageContent() {
         const Icon = (LucideIcons as any)[name];
         return Icon ? <Icon className="w-8 h-8 text-primary" /> : <Briefcase className="w-8 h-8 text-primary" />;
     };
+    
+    const userTypes = [
+        { value: 'all', label: 'All User Types', icon: Users },
+        { value: 'Freelancer', label: 'Freelancers', icon: User },
+        { value: 'Company', label: 'Companies', icon: Building },
+    ];
 
     return (
         <div className="min-h-screen">
@@ -354,16 +359,42 @@ function HomePageContent() {
 
                             <div className='my-6'>
                                 <Label className="text-base font-semibold">User Type</Label>
-                                <Select value={role} onValueChange={setRole}>
-                                    <SelectTrigger className="w-full mt-2">
-                                        <SelectValue placeholder="Select a user type" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="all">All User Types</SelectItem>
-                                        <SelectItem value="Freelancer">Freelancers</SelectItem>
-                                        <SelectItem value="Company">Companies</SelectItem>
-                                    </SelectContent>
-                                </Select>
+                                <Dialog>
+                                    <DialogTrigger asChild>
+                                        <Button variant="outline" className="w-full justify-start text-left font-normal mt-2">
+                                            {userTypes.find(t => t.value === role)?.label || 'Select a user type'}
+                                            <ChevronDown className="ml-auto h-4 w-4 opacity-50" />
+                                        </Button>
+                                    </DialogTrigger>
+                                    <DialogContent>
+                                        <DialogHeader>
+                                            <DialogTitle>Select User Type</DialogTitle>
+                                        </DialogHeader>
+                                        <div className="grid grid-cols-1 gap-4 pt-4">
+                                            {userTypes.map((type) => (
+                                                 <DialogTrigger key={type.value} asChild>
+                                                    <Card 
+                                                        className={cn(
+                                                            "cursor-pointer transition-all duration-300 transform hover:-translate-y-1",
+                                                            role === type.value 
+                                                                ? "border-primary ring-2 ring-primary" 
+                                                                : "hover:border-primary/50"
+                                                        )}
+                                                        onClick={() => setRole(type.value)}
+                                                    >
+                                                        <CardHeader className="flex flex-row items-center justify-between p-4">
+                                                            <div className="flex items-center gap-4">
+                                                                <type.icon className="h-6 w-6 text-primary" />
+                                                                <CardTitle className="text-base">{type.label}</CardTitle>
+                                                            </div>
+                                                            {role === type.value && <Check className="h-5 w-5 text-primary" />}
+                                                        </CardHeader>
+                                                    </Card>
+                                                </DialogTrigger>
+                                            ))}
+                                        </div>
+                                    </DialogContent>
+                                </Dialog>
                             </div>
                             
                             <div className="mt-6">
