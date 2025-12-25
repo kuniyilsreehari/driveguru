@@ -307,13 +307,13 @@ function ExpertProfileContent() {
                                     {expert.tier === 'Super Premier' && <Badge variant="outline" className="border-blue-500 text-blue-500"><Sparkles className="mr-1 h-3 w-3" /> Super Premier</Badge>}
                                 </div>
                                 <div className="flex items-center gap-3 mt-4">
-                                  {expert.linkedinUrl && <a href={expert.linkedinUrl} target="_blank" rel="noopener noreferrer"><Linkedin className="h-5 w-5 text-muted-foreground hover:text-primary"/></a>}
-                                  {expert.twitterUrl && <a href={expert.twitterUrl} target="_blank" rel="noopener noreferrer"><Twitter className="h-5 w-5 text-muted-foreground hover:text-primary"/></a>}
-                                  {expert.githubUrl && <a href={expert.githubUrl} target="_blank" rel="noopener noreferrer"><Github className="h-5 w-5 text-muted-foreground hover:text-primary"/></a>}
                                   {expert.portfolioUrl && <a href={expert.portfolioUrl} target="_blank" rel="noopener noreferrer"><Globe className="h-5 w-5 text-muted-foreground hover:text-primary"/></a>}
                                   {expert.facebookUrl && <a href={expert.facebookUrl} target="_blank" rel="noopener noreferrer"><Icons.logo className="h-5 w-5 text-muted-foreground hover:text-primary"/></a>}
                                   {expert.instagramUrl && <a href={expert.instagramUrl} target="_blank" rel="noopener noreferrer"><Icons.logo className="h-5 w-5 text-muted-foreground hover:text-primary"/></a>}
                                   {expert.youtubeUrl && <a href={expert.youtubeUrl} target="_blank" rel="noopener noreferrer"><Youtube className="h-5 w-5 text-muted-foreground hover:text-primary"/></a>}
+                                  {expert.linkedinUrl && <a href={expert.linkedinUrl} target="_blank" rel="noopener noreferrer"><Linkedin className="h-5 w-5 text-muted-foreground hover:text-primary"/></a>}
+                                  {expert.twitterUrl && <a href={expert.twitterUrl} target="_blank" rel="noopener noreferrer"><Twitter className="h-5 w-5 text-muted-foreground hover:text-primary"/></a>}
+                                  {expert.githubUrl && <a href={expert.githubUrl} target="_blank" rel="noopener noreferrer"><Github className="h-5 w-5 text-muted-foreground hover:text-primary"/></a>}
                                 </div>
                             </div>
                         </div>

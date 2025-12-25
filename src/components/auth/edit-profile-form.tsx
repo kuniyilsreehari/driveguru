@@ -83,13 +83,13 @@ const formSchema = z.object({
   aboutMe: z.string().optional(),
   aboutYourDream: z.string().optional(),
   associatedProjectsName: z.string().optional(),
-  linkedinUrl: z.string().url().optional().or(z.literal('')),
-  twitterUrl: z.string().url().optional().or(z.literal('')),
-  githubUrl: z.string().url().optional().or(z.literal('')),
   portfolioUrl: z.string().url().optional().or(z.literal('')),
   facebookUrl: z.string().url().optional().or(z.literal('')),
   instagramUrl: z.string().url().optional().or(z.literal('')),
   youtubeUrl: z.string().url().optional().or(z.literal('')),
+  linkedinUrl: z.string().url().optional().or(z.literal('')),
+  twitterUrl: z.string().url().optional().or(z.literal('')),
+  githubUrl: z.string().url().optional().or(z.literal('')),
 });
 
 const linkEmailSchema = z.object({
@@ -1082,54 +1082,6 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
             <h3 className="text-lg font-medium">Social Profiles</h3>
             <FormField
               control={form.control}
-              name="linkedinUrl"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>LinkedIn</FormLabel>
-                  <div className="relative">
-                    <Linkedin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <FormControl>
-                      <Input placeholder="https://linkedin.com/in/yourprofile" {...field} className="pl-10" />
-                    </FormControl>
-                  </div>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-             <FormField
-              control={form.control}
-              name="twitterUrl"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Twitter / X</FormLabel>
-                  <div className="relative">
-                    <Twitter className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <FormControl>
-                      <Input placeholder="https://x.com/yourprofile" {...field} className="pl-10" />
-                    </FormControl>
-                  </div>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-             <FormField
-              control={form.control}
-              name="githubUrl"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>GitHub</FormLabel>
-                  <div className="relative">
-                    <Github className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <FormControl>
-                      <Input placeholder="https://github.com/yourprofile" {...field} className="pl-10" />
-                    </FormControl>
-                  </div>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-             <FormField
-              control={form.control}
               name="portfolioUrl"
               render={({ field }) => (
                 <FormItem>
@@ -1186,6 +1138,54 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
                     <Youtube className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <FormControl>
                       <Input placeholder="https://youtube.com/yourchannel" {...field} className="pl-10" />
+                    </FormControl>
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="linkedinUrl"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>LinkedIn</FormLabel>
+                  <div className="relative">
+                    <Linkedin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <FormControl>
+                      <Input placeholder="https://linkedin.com/in/yourprofile" {...field} className="pl-10" />
+                    </FormControl>
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+             <FormField
+              control={form.control}
+              name="twitterUrl"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Twitter / X</FormLabel>
+                  <div className="relative">
+                    <Twitter className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <FormControl>
+                      <Input placeholder="https://x.com/yourprofile" {...field} className="pl-10" />
+                    </FormControl>
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+             <FormField
+              control={form.control}
+              name="githubUrl"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>GitHub</FormLabel>
+                  <div className="relative">
+                    <Github className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <FormControl>
+                      <Input placeholder="https://github.com/yourprofile" {...field} className="pl-10" />
                     </FormControl>
                   </div>
                   <FormMessage />
