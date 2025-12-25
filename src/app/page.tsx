@@ -159,89 +159,10 @@ function HomePageContent() {
     };
     
     const handleAiSearch = async () => {
-        if (!isPremiumUser) {
-             toast({
-                variant: 'destructive',
-                title: 'Premium Feature',
-                description: 'Upgrade to a Premier or Super Premier plan to use AI Search.',
-            });
-            return;
-        }
-
-        if (!aiSearchQuery.trim()) {
-            toast({ variant: 'destructive', title: "Empty Query", description: "Please enter what you're looking for."});
-            return;
-        }
-
-        setIsParsingQuery(true);
-        
-        let userLat: number | undefined;
-        let userLon: number | undefined;
-        
-        const fullQuery = role !== 'all' ? `${aiSearchQuery} as a ${role}` : aiSearchQuery;
-
-        if (fullQuery.toLowerCase().includes('near me') || fullQuery.toLowerCase().includes('nearby')) {
-            try {
-                const position = await getCurrentPosition();
-                userLat = position.coords.latitude;
-                userLon = position.coords.longitude;
-            } catch (error: any) {
-                 toast({
-                    variant: 'destructive',
-                    title: 'Location Required',
-                    description: 'Could not get your location for a "near me" search. Please enable location services or try a different query.'
-                });
-                setIsParsingQuery(false);
-                return;
-            }
-        }
-
-        try {
-            const result = await parseSearchQuery({ query: fullQuery, userLat, userLon });
-            
-            const queryParams = new URLSearchParams();
-            if (result.searchQuery) {
-                queryParams.set('q', result.searchQuery);
-            }
-            if (result.location) {
-                queryParams.set('location', result.location);
-            }
-            if (result.isVerified) {
-                queryParams.set('verified', 'true');
-            }
-            if (result.isAvailable) {
-                queryParams.set('available', 'true');
-            }
-            if (result.maxRate) {
-                queryParams.set('maxRate', result.maxRate.toString());
-            }
-            if (result.radius) {
-                queryParams.set('radius', result.radius.toString());
-            }
-            if (result.lat) {
-                queryParams.set('lat', result.lat.toString());
-            }
-            if (result.lon) {
-                queryParams.set('lon', result.lon.toString());
-            }
-            if (role && role !== 'all') {
-                queryParams.set('role', role);
-            }
-            // Add tier filter for AI search
-            queryParams.set('tier', 'Premier,Super Premier');
-
-            router.push(`/search?${queryParams.toString()}`);
-
-        } catch (error) {
-            console.error("AI search parsing failed:", error);
-            toast({
-                variant: 'destructive',
-                title: 'AI Search Failed',
-                description: 'Could not understand the query. Please try rephrasing it or use the manual filters.'
-            });
-        } finally {
-            setIsParsingQuery(false);
-        }
+        const queryParams = new URLSearchParams();
+        if (aiSearchQuery) queryParams.set('q', aiSearchQuery);
+        if (role && role !== 'all') queryParams.set('role', role);
+        router.push(`/search?${queryParams.toString()}`);
     };
 
     const getIcon = (name: string) => {
@@ -276,20 +197,10 @@ function HomePageContent() {
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
-                             {!isPremiumUser && (
-                                <CardDescription className="mb-4 text-orange-400">
-                                    <div className="flex items-center gap-2">
-                                        <Lock />
-                                        <span>
-                                            This is a premium feature. <Link href="/dashboard" className="underline font-bold">Upgrade your plan</Link> to activate.
-                                        </span>
-                                    </div>
-                                </CardDescription>
-                            )}
                             <div className="flex flex-col sm:flex-row items-stretch gap-2">
                                 <Dialog>
                                     <DialogTrigger asChild>
-                                        <Button variant="outline" className="w-full sm:w-auto justify-start text-left font-normal" disabled={!isPremiumUser || isLoadingUserData}>
+                                        <Button variant="outline" className="w-full sm:w-auto justify-start text-left font-normal">
                                             <span className="flex-1">{userTypes.find(t => t.value === role)?.label || 'Select a user type'}</span>
                                             <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
                                         </Button>
@@ -333,14 +244,13 @@ function HomePageContent() {
                                     <Input
                                         id="ai-search"
                                         placeholder={`Search for a ${role !== 'all' ? role.toLowerCase() : 'professional'}...`}
-                                        className={cn("text-base", !isPremiumUser && "cursor-not-allowed")}
+                                        className={cn("text-base")}
                                         value={aiSearchQuery}
                                         onChange={(e) => setAiSearchQuery(e.target.value)}
                                         onKeyDown={(e) => e.key === 'Enter' && handleAiSearch()}
-                                        disabled={!isPremiumUser || isLoadingUserData}
                                     />
                                 </div>
-                                <Button onClick={handleAiSearch} disabled={isParsingQuery || !isPremiumUser || isLoadingUserData} className="w-full sm:w-auto">
+                                <Button onClick={handleAiSearch} disabled={isParsingQuery} className="w-full sm:w-auto">
                                     {isParsingQuery ? (
                                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                                     ) : (
