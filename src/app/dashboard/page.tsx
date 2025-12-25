@@ -106,7 +106,8 @@ type AppConfig = {
 function CompanyVacancies({ userProfile }: { userProfile: ExpertUserProfile }) {
   const firestore = useFirestore();
   const [isPostDialogOpen, setIsPostDialogOpen] = useState(false);
-  const isPremiumWithCompanyId = (userProfile.tier === 'Premier' || userProfile.tier === 'Super Premier') && !!userProfile.companyId;
+  const isPremium = userProfile.tier === 'Premier' || userProfile.tier === 'Super Premier';
+  const canPostVacancy = isPremium && (userProfile.role === 'Company' || !!userProfile.companyId);
 
   const vacanciesQuery = useMemoFirebase(() => {
     if (!firestore || !userProfile.companyId) return null;
@@ -123,7 +124,7 @@ function CompanyVacancies({ userProfile }: { userProfile: ExpertUserProfile }) {
             <CardTitle>Manage Vacancies</CardTitle>
             <CardDescription>Post and view job openings for your company.</CardDescription>
           </div>
-           {isPremiumWithCompanyId ? (
+           {canPostVacancy ? (
               <Dialog open={isPostDialogOpen} onOpenChange={setIsPostDialogOpen}>
                 <DialogTrigger asChild>
                   <Button className="w-full sm:w-auto">
