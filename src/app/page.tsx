@@ -244,7 +244,7 @@ function HomePageContent() {
                         <CardHeader>
                              <div className="flex items-center justify-between">
                                 <CardTitle className="flex items-center gap-2 text-2xl">
-                                    <Search /> Main Search
+                                    <Sparkles /> AI-Powered Search
                                 </CardTitle>
                                 <div className="flex items-center space-x-2">
                                     <Switch id="ai-mode" checked={useAiSearch} onCheckedChange={handleAiModeToggle} />
@@ -313,7 +313,7 @@ function HomePageContent() {
                                     {isParsingQuery ? (
                                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                                     ) : (
-                                        <Sparkles className="mr-2 h-4 w-4" />
+                                        <Search className="mr-2 h-4 w-4" />
                                     )}
                                     Search
                                 </Button>
