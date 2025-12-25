@@ -45,7 +45,7 @@ service cloud.firestore {
         'firstName', 'lastName', 'photoUrl', 'state', 'city', 'pincode', 'address',
         'phoneNumber', 'showPhoneNumberOnProfile', 'department', 'companyName', 'businessDescription', 'category', 'profession',
         'pricingModel', 'pricingValue',
-        'yearsOfExperience', 'gender', 'qualification', 'collegeName',
+        'experienceYears', 'experienceMonths', 'gender', 'qualification', 'collegeName',
         'skills', 'aboutMe', 'aboutYourDream', 'associatedProjectsName',
         'linkedinUrl', 'twitterUrl', 'githubUrl', 'portfolioUrl', 
         'facebookUrl', 'instagramUrl', 'youtubeUrl',
