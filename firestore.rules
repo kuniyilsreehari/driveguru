@@ -44,7 +44,8 @@ service cloud.firestore {
       let editableFields = [
         'firstName', 'lastName', 'photoUrl', 'state', 'city', 'pincode', 'address',
         'phoneNumber', 'showPhoneNumberOnProfile', 'department', 'companyName', 'businessDescription', 'category',
-        'hourlyRate', 'yearsOfExperience', 'gender', 'qualification', 'collegeName',
+        'pricingModel', 'pricingValue', // Added pricing fields
+        'yearsOfExperience', 'gender', 'qualification', 'collegeName',
         'skills', 'aboutMe', 'aboutYourDream', 'associatedProjectsName',
         'linkedinUrl', 'twitterUrl', 'githubUrl', 'portfolioUrl', 'isAvailable', 'following'
       ];
@@ -78,7 +79,7 @@ service cloud.firestore {
     
     function isCreatingCorrectVacancy() {
         // The companyId in the new vacancy must match the companyId of the user creating it.
-        return requestData().companyId == request.auth.uid;
+        return isCompanyUser() && requestData().companyId == request.auth.uid;
     }
 
     function isPremiumExpert() {
@@ -185,7 +186,7 @@ service cloud.firestore {
         // Anyone can read and list job vacancies.
         allow get, list: if true;
         // Any company user or a super admin can create vacancies.
-        allow create: if (isCompanyUser() && isCreatingCorrectVacancy()) || isSuperAdmin();
+        allow create: if isCompanyUser() && isCreatingCorrectVacancy() || isSuperAdmin();
         // Only the company that owns the vacancy or a super admin can update it.
         allow update: if (isCompanyUser() && isVacancyOwner(requestData())) || isSuperAdmin();
         // Only the company that owns the vacancy or a super admin can delete it.
