@@ -826,6 +826,23 @@ function ExpertDashboardPage() {
         )}
 
         <PlanManagement userProfile={userProfile} appConfig={appConfig} />
+
+        <Card>
+            <CardHeader>
+                <CardTitle>Explore Vacancies</CardTitle>
+                <CardDescription>Find your next career opportunity.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <div className="flex items-center justify-center p-6 bg-secondary rounded-lg">
+                    <Button asChild>
+                        <Link href="/vacancies">
+                            <Briefcase className="mr-2 h-4 w-4" />
+                            View All Job Openings
+                        </Link>
+                    </Button>
+                </div>
+            </CardContent>
+        </Card>
         
         {userProfile.role === 'Company' && <CompanyVacancies userProfile={userProfile} />}
 
