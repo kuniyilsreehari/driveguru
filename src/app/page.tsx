@@ -177,8 +177,10 @@ function HomePageContent() {
         
         let userLat: number | undefined;
         let userLon: number | undefined;
+        
+        const fullQuery = role !== 'all' ? `${aiSearchQuery} as a ${role}` : aiSearchQuery;
 
-        if (aiSearchQuery.toLowerCase().includes('near me') || aiSearchQuery.toLowerCase().includes('nearby')) {
+        if (fullQuery.toLowerCase().includes('near me') || fullQuery.toLowerCase().includes('nearby')) {
             try {
                 const position = await getCurrentPosition();
                 userLat = position.coords.latitude;
@@ -195,7 +197,7 @@ function HomePageContent() {
         }
 
         try {
-            const result = await parseSearchQuery({ query: aiSearchQuery, userLat, userLon });
+            const result = await parseSearchQuery({ query: fullQuery, userLat, userLon });
             
             const queryParams = new URLSearchParams();
             if (result.searchQuery) {
@@ -221,6 +223,9 @@ function HomePageContent() {
             }
             if (result.lon) {
                 queryParams.set('lon', result.lon.toString());
+            }
+            if (role && role !== 'all') {
+                queryParams.set('role', role);
             }
             // Add tier filter for AI search
             queryParams.set('tier', 'Premier,Super Premier');
@@ -282,12 +287,53 @@ function HomePageContent() {
                                 </CardDescription>
                             )}
                             <div className="flex flex-col sm:flex-row items-stretch gap-2">
+                                <Dialog>
+                                    <DialogTrigger asChild>
+                                        <Button variant="outline" className="w-full sm:w-auto justify-start text-left font-normal" disabled={!isPremiumUser || isLoadingUserData}>
+                                            <span className="flex-1">{userTypes.find(t => t.value === role)?.label || 'Select a user type'}</span>
+                                            <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
+                                        </Button>
+                                    </DialogTrigger>
+                                    <DialogContent>
+                                        <DialogHeader>
+                                            <DialogTitle>Select User Type for AI Search</DialogTitle>
+                                        </DialogHeader>
+                                        <div className="grid grid-cols-1 gap-4 pt-4">
+                                            {userTypes.map((type) => (
+                                                <DialogTrigger key={type.value} asChild>
+                                                    <Card 
+                                                        className={cn(
+                                                            "cursor-pointer transition-all duration-300 transform hover:-translate-y-1",
+                                                            role === type.value && !type.href
+                                                                ? "border-primary ring-2 ring-primary" 
+                                                                : "hover:border-primary/50"
+                                                        )}
+                                                        onClick={() => {
+                                                            if (type.href) {
+                                                                router.push(type.href);
+                                                            } else {
+                                                                setRole(type.value)
+                                                            }
+                                                        }}
+                                                    >
+                                                        <CardHeader className="flex flex-row items-center justify-between p-4">
+                                                            <div className="flex items-center gap-4">
+                                                                <type.icon className="h-6 w-6 text-primary" />
+                                                                <CardTitle className="text-base">{type.label}</CardTitle>
+                                                            </div>
+                                                            {role === type.value && !type.href && <Check className="h-5 w-5 text-primary" />}
+                                                        </CardHeader>
+                                                    </Card>
+                                                </DialogTrigger>
+                                            ))}
+                                        </div>
+                                    </DialogContent>
+                                </Dialog>
                                 <div className="relative flex-grow">
-                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                     <Input
                                         id="ai-search"
-                                        placeholder="I'm looking for a verified plumber in Mumbai..."
-                                        className={cn("pl-10 text-base", !isPremiumUser && "cursor-not-allowed")}
+                                        placeholder={`Search for a ${role !== 'all' ? role.toLowerCase() : 'professional'}...`}
+                                        className={cn("text-base", !isPremiumUser && "cursor-not-allowed")}
                                         value={aiSearchQuery}
                                         onChange={(e) => setAiSearchQuery(e.target.value)}
                                         onKeyDown={(e) => e.key === 'Enter' && handleAiSearch()}
@@ -300,7 +346,7 @@ function HomePageContent() {
                                     ) : (
                                         <Sparkles className="mr-2 h-4 w-4" />
                                     )}
-                                    Search with AI
+                                    Search
                                 </Button>
                             </div>
                         </CardContent>
