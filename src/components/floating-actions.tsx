@@ -14,7 +14,6 @@ import { useToast } from '@/hooks/use-toast';
 
 interface FloatingActionsProps {
     expert?: ExpertUser;
-    isPremium?: boolean;
     isGeneratingPdf?: boolean;
     onDownloadPdf?: () => void;
 }
@@ -24,7 +23,7 @@ const cleanPhoneNumber = (phoneNumber?: string) => {
     return phoneNumber.replace(/\s+/g, '');
 }
 
-export function FloatingActions({ expert, isPremium, isGeneratingPdf, onDownloadPdf }: FloatingActionsProps) {
+export function FloatingActions({ expert, isGeneratingPdf, onDownloadPdf }: FloatingActionsProps) {
     const [isOpen, setIsOpen] = useState(false);
     const [installPrompt, setInstallPrompt] = useAtom(installPromptAtom);
     const [canShare, setCanShare] = useState(false);
@@ -90,7 +89,7 @@ export function FloatingActions({ expert, isPremium, isGeneratingPdf, onDownload
             onClick: handleInstallClick,
             enabled: true,
         }] : []),
-        ...(isPremium && expert && onDownloadPdf ? [{
+        ...(expert && onDownloadPdf ? [{
             id: 'pdf',
             label: 'Download PDF',
             icon: <FileDown className="h-6 w-6" />,

@@ -228,7 +228,6 @@ function ExpertProfileContent() {
         );
     }
 
-    const isPremium = expert.tier === 'Premier' || expert.tier === 'Super Premier';
     const locationString = [expert.city, expert.state, expert.pincode].filter(Boolean).join(', ');
     const experienceString = [
       expert.experienceYears ? `${expert.experienceYears} years` : null,
@@ -240,7 +239,7 @@ function ExpertProfileContent() {
         return phoneNumber.replace(/\s+/g, '');
     }
     const formattedPhoneNumber = cleanPhoneNumber(expert.phoneNumber);
-    const canContact = expert.verified && expert.showPhoneNumberOnProfile && formattedPhoneNumber && isPremium;
+    const canContact = expert.verified && expert.showPhoneNumberOnProfile && formattedPhoneNumber;
     
     return (
         <div className="min-h-screen bg-background p-4 sm:p-8">
@@ -425,7 +424,7 @@ function ExpertProfileContent() {
                                             </div>
                                         </TooltipTrigger>
                                         <TooltipContent>
-                                            <p>Contact is only available for verified Premier or Super Premier experts who have enabled it.</p>
+                                            <p>Contact is only available for verified experts who have enabled it.</p>
                                         </TooltipContent>
                                     </Tooltip>
                                 </TooltipProvider>
@@ -433,11 +432,10 @@ function ExpertProfileContent() {
                         </div>
                     </CardFooter>
                 </Card>
-                <FloatingActions 
+                <FloatingActions
                     expert={expert}
-                    isPremium={isPremium} 
-                    isGeneratingPdf={isGeneratingPdf} 
-                    onDownloadPdf={handleDownloadPdf} 
+                    isGeneratingPdf={isGeneratingPdf}
+                    onDownloadPdf={handleDownloadPdf}
                 />
             </div>
         </div>
