@@ -248,6 +248,7 @@ function HomePageContent() {
         { value: 'all', label: 'All User Types', icon: Users },
         { value: 'Freelancer', label: 'Freelancers', icon: User },
         { value: 'Company', label: 'Companies', icon: Building },
+        { value: 'Authorized Pro', label: 'Authorized Pros', icon: Briefcase },
     ];
 
     return (
