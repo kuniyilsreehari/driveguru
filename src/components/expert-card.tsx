@@ -95,11 +95,41 @@ export function ExpertCard({ expert }: ExpertCardProps) {
         }
     };
 
+    const createWhatsAppMessage = () => {
+        const expertName = getDisplayName(expert);
+        const clientName = user?.displayName || "a potential client";
+        const clientEmail = user?.email || "not provided";
+        const today = new Date();
+        
+        const message = `*New Booking Request from DriveGuru*
+
+Hello ${expertName},
+
+A new appointment has been requested. Please review the details below and reply to the client.
+
+*Client Details:*
+• Name: ${clientName}
+• Email: ${clientEmail}
+
+*Appointment Details:*
+• Date: [Please enter desired date]
+• Time: [Please enter desired time]
+• Location: [Please enter location]
+• Work Required: [Please describe the work]
+
+--------------------
+*To the Expert:* Please reply to confirm this appointment or suggest a new time.`;
+        
+        return `https://wa.me/${formattedPhoneNumber}?text=${encodeURIComponent(message)}`;
+    };
+
     const formattedPhoneNumber = cleanPhoneNumber(expert.phoneNumber);
     const locationString = [expert.city, expert.state, expert.pincode].filter(Boolean).join(', ');
     
     // Determine if contact actions should be shown
     const canShowContactActions = expert.verified && expert.showPhoneNumberOnProfile && formattedPhoneNumber;
+    const whatsappLink = createWhatsAppMessage();
+
 
     return (
         <Card key={expert.id} className="relative overflow-hidden transition-all hover:shadow-lg hover:border-primary/50">
@@ -165,16 +195,15 @@ export function ExpertCard({ expert }: ExpertCardProps) {
                     <div className="flex flex-1 gap-2">
                     {canShowContactActions ? (
                         <>
-                            <Button asChild size="sm" className="flex-1 bg-orange-500 hover:bg-orange-600">
-                                <a href={`tel:${formattedPhoneNumber}`}><Phone className="mr-2 h-4 w-4" /> Call</a>
-                            </Button>
                             <Button asChild size="sm" className="flex-1 bg-green-500 hover:bg-green-600">
-                                <a href={`https://wa.me/${formattedPhoneNumber}`} target="_blank" rel="noopener noreferrer"><MessageCircle className="mr-2 h-4 w-4" /> WhatsApp</a>
+                                <a href={whatsappLink} target="_blank" rel="noopener noreferrer">
+                                    <MessageCircle className="mr-2 h-4 w-4" /> WhatsApp
+                                </a>
                             </Button>
                         </>
                     ) : (
                          <Button variant="secondary" disabled size="sm" className="w-full">
-                            <Lock className="mr-2 h-4 w-4" /> Contact actions locked
+                            <Lock className="mr-2 h-4 w-4" /> Contact locked
                         </Button>
                     )}
                     </div>

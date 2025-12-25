@@ -232,8 +232,29 @@ function ExpertProfileContent() {
 
     const createWhatsAppMessage = () => {
         const expertName = getDisplayName(expert);
-        const clientName = user?.displayName || "a potential client";
-        const message = `Hello ${expertName}, I found your profile on DriveGuru and I'm interested in your services.`;
+        const clientName = currentUserProfile ? `${currentUserProfile.firstName} ${currentUserProfile.lastName}` : "a potential client";
+        const clientEmail = currentUserProfile?.email || "not provided";
+        const today = new Date();
+        
+        const message = `*New Booking Request from DriveGuru*
+
+Hello ${expertName},
+
+A new appointment has been requested. Please review the details below and reply to the client.
+
+*Client Details:*
+• Name: ${clientName}
+• Email: ${clientEmail}
+
+*Appointment Details:*
+• Date: [Please enter desired date]
+• Time: [Please enter desired time]
+• Location: [Please enter location]
+• Work Required: [Please describe the work]
+
+--------------------
+*To the Expert:* Please reply to confirm this appointment or suggest a new time.`;
+        
         return `https://wa.me/${formattedPhoneNumber}?text=${encodeURIComponent(message)}`;
     };
     
