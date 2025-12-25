@@ -42,7 +42,7 @@ const chatAssistantFlow = ai.defineFlow(
   },
   async ({ message, history }) => {
     const llmResponse = await ai.generate({
-      model: 'gemini-1.5-flash-latest',
+      model: 'googleai/gemini-1.5-flash-latest',
       prompt: message,
       history: history,
       system: `You are a helpful and friendly assistant for an app called DriveGuru.
