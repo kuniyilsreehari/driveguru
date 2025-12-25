@@ -81,13 +81,18 @@ export function ExpertCard({ expert }: ExpertCardProps) {
                     description: "The link to this expert's profile has been copied to your clipboard.",
                 });
             }
-        } catch (err) {
-            console.error("Share failed:", err);
-            toast({
-                variant: 'destructive',
-                title: "Share Failed",
-                description: "Could not share the profile at this time.",
-            });
+        } catch (err: any) {
+            // Gracefully handle NotAllowedError if the user cancels the share dialog.
+            if (err.name === 'NotAllowedError' || err.name === 'AbortError') {
+                console.log('Share action was cancelled by the user.');
+            } else {
+                console.error("Share failed:", err);
+                toast({
+                    variant: 'destructive',
+                    title: "Share Failed",
+                    description: "Could not share the profile at this time.",
+                });
+            }
         }
     };
 
