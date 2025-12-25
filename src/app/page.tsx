@@ -31,6 +31,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogDescription as UiDialogDescription,
+  DialogFooter
 } from "@/components/ui/dialog"
 import { Switch } from '@/components/ui/switch';
 
@@ -58,6 +60,7 @@ function HomePageContent() {
     const [aiSearchQuery, setAiSearchQuery] = useState('');
     const [isParsingQuery, setIsParsingQuery] = useState(false);
     const [useAiSearch, setUseAiSearch] = useState(false);
+    const [isPremiumDialogOpen, setIsPremiumDialogOpen] = useState(false);
     
     const { user, isUserLoading } = useUser();
 
@@ -68,7 +71,6 @@ function HomePageContent() {
 
     const { data: userProfile, isLoading: isUserProfileLoading } = useDoc<ExpertUser>(userProfileDocRef);
 
-    const isPremiumUser = userProfile?.tier === 'Premier' || userProfile?.tier === 'Super Premier';
     const isLoadingUserData = isUserLoading || isUserProfileLoading;
 
     const appConfigDocRef = useMemoFirebase(() => {
@@ -159,17 +161,25 @@ function HomePageContent() {
         
         router.push(`/search?${queryParams.toString()}`);
     };
+
+    const handleAiModeToggle = (checked: boolean) => {
+        if (checked) {
+            if (userProfile?.tier === 'Super Premier') {
+                setUseAiSearch(true);
+            } else {
+                setIsPremiumDialogOpen(true);
+            }
+        } else {
+            setUseAiSearch(false);
+        }
+    };
     
     const handleAiSearch = async () => {
         const queryParams = new URLSearchParams();
 
         if (useAiSearch) {
-             if (!isPremiumUser && !isLoadingUserData) {
-                toast({
-                    variant: 'destructive',
-                    title: 'Premium Feature',
-                    description: 'AI-Powered Search is available for Premier members. Please upgrade your plan.',
-                });
+             if (userProfile?.tier !== 'Super Premier' && !isLoadingUserData) {
+                setIsPremiumDialogOpen(true);
                 return;
             }
             setIsParsingQuery(true);
@@ -237,7 +247,7 @@ function HomePageContent() {
                                     <Search /> Main Search
                                 </CardTitle>
                                 <div className="flex items-center space-x-2">
-                                    <Switch id="ai-mode" checked={useAiSearch} onCheckedChange={setUseAiSearch} />
+                                    <Switch id="ai-mode" checked={useAiSearch} onCheckedChange={handleAiModeToggle} />
                                     <Label htmlFor="ai-mode" className="flex items-center gap-1">
                                         <Bot className={cn("h-4 w-4 transition-colors", useAiSearch ? "text-primary" : "text-muted-foreground")} />
                                         AI Mode
@@ -495,6 +505,33 @@ function HomePageContent() {
                 </main>
                 <FloatingActions />
             </div>
+
+            <Dialog open={isPremiumDialogOpen} onOpenChange={setIsPremiumDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                    <DialogTitle>Super Premier Feature Locked</DialogTitle>
+                    <UiDialogDescription>
+                        AI-Powered Search is an exclusive feature for our Super Premier members.
+                    </UiDialogDescription>
+                    </DialogHeader>
+                    <div className="text-center">
+                        <div className="mx-auto w-fit rounded-full p-3 mb-2 bg-primary/10">
+                        <Lock className="h-8 w-8 text-primary" />
+                        </div>
+                        <p className="text-center text-sm text-muted-foreground">
+                        Upgrade your plan to unlock this and many other powerful features to enhance your profile and attract more clients.
+                        </p>
+                    </div>
+                    <DialogFooter className="flex-col gap-2 pt-4">
+                        <Button asChild className="w-full">
+                            <Link href="/dashboard#plan-management">Upgrade Your Plan</Link>
+                        </Button>
+                        <Button variant="outline" className="w-full" onClick={() => setIsPremiumDialogOpen(false)}>
+                            Maybe Later
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     )
 }
