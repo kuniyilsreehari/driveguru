@@ -18,6 +18,8 @@ const ParseSearchQueryInputSchema = z.object({
 });
 export type ParseSearchQueryInput = z.infer<typeof ParseSearchQueryInputSchema>;
 
+// This schema defines the parameters our AI can use for searching.
+// It is the primary output we want from the AI.
 const ParseSearchQueryOutputSchema = z.object({
   searchQuery: z.string().optional().describe("The primary search term, skill, qualification, or keyword (e.g., 'Plumber', 'React Developer', 'B.Tech')."),
   location: z.string().optional().describe("The geographic location to search in (e.g., 'Mumbai', 'Bangalore')."),
@@ -30,6 +32,25 @@ const ParseSearchQueryOutputSchema = z.object({
   lon: z.number().optional(),
 });
 export type ParseSearchQueryOutput = z.infer<typeof ParseSearchQueryOutputSchema>;
+
+
+/**
+ * Defines a "tool" that the AI model can use. The AI's goal will be to figure out
+ * what arguments to pass to this tool based on the user's query.
+ */
+const expertSearchTool = ai.defineTool(
+    {
+        name: 'expertSearch',
+        description: 'Performs a search for experts based on various criteria.',
+        inputSchema: ParseSearchQueryOutputSchema,
+        outputSchema: z.void(), // We only care about the input the AI provides to the tool.
+    },
+    async (input) => {
+      // This function is a placeholder. The AI will generate the `input` for this tool,
+      // and we will capture that input to use as our search parameters.
+    }
+);
+
 
 export async function parseSearchQuery(input: ParseSearchQueryInput): Promise<ParseSearchQueryOutput> {
   const result = await parseSearchQueryFlow(input);
@@ -49,22 +70,31 @@ const parseSearchQueryFlow = ai.defineFlow(
   async (input) => {
     const llmResponse = await ai.generate({
       model: 'googleai/gemini-1.5-flash-latest',
-      prompt: `You are an intelligent search assistant for a talent marketplace. Your job is to parse a user's natural language query and extract structured search parameters.
-
-      User Query: "${input.query}"
-      
-      Analyze the query and extract the following information:
-      - The core profession, skill, qualification, or name the user is looking for (searchQuery).
-      - Any specified location (location).
-      - If the user mentions affordability (e.g., "cheap", "affordable", "low cost"), set a reasonable maxRate (e.g., 500).
-      - If the user asks for "verified" or "trusted" experts, set isVerified to true.
-      - If the user asks for someone "available now" or "immediately", set isAvailable to true.
-      - If the user mentions a search radius like "within 10km" or "in a 5 km range", extract the number and set it as 'radius'. If they just say "nearby" or "near me", set 'useUserLocation' to true and set 'radius' to 20.
-      
-      Return the extracted parameters in the specified JSON format. If a parameter is not mentioned, omit it.`,
-      output: { schema: ParseSearchQueryOutputSchema },
+      prompt: `You are an intelligent search assistant for a talent marketplace. 
+               Your job is to parse a user's natural language query and use the expertSearch tool to find relevant experts.
+               
+               User Query: "${input.query}"
+               
+               Analyze the query and call the expertSearch tool with the appropriate parameters.
+               - Extract the core profession, skill, qualification, or name (searchQuery).
+               - Extract any specified location.
+               - If the user asks for "verified" experts, set isVerified to true.
+               - If they mention "available now", set isAvailable to true.
+               - If they mention a search radius, extract it. If they say "near me" or "nearby", set useUserLocation to true and radius to 20km.
+               - If they mention affordability (e.g., "cheap", "low cost"), set a reasonable maxRate like 500.
+               `,
+      tools: [expertSearchTool],
     });
     
-    return llmResponse.output!;
+    // Find the tool call request from the AI's response.
+    const searchToolCall = llmResponse.toolRequests().find(tool => tool.name === 'expertSearch');
+
+    if (searchToolCall) {
+        // The arguments the AI decided to use for the tool are our structured search parameters.
+        return searchToolCall.input as ParseSearchQueryOutput;
+    }
+
+    // Fallback if the AI doesn't use the tool (e.g., for a conversational query)
+    return { searchQuery: input.query };
   }
 );
