@@ -185,6 +185,16 @@ function HomePageContent() {
             setIsParsingQuery(true);
             try {
                 const result = await parseSearchQuery({ query: aiSearchQuery });
+                if (result.error === 'AI_FLOW_FAILED') {
+                     toast({
+                        variant: "destructive",
+                        title: "AI Search Error",
+                        description: "Could not process AI query. This may be due to a missing API key. Please check your setup.",
+                    });
+                    setIsParsingQuery(false);
+                    return;
+                }
+
                 if (result.searchQuery) queryParams.set('q', result.searchQuery);
                 if (result.location) queryParams.set('location', result.location);
                 if (result.maxRate) queryParams.set('maxRate', result.maxRate.toString());

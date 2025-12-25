@@ -30,6 +30,7 @@ const ParseSearchQueryOutputSchema = z.object({
   useUserLocation: z.boolean().optional().describe("Set to true if the user's query implies searching near their current location (e.g., 'near me', 'nearby')."),
   lat: z.number().optional(),
   lon: z.number().optional(),
+  error: z.string().optional(), // Add an error field to the output
 });
 export type ParseSearchQueryOutput = z.infer<typeof ParseSearchQueryOutputSchema>;
 
@@ -68,33 +69,45 @@ const parseSearchQueryFlow = ai.defineFlow(
     outputSchema: ParseSearchQueryOutputSchema,
   },
   async (input) => {
-    const llmResponse = await ai.generate({
-      model: 'googleai/gemini-1.5-flash-latest',
-      prompt: `You are an intelligent search assistant for a talent marketplace. 
-               Your job is to parse a user's natural language query and use the expertSearch tool to find relevant experts.
-               
-               User Query: "${input.query}"
-               
-               Analyze the query and call the expertSearch tool with the appropriate parameters.
-               - Extract the core profession, skill, qualification, or name (searchQuery).
-               - Extract any specified location.
-               - If the user asks for "verified" experts, set isVerified to true.
-               - If they mention "available now", set isAvailable to true.
-               - If they mention a search radius, extract it. If they say "near me" or "nearby", set useUserLocation to true and radius to 20km.
-               - If they mention affordability (e.g., "cheap", "low cost"), set a reasonable maxRate like 500.
-               `,
-      tools: [expertSearchTool],
-    });
-    
-    // Find the tool call request from the AI's response.
-    const searchToolCall = llmResponse.toolRequests().find(tool => tool.name === 'expertSearch');
+    try {
+        const llmResponse = await ai.generate({
+            model: 'googleai/gemini-1.5-flash-latest',
+            prompt: `You are an intelligent search assistant for a talent marketplace. 
+                    Your job is to parse a user's natural language query and use the expertSearch tool to find relevant experts.
+                    
+                    User Query: "${input.query}"
+                    
+                    Analyze the query and call the expertSearch tool with the appropriate parameters.
+                    - Extract the core profession, skill, qualification, or name (searchQuery).
+                    - Extract any specified location.
+                    - If the user asks for "verified" experts, set isVerified to true.
+                    - If they mention "available now", set isAvailable to true.
+                    - If they mention a search radius, extract it. If they say "near me" or "nearby", set useUserLocation to true and radius to 20km.
+                    - If they mention affordability (e.g., "cheap", "low cost"), set a reasonable maxRate like 500.
+                    `,
+            tools: [expertSearchTool],
+        });
+        
+        // Find the tool call request from the AI's response.
+        const searchToolCall = llmResponse.toolRequests().find(tool => tool.name === 'expertSearch');
 
-    if (searchToolCall) {
-        // The arguments the AI decided to use for the tool are our structured search parameters.
-        return searchToolCall.input as ParseSearchQueryOutput;
+        if (searchToolCall) {
+            // The arguments the AI decided to use for the tool are our structured search parameters.
+            return searchToolCall.input as ParseSearchQueryOutput;
+        }
+
+        // Fallback if the AI doesn't use the tool (e.g., for a conversational query)
+        return { searchQuery: input.query };
+
+    } catch (e: any) {
+        console.error("AI search flow failed:", e);
+        // If there's an error (e.g., missing API key), return a fallback object
+        // with the original query and an error message.
+        return { 
+            searchQuery: input.query,
+            error: "AI_FLOW_FAILED"
+        };
     }
-
-    // Fallback if the AI doesn't use the tool (e.g., for a conversational query)
-    return { searchQuery: input.query };
   }
 );
+
