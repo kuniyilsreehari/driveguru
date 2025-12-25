@@ -717,6 +717,50 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
                   </FormItem>
                 )}
               />
+            
+            <FormItem>
+              <FormLabel>Years of Experience</FormLabel>
+              <div className="flex items-center gap-2">
+                <FormField
+                  control={form.control}
+                  name="experienceYears"
+                  render={({ field }) => (
+                    <FormItem className="flex-1">
+                      <Select onValueChange={(value) => field.onChange(Number(value))} value={String(field.value || 0)}>
+                          <FormControl>
+                          <SelectTrigger>
+                              <SelectValue placeholder="Years" />
+                          </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                          {[...Array(51).keys()].map(i => <SelectItem key={i} value={String(i)}>{i} years</SelectItem>)}
+                          </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="experienceMonths"
+                  render={({ field }) => (
+                    <FormItem className="flex-1">
+                      <Select onValueChange={(value) => field.onChange(Number(value))} value={String(field.value || 0)}>
+                           <FormControl>
+                          <SelectTrigger>
+                              <SelectValue placeholder="Months" />
+                          </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                          {[...Array(12).keys()].map(i => <SelectItem key={i} value={String(i)}>{i} months</SelectItem>)}
+                          </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </FormItem>
 
           <div className="grid grid-cols-2 gap-4">
               <FormField
@@ -906,49 +950,6 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
               />
           </div>
           
-            <FormItem>
-              <FormLabel>Years of Experience</FormLabel>
-              <div className="flex items-center gap-2">
-                <FormField
-                  control={form.control}
-                  name="experienceYears"
-                  render={({ field }) => (
-                    <FormItem className="flex-1">
-                      <Select onValueChange={(value) => field.onChange(Number(value))} value={String(field.value || 0)}>
-                          <FormControl>
-                          <SelectTrigger>
-                              <SelectValue placeholder="Years" />
-                          </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                          {[...Array(51).keys()].map(i => <SelectItem key={i} value={String(i)}>{i} years</SelectItem>)}
-                          </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="experienceMonths"
-                  render={({ field }) => (
-                    <FormItem className="flex-1">
-                      <Select onValueChange={(value) => field.onChange(Number(value))} value={String(field.value || 0)}>
-                           <FormControl>
-                          <SelectTrigger>
-                              <SelectValue placeholder="Months" />
-                          </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                          {[...Array(12).keys()].map(i => <SelectItem key={i} value={String(i)}>{i} months</SelectItem>)}
-                          </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-            </FormItem>
 
           <FormField
             control={form.control}
