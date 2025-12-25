@@ -80,6 +80,9 @@ export function FloatingActions({ expert, isGeneratingPdf, onDownloadPdf }: Floa
     const canWhatsapp = expert?.verified && formattedPhoneNumber;
     const whatsappLink = `https://wa.me/${formattedPhoneNumber}`;
     const callLink = `tel:${formattedPhoneNumber}`;
+    
+    // The download button is always enabled visually but its function is conditional
+    const downloadActionEnabled = true; 
 
     const allActions = [
         ...(installPrompt ? [{
@@ -94,7 +97,7 @@ export function FloatingActions({ expert, isGeneratingPdf, onDownloadPdf }: Floa
             label: 'Download PDF',
             icon: <FileDown className="h-6 w-6" />,
             onClick: onDownloadPdf,
-            enabled: !isGeneratingPdf,
+            enabled: downloadActionEnabled,
         }] : []),
         ...(expert ? [{
             id: 'call',
@@ -160,7 +163,7 @@ export function FloatingActions({ expert, isGeneratingPdf, onDownloadPdf }: Floa
                                     </Button>
                                 </TooltipTrigger>
                                 <TooltipContent side="left">
-                                    <p>{!action.enabled && expert ? `${action.label} (Locked)` : action.label}</p>
+                                    <p>{!action.enabled && expert && action.id !== 'pdf' ? `${action.label} (Locked)` : action.label}</p>
                                 </TooltipContent>
                             </Tooltip>
                         </div>

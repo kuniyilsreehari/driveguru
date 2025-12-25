@@ -20,6 +20,7 @@ import { FloatingActions } from '@/components/floating-actions';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { WhatsAppBookingDialog } from '@/components/whatsapp-booking-dialog';
 import { Icons } from '@/components/icons';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription as UiDialogDescription, DialogFooter } from '@/components/ui/dialog';
 
 
 type ExpertUserProfile = {
@@ -103,6 +104,8 @@ function ExpertProfileContent() {
     const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
     const [isFollowing, setIsFollowing] = useState(false);
     const [isFollowLoading, setIsFollowLoading] = useState(false);
+    const [isPremiumDialogOpen, setIsPremiumDialogOpen] = useState(false);
+
 
     const expertDocRef = useMemoFirebase(() => {
         if (!firestore || !expertId) return null;
@@ -163,6 +166,12 @@ function ExpertProfileContent() {
         const element = profileCardRef.current;
         if (!element || !expert) {
             toast({ variant: 'destructive', title: 'Error', description: 'Could not capture profile content.' });
+            return;
+        }
+        
+        const isPremium = expert.tier === 'Premier' || expert.tier === 'Super Premier';
+        if (!isPremium) {
+            setIsPremiumDialogOpen(true);
             return;
         }
 
@@ -438,6 +447,32 @@ function ExpertProfileContent() {
                     onDownloadPdf={handleDownloadPdf}
                 />
             </div>
+            <Dialog open={isPremiumDialogOpen} onOpenChange={setIsPremiumDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                    <DialogTitle>Premium Feature Locked</DialogTitle>
+                    <UiDialogDescription>
+                        Downloading profiles as a PDF is an exclusive feature for Premier members.
+                    </UiDialogDescription>
+                    </DialogHeader>
+                    <div className="text-center">
+                        <div className="mx-auto w-fit rounded-full p-3 mb-2 bg-primary/10">
+                        <Lock className="h-8 w-8 text-primary" />
+                        </div>
+                        <p className="text-center text-sm text-muted-foreground">
+                        Upgrade your plan to unlock this and many other powerful features.
+                        </p>
+                    </div>
+                    <DialogFooter className="flex-col gap-2 pt-4">
+                        <Button asChild className="w-full">
+                            <Link href="/dashboard#plan-management">Upgrade Plan</Link>
+                        </Button>
+                        <Button variant="outline" className="w-full" onClick={() => setIsPremiumDialogOpen(false)}>
+                            Maybe Later
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }
