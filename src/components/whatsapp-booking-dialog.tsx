@@ -6,7 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { format } from 'date-fns';
-import { CalendarIcon, MapPin, MessageSquare, Send, User, Mail } from 'lucide-react';
+import { CalendarIcon, MapPin, MessageSquare, Send, User, Mail, Phone } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 import { Button } from '@/components/ui/button';
@@ -23,6 +23,7 @@ import { useUser } from '@/firebase';
 const formSchema = z.object({
   clientName: z.string().min(2, { message: 'Name is required.' }),
   clientEmail: z.string().email({ message: 'A valid email is required.' }),
+  clientPhone: z.string().min(10, { message: 'A valid phone number is required.' }),
   date: z.date({ required_error: 'A date is required.' }),
   time: z.string().min(1, 'A time is required.'),
   location: z.string().min(1, 'A location is required.'),
@@ -53,6 +54,7 @@ export function WhatsAppBookingDialog({ expert, children }: WhatsAppBookingDialo
     defaultValues: {
       clientName: currentUser?.displayName || '',
       clientEmail: currentUser?.email || '',
+      clientPhone: currentUser?.phoneNumber || '',
       time: format(new Date(), 'HH:mm'),
       location: '',
       workRequired: '',
@@ -72,6 +74,7 @@ A new appointment has been requested. Please review the details below and respon
 *Client Details*
 Name: ${values.clientName}
 Email: ${values.clientEmail}
+Phone: ${values.clientPhone}
 
 *Appointment Details*
 Date: ${formattedDate}
@@ -118,6 +121,20 @@ Work Required: ${values.workRequired}`;
                   <div className="relative">
                     <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <FormControl><Input type="email" placeholder="e.g. john@example.com" {...field} className="pl-10" /></FormControl>
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="clientPhone"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Your Contact Number</FormLabel>
+                  <div className="relative">
+                    <Phone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <FormControl><Input type="tel" placeholder="e.g. +91 9876543210" {...field} className="pl-10" /></FormControl>
                   </div>
                   <FormMessage />
                 </FormItem>
