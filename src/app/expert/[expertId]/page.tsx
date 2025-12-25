@@ -28,6 +28,7 @@ type ExpertUserProfile = {
     email: string;
     role: string;
     category?: string;
+    profession?: string;
     photoUrl?: string;
     state?: string;
     city?: string;
@@ -281,6 +282,7 @@ function ExpertProfileContent() {
                                         <Badge variant="secondary">Unavailable</Badge>
                                     )}
                                 </div>
+                                {expert.profession && <p className="text-lg font-semibold text-primary">{expert.profession}</p>}
                                 <FollowerStats expert={expert} />
                                 <div className="flex items-center gap-2 mt-3 flex-wrap">
                                     {expert.verified ? (
@@ -316,9 +318,19 @@ function ExpertProfileContent() {
                                 <UserIcon className="h-5 w-5 text-muted-foreground mt-1" />
                                 <p><span className="font-semibold">Gender:</span> {expert.gender || 'Not specified'}</p>
                             </div>
-                            <div className="flex items-start gap-3">
+                             <div className="flex items-start gap-3">
                                 <IndianRupee className="h-5 w-5 text-muted-foreground mt-1" />
-                                <p><span className="font-semibold">Rate:</span> {expert.pricingValue ? `₹${expert.pricingValue}` : 'Not specified'}{expert.pricingModel && ` / ${expert.pricingModel}`}</p>
+                                <p>
+                                  <span className="font-semibold">Rate:</span>{' '}
+                                  {expert.pricingValue ? (
+                                    <span>
+                                      {`₹${expert.pricingValue}`}
+                                      {expert.pricingModel && ` / ${expert.pricingModel}`}
+                                    </span>
+                                  ) : (
+                                    'Not specified'
+                                  )}
+                                </p>
                             </div>
                             <div className="flex items-start gap-3">
                                 <Calendar className="h-5 w-5 text-muted-foreground mt-1" />

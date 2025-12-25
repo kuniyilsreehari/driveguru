@@ -37,8 +37,10 @@ export type ExpertUser = {
     longitude?: number;
     role?: string;
     category?: string;
+    profession?: string;
     verified?: boolean;
-    hourlyRate?: number;
+    pricingModel?: string;
+    pricingValue?: number;
     yearsOfExperience?: number;
     tier?: 'Standard' | 'Premier' | 'Super Premier';
     photoUrl?: string;
@@ -98,9 +100,11 @@ const ShareDialog = ({ expert, children }: { expert: ExpertUser, children: React
                     </DialogDescription>
                 </DialogHeader>
                 <div className="flex flex-col gap-4 py-4">
-                    <Button onClick={handleNativeShare} disabled={!navigator.share}>
-                        <Share2 className="mr-2 h-4 w-4" /> Share via...
-                    </Button>
+                    {navigator.share && (
+                        <Button onClick={handleNativeShare}>
+                            <Share2 className="mr-2 h-4 w-4" /> Share via...
+                        </Button>
+                    )}
                     <Button variant="outline" onClick={handleCopyLink}>
                         <Copy className="mr-2 h-4 w-4" /> Copy Link
                     </Button>
@@ -156,6 +160,9 @@ export function ExpertCard({ expert }: ExpertCardProps) {
                              {expert.companyName && (
                                 <p className="text-sm text-muted-foreground">{`${expert.firstName} ${expert.lastName}`}</p>
                             )}
+                             {expert.profession && (
+                                <p className="text-sm font-semibold text-primary">{expert.profession}</p>
+                             )}
                             {expert.businessDescription && <p className="text-sm text-muted-foreground mt-1">{expert.businessDescription}</p>}
                             <div className="mt-1">
                                 <FollowerStats expert={expert} />
@@ -180,7 +187,12 @@ export function ExpertCard({ expert }: ExpertCardProps) {
                          <Link href={`/expert/${expert.id}`} className="block cursor-pointer">
                             <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm text-muted-foreground">
                                 <div className="flex items-center gap-2 truncate"><MapPin className="h-4 w-4 flex-shrink-0" /> <span className="truncate">{locationString || 'N/A'}</span></div>
-                                <div className="flex items-center gap-2"><IndianRupee className="h-4 w-4 flex-shrink-0" /> {expert.hourlyRate ? `${expert.hourlyRate}/hr` : 'N/A'}</div>
+                                <div className="flex items-center gap-2">
+                                    <IndianRupee className="h-4 w-4 flex-shrink-0" />
+                                    {expert.pricingValue ? (
+                                        <span>{`₹${expert.pricingValue}`} {expert.pricingModel && `/ ${expert.pricingModel}`}</span>
+                                    ) : 'N/A'}
+                                </div>
                                 <div className="flex items-center gap-2"><Briefcase className="h-4 w-4 flex-shrink-0" /> {expert.yearsOfExperience ? `${expert.yearsOfExperience} years` : 'N/A'}</div>
                                 <div className="flex items-center gap-2"><Badge variant="secondary" className="truncate">{expert.role}</Badge></div>
                             </div>
