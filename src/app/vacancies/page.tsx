@@ -139,7 +139,7 @@ function VacanciesList() {
                             <div className="flex items-center justify-between mb-4">
                                 <div className="flex items-center gap-2 flex-wrap">
                                     {vacancy.isImmediate && (
-                                        <Badge variant="destructive"><AlertTriangle className="mr-1 h-3 w-3" />Immediate</Badge>
+                                        <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-900/50 dark:text-yellow-300 dark:border-yellow-700/50"><AlertTriangle className="mr-1 h-3 w-3" />Immediate</Badge>
                                     )}
                                     {vacancy.isCompanyVerified ? (
                                         <Badge variant="outline" className="border-green-500 text-green-500"><UserCheck className="mr-1 h-3 w-3" />Verified</Badge>
