@@ -44,7 +44,8 @@ service cloud.firestore {
       let editableFields = [
         'firstName', 'lastName', 'photoUrl', 'state', 'city', 'pincode', 'address',
         'phoneNumber', 'showPhoneNumberOnProfile', 'department', 'companyName', 'businessDescription', 'category',
-        'hourlyRate', 'yearsOfExperience', 'gender', 'qualification', 'collegeName',
+        'pricingModel', 'pricingValue',
+        'yearsOfExperience', 'gender', 'qualification', 'collegeName',
         'skills', 'aboutMe', 'aboutYourDream', 'associatedProjectsName',
         'linkedinUrl', 'twitterUrl', 'githubUrl', 'portfolioUrl', 'isAvailable', 'following'
       ];
@@ -80,7 +81,7 @@ service cloud.firestore {
 
     function isVacancyOwner(vacancy) {
         let userDoc = get(/databases/$(database)/documents/users/$(request.auth.uid));
-        return isCompanyUser() && vacancy.companyId == userDoc.data.companyId;
+        return isCompanyUser() && 'companyId' in userDoc.data && vacancy.companyId == userDoc.data.companyId;
     }
     
     function isCreatingCorrectVacancy() {
