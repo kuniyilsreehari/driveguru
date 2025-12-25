@@ -1132,6 +1132,24 @@ export default function AdminDashboardPage() {
           </header>
 
           <main>
+             <Alert variant="destructive" className="mb-8">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertTitle>Action Required: Set Up Environment Variables</AlertTitle>
+                <AlertDescription>
+                    To use features like AI Search or Payments, you must add your secret API keys to the `.env` file in your project&apos;s root directory.
+                    <strong className="block my-2">Never save secret keys directly in this dashboard.</strong>
+                    <pre className="p-2 bg-muted/50 rounded-md text-xs font-mono mt-2 overflow-x-auto">
+                        <code>
+                            # For Gemini AI Features{'\n'}
+                            GEMINI_API_KEY="your_gemini_api_key_here"{'\n\n'}
+                            # For Cashfree Payment Gateway{'\n'}
+                            CASHFREE_APP_ID="your_cashfree_client_id"{'\n'}
+                            CASHFREE_SECRET="your_cashfree_secret_key"
+                        </code>
+                    </pre>
+                    <p className="mt-2">After adding keys to the `.env` file, you must restart your development server for the changes to take effect.</p>
+                </AlertDescription>
+            </Alert>
             <Tabs defaultValue="dashboard" className="w-full">
                 <TabsList className="grid w-full grid-cols-3">
                     <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
@@ -1399,24 +1417,6 @@ export default function AdminDashboardPage() {
                             </div>
                         </CardHeader>
                         <CardContent className="space-y-6">
-                            <Alert variant="destructive">
-                                <AlertTriangle className="h-4 w-4" />
-                                <AlertTitle>Action Required: Set Up Environment Variables</AlertTitle>
-                                <AlertDescription>
-                                    To use features like Cashfree payments or Gemini AI, you must add your secret API keys to the `.env` file in the project's root directory.
-                                    <strong className="block my-2">Never save secret keys directly in this form or in your code.</strong>
-                                    <pre className="p-2 bg-muted/50 rounded-md text-xs font-mono mt-2 overflow-x-auto">
-                                        <code>
-                                            # For Gemini AI Features{'\n'}
-                                            GEMINI_API_KEY=your_gemini_api_key_here{'\n\n'}
-                                            # For Cashfree Payment Gateway{'\n'}
-                                            CASHFREE_APP_ID=your_cashfree_client_id{'\n'}
-                                            CASHFREE_SECRET=your_cashfree_secret_key
-                                        </code>
-                                    </pre>
-                                    <p className="mt-2">After adding or changing any keys in the `.env` file, you must restart your development server for the changes to take effect.</p>
-                                </AlertDescription>
-                            </Alert>
                              <div>
                                 <Label htmlFor="public-api-key">Public API Key / App ID (e.g., Cashfree)</Label>
                                 <Input
