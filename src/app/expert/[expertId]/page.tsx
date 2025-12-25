@@ -45,6 +45,7 @@ type ExpertUserProfile = {
     aboutYourDream?: string;
     associatedProjectsName?: string;
     phoneNumber?: string;
+    showPhoneNumberOnProfile?: boolean;
     companyName?: string;
     department?: string;
     isAvailable?: boolean;
@@ -229,7 +230,7 @@ function ExpertProfileContent() {
         return phoneNumber.replace(/\s+/g, '');
     }
     const formattedPhoneNumber = cleanPhoneNumber(expert.phoneNumber);
-    const canContact = expert.verified && formattedPhoneNumber && isPremium;
+    const canContact = expert.verified && expert.showPhoneNumberOnProfile && formattedPhoneNumber && isPremium;
     
     return (
         <div className="min-h-screen bg-background p-4 sm:p-8">
@@ -400,7 +401,7 @@ function ExpertProfileContent() {
                                             </div>
                                         </TooltipTrigger>
                                         <TooltipContent>
-                                            <p>Contact is only available for verified Premier or Super Premier experts.</p>
+                                            <p>Contact is only available for verified Premier or Super Premier experts who have enabled it.</p>
                                         </TooltipContent>
                                     </Tooltip>
                                 </TooltipProvider>

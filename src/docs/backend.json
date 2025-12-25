@@ -87,6 +87,10 @@
           "type": "boolean",
           "description": "If true, the phone number will be visible on the public profile card."
         },
+        "verified": {
+          "type": "boolean",
+          "description": "Indicates if the expert has been verified by a super admin."
+        },
         "pricingModel": {
             "type": "string",
             "description": "The pricing model selected by the user (e.g., 'Hourly', 'Per Project')."
