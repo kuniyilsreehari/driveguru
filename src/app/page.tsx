@@ -3,7 +3,7 @@
 
 import { Suspense, useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { Briefcase, Building, ChevronDown, Laptop, LocateIcon, MapPin, Search, Smartphone, Wrench, Loader2, Star, UserCheck, Crown, Sparkles, HelpCircle, Bot, Lock } from "lucide-react"
+import { Briefcase, Building, ChevronDown, Laptop, LocateIcon, MapPin, Search, Smartphone, Wrench, Loader2, Star, UserCheck, Crown, Sparkles, HelpCircle, Bot, Lock, Users } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
@@ -25,6 +25,13 @@ import Link from 'next/link';
 import { FloatingActions } from '@/components/floating-actions';
 import type { HomepageCategory } from '@/app/admin/page';
 import { WelcomeRedirect } from '@/components/welcome-redirect';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 
 type AppConfig = {
@@ -39,6 +46,7 @@ function HomePageContent() {
     const [state, setState] = useState('');
     const [pincode, setPincode] = useState('');
     const [maxRate, setMaxRate] = useState<number | null>(null);
+    const [role, setRole] = useState<string>('');
     const [isDetecting, setIsDetecting] = useState(false);
     const [showVerifiedOnly, setShowVerifiedOnly] = useState(false);
     const [showAvailableOnly, setShowAvailableOnly] = useState(false);
@@ -142,6 +150,7 @@ function HomePageContent() {
         if (city) queryParams.set('city', city);
         if (state) queryParams.set('state', state);
         if (pincode) queryParams.set('pincode', pincode);
+        if (role) queryParams.set('role', role);
         if (showVerifiedOnly) queryParams.set('verified', 'true');
         if (showAvailableOnly) queryParams.set('available', 'true');
         if (maxRate !== null) queryParams.set('maxRate', maxRate.toString());
@@ -344,12 +353,16 @@ function HomePageContent() {
 
                             <div className='my-6'>
                                 <Label className="text-base font-semibold">User Type</Label>
-                                <Tabs defaultValue="experts" className="mt-2">
-                                    <TabsList className="grid w-full grid-cols-2">
-                                        <TabsTrigger value="experts"><Briefcase className="mr-2 h-4 w-4" />Experts</TabsTrigger>
-                                        <TabsTrigger value="freshers"><Icons.graduate className="mr-2 h-4 w-4" />Freshers</TabsTrigger>
-                                    </TabsList>
-                                </Tabs>
+                                <Select value={role} onValueChange={setRole}>
+                                    <SelectTrigger className="w-full mt-2">
+                                        <SelectValue placeholder="Select a user type" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="">All User Types</SelectItem>
+                                        <SelectItem value="Freelancer">Freelancers</SelectItem>
+                                        <SelectItem value="Company">Companies</SelectItem>
+                                    </SelectContent>
+                                </Select>
                             </div>
                             
                             <div className="mt-6">
