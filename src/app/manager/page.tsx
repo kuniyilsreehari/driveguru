@@ -1,8 +1,7 @@
 'use client';
 
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { useUser, useFirestore, useCollection, useMemoFirebase, updateDocumentNonBlocking } from '@/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -10,10 +9,12 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { collection, query, where, doc } from 'firebase/firestore';
-import { Loader, User, LogOut, Eye, UserX, UserCheck, Phone } from 'lucide-react';
+import { Loader, User, LogOut, Eye, UserX, UserCheck, Phone, Briefcase, Calendar, GraduationCap, School, Book, Info, MapPin } from 'lucide-react';
 import { signOut } from 'firebase/auth';
 import { useAuth } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
+import { Separator } from '@/components/ui/separator';
 
 type ExpertUser = {
     id: string;
@@ -23,9 +24,71 @@ type ExpertUser = {
     role: string;
     photoUrl?: string;
     phoneNumber?: string;
+    city?: string;
+    state?: string;
+    pincode?: string;
+    qualification?: string;
+    collegeName?: string;
+    skills?: string;
+    aboutMe?: string;
+    experienceYears?: number;
+    experienceMonths?: number;
 };
 
-function UnverifiedExpertsList({ onVerify }: { onVerify: (expert: ExpertUser) => void }) {
+const ExpertProfileView = ({ expert }: { expert: ExpertUser }) => {
+    const getInitials = (firstName?: string, lastName?: string) => {
+        if (firstName && lastName) {
+            return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
+        }
+        return 'U';
+    };
+
+    const locationString = [expert.city, expert.state, expert.pincode].filter(Boolean).join(', ');
+    const experienceString = [
+      expert.experienceYears ? `${expert.experienceYears} years` : null,
+      expert.experienceMonths ? `${expert.experienceMonths} months` : null,
+    ].filter(Boolean).join(' ') || 'Not specified';
+
+
+    return (
+        <div className="space-y-4">
+            <div className="flex flex-col sm:flex-row items-center gap-4">
+                <Avatar className="h-24 w-24 text-3xl">
+                    <AvatarImage src={expert.photoUrl} alt={`${expert.firstName} ${expert.lastName}`} />
+                    <AvatarFallback>{getInitials(expert.firstName, expert.lastName)}</AvatarFallback>
+                </Avatar>
+                <div className="text-center sm:text-left">
+                    <h3 className="text-2xl font-bold">{expert.firstName} {expert.lastName}</h3>
+                    <p className="text-muted-foreground">{expert.email}</p>
+                    <p className="text-muted-foreground">{expert.phoneNumber}</p>
+                </div>
+            </div>
+            <Separator />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                <div className="flex items-center gap-2"><Briefcase className="h-4 w-4 text-muted-foreground" /> <strong>Role:</strong> <Badge variant="secondary">{expert.role}</Badge></div>
+                <div className="flex items-center gap-2"><MapPin className="h-4 w-4 text-muted-foreground" /> <strong>Location:</strong> {locationString || 'N/A'}</div>
+                <div className="flex items-center gap-2"><Calendar className="h-4 w-4 text-muted-foreground" /> <strong>Experience:</strong> {experienceString}</div>
+                <div className="flex items-center gap-2"><GraduationCap className="h-4 w-4 text-muted-foreground" /> <strong>Qualification:</strong> {expert.qualification || 'N/A'}</div>
+                <div className="flex items-center gap-2"><School className="h-4 w-4 text-muted-foreground" /> <strong>College:</strong> {expert.collegeName || 'N/A'}</div>
+            </div>
+            <Separator />
+             <div>
+                <h4 className="font-semibold flex items-center gap-2 mb-2"><Info className="h-5 w-5" /> About</h4>
+                <p className="text-muted-foreground text-sm pl-7">{expert.aboutMe || 'No information provided.'}</p>
+            </div>
+            <div>
+                <h4 className="font-semibold flex items-center gap-2 mb-2"><Book className="h-5 w-5" /> Skills</h4>
+                <div className="flex flex-wrap gap-2 pl-7">
+                    {expert.skills ? expert.skills.split(',').map((skill, index) => (
+                        <Badge key={index} variant="secondary">{skill.trim()}</Badge>
+                    )) : <p className="text-sm text-muted-foreground">No skills specified.</p>}
+                </div>
+            </div>
+        </div>
+    )
+}
+
+function UnverifiedExpertsList({ onVerify, onViewProfile }: { onVerify: (expert: ExpertUser) => void, onViewProfile: (expert: ExpertUser) => void }) {
     const firestore = useFirestore();
 
     const unverifiedUsersQuery = useMemoFirebase(() => {
@@ -94,11 +157,9 @@ function UnverifiedExpertsList({ onVerify }: { onVerify: (expert: ExpertUser) =>
                             <Badge variant="secondary">{expert.role}</Badge>
                         </TableCell>
                         <TableCell className="text-right space-x-2">
-                           <Button asChild variant="outline" size="sm">
-                                <Link href={`/expert/${expert.id}`} target="_blank">
-                                    <Eye className="mr-2 h-4 w-4" />
-                                    View Profile
-                                </Link>
+                           <Button variant="outline" size="sm" onClick={() => onViewProfile(expert)}>
+                                <Eye className="mr-2 h-4 w-4" />
+                                View Profile
                            </Button>
                            <Button variant="outline" size="sm" onClick={() => onVerify(expert)}>
                                 <UserCheck className="mr-2 h-4 w-4" />
@@ -118,6 +179,9 @@ export default function ManagerDashboardPage() {
     const auth = useAuth();
     const firestore = useFirestore();
     const { toast } = useToast();
+
+    const [selectedExpert, setSelectedExpert] = useState<ExpertUser | null>(null);
+    const [isProfileDialogOpen, setIsProfileDialogOpen] = useState(false);
 
     useEffect(() => {
         if (!isUserLoading && !user) {
@@ -141,6 +205,11 @@ export default function ManagerDashboardPage() {
         });
     };
 
+    const handleViewProfile = (expert: ExpertUser) => {
+        setSelectedExpert(expert);
+        setIsProfileDialogOpen(true);
+    }
+
     if (isUserLoading) {
         return (
             <div className="flex h-screen w-full items-center justify-center bg-background">
@@ -151,40 +220,54 @@ export default function ManagerDashboardPage() {
     }
 
     return (
-        <div className="min-h-screen bg-background p-4 sm:p-8">
-            <div className="mx-auto max-w-4xl">
-                <header className="flex items-center justify-between pb-8">
-                    <div className="flex items-center gap-4">
-                        <User className="h-10 w-10 text-primary" />
-                        <div>
-                            <h1 className="text-4xl font-bold">Manager Dashboard</h1>
-                            <p className="text-muted-foreground">Welcome, {user?.displayName || 'Manager'}.</p>
-                        </div>
-                    </div>
-                    <Button variant="outline" onClick={handleLogout}>
-                        <LogOut className="mr-2 h-4 w-4" />
-                        Log Out
-                    </Button>
-                </header>
-                <main>
-                    <Card>
-                        <CardHeader>
-                            <div className="flex items-center gap-3">
-                                <UserX className="h-6 w-6"/>
-                                <div>
-                                    <CardTitle>Unverified Experts</CardTitle>
-                                    <CardDescription>
-                                        Review the profiles of experts who are pending verification.
-                                    </CardDescription>
-                                </div>
+        <>
+            <div className="min-h-screen bg-background p-4 sm:p-8">
+                <div className="mx-auto max-w-4xl">
+                    <header className="flex items-center justify-between pb-8">
+                        <div className="flex items-center gap-4">
+                            <User className="h-10 w-10 text-primary" />
+                            <div>
+                                <h1 className="text-4xl font-bold">Manager Dashboard</h1>
+                                <p className="text-muted-foreground">Welcome, {user?.displayName || 'Manager'}.</p>
                             </div>
-                        </CardHeader>
-                        <CardContent>
-                           <UnverifiedExpertsList onVerify={handleVerifyUser} />
-                        </CardContent>
-                    </Card>
-                </main>
+                        </div>
+                        <Button variant="outline" onClick={handleLogout}>
+                            <LogOut className="mr-2 h-4 w-4" />
+                            Log Out
+                        </Button>
+                    </header>
+                    <main>
+                        <Card>
+                            <CardHeader>
+                                <div className="flex items-center gap-3">
+                                    <UserX className="h-6 w-6"/>
+                                    <div>
+                                        <CardTitle>Unverified Experts</CardTitle>
+                                        <CardDescription>
+                                            Review the profiles of experts who are pending verification.
+                                        </CardDescription>
+                                    </div>
+                                </div>
+                            </CardHeader>
+                            <CardContent>
+                            <UnverifiedExpertsList onVerify={handleVerifyUser} onViewProfile={handleViewProfile} />
+                            </CardContent>
+                        </Card>
+                    </main>
+                </div>
             </div>
-        </div>
+
+            <Dialog open={isProfileDialogOpen} onOpenChange={setIsProfileDialogOpen}>
+                <DialogContent className="sm:max-w-[600px]">
+                    <DialogHeader>
+                        <DialogTitle>Expert Profile</DialogTitle>
+                        <DialogDescription>
+                            Review the details of the unverified expert.
+                        </DialogDescription>
+                    </DialogHeader>
+                    {selectedExpert && <ExpertProfileView expert={selectedExpert} />}
+                </DialogContent>
+            </Dialog>
+        </>
     );
 }
