@@ -181,6 +181,7 @@ const UserTable = ({ users, allUsers, managerIds, onTierChange, onVerificationTo
                 <TableHead>Full Name</TableHead>
                 <TableHead>Referral</TableHead>
                 <TableHead>Role</TableHead>
+                <TableHead>Joined</TableHead>
                 <TableHead className="text-center">Tier</TableHead>
                 <TableHead className="text-center">Verified</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
@@ -236,6 +237,9 @@ const UserTable = ({ users, allUsers, managerIds, onTierChange, onVerificationTo
                                 <Badge variant="secondary">{expert.role}</Badge>
                                 {isManager && <Badge variant="outline" className="border-cyan-500 text-cyan-500">Manager</Badge>}
                             </div>
+                        </TableCell>
+                        <TableCell className="text-xs text-muted-foreground">
+                            {expert.createdAt ? formatDistanceToNow(expert.createdAt.toDate(), { addSuffix: true }) : 'N/A'}
                         </TableCell>
                         <TableCell className="text-center">{renderTierBadge(expert.tier)}</TableCell>
                         <TableCell className="text-center">
@@ -677,7 +681,6 @@ export default function AdminDashboardPage() {
     const isCurrentlyManager = managerIds.includes(expert.id);
 
     if (isCurrentlyManager) {
-        // Use non-blocking delete
         deleteDocumentNonBlocking(managerDocRef).then(() => {
             toast({
                 title: "Manager Role Removed",
@@ -693,7 +696,6 @@ export default function AdminDashboardPage() {
             }
         });
     } else {
-        // Use non-blocking set with an empty object
         setDocumentNonBlocking(managerDocRef, {}).then(() => {
             toast({
                 title: "Manager Role Granted",
@@ -2005,5 +2007,3 @@ export default function AdminDashboardPage() {
     </>
   );
 }
-
-    
