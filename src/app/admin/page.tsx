@@ -562,18 +562,19 @@ export default function AdminDashboardPage() {
 
   const { data: superAdminData, isLoading: isRoleLoading } = useDoc(superAdminDocRef);
   const isSuperAdmin = superAdminData !== null;
+  const isLoading = isUserLoading || isRoleLoading;
+
 
   useEffect(() => {
     // Wait until loading is finished before checking roles and redirecting
-    if (!isUserLoading && !isRoleLoading) {
+    if (!isLoading) {
       if (!user) {
         router.push('/login');
       } else if (!isSuperAdmin) {
-        // This is the key change: only redirect if the user is definitely NOT a super admin.
         router.push('/dashboard');
       }
     }
-  }, [user, isUserLoading, isSuperAdmin, isRoleLoading, router]);
+  }, [user, isLoading, isSuperAdmin, router]);
   
 
   const usersCollectionRef = useMemoFirebase(() => {
@@ -1056,7 +1057,6 @@ export default function AdminDashboardPage() {
   };
 
 
-  const isLoading = isUserLoading || isRoleLoading;
   const areTablesLoading = isSuperAdmin && (isUsersLoading || isReviewsLoading || isVacanciesLoading || isPaymentsLoading);
   
   const filteredUsers = useMemo(() => {
@@ -1103,7 +1103,14 @@ export default function AdminDashboardPage() {
   }
 
   if (!isSuperAdmin) {
-    return null; // The redirect in useEffect will handle this.
+    // This case should be rare due to the redirect in useEffect, but it's a good fallback.
+    // It prevents a flash of content for non-admin users.
+    return (
+       <div className="flex h-screen w-full items-center justify-center bg-background">
+        <Loader className="h-8 w-8 animate-spin text-primary" />
+        <p className="ml-4 text-muted-foreground">Redirecting...</p>
+      </div>
+    );
   }
 
   return (
