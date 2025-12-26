@@ -154,7 +154,7 @@ type AppConfig = {
     referralRewardPoints?: number;
 };
 
-const UserTable = ({ users, allUsers, managerIds, onTierChange, onVerificationToggle, onDelete, onEdit, onAwardReferral, onToggleManager }: { users: ExpertUser[], allUsers: ExpertUser[], managerIds: string[], onTierChange: (expert: ExpertUser, tier: ExpertUser['tier']) => void, onVerificationToggle: (expert: ExpertUser) => void, onDelete: (expert: ExpertUser) => void, onEdit: (expert: ExpertUser) => void, onAwardReferral: (user: ExpertUser) => void, onToggleManager: (expert: ExpertUser) => void }) => {
+const UserTable = ({ users, allUsers, onTierChange, onVerificationToggle, onDelete, onEdit, onAwardReferral }: { users: ExpertUser[], allUsers: ExpertUser[], onTierChange: (expert: ExpertUser, tier: ExpertUser['tier']) => void, onVerificationToggle: (expert: ExpertUser) => void, onDelete: (expert: ExpertUser) => void, onEdit: (expert: ExpertUser) => void, onAwardReferral: (user: ExpertUser) => void }) => {
     const getInitials = (firstName?: string, lastName?: string) => {
         if (firstName && lastName) {
             return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
@@ -191,7 +191,6 @@ const UserTable = ({ users, allUsers, managerIds, onTierChange, onVerificationTo
                 {users && users.length > 0 ? (
                 users.map((expert) => {
                     const referralCount = expert.referralCode ? allUsers.filter(u => u.referredByCode === expert.referralCode).length : 0;
-                    const isManager = managerIds.includes(expert.id);
                     return (
                         <TableRow key={expert.id}>
                         <TableCell>
@@ -235,7 +234,6 @@ const UserTable = ({ users, allUsers, managerIds, onTierChange, onVerificationTo
                         <TableCell>
                             <div className="flex flex-col gap-1">
                                 <Badge variant="secondary">{expert.role}</Badge>
-                                {isManager && <Badge variant="outline" className="border-cyan-500 text-cyan-500">Manager</Badge>}
                             </div>
                         </TableCell>
                         <TableCell className="text-xs text-muted-foreground">
@@ -260,10 +258,6 @@ const UserTable = ({ users, allUsers, managerIds, onTierChange, onVerificationTo
                                             <DropdownMenuItem onClick={() => onTierChange(expert, 'Super Premier')}><Sparkles className="mr-2 h-4 w-4" />Super Premier</DropdownMenuItem>
                                         </DropdownMenuSubContent></DropdownMenuPortal>
                                     </DropdownMenuSub>
-                                    <DropdownMenuItem onClick={() => onToggleManager(expert)}>
-                                        <Briefcase className="mr-2 h-4 w-4" />
-                                        <span>{isManager ? 'Remove Manager' : 'Make Manager'}</span>
-                                    </DropdownMenuItem>
                                     <DropdownMenuItem onClick={() => onEdit(expert)}><Edit className="mr-2 h-4 w-4" />Edit</DropdownMenuItem>
                                     <DropdownMenuSeparator />
                                     <DropdownMenuItem onClick={() => onDelete(expert)} className="text-destructive focus:text-destructive"><Trash2 className="mr-2 h-4 w-4" />Delete</DropdownMenuItem>
@@ -568,14 +562,18 @@ export default function AdminDashboardPage() {
   const { data: superAdminData, isLoading: isRoleLoading } = useDoc(superAdminDocRef);
   const isSuperAdmin = superAdminData !== null;
 
+  useEffect(() => {
+    if (!isUserLoading && !user) {
+      router.push('/login');
+    } else if (!isUserLoading && user && !isRoleLoading && !isSuperAdmin) {
+      router.push('/dashboard');
+    }
+  }, [user, isUserLoading, isRoleLoading, isSuperAdmin, router]);
+  
+
   const usersCollectionRef = useMemoFirebase(() => {
     if (!firestore || !isSuperAdmin) return null;
     return collection(firestore, 'users');
-  }, [firestore, isSuperAdmin]);
-
-  const managersCollectionRef = useMemoFirebase(() => {
-    if (!firestore || !isSuperAdmin) return null;
-    return collection(firestore, 'roles_manager');
   }, [firestore, isSuperAdmin]);
 
   const reviewsCollectionQuery = useMemoFirebase(() => {
@@ -595,7 +593,6 @@ export default function AdminDashboardPage() {
 
 
   const { data: usersData, isLoading: isUsersLoading } = useCollection<ExpertUser>(usersCollectionRef);
-  const { data: managersData, isLoading: isManagersLoading } = useCollection<{id: string}>(managersCollectionRef);
   const { data: reviews, isLoading: isReviewsLoading } = useCollection<Review>(reviewsCollectionQuery);
   const { data: vacancies, isLoading: isVacanciesLoading } = useCollection<Vacancy>(vacanciesCollectionQuery);
   const { data: payments, isLoading: isPaymentsLoading } = useCollection<Payment>(paymentsCollectionQuery);
@@ -606,8 +603,6 @@ export default function AdminDashboardPage() {
   }, [firestore]);
   
   const { data: appConfig, isLoading: isAppConfigLoading } = useDoc<AppConfig>(appConfigDocRef);
-  
-  const managerIds = useMemo(() => managersData?.map(m => m.id) || [], [managersData]);
 
   useEffect(() => {
     if (!isAppConfigLoading && appConfig) {
@@ -636,12 +631,6 @@ export default function AdminDashboardPage() {
   const unverifiedCount = usersData?.filter(u => !u.verified).length || 0;
   const premierCount = usersData?.filter(u => u.tier === 'Premier').length || 0;
   const superPremierCount = usersData?.filter(u => u.tier === 'Super Premier').length || 0;
-
-  useEffect(() => {
-    if (!isUserLoading && !user) {
-      router.push('/login');
-    }
-  }, [user, isUserLoading, router]);
 
   const handleLogout = () => {
     if (auth) {
@@ -673,46 +662,6 @@ export default function AdminDashboardPage() {
     setIsDeleteDialogOpen(false);
     setSelectedUser(null);
   }
-
-  const handleToggleManagerRole = (expert: ExpertUser) => {
-    if (!firestore) return;
-
-    const managerDocRef = doc(firestore, 'roles_manager', expert.id);
-    const isCurrentlyManager = managerIds.includes(expert.id);
-
-    if (isCurrentlyManager) {
-        deleteDocumentNonBlocking(managerDocRef).then(() => {
-            toast({
-                title: "Manager Role Removed",
-                description: `${expert.firstName} ${expert.lastName} is no longer a manager.`,
-            });
-        }).catch(error => {
-            if (error.name !== 'FirebaseError') {
-                 toast({
-                    variant: 'destructive',
-                    title: "Update Failed",
-                    description: "Could not remove manager role. Please try again.",
-                });
-            }
-        });
-    } else {
-        setDocumentNonBlocking(managerDocRef, {}).then(() => {
-            toast({
-                title: "Manager Role Granted",
-                description: `${expert.firstName} ${expert.lastName} has been made a manager.`,
-            });
-        }).catch(error => {
-            if (error.name !== 'FirebaseError') {
-                 toast({
-                    variant: 'destructive',
-                    title: "Update Failed",
-                    description: "Could not grant manager role. Please try again.",
-                });
-            }
-        });
-    }
-  }
-
 
   const handleTierChange = (expert: ExpertUser, tier: ExpertUser['tier']) => {
     if (!firestore) return;
@@ -1103,7 +1052,7 @@ export default function AdminDashboardPage() {
 
 
   const isLoading = isUserLoading || isRoleLoading;
-  const areTablesLoading = isSuperAdmin && (isUsersLoading || isReviewsLoading || isVacanciesLoading || isPaymentsLoading || isManagersLoading);
+  const areTablesLoading = isSuperAdmin && (isUsersLoading || isReviewsLoading || isVacanciesLoading || isPaymentsLoading);
   
   const filteredUsers = useMemo(() => {
     if (!usersData) return [];
@@ -1322,19 +1271,19 @@ export default function AdminDashboardPage() {
                                             <TabsTrigger value="superAdmins">Super Admins</TabsTrigger>
                                         </TabsList>
                                         <TabsContent value="all" className="mt-4">
-                                            <UserTable users={filteredUsers} allUsers={usersData || []} managerIds={managerIds} onTierChange={handleTierChange} onVerificationToggle={handleVerificationToggle} onDelete={openDeleteDialog} onEdit={openEditDialog} onAwardReferral={handleAwardReferral} onToggleManager={handleToggleManagerRole} />
+                                            <UserTable users={filteredUsers} allUsers={usersData || []} onTierChange={handleTierChange} onVerificationToggle={handleVerificationToggle} onDelete={openDeleteDialog} onEdit={openEditDialog} onAwardReferral={handleAwardReferral} />
                                         </TabsContent>
                                         <TabsContent value="freelancers" className="mt-4">
-                                            <UserTable users={freelancers || []} allUsers={usersData || []} managerIds={managerIds} onTierChange={handleTierChange} onVerificationToggle={handleVerificationToggle} onDelete={openDeleteDialog} onEdit={openEditDialog} onAwardReferral={handleAwardReferral} onToggleManager={handleToggleManagerRole} />
+                                            <UserTable users={freelancers || []} allUsers={usersData || []} onTierChange={handleTierChange} onVerificationToggle={handleVerificationToggle} onDelete={openDeleteDialog} onEdit={openEditDialog} onAwardReferral={handleAwardReferral} />
                                         </TabsContent>
                                         <TabsContent value="companies" className="mt-4">
-                                            <UserTable users={companies || []} allUsers={usersData || []} managerIds={managerIds} onTierChange={handleTierChange} onVerificationToggle={handleVerificationToggle} onDelete={openDeleteDialog} onEdit={openEditDialog} onAwardReferral={handleAwardReferral} onToggleManager={handleToggleManagerRole} />
+                                            <UserTable users={companies || []} allUsers={usersData || []} onTierChange={handleTierChange} onVerificationToggle={handleVerificationToggle} onDelete={openDeleteDialog} onEdit={openEditDialog} onAwardReferral={handleAwardReferral} />
                                         </TabsContent>
                                         <TabsContent value="authorizedPros" className="mt-4">
-                                            <UserTable users={authorizedPros || []} allUsers={usersData || []} managerIds={managerIds} onTierChange={handleTierChange} onVerificationToggle={handleVerificationToggle} onDelete={openDeleteDialog} onEdit={openEditDialog} onAwardReferral={handleAwardReferral} onToggleManager={handleToggleManagerRole} />
+                                            <UserTable users={authorizedPros || []} allUsers={usersData || []} onTierChange={handleTierChange} onVerificationToggle={handleVerificationToggle} onDelete={openDeleteDialog} onEdit={openEditDialog} onAwardReferral={handleAwardReferral} />
                                         </TabsContent>
                                         <TabsContent value="superAdmins" className="mt-4">
-                                            <UserTable users={superAdmins || []} allUsers={usersData || []} managerIds={managerIds} onTierChange={handleTierChange} onVerificationToggle={handleVerificationToggle} onDelete={openDeleteDialog} onEdit={openEditDialog} onAwardReferral={handleAwardReferral} onToggleManager={handleToggleManagerRole} />
+                                            <UserTable users={superAdmins || []} allUsers={usersData || []} onTierChange={handleTierChange} onVerificationToggle={handleVerificationToggle} onDelete={openDeleteDialog} onEdit={openEditDialog} onAwardReferral={handleAwardReferral} />
                                         </TabsContent>
                                     </Tabs>
                                 )}

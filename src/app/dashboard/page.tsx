@@ -8,7 +8,7 @@ import { signOut } from 'firebase/auth';
 import { doc, collection, query, where, getDoc, runTransaction, increment, getDocs, orderBy, Timestamp, limit, arrayUnion, arrayRemove } from 'firebase/firestore';
 import { useUser, useAuth, useFirestore, useDoc, useCollection, useMemoFirebase, updateDocumentNonBlocking } from '@/firebase';
 import { Button } from '@/components/ui/button';
-import { LogOut, Briefcase, Loader, Edit, UserCheck, XCircle, MapPin, IndianRupee, Calendar, Book, GraduationCap, School, Info, User as UserIcon, Check, Power, Building, PlusCircle, Crown, Sparkles, Lock, Home, ArrowUpCircle, ShieldCheck, ExternalLink, Gift, Copy, Shield, AlertTriangle, ChevronDown, Link as LinkIcon, MessageCircle, BookOpen, CheckCircle, PenSquare, Factory, Users, Type, UserPlus, UserMinus, UserCog } from 'lucide-react';
+import { LogOut, Briefcase, Loader, Edit, UserCheck, XCircle, MapPin, IndianRupee, Calendar, Book, GraduationCap, School, Info, User as UserIcon, Check, Power, Building, PlusCircle, Crown, Sparkles, Lock, Home, ArrowUpCircle, ShieldCheck, ExternalLink, Gift, Copy, Shield, AlertTriangle, ChevronDown, Link as LinkIcon, MessageCircle, BookOpen, CheckCircle, PenSquare, Factory, Users, Type, UserPlus, UserMinus } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import {
   Dialog,
@@ -507,16 +507,9 @@ function ExpertDashboardPage() {
     if (!user) return null;
     return doc(firestore, 'roles_super_admin', user.uid);
   }, [firestore, user]);
-  
-  const managerDocRef = useMemoFirebase(() => {
-    if (!user) return null;
-    return doc(firestore, 'roles_manager', user.uid);
-  }, [firestore, user]);
 
   const { data: superAdminData, isLoading: isRoleLoading } = useDoc(superAdminDocRef);
-  const { data: managerData, isLoading: isManagerRoleLoading } = useDoc(managerDocRef);
   const isSuperAdmin = superAdminData !== null;
-  const isManager = managerData !== null;
   
   const referralsQuery = useMemoFirebase(() => {
     if (!firestore || !userProfile?.referralCode) return null;
@@ -536,12 +529,12 @@ function ExpertDashboardPage() {
   useEffect(() => {
     if (!isUserLoading && !user) {
       router.push('/login');
-    } else if (!isUserLoading && user && !isRoleLoading && !isManagerRoleLoading) {
+    } else if (!isUserLoading && user && !isRoleLoading) {
       if (isSuperAdmin) {
         router.push('/admin');
       }
     }
-  }, [user, isUserLoading, isRoleLoading, isManagerRoleLoading, isSuperAdmin, router]);
+  }, [user, isUserLoading, isRoleLoading, isSuperAdmin, router]);
   
 
   const handleLogout = () => {
@@ -655,7 +648,7 @@ function ExpertDashboardPage() {
 
   const profileCompletion = calculateProfileCompletion(userProfile);
   const paymentQueryParam = searchParams.get('payment');
-  const isLoading = isUserLoading || isProfileLoading || isAppConfigLoading || isRoleLoading || isReferralsLoading || isManagerRoleLoading;
+  const isLoading = isUserLoading || isProfileLoading || isAppConfigLoading || isRoleLoading || isReferralsLoading;
 
   if (isLoading) {
     let message = "Finalizing session...";
@@ -756,13 +749,6 @@ function ExpertDashboardPage() {
                         </div>
                     </div>
                     <div className="flex items-center gap-2 self-start sm:self-auto">
-                        {isManager && (
-                            <Button variant="outline" asChild>
-                                <Link href="/manager">
-                                    <UserCog className="mr-2 h-4 w-4" /> Manager
-                                </Link>
-                            </Button>
-                        )}
                         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
                             <DialogTrigger asChild>
                                 <Button variant="outline">

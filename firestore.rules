@@ -20,11 +20,6 @@ service cloud.firestore {
         exists(/databases/$(database)/documents/roles_super_admin/$(request.auth.uid));
     }
     
-    function isManager() {
-      return isSignedIn() &&
-        exists(/databases/$(database)/documents/roles_manager/$(request.auth.uid));
-    }
-
     function isExistingDoc() {
       return resource != null;
     }
@@ -60,14 +55,6 @@ service cloud.firestore {
       return isOwner(userId) && isExistingDoc() && allAffectedKeys.hasOnly(editableFields);
     }
 
-    // A manager can update a user's verification status and cash payment status.
-    function isManagerUpdatingUserDoc() {
-      let editableFields = ['verified', 'cashPaymentStatus'];
-      let allAffectedKeys = request.resource.data.diff(resource.data).affectedKeys();
-      
-      return isManager() && isExistingDoc() && allAffectedKeys.hasOnly(editableFields);
-    }
-    
     function isCreatingOwnLocationData(userId) {
       return isCreatingOwnUserDoc(userId) && requestData().userId == userId;
     }
@@ -125,11 +112,6 @@ service cloud.firestore {
       allow get: if isOwner(userId) || isSuperAdmin();
       allow list, create, update, delete: if isSuperAdmin();
     }
-    
-    match /roles_manager/{userId} {
-      allow get: if isOwner(userId) || isSuperAdmin();
-      allow list, create, update, delete: if isSuperAdmin();
-    }
 
     /* =====================================================
      * App Configuration
@@ -177,7 +159,6 @@ service cloud.firestore {
 
       // A user can update their own document, or a super admin can update any user doc.
       allow update: if isUpdatingOwnUserDoc(userId) || 
-                       isManagerUpdatingUserDoc() ||
                        (isSuperAdmin() && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['id', 'createdAt']));
 
       // Users can delete their own account, and admins can delete any account.
