@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
@@ -8,13 +9,15 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { collection, query, where, doc } from 'firebase/firestore';
+import { collection, query, where, doc, Timestamp } from 'firebase/firestore';
 import { Loader, User, LogOut, Eye, UserX, UserCheck, Phone, Briefcase, Calendar, GraduationCap, School, Book, Info, MapPin } from 'lucide-react';
 import { signOut } from 'firebase/auth';
 import { useAuth } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
+import { formatDistanceToNow } from 'date-fns';
+
 
 type ExpertUser = {
     id: string;
@@ -33,6 +36,7 @@ type ExpertUser = {
     aboutMe?: string;
     experienceYears?: number;
     experienceMonths?: number;
+    createdAt?: Timestamp;
 };
 
 const ExpertProfileView = ({ expert }: { expert: ExpertUser }) => {
@@ -129,6 +133,7 @@ function UnverifiedExpertsList({ onVerify, onViewProfile }: { onVerify: (expert:
                     <TableHead className="w-[80px]">Avatar</TableHead>
                     <TableHead>Contact Info</TableHead>
                     <TableHead>Role</TableHead>
+                    <TableHead>Joined</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
             </TableHeader>
@@ -155,6 +160,9 @@ function UnverifiedExpertsList({ onVerify, onViewProfile }: { onVerify: (expert:
                         </TableCell>
                          <TableCell>
                             <Badge variant="secondary">{expert.role}</Badge>
+                        </TableCell>
+                        <TableCell className="text-xs text-muted-foreground">
+                            {expert.createdAt ? formatDistanceToNow(expert.createdAt.toDate(), { addSuffix: true }) : 'N/A'}
                         </TableCell>
                         <TableCell className="text-right space-x-2">
                            <Button variant="outline" size="sm" onClick={() => onViewProfile(expert)}>
