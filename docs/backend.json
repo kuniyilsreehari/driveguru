@@ -96,6 +96,11 @@
           "type": "boolean",
           "description": "Indicates if the expert has been verified by a super admin."
         },
+        "cashPaymentStatus": {
+          "type": "string",
+          "description": "The status of an offline cash payment, managed by managers.",
+          "enum": ["Pending", "Received"]
+        },
         "pricingModel": {
             "type": "string",
             "description": "The pricing model selected by the user (e.g., 'Hourly', 'Per Project')."

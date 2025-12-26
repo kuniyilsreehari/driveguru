@@ -10,13 +10,14 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { collection, query, where, doc, Timestamp } from 'firebase/firestore';
-import { Loader, User, LogOut, Eye, UserX, UserCheck, Phone, Briefcase, Calendar, GraduationCap, School, Book, Info, MapPin } from 'lucide-react';
+import { Loader, User, LogOut, Eye, UserX, UserCheck, Phone, Briefcase, Calendar, GraduationCap, School, Book, Info, MapPin, MoreHorizontal, IndianRupee } from 'lucide-react';
 import { signOut } from 'firebase/auth';
 import { useAuth } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
 import { formatDistanceToNow } from 'date-fns';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 
 type ExpertUser = {
@@ -37,6 +38,7 @@ type ExpertUser = {
     experienceYears?: number;
     experienceMonths?: number;
     createdAt?: Timestamp;
+    cashPaymentStatus?: 'Pending' | 'Received';
 };
 
 const ExpertProfileView = ({ expert }: { expert: ExpertUser }) => {
@@ -92,7 +94,7 @@ const ExpertProfileView = ({ expert }: { expert: ExpertUser }) => {
     )
 }
 
-function UnverifiedExpertsList({ onVerify, onViewProfile }: { onVerify: (expert: ExpertUser) => void, onViewProfile: (expert: ExpertUser) => void }) {
+function UnverifiedExpertsList({ onVerify, onViewProfile, onToggleCashStatus }: { onVerify: (expert: ExpertUser) => void, onViewProfile: (expert: ExpertUser) => void, onToggleCashStatus: (expert: ExpertUser) => void }) {
     const firestore = useFirestore();
 
     const unverifiedUsersQuery = useMemoFirebase(() => {
@@ -134,6 +136,7 @@ function UnverifiedExpertsList({ onVerify, onViewProfile }: { onVerify: (expert:
                     <TableHead>Contact Info</TableHead>
                     <TableHead>Role</TableHead>
                     <TableHead>Joined</TableHead>
+                    <TableHead>Cash Status</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
             </TableHeader>
@@ -164,15 +167,36 @@ function UnverifiedExpertsList({ onVerify, onViewProfile }: { onVerify: (expert:
                         <TableCell className="text-xs text-muted-foreground">
                             {expert.createdAt ? formatDistanceToNow(expert.createdAt.toDate(), { addSuffix: true }) : 'N/A'}
                         </TableCell>
+                        <TableCell>
+                            {expert.cashPaymentStatus === 'Received' ? (
+                                <Badge variant="outline" className="border-green-500 text-green-500">Received</Badge>
+                            ) : (
+                                <Badge variant="destructive">Pending</Badge>
+                            )}
+                        </TableCell>
                         <TableCell className="text-right space-x-2">
-                           <Button variant="outline" size="sm" onClick={() => onViewProfile(expert)}>
-                                <Eye className="mr-2 h-4 w-4" />
-                                View Profile
-                           </Button>
-                           <Button variant="outline" size="sm" onClick={() => onVerify(expert)}>
-                                <UserCheck className="mr-2 h-4 w-4" />
-                                Verify
-                           </Button>
+                           <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" className="h-8 w-8 p-0">
+                                        <span className="sr-only">Open menu</span>
+                                        <MoreHorizontal className="h-4 w-4" />
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                    <DropdownMenuItem onClick={() => onViewProfile(expert)}>
+                                        <Eye className="mr-2 h-4 w-4" />
+                                        View Profile
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => onVerify(expert)}>
+                                        <UserCheck className="mr-2 h-4 w-4" />
+                                        Mark as Verified
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => onToggleCashStatus(expert)}>
+                                        <IndianRupee className="mr-2 h-4 w-4" />
+                                        Toggle Cash Status
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
                         </TableCell>
                     </TableRow>
                 ))}
@@ -218,6 +242,28 @@ export default function ManagerDashboardPage() {
         setIsProfileDialogOpen(true);
     }
 
+    const handleToggleCashStatus = (expert: ExpertUser) => {
+        if (!firestore) return;
+        const userDocRef = doc(firestore, 'users', expert.id);
+        const newStatus = expert.cashPaymentStatus === 'Received' ? 'Pending' : 'Received';
+        updateDocumentNonBlocking(userDocRef, { cashPaymentStatus: newStatus })
+            .then(() => {
+                toast({
+                    title: "Cash Status Updated",
+                    description: `${expert.firstName}'s cash payment status is now ${newStatus}.`,
+                });
+            })
+            .catch(error => {
+                if (error.name !== 'FirebaseError') {
+                    toast({
+                        variant: 'destructive',
+                        title: 'Update Failed',
+                        description: 'Could not update cash status. Please check your permissions.'
+                    });
+                }
+            });
+    };
+
     if (isUserLoading) {
         return (
             <div className="flex h-screen w-full items-center justify-center bg-background">
@@ -252,13 +298,13 @@ export default function ManagerDashboardPage() {
                                     <div>
                                         <CardTitle>Unverified Experts</CardTitle>
                                         <CardDescription>
-                                            Review the profiles of experts who are pending verification.
+                                            Review the profiles of experts who are pending verification and manage their payment status.
                                         </CardDescription>
                                     </div>
                                 </div>
                             </CardHeader>
                             <CardContent>
-                            <UnverifiedExpertsList onVerify={handleVerifyUser} onViewProfile={handleViewProfile} />
+                            <UnverifiedExpertsList onVerify={handleVerifyUser} onViewProfile={handleViewProfile} onToggleCashStatus={handleToggleCashStatus} />
                             </CardContent>
                         </Card>
                     </main>
