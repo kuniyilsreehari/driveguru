@@ -81,18 +81,20 @@ export function updateDocumentNonBlocking(docRef: DocumentReference, data: any) 
 
 /**
  * Initiates a deleteDoc operation for a document reference.
- * Does NOT await the write operation internally.
+ * It can be awaited by the caller, or used in a fire-and-forget manner.
  */
-export function deleteDocumentNonBlocking(docRef: DocumentReference) {
-  deleteDoc(docRef)
-    .catch(error => {
-      errorEmitter.emit(
-        'permission-error',
-        new FirestorePermissionError({
-          path: docRef.path,
-          operation: 'delete',
-        })
-      )
-    });
+export function deleteDocumentNonBlocking(docRef: DocumentReference): Promise<void> {
+  // Return the promise from deleteDoc.
+  return deleteDoc(docRef).catch(error => {
+    // On failure, emit a structured permission error.
+    errorEmitter.emit(
+      'permission-error',
+      new FirestorePermissionError({
+        path: docRef.path,
+        operation: 'delete',
+      })
+    );
+    // Re-throw the original error so that if the caller is awaiting, their catch block will trigger.
+    throw error;
+  });
 }
-
