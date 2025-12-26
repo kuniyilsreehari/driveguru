@@ -3,16 +3,17 @@
 import { useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { useUser, useFirestore, useCollection, useMemoFirebase, updateDocumentNonBlocking } from '@/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { collection, query, where } from 'firebase/firestore';
-import { Loader, User, LogOut, Eye, UserX } from 'lucide-react';
+import { collection, query, where, doc } from 'firebase/firestore';
+import { Loader, User, LogOut, Eye, UserX, UserCheck } from 'lucide-react';
 import { signOut } from 'firebase/auth';
 import { useAuth } from '@/firebase';
+import { useToast } from '@/hooks/use-toast';
 
 type ExpertUser = {
     id: string;
@@ -23,7 +24,7 @@ type ExpertUser = {
     photoUrl?: string;
 };
 
-function UnverifiedExpertsList() {
+function UnverifiedExpertsList({ onVerify }: { onVerify: (expert: ExpertUser) => void }) {
     const firestore = useFirestore();
 
     const unverifiedUsersQuery = useMemoFirebase(() => {
@@ -83,12 +84,16 @@ function UnverifiedExpertsList() {
                          <TableCell>
                             <Badge variant="secondary">{expert.role}</Badge>
                         </TableCell>
-                        <TableCell className="text-right">
+                        <TableCell className="text-right space-x-2">
                            <Button asChild variant="outline" size="sm">
                                 <Link href={`/expert/${expert.id}`} target="_blank">
                                     <Eye className="mr-2 h-4 w-4" />
                                     View Profile
                                 </Link>
+                           </Button>
+                           <Button variant="outline" size="sm" onClick={() => onVerify(expert)}>
+                                <UserCheck className="mr-2 h-4 w-4" />
+                                Verify
                            </Button>
                         </TableCell>
                     </TableRow>
@@ -102,6 +107,8 @@ export default function ManagerDashboardPage() {
     const { user, isUserLoading } = useUser();
     const router = useRouter();
     const auth = useAuth();
+    const firestore = useFirestore();
+    const { toast } = useToast();
 
     useEffect(() => {
         if (!isUserLoading && !user) {
@@ -113,6 +120,16 @@ export default function ManagerDashboardPage() {
         if (auth) {
             signOut(auth);
         }
+    };
+    
+    const handleVerifyUser = (expert: ExpertUser) => {
+        if (!firestore) return;
+        const userDocRef = doc(firestore, 'users', expert.id);
+        updateDocumentNonBlocking(userDocRef, { verified: true });
+        toast({
+            title: "Expert Verified",
+            description: `${expert.firstName} ${expert.lastName} is now verified.`,
+        });
     };
 
     if (isUserLoading) {
@@ -154,7 +171,7 @@ export default function ManagerDashboardPage() {
                             </div>
                         </CardHeader>
                         <CardContent>
-                           <UnverifiedExpertsList />
+                           <UnverifiedExpertsList onVerify={handleVerifyUser} />
                         </CardContent>
                     </Card>
                 </main>
