@@ -10,7 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { collection, query, where, doc } from 'firebase/firestore';
-import { Loader, User, LogOut, Eye, UserX, UserCheck } from 'lucide-react';
+import { Loader, User, LogOut, Eye, UserX, UserCheck, Phone } from 'lucide-react';
 import { signOut } from 'firebase/auth';
 import { useAuth } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
@@ -22,6 +22,7 @@ type ExpertUser = {
     email: string;
     role: string;
     photoUrl?: string;
+    phoneNumber?: string;
 };
 
 function UnverifiedExpertsList({ onVerify }: { onVerify: (expert: ExpertUser) => void }) {
@@ -63,7 +64,7 @@ function UnverifiedExpertsList({ onVerify }: { onVerify: (expert: ExpertUser) =>
             <TableHeader>
                 <TableRow>
                     <TableHead className="w-[80px]">Avatar</TableHead>
-                    <TableHead>Full Name</TableHead>
+                    <TableHead>Contact Info</TableHead>
                     <TableHead>Role</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -80,6 +81,14 @@ function UnverifiedExpertsList({ onVerify }: { onVerify: (expert: ExpertUser) =>
                         <TableCell>
                             <div className="font-medium">{expert.firstName} {expert.lastName}</div>
                             <div className="text-xs text-muted-foreground">{expert.email}</div>
+                            {expert.phoneNumber && (
+                                <div className="text-xs text-muted-foreground flex items-center gap-2 mt-1">
+                                    <span>{expert.phoneNumber}</span>
+                                    <Button asChild variant="outline" size="sm" className="h-6 px-2">
+                                        <a href={`tel:${expert.phoneNumber}`}><Phone className="mr-1 h-3 w-3"/>Call</a>
+                                    </Button>
+                                </div>
+                            )}
                         </TableCell>
                          <TableCell>
                             <Badge variant="secondary">{expert.role}</Badge>
