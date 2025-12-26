@@ -569,6 +569,7 @@ export default function AdminDashboardPage() {
       if (!user) {
         router.push('/login');
       } else if (!isSuperAdmin) {
+        // This is the key change: only redirect if the user is definitely NOT a super admin.
         router.push('/dashboard');
       }
     }
@@ -1086,7 +1087,6 @@ export default function AdminDashboardPage() {
   const freelancers = filteredUsers?.filter(user => user.role === 'Freelancer');
   const companies = filteredUsers?.filter(user => user.role === 'Company');
   const authorizedPros = filteredUsers?.filter(user => user.role === 'Authorized Pro');
-  const superAdmins = filteredUsers?.filter(user => user.role === 'Super Admin');
   
   const pendingReviews = reviews?.filter(r => r.status === 'pending');
   const approvedReviews = reviews?.filter(r => r.status === 'approved');
@@ -1103,21 +1103,7 @@ export default function AdminDashboardPage() {
   }
 
   if (!isSuperAdmin) {
-    return (
-      <div className="flex h-screen w-full items-center justify-center bg-background p-4">
-        <Card className="w-full max-w-md border-destructive">
-          <CardHeader className="text-center">
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-destructive/20">
-              <Ban className="h-6 w-6 text-destructive" />
-            </div>
-            <CardTitle className="mt-4 text-2xl text-destructive">Access Denied</CardTitle>
-          </CardHeader>
-          <CardContent className="text-center text-muted-foreground">
-            <p>You do not have the necessary permissions to view this page. Please contact an administrator if you believe this is an error.</p>
-          </CardContent>
-        </Card>
-      </div>
-    );
+    return null; // The redirect in useEffect will handle this.
   }
 
   return (
@@ -1267,12 +1253,11 @@ export default function AdminDashboardPage() {
                                     </div>
                                 ) : (
                                     <Tabs defaultValue="all">
-                                        <TabsList className="grid w-full grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
+                                        <TabsList className="grid w-full grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
                                             <TabsTrigger value="all">All Users</TabsTrigger>
                                             <TabsTrigger value="freelancers">Freelancers</TabsTrigger>
                                             <TabsTrigger value="companies">Companies</TabsTrigger>
                                             <TabsTrigger value="authorizedPros">Authorized Pros</TabsTrigger>
-                                            <TabsTrigger value="superAdmins">Super Admins</TabsTrigger>
                                         </TabsList>
                                         <TabsContent value="all" className="mt-4">
                                             <UserTable users={filteredUsers} allUsers={usersData || []} onTierChange={handleTierChange} onVerificationToggle={handleVerificationToggle} onDelete={openDeleteDialog} onEdit={openEditDialog} onAwardReferral={handleAwardReferral} />
@@ -1285,9 +1270,6 @@ export default function AdminDashboardPage() {
                                         </TabsContent>
                                         <TabsContent value="authorizedPros" className="mt-4">
                                             <UserTable users={authorizedPros || []} allUsers={usersData || []} onTierChange={handleTierChange} onVerificationToggle={handleVerificationToggle} onDelete={openDeleteDialog} onEdit={openEditDialog} onAwardReferral={handleAwardReferral} />
-                                        </TabsContent>
-                                        <TabsContent value="superAdmins" className="mt-4">
-                                            <UserTable users={superAdmins || []} allUsers={usersData || []} onTierChange={handleTierChange} onVerificationToggle={handleVerificationToggle} onDelete={openDeleteDialog} onEdit={openEditDialog} onAwardReferral={handleAwardReferral} />
                                         </TabsContent>
                                     </Tabs>
                                 )}

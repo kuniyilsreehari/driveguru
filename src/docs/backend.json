@@ -41,7 +41,6 @@
           "type": "string",
           "description": "The user's role within the application.",
           "enum": [
-            "Super Admin",
             "Freelancer",
             "Company",
             "Authorized Pro"
@@ -683,6 +682,22 @@
             "$ref": "#/backend/entities/User"
           },
           "description": "Collection used to assign super admin roles. The existence of a document indicates super admin privileges. This enables secure `list` operations.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/roles_manager/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Collection used to assign manager roles. The existence of a document indicates manager privileges.",
           "params": [
             {
               "name": "userId",

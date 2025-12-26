@@ -19,7 +19,12 @@ service cloud.firestore {
       return isSignedIn() &&
         exists(/databases/$(database)/documents/roles_super_admin/$(request.auth.uid));
     }
-
+    
+    function isManager() {
+      return isSignedIn() &&
+        exists(/databases/$(database)/documents/roles_manager/$(request.auth.uid));
+    }
+    
     function isExistingDoc() {
       return resource != null;
     }
@@ -43,17 +48,25 @@ service cloud.firestore {
       // All fields a user is allowed to edit on their own.
       let editableFields = [
         'firstName', 'lastName', 'photoUrl', 'state', 'city', 'pincode', 'address',
-        'phoneNumber', 'showPhoneNumberOnProfile', 'department', 'companyName', 'businessDescription', 'category',
+        'phoneNumber', 'showPhoneNumberOnProfile', 'department', 'companyName', 'businessDescription', 'category', 'profession',
         'pricingModel', 'pricingValue',
-        'yearsOfExperience', 'gender', 'qualification', 'collegeName',
+        'experienceYears', 'experienceMonths', 'gender', 'qualification', 'collegeName',
         'skills', 'aboutMe', 'aboutYourDream', 'associatedProjectsName',
-        'linkedinUrl', 'twitterUrl', 'githubUrl', 'portfolioUrl', 'isAvailable', 'following'
+        'linkedinUrl', 'twitterUrl', 'githubUrl', 'portfolioUrl', 'facebookUrl', 'instagramUrl', 'youtubeUrl',
+        'isAvailable', 'following'
       ];
       let allAffectedKeys = request.resource.data.diff(resource.data).affectedKeys();
       
       return isOwner(userId) && isExistingDoc() && allAffectedKeys.hasOnly(editableFields);
     }
-    
+
+    // A manager can only update verification and cash payment status.
+    function isManagerUpdatingUserDoc() {
+      let editableFields = ['verified', 'cashPaymentStatus'];
+      let allAffectedKeys = request.resource.data.diff(resource.data).affectedKeys();
+      return isManager() && isExistingDoc() && allAffectedKeys.hasOnly(editableFields);
+    }
+
     function isCreatingOwnLocationData(userId) {
       return isCreatingOwnUserDoc(userId) && requestData().userId == userId;
     }
@@ -104,13 +117,19 @@ service cloud.firestore {
 
 
     /* =====================================================
-     * Super Admin Roles
+     * Admin Roles
      * ===================================================== */
 
     match /roles_super_admin/{userId} {
       allow get: if isOwner(userId) || isSuperAdmin();
       allow list, create, update, delete: if isSuperAdmin();
     }
+    
+    match /roles_manager/{userId} {
+      allow get: if isOwner(userId) || isSuperAdmin() || isManager();
+      allow list, create, update, delete: if isSuperAdmin();
+    }
+
 
     /* =====================================================
      * App Configuration
@@ -156,8 +175,8 @@ service cloud.firestore {
       // VERY PERMISSIVE: Any signed-in user can create their own user document.
       allow create: if isOwner(userId);
 
-      // A user can update their own document, or a super admin can update any user doc.
-      allow update: if isUpdatingOwnUserDoc(userId) || 
+      // A user can update their own document, or an admin/manager can update specific fields.
+      allow update: if isUpdatingOwnUserDoc(userId) || isManagerUpdatingUserDoc() ||
                        (isSuperAdmin() && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['id', 'createdAt']));
 
       // Users can delete their own account, and admins can delete any account.
