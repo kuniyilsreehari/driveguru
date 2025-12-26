@@ -8,7 +8,7 @@ import { signOut } from 'firebase/auth';
 import { doc, collection, query, where, getDoc, runTransaction, increment, getDocs, orderBy, Timestamp, limit, arrayUnion, arrayRemove } from 'firebase/firestore';
 import { useUser, useAuth, useFirestore, useDoc, useCollection, useMemoFirebase, updateDocumentNonBlocking } from '@/firebase';
 import { Button } from '@/components/ui/button';
-import { LogOut, Briefcase, Loader, Edit, UserCheck, XCircle, MapPin, IndianRupee, Calendar, Book, GraduationCap, School, Info, User as UserIcon, Check, Power, Building, PlusCircle, Crown, Sparkles, Lock, Home, ArrowUpCircle, ShieldCheck, ExternalLink, Gift, Copy, Shield, AlertTriangle, ChevronDown, Link as LinkIcon, MessageCircle, BookOpen, CheckCircle, PenSquare, Factory, Users, Type, UserPlus, UserMinus } from 'lucide-react';
+import { LogOut, Briefcase, Loader, Edit, UserCheck, XCircle, MapPin, IndianRupee, Calendar, Book, GraduationCap, School, Info, User as UserIcon, Check, Power, Building, PlusCircle, Crown, Sparkles, Lock, Home, ArrowUpCircle, ShieldCheck, ExternalLink, Gift, Copy, Shield, AlertTriangle, ChevronDown, Link as LinkIcon, MessageCircle, BookOpen, CheckCircle, PenSquare, Factory, Users, Type, UserPlus, UserMinus, UserCog } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import {
   Dialog,
@@ -539,11 +539,9 @@ function ExpertDashboardPage() {
     } else if (!isUserLoading && user && !isRoleLoading && !isManagerRoleLoading) {
       if (isSuperAdmin) {
         router.push('/admin');
-      } else if (isManager) {
-        router.push('/manager');
       }
     }
-  }, [user, isUserLoading, isRoleLoading, isManagerRoleLoading, isSuperAdmin, isManager, router]);
+  }, [user, isUserLoading, isRoleLoading, isManagerRoleLoading, isSuperAdmin, router]);
   
 
   const handleLogout = () => {
@@ -758,6 +756,13 @@ function ExpertDashboardPage() {
                         </div>
                     </div>
                     <div className="flex items-center gap-2 self-start sm:self-auto">
+                        {isManager && (
+                            <Button variant="outline" asChild>
+                                <Link href="/manager">
+                                    <UserCog className="mr-2 h-4 w-4" /> Manager
+                                </Link>
+                            </Button>
+                        )}
                         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
                             <DialogTrigger asChild>
                                 <Button variant="outline">
@@ -1004,5 +1009,3 @@ export default function DashboardPageWrapper() {
     </Suspense>
   )
 }
-
-    
