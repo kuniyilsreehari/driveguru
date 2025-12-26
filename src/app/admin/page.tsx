@@ -561,21 +561,7 @@ export default function AdminDashboardPage() {
   }, [firestore, user]);
 
   const { data: superAdminData, isLoading: isRoleLoading } = useDoc(superAdminDocRef);
-  const isSuperAdmin = superAdminData !== null;
-  const isLoading = isUserLoading || isRoleLoading;
-
-
-  useEffect(() => {
-    // Wait until loading is finished before checking roles and redirecting
-    if (!isLoading) {
-      if (!user) {
-        router.push('/login');
-      } else if (!isSuperAdmin) {
-        router.push('/dashboard');
-      }
-    }
-  }, [user, isLoading, isSuperAdmin, router]);
-  
+  const isSuperAdmin = !!superAdminData;
 
   const usersCollectionRef = useMemoFirebase(() => {
     if (!firestore || !isSuperAdmin) return null;
@@ -1091,22 +1077,24 @@ export default function AdminDashboardPage() {
   const pendingReviews = reviews?.filter(r => r.status === 'pending');
   const approvedReviews = reviews?.filter(r => r.status === 'approved');
   const rejectedReviews = reviews?.filter(r => r.status === 'rejected');
+  
+  const isLoading = isUserLoading || isRoleLoading;
 
 
   if (isLoading) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
         <Loader className="h-8 w-8 animate-spin text-primary" />
-        <p className="ml-4 text-muted-foreground">Checking permissions...</p>
+        <p className="ml-4 text-muted-foreground">Verifying Super Admin permissions...</p>
       </div>
     );
   }
 
+  // Once loading is complete, we decide what to render.
+  // This check prevents a flash of content if the user is not a super admin.
   if (!isSuperAdmin) {
-    // This case should be rare due to the redirect in useEffect, but it's a good fallback.
-    // It prevents a flash of content for non-admin users.
     return (
-       <div className="flex h-screen w-full items-center justify-center bg-background">
+      <div className="flex h-screen w-full items-center justify-center bg-background">
         <Loader className="h-8 w-8 animate-spin text-primary" />
         <p className="ml-4 text-muted-foreground">Redirecting...</p>
       </div>
