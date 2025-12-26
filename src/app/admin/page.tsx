@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
@@ -563,12 +564,15 @@ export default function AdminDashboardPage() {
   const isSuperAdmin = superAdminData !== null;
 
   useEffect(() => {
-    if (!isUserLoading && !user) {
-      router.push('/login');
-    } else if (!isUserLoading && user && !isRoleLoading && !isSuperAdmin) {
-      router.push('/dashboard');
+    // Wait until loading is finished before checking roles and redirecting
+    if (!isUserLoading && !isRoleLoading) {
+      if (!user) {
+        router.push('/login');
+      } else if (!isSuperAdmin) {
+        router.push('/dashboard');
+      }
     }
-  }, [user, isUserLoading, isRoleLoading, isSuperAdmin, router]);
+  }, [user, isUserLoading, isSuperAdmin, isRoleLoading, router]);
   
 
   const usersCollectionRef = useMemoFirebase(() => {
