@@ -1,13 +1,102 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { useUser } from '@/firebase';
+import Link from 'next/link';
+import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Loader, User, LogOut } from 'lucide-react';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { collection, query, where } from 'firebase/firestore';
+import { Loader, User, LogOut, Eye, UserX } from 'lucide-react';
 import { signOut } from 'firebase/auth';
 import { useAuth } from '@/firebase';
+
+type ExpertUser = {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    role: string;
+    photoUrl?: string;
+};
+
+function UnverifiedExpertsList() {
+    const firestore = useFirestore();
+
+    const unverifiedUsersQuery = useMemoFirebase(() => {
+        if (!firestore) return null;
+        return query(collection(firestore, 'users'), where('verified', '==', false));
+    }, [firestore]);
+
+    const { data: users, isLoading } = useCollection<ExpertUser>(unverifiedUsersQuery);
+
+    const getInitials = (firstName?: string, lastName?: string) => {
+        if (firstName && lastName) {
+            return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
+        }
+        return 'U';
+    }
+
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center p-8">
+                <Loader className="h-6 w-6 animate-spin text-primary" />
+                <p className="ml-3 text-muted-foreground">Loading unverified experts...</p>
+            </div>
+        );
+    }
+    
+    if (!users || users.length === 0) {
+        return (
+             <div className="text-center p-8 border-2 border-dashed rounded-lg">
+                <p className="text-muted-foreground">No unverified experts found at this time.</p>
+            </div>
+        )
+    }
+
+    return (
+        <Table>
+            <TableHeader>
+                <TableRow>
+                    <TableHead className="w-[80px]">Avatar</TableHead>
+                    <TableHead>Full Name</TableHead>
+                    <TableHead>Role</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+            </TableHeader>
+            <TableBody>
+                {users.map((expert) => (
+                    <TableRow key={expert.id}>
+                        <TableCell>
+                            <Avatar>
+                                <AvatarImage src={expert.photoUrl} alt={`${expert.firstName} ${expert.lastName}`} />
+                                <AvatarFallback>{getInitials(expert.firstName, expert.lastName)}</AvatarFallback>
+                            </Avatar>
+                        </TableCell>
+                        <TableCell>
+                            <div className="font-medium">{expert.firstName} {expert.lastName}</div>
+                            <div className="text-xs text-muted-foreground">{expert.email}</div>
+                        </TableCell>
+                         <TableCell>
+                            <Badge variant="secondary">{expert.role}</Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                           <Button asChild variant="outline" size="sm">
+                                <Link href={`/expert/${expert.id}`} target="_blank">
+                                    <Eye className="mr-2 h-4 w-4" />
+                                    View Profile
+                                </Link>
+                           </Button>
+                        </TableCell>
+                    </TableRow>
+                ))}
+            </TableBody>
+        </Table>
+    )
+}
 
 export default function ManagerDashboardPage() {
     const { user, isUserLoading } = useUser();
@@ -54,13 +143,18 @@ export default function ManagerDashboardPage() {
                 <main>
                     <Card>
                         <CardHeader>
-                            <CardTitle>Overview</CardTitle>
-                            <CardDescription>
-                                This is your dedicated dashboard. More manager-specific features will be added here.
-                            </CardDescription>
+                            <div className="flex items-center gap-3">
+                                <UserX className="h-6 w-6"/>
+                                <div>
+                                    <CardTitle>Unverified Experts</CardTitle>
+                                    <CardDescription>
+                                        Review the profiles of experts who are pending verification.
+                                    </CardDescription>
+                                </div>
+                            </div>
                         </CardHeader>
                         <CardContent>
-                            <p>You can manage your team and vacancies from this dashboard.</p>
+                           <UnverifiedExpertsList />
                         </CardContent>
                     </Card>
                 </main>
