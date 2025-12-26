@@ -62,20 +62,23 @@ export function addDocumentNonBlocking(colRef: CollectionReference, data: any) {
 
 /**
  * Initiates an updateDoc operation for a document reference.
- * Does NOT await the write operation internally.
+ * It can be awaited by the caller, or used in a fire-and-forget manner.
  */
-export function updateDocumentNonBlocking(docRef: DocumentReference, data: any) {
-  updateDoc(docRef, data)
-    .catch(error => {
-      errorEmitter.emit(
-        'permission-error',
-        new FirestorePermissionError({
-          path: docRef.path,
-          operation: 'update',
-          requestResourceData: data,
-        })
-      )
-    });
+export function updateDocumentNonBlocking(docRef: DocumentReference, data: any): Promise<void> {
+  // Return the promise from updateDoc.
+  return updateDoc(docRef, data).catch(error => {
+    // On failure, emit a structured permission error.
+    errorEmitter.emit(
+      'permission-error',
+      new FirestorePermissionError({
+        path: docRef.path,
+        operation: 'update',
+        requestResourceData: data,
+      })
+    );
+    // Re-throw the original error so that if the caller is awaiting, their catch block will trigger.
+    throw error;
+  });
 }
 
 
