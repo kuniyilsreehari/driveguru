@@ -177,7 +177,6 @@ function PeopleToFollow({ currentUserProfile }: { currentUserProfile: ExpertUser
                 <Carousel
                     opts={{
                         align: "start",
-                        loop: true,
                     }}
                     className="w-full"
                 >
@@ -214,8 +213,8 @@ function PeopleToFollow({ currentUserProfile }: { currentUserProfile: ExpertUser
                             )
                         })}
                     </CarouselContent>
-                    <CarouselPrevious className="absolute left-[-1rem] top-1/2 -translate-y-1/2" />
-                    <CarouselNext className="absolute right-[-1rem] top-1/2 -translate-y-1/2" />
+                    <CarouselPrevious />
+                    <CarouselNext />
                 </Carousel>
             </CardContent>
         </Card>
