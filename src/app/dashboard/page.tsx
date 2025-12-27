@@ -135,6 +135,7 @@ function CreatePostForm({ userProfile }: { userProfile: ExpertUserProfile }) {
             authorId: userProfile.id,
             authorName: userProfile.companyName || `${userProfile.firstName} ${userProfile.lastName}`,
             authorPhotoUrl: userProfile.photoUrl || '',
+            authorRole: userProfile.role,
             content: content,
             createdAt: serverTimestamp(),
         };
@@ -1283,5 +1284,7 @@ export default function DashboardPageWrapper() {
     </Suspense>
   )
 }
+
+    
 
     

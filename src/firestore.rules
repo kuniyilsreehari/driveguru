@@ -81,8 +81,7 @@ service cloud.firestore {
     }
     
     function isCompanyUser() {
-        let userDoc = get(/databases/$(database)/documents/users/$(request.auth.uid));
-        return isSignedIn() && (userDoc.data.role == 'Company' || userDoc.data.role == 'Authorized Pro' || userDoc.data.role == 'Freelancer');
+      return isSignedIn() && requestData().authorRole in ['Company', 'Authorized Pro', 'Freelancer'];
     }
 
     function isPremiumCompanyUser() {
@@ -225,11 +224,8 @@ service cloud.firestore {
      * Posts
      * ===================================================== */
     match /posts/{postId} {
-        // Anyone can read and list posts for the public feed.
-        allow get, list: if true;
-        // Only a signed-in company/expert user can create a post, and they must be the author.
+        allow read, list: if true;
         allow create: if isCompanyUser() && requestData().authorId == request.auth.uid;
-        // Only the author of the post or a super admin can update or delete it.
         allow update, delete: if (isSignedIn() && resource.data.authorId == request.auth.uid) || isSuperAdmin();
     }
 
@@ -239,3 +235,5 @@ service cloud.firestore {
      * ===================================================== */
   }
 }
+
+    
