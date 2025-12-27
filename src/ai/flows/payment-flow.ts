@@ -13,6 +13,7 @@ import { z } from 'genkit';
 import { v4 as uuidv4 } from 'uuid';
 import { getFirestore } from 'firebase-admin/firestore';
 import { getAdminApp } from './get-admin-app';
+import { Cashfree } from 'cashfree-pg';
 
 
 const CreatePaymentOrderInputSchema = z.object({
@@ -32,32 +33,24 @@ export type CreatePaymentOrderOutput = z.infer<typeof CreatePaymentOrderOutputSc
 
 
 async function createCashfreeOrder(input: CreatePaymentOrderInput & { amount: number, orderId: string }): Promise<{ payment_link: string }> {
-    const baseUrl = process.env.CASHFREE_API_URL;
-    if (!baseUrl) {
-        throw new Error('CASHFREE_API_URL environment variable is not set. Use https://sandbox.cashfree.com/pg for testing or https://api.cashfree.com/pg for production.');
-    }
-    const url = `${baseUrl}/orders`;
     
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9004';
-    const returnUrl = `${appUrl}/payment-status`; // Cashfree appends order_id automatically
-
     const cashfreeAppId = process.env.CASHFREE_APP_ID;
     const cashfreeSecret = process.env.CASHFREE_SECRET;
 
     if (!cashfreeAppId || !cashfreeSecret) {
         throw new Error('Cashfree credentials (CASHFREE_APP_ID or CASHFREE_SECRET) are not set in the environment variables.');
     }
+    
+    Cashfree.XClientId = cashfreeAppId;
+    Cashfree.XClientSecret = cashfreeSecret;
+    Cashfree.XEnvironment = Cashfree.Environment.SANDBOX;
 
-    const headers = {
-        'Content-Type': 'application/json',
-        'x-api-version': '2023-08-01',
-        'x-client-id': cashfreeAppId,
-        'x-client-secret': cashfreeSecret,
-    };
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9004';
+    const returnUrl = `${appUrl}/payment-status`;
     
     const sanitizedPhone = input.userPhone.replace(/[^0-9]/g, '');
 
-    const body = {
+    const request = {
         order_id: input.orderId,
         order_amount: input.amount,
         order_currency: 'INR',
@@ -70,36 +63,21 @@ async function createCashfreeOrder(input: CreatePaymentOrderInput & { amount: nu
         order_meta: {
             return_url: returnUrl,
         },
-        order_tags: {
-            whatsapp: sanitizedPhone, // Instruct Cashfree to send WhatsApp notification
-        },
         order_note: `Payment for DriveGuru: ${input.plan} (${input.billingCycle})`,
     };
 
     try {
-        const response = await fetch(url, {
-            method: 'POST',
-            headers,
-            body: JSON.stringify(body),
-        });
+        const response = await Cashfree.PGCreateOrder("2023-08-01", request);
+        const orderData = response.data;
 
-        if (!response.ok) {
-            const errorBody = await response.json();
-            console.error('Cashfree API Error:', errorBody);
-            throw new Error(`Cashfree API responded with status ${response.status}: ${errorBody.message}`);
-        }
-
-        const data: any = await response.json();
-
-        if (data && data.payment_link) {
-            return { payment_link: data.payment_link };
+        if (orderData && orderData.payment_link) {
+            return { payment_link: orderData.payment_link };
         } else {
             throw new Error('Payment link not found in Cashfree response.');
         }
-
-    } catch (error) {
-        console.error('Failed to create Cashfree order:', error);
-        throw error;
+    } catch (error: any) {
+        console.error('Failed to create Cashfree order:', error.response?.data || error.message);
+        throw new Error(error.response?.data?.message || 'Failed to create Cashfree order via API.');
     }
 }
 
@@ -152,6 +130,15 @@ const createPaymentOrderFlow = ai.defineFlow(
     }
 
     // 3. Fallback to dynamic API generation (Cashfree) if method is 'API'
+
+    // This is the most likely cause of an Internal Server Error if not configured.
+    const isCashfreeConfigured = process.env.CASHFREE_APP_ID && process.env.CASHFREE_SECRET;
+
+    if (!isCashfreeConfigured) {
+        throw new Error("The Cashfree API payment method is not configured. Please add your API keys to the .env file or select the 'Payment Link' method in the admin dashboard.");
+    }
+
+
     let amount = 0;
     if (input.plan === 'Verification') {
         amount = appConfig.verificationFee || 0;
