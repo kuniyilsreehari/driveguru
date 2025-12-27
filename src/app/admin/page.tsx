@@ -1139,8 +1139,13 @@ export default function AdminDashboardPage() {
                             # For Gemini AI Features{'\n'}
                             GEMINI_API_KEY="your_gemini_api_key_here"{'\n\n'}
                             # For Cashfree Payment Gateway{'\n'}
+                            CASHFREE_API_URL="https://sandbox.cashfree.com/pg"{'\n'}
                             CASHFREE_APP_ID="your_cashfree_client_id"{'\n'}
-                            CASHFREE_SECRET="your_cashfree_secret_key"
+                            CASHFREE_SECRET="your_cashfree_secret_key"{'\n\n'}
+                            # For Cashfree Verification Features (Optional){'\n'}
+                            CASHFREE_VERIFICATION_ENVIRONMENT="sandbox" # or "production"{'\n'}
+                            CASHFREE_VERIFICATION_CLIENT_ID="your_verification_client_id"{'\n'}
+                            CASHFREE_VERIFICATION_CLIENT_SECRET="your_verification_secret_key"
                         </code>
                     </pre>
                     <p className="mt-2">After adding keys to the `.env` file, you must restart your development server for the changes to take effect.</p>
