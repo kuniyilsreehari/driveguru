@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useEffect, useState, useMemo, Suspense } from 'react';
@@ -430,12 +431,27 @@ function PlanManagement({ userProfile, appConfig }: { userProfile: ExpertUserPro
                 <CardDescription>Upgrade your plan to unlock powerful new features and increase your visibility.</CardDescription>
             </CardHeader>
             <CardContent>
-                 <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
+                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                     <PlanCard
+                        title="Standard"
+                        icon={<UserIcon className="h-6 w-6" />}
+                        description="Your current free plan."
+                        features={["Public profile listing", "Appear in search results", "Earn referral points"]}
+                        current={userProfile.tier === 'Standard' || !userProfile.tier}
+                     />
+                     <PlanCard
+                        title="Premier"
+                        icon={<Crown className="h-6 w-6" />}
+                        description="Enhanced visibility and features."
+                        features={["Higher search ranking", "Post job vacancies", "AI-powered bio & skill suggestions"]}
+                        current={userProfile.tier === 'Premier'}
+                        link={appConfig?.premierPaymentLink || '/payment/premier'}
+                     />
                      <PlanCard
                         title="Super Premier"
                         icon={<Sparkles className="h-6 w-6" />}
                         description="Maximum visibility and tools."
-                        features={["All Premier features", "Top placement in search results", "Featured expert listing"]}
+                        features={["All Premier features", "Top placement in search results", "AI-powered search access"]}
                         current={userProfile.tier === 'Super Premier'}
                         link={appConfig?.superPremierPaymentLink || '/payment/super-premier'}
                      >
