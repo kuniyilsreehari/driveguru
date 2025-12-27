@@ -8,7 +8,7 @@ import { signOut } from 'firebase/auth';
 import { doc, collection, query, where, getDoc, runTransaction, increment, getDocs, orderBy, Timestamp, limit, arrayUnion, arrayRemove } from 'firebase/firestore';
 import { useUser, useAuth, useFirestore, useDoc, useCollection, useMemoFirebase, updateDocumentNonBlocking } from '@/firebase';
 import { Button } from '@/components/ui/button';
-import { LogOut, Briefcase, Loader, Edit, UserCheck, XCircle, MapPin, IndianRupee, Calendar, Book, GraduationCap, School, Info, User as UserIcon, Check, Power, Building, PlusCircle, Crown, Sparkles, Lock, Home, ArrowUpCircle, ShieldCheck, ExternalLink, Gift, Copy, Shield, AlertTriangle, ChevronDown, Link as LinkIcon, MessageCircle, BookOpen, CheckCircle, PenSquare, Factory, Users, Type, UserPlus, UserMinus, Terminal } from 'lucide-react';
+import { LogOut, Briefcase, Loader, Edit, UserCheck, XCircle, MapPin, IndianRupee, Calendar, Book, GraduationCap, School, Info, User as UserIcon, Check, Power, Building, PlusCircle, Crown, Sparkles, Lock, Home, ArrowUpCircle, ShieldCheck, ExternalLink, Gift, Copy, Shield, AlertTriangle, ChevronDown, Link as LinkIcon, MessageCircle, BookOpen, CheckCircle, PenSquare, Factory, Users, Type, UserPlus, UserMinus, Terminal, ArrowLeft, ArrowRight } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import {
   Dialog,
@@ -506,41 +506,26 @@ type ProfilePrompt = {
     subFields?: { name: keyof ExpertUserProfile; label: string }[];
 }
 
-const ProfilePromptDialog = ({ prompt, isOpen, onOpenChange, userProfile, appConfig }: { prompt: ProfilePrompt | null, isOpen: boolean, onOpenChange: (open: boolean) => void, userProfile: ExpertUserProfile, appConfig: AppConfig | null }) => {
-    const [value, setValue] = useState('');
-    const [subValue, setSubValue] = useState<number | undefined>(undefined);
-    const firestore = useFirestore();
+const ProfilePromptDialog = ({ prompt, isOpen, onOpenChange, userProfile, appConfig, onNext, onPrevious, hasNext, hasPrevious }: { prompt: ProfilePrompt | null, isOpen: boolean, onOpenChange: (open: boolean) => void, userProfile: ExpertUserProfile, appConfig: AppConfig | null, onNext: (currentField: keyof ExpertUserProfile, value: any, subValue?: any) => void, onPrevious: () => void, hasNext: boolean, hasPrevious: boolean }) => {
+    const [value, setValue] = useState<any>('');
+    const [subValue, setSubValue] = useState<any>(undefined);
     const { toast } = useToast();
 
     useEffect(() => {
-      // Reset state when a new prompt is set
-      setValue('');
-      setSubValue(undefined);
-    }, [prompt]);
-
-    const handleSave = async () => {
-      if (!prompt || !userProfile) return;
-      
-      const userDocRef = doc(firestore, 'users', userProfile.id);
-      
-      let dataToUpdate: Partial<ExpertUserProfile> = {};
-
-      if (prompt.type === 'number-group' && prompt.subFields) {
-          dataToUpdate[prompt.field] = Number(value) || 0;
-          dataToUpdate[prompt.subFields[0].name] = Number(subValue) || 0;
-      } else {
-          dataToUpdate[prompt.field] = value;
-      }
-      
-      try {
-        await updateDocumentNonBlocking(userDocRef, dataToUpdate);
-        toast({ title: "Profile Updated!", description: "Your information has been saved." });
-        onOpenChange(false);
-      } catch (error) {
-        if ((error as any).name !== 'FirebaseError') {
-          toast({ variant: 'destructive', title: 'Save Failed', description: 'Could not update your profile.' });
+        if (prompt) {
+            setValue(userProfile[prompt.field] || '');
+            if (prompt.type === 'number-group' && prompt.subFields) {
+                setSubValue(userProfile[prompt.subFields[0].name] || undefined);
+            }
+        } else {
+            setValue('');
+            setSubValue(undefined);
         }
-      }
+    }, [prompt, userProfile]);
+
+    const handleSaveAndNext = async () => {
+        if (!prompt) return;
+        onNext(prompt.field, value, subValue);
     };
 
     if (!prompt) return null;
@@ -559,14 +544,14 @@ const ProfilePromptDialog = ({ prompt, isOpen, onOpenChange, userProfile, appCon
             case 'number-group':
                 return (
                     <div className="flex items-center gap-2">
-                         <Select onValueChange={setValue} value={value}>
+                         <Select onValueChange={setValue} value={String(value || '')}>
                             <SelectTrigger><SelectValue placeholder={prompt.label} /></SelectTrigger>
                             <SelectContent>
                                 {[...Array(51).keys()].map(i => <SelectItem key={i} value={String(i)}>{i} {prompt.label}</SelectItem>)}
                             </SelectContent>
                         </Select>
                         {prompt.subFields && (
-                            <Select onValueChange={(val) => setSubValue(Number(val))} value={String(subValue || '')}>
+                            <Select onValueChange={(val) => setSubValue(val)} value={String(subValue || '')}>
                                 <SelectTrigger><SelectValue placeholder={prompt.subFields[0].label} /></SelectTrigger>
                                 <SelectContent>
                                     {[...Array(12).keys()].map(i => <SelectItem key={i} value={String(i)}>{i} {prompt.subFields![0].label}</SelectItem>)}
@@ -593,9 +578,16 @@ const ProfilePromptDialog = ({ prompt, isOpen, onOpenChange, userProfile, appCon
                     <Label htmlFor={prompt.field}>{prompt.label}</Label>
                     {renderInput()}
                 </div>
-                <DialogFooter>
-                    <Button variant="outline" onClick={() => onOpenChange(false)}>Skip for now</Button>
-                    <Button onClick={handleSave}>Save</Button>
+                <DialogFooter className="justify-between">
+                    <Button variant="outline" onClick={() => onOpenChange(false)}>Close</Button>
+                    <div className="flex gap-2">
+                        <Button variant="ghost" onClick={onPrevious} disabled={!hasPrevious}>
+                            <ArrowLeft className="mr-2 h-4 w-4" /> Previous
+                        </Button>
+                        <Button onClick={handleSaveAndNext}>
+                             {hasNext ? 'Save & Next' : 'Save & Finish'} <ArrowRight className="ml-2 h-4 w-4" />
+                        </Button>
+                    </div>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
@@ -611,7 +603,9 @@ function ExpertDashboardPage() {
   const searchParams = useSearchParams();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const { toast } = useToast();
-  const [profilePrompt, setProfilePrompt] = useState<ProfilePrompt | null>(null);
+  
+  const [incompletePrompts, setIncompletePrompts] = useState<ProfilePrompt[]>([]);
+  const [promptIndex, setPromptIndex] = useState(0);
   const [isPromptDialogOpen, setIsPromptDialogOpen] = useState(false);
 
   const userDocRef = useMemoFirebase(() => {
@@ -652,35 +646,68 @@ function ExpertDashboardPage() {
 
   // Logic for the profile completion prompt
   useEffect(() => {
-    if (typeof window !== 'undefined' && userProfile && !isProfileLoading) {
-      if (sessionStorage.getItem('profilePromptShown')) {
-        return;
+    if (typeof window !== 'undefined' && userProfile && !isProfileLoading && !isAppConfigLoading) {
+        if (sessionStorage.getItem('profilePromptShown')) {
+            return;
+        }
+  
+        const allPrompts: ProfilePrompt[] = [
+            { field: 'gender', label: 'Gender', question: 'What is your gender?', type: 'select', options: [{value: 'Male', label: 'Male'}, {value: 'Female', label: 'Female'}, {value: 'Other', label: 'Other'}] },
+            { field: 'pricingModel', label: 'Pricing Model', question: 'How do you typically charge for your services?', type: 'select', options: (appConfig?.pricingModels || []).map(m => ({value: m, label: m})) },
+            { field: 'experienceYears', label: 'Years', question: 'How many years of experience do you have?', type: 'number-group', subFields: [{name: 'experienceMonths', label: 'Months'}] },
+            { field: 'qualification', label: 'Qualification', question: 'What is your highest qualification?', type: 'text' },
+            { field: 'skills', label: 'Skills', question: 'What are some of your key skills? (comma-separated)', type: 'text' },
+        ];
+  
+        const filteredPrompts = allPrompts.filter(p => {
+            const value = userProfile[p.field];
+            return value === null || value === undefined || value === '' || value === 0;
+        });
+
+        if (filteredPrompts.length > 0) {
+            setIncompletePrompts(filteredPrompts);
+            const timer = setTimeout(() => {
+                setPromptIndex(0);
+                setIsPromptDialogOpen(true);
+                sessionStorage.setItem('profilePromptShown', 'true');
+            }, 2000); // 2-second delay
+            
+            return () => clearTimeout(timer);
+        }
+    }
+  }, [userProfile, isProfileLoading, appConfig, isAppConfigLoading]);
+
+  const handleNextPrompt = async (field: keyof ExpertUserProfile, value: any, subValue?: any) => {
+    if (!userDocRef) return;
+    
+    let dataToUpdate: Partial<ExpertUserProfile> = { [field]: value };
+    const currentPrompt = incompletePrompts[promptIndex];
+    
+    if (currentPrompt.type === 'number-group' && currentPrompt.subFields) {
+        dataToUpdate[field] = Number(value) || 0;
+        dataToUpdate[currentPrompt.subFields[0].name] = Number(subValue) || 0;
+    }
+    
+    try {
+      await updateDocumentNonBlocking(userDocRef, dataToUpdate);
+      if (promptIndex < incompletePrompts.length - 1) {
+          setPromptIndex(prev => prev + 1);
+      } else {
+          setIsPromptDialogOpen(false);
+          toast({ title: "Profile Complete!", description: "All missing information has been added." });
       }
-
-      const prompts: ProfilePrompt[] = [
-        { field: 'gender', label: 'Gender', question: 'What is your gender?', type: 'select', options: [{value: 'Male', label: 'Male'}, {value: 'Female', label: 'Female'}, {value: 'Other', label: 'Other'}] },
-        { field: 'pricingModel', label: 'Pricing Model', question: 'How do you typically charge for your services?', type: 'select', options: (appConfig?.pricingModels || []).map(m => ({value: m, label: m})) },
-        { field: 'experienceYears', label: 'Years', question: 'How many years of experience do you have?', type: 'number-group', subFields: [{name: 'experienceMonths', label: 'Months'}] },
-        { field: 'qualification', label: 'Qualification', question: 'What is your highest qualification?', type: 'text' },
-        { field: 'skills', label: 'Skills', question: 'What are some of your key skills? (comma-separated)', type: 'text' },
-      ];
-
-      const incompletePrompt = prompts.find(p => {
-        const value = userProfile[p.field];
-        return value === null || value === undefined || value === '' || value === 0;
-      });
-
-      if (incompletePrompt) {
-        const timer = setTimeout(() => {
-          setProfilePrompt(incompletePrompt);
-          setIsPromptDialogOpen(true);
-          sessionStorage.setItem('profilePromptShown', 'true');
-        }, 2000); // 2-second delay
-        
-        return () => clearTimeout(timer);
+    } catch(e) {
+      if ((e as any).name !== 'FirebaseError') {
+        toast({ variant: 'destructive', title: 'Save Failed', description: 'Could not update your profile.' });
       }
     }
-  }, [userProfile, isProfileLoading, appConfig]);
+  };
+
+  const handlePreviousPrompt = () => {
+    if (promptIndex > 0) {
+        setPromptIndex(prev => prev - 1);
+    }
+  };
 
 
   useEffect(() => {
@@ -1152,11 +1179,15 @@ function ExpertDashboardPage() {
         {userProfile.role === 'Company' && <CompanyVacancies userProfile={userProfile} />}
 
         <ProfilePromptDialog 
-            prompt={profilePrompt}
+            prompt={incompletePrompts[promptIndex]}
             isOpen={isPromptDialogOpen}
             onOpenChange={setIsPromptDialogOpen}
             userProfile={userProfile}
             appConfig={appConfig}
+            onNext={handleNextPrompt}
+            onPrevious={handlePreviousPrompt}
+            hasNext={promptIndex < incompletePrompts.length - 1}
+            hasPrevious={promptIndex > 0}
         />
       </div>
     </div>
