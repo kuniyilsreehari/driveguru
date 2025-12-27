@@ -43,9 +43,15 @@ function PaymentStatusContent() {
                     const successQuery = query(paymentsCol, where('orderId', '==', orderId), where('status', '==', 'successful'));
                     const successSnapshot = await getDocs(successQuery);
                     if (!successSnapshot.empty) {
+                        const paymentData = successSnapshot.docs[0].data();
                         setStatus('success');
                         setMessage('Your payment was already confirmed and your account has been updated.');
-                        router.push('/success'); // Already processed, go to success page
+                         // Redirect to the correct page based on the already-processed plan
+                        if (paymentData.plan === 'Verification') {
+                            router.push('/verified');
+                        } else {
+                            router.push('/success');
+                        }
                     } else {
                         setStatus('error');
                         setMessage('Payment record not found or already processed. If you have been charged, please contact support.');
@@ -78,7 +84,14 @@ function PaymentStatusContent() {
                     await batch.commit();
                     setStatus('success');
                     setMessage('Your payment was successful and your account has been updated.');
-                    router.push('/success'); // Redirect to new success page
+                    
+                    // Redirect to a specific page based on the plan
+                    if (plan === 'Verification') {
+                        router.push('/verified');
+                    } else {
+                        router.push('/success');
+                    }
+
                 } else if (orderStatus === 'CANCELLED') {
                     batch.update(paymentDoc.ref, { status: 'failed', updatedAt: new Date() });
                     await batch.commit();
