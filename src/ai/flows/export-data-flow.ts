@@ -14,7 +14,6 @@ import { getAdminApp } from './get-admin-app';
 
 const UserSchema = z.any();
 const CompanySchema = z.any();
-const ReviewSchema = z.any();
 const VacancySchema = z.any();
 const AppConfigSchema = z.any();
 const PaymentSchema = z.any();
@@ -22,7 +21,6 @@ const PaymentSchema = z.any();
 const ExportDataOutputSchema = z.object({
   users: z.array(UserSchema),
   companies: z.array(CompanySchema),
-  reviews: z.array(ReviewSchema),
   vacancies: z.array(VacancySchema),
   app_config: z.array(AppConfigSchema),
   payments: z.array(PaymentSchema),
@@ -49,10 +47,9 @@ const exportDataFlow = ai.defineFlow(
   },
   async () => {
     
-    const [users, companies, reviews, vacancies, app_config, payments] = await Promise.all([
+    const [users, companies, vacancies, app_config, payments] = await Promise.all([
         getAllFromCollection('users'),
         getAllFromCollection('companies'),
-        getAllFromCollection('reviews'),
         getAllFromCollection('vacancies'),
         getAllFromCollection('app_config'),
         getAllFromCollection('payments'),
@@ -61,7 +58,6 @@ const exportDataFlow = ai.defineFlow(
     return {
       users,
       companies,
-      reviews,
       vacancies,
       app_config,
       payments,

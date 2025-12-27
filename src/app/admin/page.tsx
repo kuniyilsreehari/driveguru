@@ -44,7 +44,6 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { PostVacancyForm } from '@/components/auth/post-vacancy-form';
-import { AddReviewForm } from '@/components/auth/add-review-form';
 import { useToast } from '@/hooks/use-toast';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
@@ -97,17 +96,6 @@ type ExpertUser = {
     referralPoints?: number;
     referredByCode?: string | null;
     createdAt?: Timestamp;
-};
-
-type Review = {
-    id: string;
-    expertId: string;
-    expertName: string;
-    reviewerName: string;
-    rating: number;
-    comment: string;
-    createdAt: Timestamp;
-    status: 'pending' | 'approved' | 'rejected';
 };
 
 type Payment = {
@@ -269,65 +257,6 @@ const UserTable = ({ users, allUsers, onTierChange, onVerificationToggle, onDele
                     )
                 })
                 ) : ( <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground h-24">No users found for this role.</TableCell></TableRow> )}
-            </TableBody>
-        </Table>
-    )
-}
-
-const ReviewTable = ({ reviews, onApprove, onReject, onDelete }: { reviews: Review[], onApprove: (review: Review) => void, onReject: (review: Review) => void, onDelete: (review: Review) => void }) => {
-    return (
-        <Table>
-            <TableHeader>
-                <TableRow>
-                    <TableHead>Expert</TableHead>
-                    <TableHead>Reviewer</TableHead>
-                    <TableHead className="text-center">Rating</TableHead>
-                    <TableHead>Comment</TableHead>
-                    <TableHead>Submitted</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-            </TableHeader>
-            <TableBody>
-                {reviews && reviews.length > 0 ? (
-                    reviews.map((review) => (
-                        <TableRow key={review.id}>
-                            <TableCell className="font-medium">
-                                <Link href={`/expert/${review.expertId}`} className="hover:underline">{review.expertName}</Link>
-                            </TableCell>
-                            <TableCell>{review.reviewerName}</TableCell>
-                            <TableCell className="text-center">
-                                <div className="flex items-center justify-center gap-1">
-                                    {review.rating} <Star className="h-4 w-4 text-yellow-400 fill-yellow-400" />
-                                </div>
-                            </TableCell>
-                            <TableCell className="max-w-xs truncate">{review.comment}</TableCell>
-                            <TableCell>{review.createdAt ? formatDistanceToNow(review.createdAt.toDate(), { addSuffix: true }) : 'pending...'}</TableCell>
-                            <TableCell className="text-right">
-                                <div className="flex gap-2 justify-end">
-                                    {review.status === 'pending' && (
-                                        <>
-                                            <Button variant="outline" size="sm" onClick={() => onApprove(review)}><ThumbsUp className="mr-2 h-4 w-4" />Approve</Button>
-                                            <Button variant="destructive" size="sm" onClick={() => onReject(review)}><ThumbsDown className="mr-2 h-4 w-4" />Reject</Button>
-                                        </>
-                                    )}
-                                    <DropdownMenu>
-                                        <DropdownMenuTrigger asChild><Button variant="ghost" className="h-8 w-8 p-0"><span className="sr-only">Open menu</span><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
-                                        <DropdownMenuContent align="end">
-                                            <DropdownMenuItem onClick={() => onDelete(review)} className="text-destructive focus:text-destructive"><Trash2 className="mr-2 h-4 w-4" />Delete Review</DropdownMenuItem>
-                                        </DropdownMenuContent>
-                                    </DropdownMenu>
-                                </div>
-                                {review.status !== 'pending' && (
-                                    <Badge variant={review.status === 'approved' ? 'outline' : 'destructive'} className={review.status === 'approved' ? 'border-green-500 text-green-500' : ''}>
-                                        {review.status.charAt(0).toUpperCase() + review.status.slice(1)}
-                                    </Badge>
-                                )}
-                            </TableCell>
-                        </TableRow>
-                    ))
-                ) : (
-                    <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground h-24">No reviews found.</TableCell></TableRow>
-                )}
             </TableBody>
         </Table>
     )
@@ -505,16 +434,12 @@ export default function AdminDashboardPage() {
   };
 
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [isReviewRejectDialogOpen, setIsReviewRejectDialogOpen] = useState(false);
-  const [isReviewDeleteDialogOpen, setIsReviewDeleteDialogOpen] = useState(false);
   const [isVacancyDeleteDialogOpen, setIsVacancyDeleteDialogOpen] = useState(false);
   const [isVacancyPostDialogOpen, setIsVacancyPostDialogOpen] = useState(false);
   const [isVacancyEditDialogOpen, setIsVacancyEditDialogOpen] = useState(false);
-  const [isAddReviewDialogOpen, setIsAddReviewDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   const [selectedUser, setSelectedUser] = useState<ExpertUser | null>(null);
-  const [selectedReview, setSelectedReview] = useState<Review | null>(null);
   const [selectedVacancy, setSelectedVacancy] = useState<Vacancy | null>(null);
 
   const [featuredExpertsLimit, setFeaturedExpertsLimit] = useState(3);
@@ -568,11 +493,6 @@ export default function AdminDashboardPage() {
     return collection(firestore, 'users');
   }, [firestore, isSuperAdmin]);
 
-  const reviewsCollectionQuery = useMemoFirebase(() => {
-      if (!firestore || !isSuperAdmin) return null;
-      return query(collection(firestore, 'reviews'), orderBy('createdAt', 'desc'));
-  }, [firestore, isSuperAdmin]);
-
   const vacanciesCollectionQuery = useMemoFirebase(() => {
     if (!firestore || !isSuperAdmin) return null;
     return query(collection(firestore, 'vacancies'), orderBy('postedAt', 'desc'));
@@ -585,7 +505,6 @@ export default function AdminDashboardPage() {
 
 
   const { data: usersData, isLoading: isUsersLoading } = useCollection<ExpertUser>(usersCollectionRef);
-  const { data: reviews, isLoading: isReviewsLoading } = useCollection<Review>(reviewsCollectionQuery);
   const { data: vacancies, isLoading: isVacanciesLoading } = useCollection<Vacancy>(vacanciesCollectionQuery);
   const { data: payments, isLoading: isPaymentsLoading } = useCollection<Payment>(paymentsCollectionQuery);
   
@@ -814,51 +733,6 @@ export default function AdminDashboardPage() {
       setPricingModels(prev => prev.filter(model => model !== modelToDelete));
   };
 
-  const handleApproveReview = (review: Review) => {
-    if (!firestore) return;
-    const reviewDocRef = doc(firestore, 'reviews', review.id);
-    updateDocumentNonBlocking(reviewDocRef, { status: 'approved' });
-    toast({
-      title: "Review Approved",
-      description: `The review for ${review.expertName} is now public.`,
-    });
-  };
-
-  const openReviewRejectDialog = (review: Review) => {
-    setSelectedReview(review);
-    setIsReviewRejectDialogOpen(true);
-  };
-
-  const handleRejectReview = () => {
-    if (!selectedReview || !firestore) return;
-    const reviewDocRef = doc(firestore, 'reviews', selectedReview.id);
-    updateDocumentNonBlocking(reviewDocRef, { status: 'rejected' });
-    toast({
-      title: "Review Rejected",
-      description: "The review has been marked as rejected.",
-      variant: 'destructive'
-    });
-    setIsReviewRejectDialogOpen(false);
-    setSelectedReview(null);
-  };
-  
-  const openReviewDeleteDialog = (review: Review) => {
-    setSelectedReview(review);
-    setIsReviewDeleteDialogOpen(true);
-  };
-
-  const handleDeleteReview = () => {
-      if (!selectedReview || !firestore) return;
-      const reviewDocRef = doc(firestore, 'reviews', selectedReview.id);
-      deleteDocumentNonBlocking(reviewDocRef);
-      toast({
-          title: "Review Deleted",
-          description: `The review from ${selectedReview.reviewerName} has been removed.`,
-      });
-      setIsReviewDeleteDialogOpen(false);
-      setSelectedReview(null);
-  };
-
   const openVacancyEditDialog = (vacancy: Vacancy) => {
       setSelectedVacancy(vacancy);
       setIsVacancyEditDialogOpen(true);
@@ -1043,7 +917,7 @@ export default function AdminDashboardPage() {
   };
 
 
-  const areTablesLoading = isSuperAdmin && (isUsersLoading || isReviewsLoading || isVacanciesLoading || isPaymentsLoading);
+  const areTablesLoading = isSuperAdmin && (isUsersLoading || isVacanciesLoading || isPaymentsLoading);
   
   const filteredUsers = useMemo(() => {
     if (!usersData) return [];
@@ -1073,10 +947,6 @@ export default function AdminDashboardPage() {
   const freelancers = filteredUsers?.filter(user => user.role === 'Freelancer');
   const companies = filteredUsers?.filter(user => user.role === 'Company');
   const authorizedPros = filteredUsers?.filter(user => user.role === 'Authorized Pro');
-  
-  const pendingReviews = reviews?.filter(r => r.status === 'pending');
-  const approvedReviews = reviews?.filter(r => r.status === 'approved');
-  const rejectedReviews = reviews?.filter(r => r.status === 'rejected');
   
   const isLoading = isUserLoading || isRoleLoading;
 
@@ -1188,9 +1058,8 @@ export default function AdminDashboardPage() {
                       </Card>
                     </div>
                      <Tabs defaultValue="users">
-                        <TabsList className="grid w-full grid-cols-4">
+                        <TabsList className="grid w-full grid-cols-3">
                             <TabsTrigger value="users">User Management</TabsTrigger>
-                            <TabsTrigger value="reviews">Review Management</TabsTrigger>
                             <TabsTrigger value="vacancies">Vacancy Management</TabsTrigger>
                             <TabsTrigger value="payments">Payment Management</TabsTrigger>
                         </TabsList>
@@ -1250,64 +1119,6 @@ export default function AdminDashboardPage() {
                                         </TabsContent>
                                     </Tabs>
                                 )}
-                                </CardContent>
-                            </Card>
-                        </TabsContent>
-                        <TabsContent value="reviews" className="mt-4">
-                            <Card>
-                                <CardHeader>
-                                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                                    <div className="flex items-center gap-3">
-                                        <MessageSquare className="h-6 w-6" />
-                                        <div>
-                                        <CardTitle>Review Moderation</CardTitle>
-                                        <CardDescription>Approve, reject, delete, or manually add reviews.</CardDescription>
-                                        </div>
-                                    </div>
-                                    <Dialog open={isAddReviewDialogOpen} onOpenChange={setIsAddReviewDialogOpen}>
-                                        <DialogTrigger asChild>
-                                        <Button className="w-full sm:w-auto">
-                                            <Edit3 className="mr-2 h-4 w-4" />
-                                            Write a Review
-                                        </Button>
-                                        </DialogTrigger>
-                                        <DialogContent className="sm:max-w-[600px]">
-                                        <DialogHeader>
-                                            <DialogTitle>Add a New Review</DialogTitle>
-                                            <DialogDescription>Manually add a review for any expert in the system.</DialogDescription>
-                                        </DialogHeader>
-                                        <AddReviewForm
-                                            experts={usersData || []}
-                                            onSuccess={() => setIsAddReviewDialogOpen(false)}
-                                        />
-                                        </DialogContent>
-                                    </Dialog>
-                                    </div>
-                                </CardHeader>
-                                <CardContent>
-                                    {isReviewsLoading ? (
-                                        <div className="flex justify-center items-center p-8">
-                                            <Loader className="h-6 w-6 animate-spin text-primary" />
-                                            <p className="ml-3 text-muted-foreground">Loading reviews...</p>
-                                        </div>
-                                    ) : (
-                                        <Tabs defaultValue="pending">
-                                            <TabsList className="grid w-full grid-cols-3">
-                                                <TabsTrigger value="pending">Pending</TabsTrigger>
-                                                <TabsTrigger value="approved">Approved</TabsTrigger>
-                                                <TabsTrigger value="rejected">Rejected</TabsTrigger>
-                                            </TabsList>
-                                            <TabsContent value="pending" className="mt-4">
-                                                <ReviewTable reviews={pendingReviews || []} onApprove={handleApproveReview} onReject={openReviewRejectDialog} onDelete={openReviewDeleteDialog}/>
-                                            </TabsContent>
-                                            <TabsContent value="approved" className="mt-4">
-                                                <ReviewTable reviews={approvedReviews || []} onApprove={handleApproveReview} onReject={openReviewRejectDialog} onDelete={openReviewDeleteDialog}/>
-                                            </TabsContent>
-                                            <TabsContent value="rejected" className="mt-4">
-                                                <ReviewTable reviews={rejectedReviews || []} onApprove={handleApproveReview} onReject={openReviewRejectDialog} onDelete={openReviewDeleteDialog}/>
-                                            </TabsContent>
-                                        </Tabs>
-                                    )}
                                 </CardContent>
                             </Card>
                         </TabsContent>
@@ -1823,38 +1634,6 @@ export default function AdminDashboardPage() {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={handleDeleteUser} className="bg-destructive hover:bg-destructive/90">
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-      <AlertDialog open={isReviewRejectDialogOpen} onOpenChange={setIsReviewRejectDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Reject Review?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to reject this review? This action can be undone later.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleRejectReview} className="bg-destructive hover:bg-destructive/90">
-              Reject
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-       <AlertDialog open={isReviewDeleteDialogOpen} onOpenChange={setIsReviewDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Review?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to permanently delete the review from <span className="font-bold">{selectedReview?.reviewerName}</span>? This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteReview} className="bg-destructive hover:bg-destructive/90">
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>

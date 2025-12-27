@@ -194,19 +194,6 @@ service cloud.firestore {
     }
     
     /* =====================================================
-     * Reviews
-     * ===================================================== */
-    match /reviews/{reviewId} {
-        // Anyone can read approved reviews. Super admins can read all reviews.
-        allow get, list: if true;
-        // Any signed-in user can create a review, which starts as 'pending'. Admins can bypass this.
-        allow create: if (isSignedIn() && requestData().status == 'pending') || isSuperAdmin();
-        // Only super admins can change the status of a review.
-        allow update: if isSuperAdmin();
-        allow delete: if isSuperAdmin();
-    }
-    
-    /* =====================================================
      * Vacancies
      * ===================================================== */
     match /vacancies/{vacancyId} {
@@ -226,5 +213,4 @@ service cloud.firestore {
      * ===================================================== */
   }
 }
-
     
