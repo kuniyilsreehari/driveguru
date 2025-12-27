@@ -225,9 +225,9 @@ service cloud.firestore {
      * Posts
      * ===================================================== */
     match /posts/{postId} {
-        // Anyone can read posts
-        allow read: if true;
-        // Only a signed-in user can create a post, and they must be the author.
+        // Anyone can read and list posts for the public feed.
+        allow get, list: if true;
+        // Only a signed-in company/expert user can create a post, and they must be the author.
         allow create: if isCompanyUser() && requestData().authorId == request.auth.uid;
         // Only the author of the post or a super admin can update or delete it.
         allow update, delete: if (isSignedIn() && resource.data.authorId == request.auth.uid) || isSuperAdmin();
