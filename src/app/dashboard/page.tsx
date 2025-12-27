@@ -992,21 +992,6 @@ function ExpertDashboardPage() {
                                 {userProfile.tier === 'Premier' && <Badge variant="outline" className="border-purple-500 text-purple-500"><Crown className="mr-1 h-3 w-3" /> Premier</Badge>}
                                 {userProfile.tier === 'Super Premier' && <Badge variant="outline" className="border-blue-500 text-blue-500"><Sparkles className="mr-1 h-3 w-3" /> Super Premier</Badge>}
                             </div>
-                            <div className="flex items-center space-x-2 mt-4">
-                                <Switch 
-                                    id="availability-mode" 
-                                    checked={userProfile.isAvailable} 
-                                    onCheckedChange={handleAvailabilityToggle}
-                                    aria-label="Availability status"
-                                />
-                                <Label htmlFor="availability-mode" className="flex items-center gap-2 text-sm">
-                                    {userProfile.isAvailable ? (
-                                        <><Check className="h-4 w-4 text-green-500"/> I am currently available.</>
-                                    ) : (
-                                        <><Power className="h-4 w-4 text-red-500"/> I am not available.</>
-                                    )}
-                                </Label>
-                            </div>
                         </div>
                     </div>
                     <div className="flex items-center gap-2 self-start sm:self-auto">
@@ -1038,8 +1023,24 @@ function ExpertDashboardPage() {
                 </div>
             </CardHeader>
             <CardContent>
+                 <div className="flex items-center space-x-2">
+                    <Switch 
+                        id="availability-mode" 
+                        checked={userProfile.isAvailable} 
+                        onCheckedChange={handleAvailabilityToggle}
+                        aria-label="Availability status"
+                    />
+                    <Label htmlFor="availability-mode" className="flex items-center gap-2 text-sm">
+                        {userProfile.isAvailable ? (
+                            <><Check className="h-4 w-4 text-green-500"/> I am currently available.</>
+                        ) : (
+                            <><Power className="h-4 w-4 text-red-500"/> I am not available.</>
+                        )}
+                    </Label>
+                </div>
+
                 {!userProfile.verified && (
-                    <div className="bg-blue-900/20 border border-blue-700 text-blue-200 p-4 rounded-lg mb-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div className="bg-blue-900/20 border border-blue-700 text-blue-200 p-4 rounded-lg mt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
                         <div className="flex items-center gap-4">
                             <Shield className="h-8 w-8 text-blue-400 flex-shrink-0" />
                             <div>
@@ -1284,7 +1285,3 @@ export default function DashboardPageWrapper() {
     </Suspense>
   )
 }
-
-    
-
-    
