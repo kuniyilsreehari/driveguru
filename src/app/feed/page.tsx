@@ -3,7 +3,7 @@
 
 import { Suspense } from 'react';
 import Link from 'next/link';
-import { collection, query, orderBy, Timestamp, where } from 'firebase/firestore';
+import { collection, query, orderBy, Timestamp, where, doc } from 'firebase/firestore';
 import { useFirestore, useCollection, useMemoFirebase, useUser, useDoc } from '@/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -118,7 +118,7 @@ function FeedContent() {
                                     <CardTitle className="text-base">{post.authorName}</CardTitle>
                                 </Link>
                                 <CardDescription className="text-xs">
-                                    {post.createdAt ? formatDistanceToNow(post.createdAt.toDate(), { addSuffix: true }) : '...'}
+                                    {post.createdAt ? formatDistanceToNow(new Date(post.createdAt.seconds * 1000), { addSuffix: true }) : '...'}
                                 </CardDescription>
                             </div>
                         </div>
