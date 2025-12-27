@@ -3,14 +3,13 @@
 
 import { Suspense } from 'react';
 import Link from 'next/link';
-import { collection, query, orderBy, Timestamp, where, doc } from 'firebase/firestore';
-import { useFirestore, useCollection, useMemoFirebase, useUser, useDoc } from '@/firebase';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
+import { collection, query, orderBy, Timestamp } from 'firebase/firestore';
+import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Loader2, ChevronLeft, Rss, UserPlus, LogIn } from 'lucide-react';
+import { Loader2, ChevronLeft, Rss } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import type { ExpertUser } from '@/components/expert-card';
 
 type Post = {
     id: string;
@@ -32,53 +31,22 @@ function getInitials(name: string) {
 
 function FeedContent() {
     const firestore = useFirestore();
-    const { user, isUserLoading } = useUser();
-
-    const currentUserDocRef = useMemoFirebase(() => {
-        if (!firestore || !user) return null;
-        return doc(firestore, 'users', user.uid);
-    }, [firestore, user]);
-
-    const { data: currentUserProfile, isLoading: isProfileLoading } = useDoc<ExpertUser>(currentUserDocRef);
-    
-    const followingList = currentUserProfile?.following && currentUserProfile.following.length > 0 ? currentUserProfile.following : [''];
 
     const postsQuery = useMemoFirebase(() => {
-        if (!firestore || !currentUserProfile || followingList.length === 0) return null;
+        if (!firestore) return null;
         return query(
             collection(firestore, 'posts'),
-            where('authorId', 'in', followingList),
             orderBy('createdAt', 'desc')
         );
-    }, [firestore, currentUserProfile, followingList]);
+    }, [firestore]);
 
-    const { data: posts, isLoading: isLoadingPosts } = useCollection<Post>(postsQuery);
+    const { data: posts, isLoading } = useCollection<Post>(postsQuery);
     
-    const isLoading = isUserLoading || isProfileLoading || isLoadingPosts;
-
     if (isLoading) {
         return (
             <div className="flex h-64 w-full items-center justify-center">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                <p className="ml-4 text-muted-foreground">Loading your feed...</p>
-            </div>
-        );
-    }
-    
-    if (!user) {
-         return (
-            <div className="text-center py-16">
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="flex items-center justify-center gap-2"><LogIn className="h-6 w-6" /> Your Feed is Private</CardTitle>
-                        <CardDescription>Please log in to see posts from experts you follow.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <Button asChild>
-                            <Link href="/login">Log In</Link>
-                        </Button>
-                    </CardContent>
-                </Card>
+                <p className="ml-4 text-muted-foreground">Loading public feed...</p>
             </div>
         );
     }
@@ -88,14 +56,9 @@ function FeedContent() {
             <div className="text-center py-16">
                 <Card>
                     <CardHeader>
-                        <CardTitle className="flex items-center justify-center gap-2"><UserPlus className="h-6 w-6" /> Your Feed is Empty</CardTitle>
-                        <CardDescription>You&apos;re not following any experts yet. Find some to see their posts here.</CardDescription>
+                        <CardTitle className="flex items-center justify-center gap-2">The Feed is Empty</CardTitle>
+                        <CardDescription>No posts have been made yet. Check back later!</CardDescription>
                     </CardHeader>
-                     <CardContent>
-                        <Button asChild>
-                            <Link href="/search">Find Experts to Follow</Link>
-                        </Button>
-                    </CardContent>
                 </Card>
             </div>
         );
@@ -140,9 +103,9 @@ export default function FeedPage() {
                 <header className="pb-8 text-center">
                      <div className="flex items-center justify-center gap-3 mb-4">
                         <Rss className="h-10 w-10 text-primary" />
-                        <h1 className="text-4xl sm:text-5xl font-bold">Your Personal Feed</h1>
+                        <h1 className="text-4xl sm:text-5xl font-bold">Public Feed</h1>
                     </div>
-                    <p className="text-muted-foreground">Updates from the experts and companies you follow.</p>
+                    <p className="text-muted-foreground">Updates from all experts and companies on the platform.</p>
                 </header>
                 <main>
                     <div className="mb-6">

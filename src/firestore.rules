@@ -82,7 +82,7 @@ service cloud.firestore {
     
     function isCompanyUser() {
         let userDoc = get(/databases/$(database)/documents/users/$(request.auth.uid));
-        return isSignedIn() && userDoc.data.role == 'Company';
+        return isSignedIn() && (userDoc.data.role == 'Company' || userDoc.data.role == 'Authorized Pro' || userDoc.data.role == 'Freelancer');
     }
 
     function isPremiumCompanyUser() {
@@ -113,11 +113,6 @@ service cloud.firestore {
     function isTargetExpertPremium(expertId) {
       let expertDoc = get(/databases/$(database)/documents/users/$(expertId));
       return expertDoc.data.tier == 'Premier' || expertDoc.data.tier == 'Super Premier';
-    }
-    
-    function isFollowing(authorId) {
-      let userDoc = get(/databases/$(database)/documents/users/$(request.auth.uid));
-      return authorId in userDoc.data.following;
     }
 
 
@@ -230,11 +225,8 @@ service cloud.firestore {
      * Posts
      * ===================================================== */
     match /posts/{postId} {
-        // A query for posts is allowed if the user is signed in. The `get` rule will be
-        // enforced on each document returned by the query.
-        allow list: if isSignedIn();
-        // Logged-in users can read individual posts from people they follow.
-        allow get: if isSignedIn() && isFollowing(resource.data.authorId);
+        // Anyone can read posts
+        allow read: if true;
         // Only a signed-in user can create a post, and they must be the author.
         allow create: if isSignedIn() && requestData().authorId == request.auth.uid;
         // Only the author of the post or a super admin can update or delete it.
