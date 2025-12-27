@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useEffect, useState, useMemo, Suspense } from 'react';
@@ -61,7 +60,7 @@ type ExpertUserProfile = {
     id: string;
     firstName: string;
     lastName: string;
-    email: string;
+    email: string | null;
     role: string;
     photoUrl?: string;
     city?: string;
@@ -259,7 +258,7 @@ function CompanyVacancies({ userProfile }: { userProfile: ExpertUserProfile }) {
                   <PostVacancyForm
                     companyId={userProfile.companyId!}
                     companyName={userProfile.companyName!}
-                    companyEmail={userProfile.email}
+                    companyEmail={userProfile.email!}
                     onSuccess={() => setIsPostDialogOpen(false)}
                   />
                 </DialogContent>
@@ -321,7 +320,7 @@ function UpgradeDialog({ userProfile, tier, billingCycle, price, children }: { u
         try {
             const { payment_link } = await createPaymentOrder({
                 userId: userProfile.id,
-                userEmail: userProfile.email,
+                userEmail: userProfile.email!,
                 userName: `${userProfile.firstName} ${userProfile.lastName}`,
                 userPhone: userProfile.phoneNumber || '',
                 plan: tier,
@@ -633,12 +632,11 @@ function ExpertDashboardPage() {
   const totalPoints = useMemo(() => {
       if (isAppConfigLoading || !appConfig || !appConfig.referralRewardPoints) return userProfile?.referralPoints || 0;
       const pointsPerReferral = appConfig.referralRewardPoints;
-      return referralCount * pointsPerReferral;
+      return (userProfile?.referralPoints || 0);
   }, [referralCount, userProfile?.referralPoints, appConfig, isAppConfigLoading]);
 
   // Logic for the profile completion prompt
   useEffect(() => {
-    // Only run on the client, after profile is loaded, and only once per session
     if (typeof window !== 'undefined' && userProfile && !isProfileLoading) {
       if (sessionStorage.getItem('profilePromptShown')) {
         return;
@@ -654,11 +652,10 @@ function ExpertDashboardPage() {
 
       const incompletePrompt = prompts.find(p => {
         const value = userProfile[p.field];
-        return value === null || value === undefined || value === '';
+        return value === null || value === undefined || value === '' || value === 0;
       });
 
       if (incompletePrompt) {
-        // Use a timeout to delay the modal appearance slightly
         const timer = setTimeout(() => {
           setProfilePrompt(incompletePrompt);
           setIsPromptDialogOpen(true);
@@ -674,12 +671,14 @@ function ExpertDashboardPage() {
   useEffect(() => {
     if (!isUserLoading && !user) {
       router.push('/login');
-    } else if (!isUserLoading && user && !isRoleLoading) {
-      if (isSuperAdmin) {
-        router.push('/admin');
-      }
     }
-  }, [user, isUserLoading, isRoleLoading, isSuperAdmin, router]);
+  }, [user, isUserLoading, router]);
+  
+   useEffect(() => {
+    if (isSuperAdmin) {
+      router.push('/admin');
+    }
+  }, [isSuperAdmin, router]);
   
 
   const handleLogout = () => {
@@ -1162,3 +1161,5 @@ export default function DashboardPageWrapper() {
     </Suspense>
   )
 }
+
+    
