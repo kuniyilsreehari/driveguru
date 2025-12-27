@@ -230,9 +230,11 @@ service cloud.firestore {
      * Posts
      * ===================================================== */
     match /posts/{postId} {
-        // Logged-in users can read posts from people they follow.
-        allow get: if isSignedIn() && isFollowing(resource.data.authorId);
+        // A query for posts is allowed if the user is signed in. The `get` rule will be
+        // enforced on each document returned by the query.
         allow list: if isSignedIn();
+        // Logged-in users can read individual posts from people they follow.
+        allow get: if isSignedIn() && isFollowing(resource.data.authorId);
         // Only a signed-in user can create a post, and they must be the author.
         allow create: if isSignedIn() && requestData().authorId == request.auth.uid;
         // Only the author of the post or a super admin can update or delete it.
