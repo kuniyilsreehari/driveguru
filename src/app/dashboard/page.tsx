@@ -8,7 +8,7 @@ import { signOut } from 'firebase/auth';
 import { doc, collection, query, where, getDoc, runTransaction, increment, getDocs, orderBy, Timestamp, limit, arrayUnion, arrayRemove } from 'firebase/firestore';
 import { useUser, useAuth, useFirestore, useDoc, useCollection, useMemoFirebase, updateDocumentNonBlocking } from '@/firebase';
 import { Button } from '@/components/ui/button';
-import { LogOut, Briefcase, Loader, Edit, UserCheck, XCircle, MapPin, IndianRupee, Calendar, Book, GraduationCap, School, Info, User as UserIcon, Check, Power, Building, PlusCircle, Crown, Sparkles, Lock, Home, ArrowUpCircle, ShieldCheck, ExternalLink, Gift, Copy, Shield, AlertTriangle, ChevronDown, Link as LinkIcon, MessageCircle, BookOpen, CheckCircle, PenSquare, Factory, Users, Type, UserPlus, UserMinus } from 'lucide-react';
+import { LogOut, Briefcase, Loader, Edit, UserCheck, XCircle, MapPin, IndianRupee, Calendar, Book, GraduationCap, School, Info, User as UserIcon, Check, Power, Building, PlusCircle, Crown, Sparkles, Lock, Home, ArrowUpCircle, ShieldCheck, ExternalLink, Gift, Copy, Shield, AlertTriangle, ChevronDown, Link as LinkIcon, MessageCircle, BookOpen, CheckCircle, PenSquare, Factory, Users, Type, UserPlus, UserMinus, Terminal } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import {
   Dialog,
@@ -35,6 +35,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertDialogTrigger } from '@radix-ui/react-alert-dialog';
 import { EditProfileForm } from '@/components/auth/edit-profile-form';
 import { PostVacancyForm } from '@/components/auth/post-vacancy-form';
@@ -804,7 +805,22 @@ function ExpertDashboardPage() {
                     <span className="text-sm font-bold text-primary">{profileCompletion}%</span>
                   </div>
                   <Progress value={profileCompletion} className="h-2" />
-                  {profileCompletion < 100 && <p className="text-xs text-muted-foreground mt-2">Complete your profile to attract more clients. Click &apos;Edit Profile&apos; to get started.</p>}
+                  {profileCompletion < 100 && (
+                    <Alert className="mt-4">
+                        <Terminal className="h-4 w-4" />
+                        <AlertTitle>Complete Your Profile!</AlertTitle>
+                        <AlertDescription>
+                           A complete profile helps you stand out. Click the button below to add your missing details and attract more clients.
+                           <Button 
+                             size="sm" 
+                             className="mt-3 w-full sm:w-auto"
+                             onClick={() => setIsEditDialogOpen(true)}
+                           >
+                              <Edit className="mr-2 h-4 w-4" /> Update Profile
+                           </Button>
+                        </AlertDescription>
+                    </Alert>
+                  )}
                 </div>
 
                 <Separator className="my-6" />
