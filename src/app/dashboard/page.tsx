@@ -112,80 +112,6 @@ type AppConfig = {
     pricingModels?: string[];
 };
 
-function CreatePostForm({ userProfile }: { userProfile: ExpertUserProfile }) {
-    const [content, setContent] = useState('');
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const { toast } = useToast();
-    const firestore = useFirestore();
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!firestore || content.trim().length < 10) {
-            toast({
-                variant: 'destructive',
-                title: 'Content too short',
-                description: 'Your post must be at least 10 characters long.',
-            });
-            return;
-        }
-
-        setIsSubmitting(true);
-        const postsCollectionRef = collection(firestore, 'posts');
-        const newPost = {
-            authorId: userProfile.id,
-            authorName: userProfile.companyName || `${userProfile.firstName} ${userProfile.lastName}`,
-            authorPhotoUrl: userProfile.photoUrl || '',
-            authorRole: userProfile.role,
-            content: content,
-            createdAt: serverTimestamp(),
-        };
-
-        try {
-            await addDocumentNonBlocking(postsCollectionRef, newPost);
-            toast({
-                title: 'Post Published!',
-                description: 'Your post is now live on the public feed.',
-            });
-            setContent('');
-        } catch (error) {
-            if ((error as any).name !== 'FirebaseError') {
-                 toast({
-                    variant: 'destructive',
-                    title: 'Failed to publish post',
-                    description: 'An unexpected error occurred. Please try again.',
-                });
-            }
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
-
-    return (
-        <Card>
-            <CardHeader>
-                <CardTitle>Create a Public Post</CardTitle>
-                <CardDescription>Share an update, advertisement, or thought with the community. Your post will appear on the public feed.</CardDescription>
-            </CardHeader>
-            <CardContent>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                    <Textarea
-                        placeholder={`What's on your mind, ${userProfile.firstName}?`}
-                        value={content}
-                        onChange={(e) => setContent(e.target.value)}
-                        className="min-h-[100px]"
-                        maxLength={280}
-                    />
-                     <p className="text-xs text-muted-foreground text-right">{280 - content.length} characters remaining</p>
-                    <Button type="submit" disabled={isSubmitting || content.trim().length < 10} className="w-full">
-                        {isSubmitting ? <Loader className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
-                        Publish Post
-                    </Button>
-                </form>
-            </CardContent>
-        </Card>
-    );
-}
-
 function PeopleToFollow({ currentUserProfile }: { currentUserProfile: ExpertUserProfile }) {
     const firestore = useFirestore();
     const { toast } = useToast();
@@ -1161,7 +1087,6 @@ function ExpertDashboardPage() {
             </CardFooter>
         </Card>
         
-        <CreatePostForm userProfile={userProfile} />
 
         {userProfile.referralCode && (
             <Card>

@@ -1,15 +1,17 @@
 
 'use client';
 
-import { Suspense } from 'react';
+import { Suspense, useMemo } from 'react';
 import Link from 'next/link';
-import { collection, query, orderBy, Timestamp } from 'firebase/firestore';
-import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { collection, query, orderBy, Timestamp, doc } from 'firebase/firestore';
+import { useFirestore, useCollection, useMemoFirebase, useUser, useDoc } from '@/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Loader2, ChevronLeft, Rss } from 'lucide-react';
+import { Loader2, ChevronLeft, Rss, UserPlus, Search } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import type { ExpertUser } from '@/components/expert-card';
 
 type Post = {
     id: string;
@@ -28,9 +30,9 @@ function getInitials(name: string) {
     return name.substring(0, 2).toUpperCase();
 }
 
-
 function FeedContent() {
     const firestore = useFirestore();
+    const { user, isUserLoading } = useUser();
 
     const postsQuery = useMemoFirebase(() => {
         if (!firestore) return null;
@@ -40,7 +42,9 @@ function FeedContent() {
         );
     }, [firestore]);
 
-    const { data: posts, isLoading } = useCollection<Post>(postsQuery);
+    const { data: posts, isLoading: isLoadingPosts } = useCollection<Post>(postsQuery);
+
+    const isLoading = isUserLoading || isLoadingPosts;
     
     if (isLoading) {
         return (
@@ -57,8 +61,15 @@ function FeedContent() {
                 <Card>
                     <CardHeader>
                         <CardTitle className="flex items-center justify-center gap-2">The Feed is Empty</CardTitle>
-                        <CardDescription>No posts have been made yet. Check back later!</CardDescription>
+                        <CardDescription>No posts have been made yet. Be the first!</CardDescription>
                     </CardHeader>
+                    <CardContent>
+                        <Button asChild>
+                            <Link href="/dashboard">
+                                <Search className="mr-2 h-4 w-4" /> Go to Dashboard
+                            </Link>
+                        </Button>
+                    </CardContent>
                 </Card>
             </div>
         );
@@ -94,7 +105,6 @@ function FeedContent() {
         </div>
     );
 }
-
 
 export default function FeedPage() {
     return (

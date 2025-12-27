@@ -81,7 +81,7 @@ service cloud.firestore {
     }
     
     function isCompanyUser() {
-      return isSignedIn() && requestData().authorRole in ['Company', 'Authorized Pro', 'Freelancer'];
+        return isSignedIn() && request.auth.uid != null;
     }
 
     function isPremiumCompanyUser() {
@@ -218,15 +218,6 @@ service cloud.firestore {
         allow update: if (isPremiumCompanyUser() && isVacancyOwner(requestData())) || isSuperAdmin();
         // Only the company that owns the vacancy (and is premium) or a super admin can delete it.
         allow delete: if (isPremiumCompanyUser() && isVacancyOwner(resource.data)) || isSuperAdmin();
-    }
-
-    /* =====================================================
-     * Posts
-     * ===================================================== */
-    match /posts/{postId} {
-        allow read, list: if true;
-        allow create: if isCompanyUser() && requestData().authorId == request.auth.uid;
-        allow update, delete: if (isSignedIn() && resource.data.authorId == request.auth.uid) || isSuperAdmin();
     }
 
 
