@@ -221,6 +221,18 @@ service cloud.firestore {
         allow delete: if (isPremiumCompanyUser() && isVacancyOwner(resource.data)) || isSuperAdmin();
     }
 
+    /* =====================================================
+     * Posts
+     * ===================================================== */
+    match /posts/{postId} {
+        // Anyone can read posts.
+        allow get, list: if true;
+        // Only a signed-in user can create a post, and they must be the author.
+        allow create: if isSignedIn() && requestData().authorId == request.auth.uid;
+        // Only the author of the post or a super admin can update or delete it.
+        allow update, delete: if (isSignedIn() && resource.data.authorId == request.auth.uid) || isSuperAdmin();
+    }
+
 
     /* =====================================================
      * Default Deny (implicit)

@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { User as UserIcon, LogOut, LayoutDashboard, MessageSquare, Home, Award, Briefcase, Moon, Sun, Menu, Download, Info } from 'lucide-react';
+import { User as UserIcon, LogOut, LayoutDashboard, MessageSquare, Home, Award, Briefcase, Moon, Sun, Menu, Download, Info, Rss } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useTheme } from 'next-themes';
@@ -115,6 +115,12 @@ export function Header() {
                     Vacancies
                 </Link>
               </Button>
+              <Button asChild variant="ghost">
+                  <Link href="/feed">
+                      <Rss className="mr-2 h-4 w-4" />
+                      Feed
+                  </Link>
+              </Button>
                <Button asChild variant="ghost">
                 <Link href="/featured-experts">
                   <Award className="mr-2 h-4 w-4" />
@@ -165,6 +171,11 @@ export function Header() {
                         </Link>
                     </Button>
                     <Button asChild variant="ghost" className="justify-start" onClick={() => setIsMobileMenuOpen(false)}>
+                        <Link href="/feed">
+                            <Rss className="mr-2 h-4 w-4" /> Feed
+                        </Link>
+                    </Button>
+                    <Button asChild variant="ghost" className="justify-start" onClick={() => setIsMobileMenuOpen(false)}>
                         <Link href="/featured-experts">
                             <Award className="mr-2 h-4 w-4" /> Featured
                         </Link>
@@ -202,6 +213,12 @@ export function Header() {
                     Vacancies
                 </Link>
               </Button>
+            <Button asChild variant="ghost">
+                <Link href="/feed">
+                    <Rss className="mr-2 h-4 w-4" />
+                    Feed
+                </Link>
+            </Button>
             <Button asChild variant="ghost">
                 <Link href="/featured-experts">
                   <Award className="mr-2 h-4 w-4" />
