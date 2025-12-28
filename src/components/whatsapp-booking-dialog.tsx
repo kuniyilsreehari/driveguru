@@ -21,7 +21,7 @@ import { Separator } from './ui/separator';
 
 const formSchema = z.object({
   clientName: z.string().min(2, { message: 'Name is required.' }),
-  clientEmail: z.string().email({ message: 'A valid email is required.' }),
+  clientEmail: z.string().email({ message: 'Please enter a valid email.' }).optional().or(z.literal('')),
   clientPhone: z.string().min(10, { message: 'A valid phone number is required.' }),
   date: z.string().min(1, 'A date is required.'),
   time: z.string().min(1, 'A time is required.'),
@@ -80,8 +80,7 @@ A new appointment has been requested. Please review the details below and respon
 
 *Client Details*
 Name: ${values.clientName}
-Email: ${values.clientEmail}
-Phone: ${values.clientPhone}
+${values.clientEmail ? `Email: ${values.clientEmail}\n` : ''}Phone: ${values.clientPhone}
 
 *Appointment Details*
 Date: ${values.date}
@@ -136,7 +135,7 @@ To proceed, please reply with "Confirm" or "Cancel".`;
                       name="clientEmail"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Your Email</FormLabel>
+                          <FormLabel>Your Email (Optional)</FormLabel>
                           <div className="relative">
                             <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                             <FormControl><Input type="email" placeholder="e.g. john@example.com" {...field} className="pl-10" /></FormControl>
@@ -226,7 +225,7 @@ To proceed, please reply with "Confirm" or "Cancel".`;
                 )}
               </div>
             </ScrollArea>
-             <DialogFooter className="pt-4">
+             <DialogFooter className="pt-4 flex-shrink-0">
                 {step === 1 ? (
                   <Button type="button" className="w-full" onClick={handleNextStep}>
                     Next <ArrowRight className="ml-2 h-4 w-4" />
