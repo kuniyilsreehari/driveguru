@@ -112,117 +112,119 @@ To proceed, please reply with "Confirm" or "Cancel".`;
         </DialogHeader>
         
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 flex-grow min-h-0">
-            <ScrollArea className="h-full border rounded-md p-4">
-              {step === 1 && (
-                <div className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="clientName"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Your Name</FormLabel>
-                        <div className="relative">
-                          <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                          <FormControl><Input placeholder="e.g. John Doe" {...field} className="pl-10" /></FormControl>
-                        </div>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="clientEmail"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Your Email</FormLabel>
-                        <div className="relative">
-                          <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                          <FormControl><Input type="email" placeholder="e.g. john@example.com" {...field} className="pl-10" /></FormControl>
-                        </div>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="clientPhone"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Your Contact Number</FormLabel>
-                        <div className="relative">
-                          <Phone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                          <FormControl><Input type="tel" placeholder="e.g. +91 9876543210" {...field} className="pl-10" /></FormControl>
-                        </div>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              )}
-
-              {step === 2 && (
-                <div className="space-y-4">
-                  <h4 className="text-sm font-medium text-muted-foreground">Appointment Details</h4>
-                  
-                  <FormField
-                    control={form.control}
-                    name="date"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-col">
-                        <FormLabel>Date</FormLabel>
-                          <FormControl>
-                            <Input type="date" {...field} />
-                          </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 flex flex-col flex-grow min-h-0">
+            <ScrollArea className="h-full border rounded-md p-4 flex-grow">
+              <div className="space-y-4">
+                {step === 1 && (
+                  <>
+                    <FormField
                       control={form.control}
-                      name="time"
+                      name="clientName"
                       render={({ field }) => (
-                          <FormItem>
-                              <FormLabel>Time</FormLabel>
-                              <FormControl>
-                                  <Input type="time" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                          </FormItem>
+                        <FormItem>
+                          <FormLabel>Your Name</FormLabel>
+                          <div className="relative">
+                            <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                            <FormControl><Input placeholder="e.g. John Doe" {...field} className="pl-10" /></FormControl>
+                          </div>
+                          <FormMessage />
+                        </FormItem>
                       )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="location"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Location</FormLabel>
-                        <div className="relative">
-                          <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                          <FormControl><Input placeholder="e.g., Your City" {...field} className="pl-10" /></FormControl>
-                        </div>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="workRequired"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Work Required</FormLabel>
-                        <div className="relative">
-                          <MessageSquare className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                          <FormControl>
-                            <Textarea placeholder="Briefly describe the work you need done..." {...field} className="pl-10 min-h-[100px]" />
-                          </FormControl>
-                        </div>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="clientEmail"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Your Email</FormLabel>
+                          <div className="relative">
+                            <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                            <FormControl><Input type="email" placeholder="e.g. john@example.com" {...field} className="pl-10" /></FormControl>
+                          </div>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="clientPhone"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Your Contact Number</FormLabel>
+                          <div className="relative">
+                            <Phone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                            <FormControl><Input type="tel" placeholder="e.g. +91 9876543210" {...field} className="pl-10" /></FormControl>
+                          </div>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </>
+                )}
+
+                {step === 2 && (
+                  <>
+                    <h4 className="text-sm font-medium text-muted-foreground">Appointment Details</h4>
+                    
+                    <FormField
+                      control={form.control}
+                      name="date"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-col">
+                          <FormLabel>Date</FormLabel>
+                            <FormControl>
+                              <Input type="date" {...field} />
+                            </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="time"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Time</FormLabel>
+                                <FormControl>
+                                    <Input type="time" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="location"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Location</FormLabel>
+                          <div className="relative">
+                            <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                            <FormControl><Input placeholder="e.g., Your City" {...field} className="pl-10" /></FormControl>
+                          </div>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="workRequired"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Work Required</FormLabel>
+                          <div className="relative">
+                            <MessageSquare className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                            <FormControl>
+                              <Textarea placeholder="Briefly describe the work you need done..." {...field} className="pl-10 min-h-[100px]" />
+                            </FormControl>
+                          </div>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </>
+                )}
+              </div>
             </ScrollArea>
              <DialogFooter className="pt-4 sticky bottom-0 bg-background/90">
                 {step === 1 ? (
