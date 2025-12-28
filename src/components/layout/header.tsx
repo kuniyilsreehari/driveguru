@@ -16,7 +16,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { User as UserIcon, LogOut, LayoutDashboard, MessageSquare, Home, Award, Briefcase, Moon, Sun, Menu, Download, Info, Rss } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -149,6 +149,9 @@ export function Header() {
                 </Button>
             </SheetTrigger>
             <SheetContent side="left" className="pr-0">
+                <SheetHeader className="sr-only">
+                    <SheetTitle>Mobile Menu</SheetTitle>
+                </SheetHeader>
                 <Link href="/" className="flex items-center space-x-2 mb-6" onClick={() => setIsMobileMenuOpen(false)}>
                     <Icons.logo className="h-6 w-6" />
                     <span className="font-bold">DriveGuru</span>
