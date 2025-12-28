@@ -113,7 +113,7 @@ To proceed, please reply with "Confirm" or "Cancel".`;
         
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 flex flex-col flex-grow min-h-0">
-            <ScrollArea className="h-full border rounded-md p-4 flex-grow">
+            <ScrollArea className="flex-grow border rounded-md p-4">
               <div className="space-y-4">
                 {step === 1 && (
                   <>
@@ -226,7 +226,7 @@ To proceed, please reply with "Confirm" or "Cancel".`;
                 )}
               </div>
             </ScrollArea>
-             <DialogFooter className="pt-4 sticky bottom-0 bg-background/90">
+             <DialogFooter className="pt-4">
                 {step === 1 ? (
                   <Button type="button" className="w-full" onClick={handleNextStep}>
                     Next <ArrowRight className="ml-2 h-4 w-4" />
