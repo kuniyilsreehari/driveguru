@@ -662,7 +662,9 @@ function ExpertDashboardPage() {
   
         const filteredPrompts = allPrompts.filter(p => {
             const value = userProfile[p.field];
-            return value === null || value === undefined || value === '' || value === 0;
+            // A field is considered incomplete if it's null, undefined, or an empty string.
+            // We explicitly allow 0 for numeric fields like experience.
+            return value === null || value === undefined || value === '';
         });
 
         if (filteredPrompts.length > 0) {
@@ -1210,3 +1212,5 @@ export default function DashboardPageWrapper() {
     </Suspense>
   )
 }
+
+    
