@@ -656,6 +656,10 @@ function ExpertDashboardPage() {
   
         const filteredPrompts = allPrompts.filter(p => {
             const value = userProfile[p.field];
+             // Treat empty string as incomplete, but allow 0 for numerical fields
+            if (typeof value === 'number') {
+                return value === null || value === undefined;
+            }
             return value === null || value === undefined || value === '';
         });
 
@@ -884,6 +888,8 @@ function ExpertDashboardPage() {
     userProfile.experienceYears ? `${userProfile.experienceYears} years` : null,
     userProfile.experienceMonths ? `${userProfile.experienceMonths} months` : null,
   ].filter(Boolean).join(' ') || 'Not specified';
+  
+  const totalPoints = (referredUsers?.length || 0) * (appConfig?.referralRewardPoints || 0);
 
   return (
     <div className="min-h-screen bg-background p-4 sm:p-8">
@@ -1115,10 +1121,10 @@ function ExpertDashboardPage() {
                             </Button>
                         </div>
                     </div>
-                    <div className="grid grid-cols-2 gap-4 mt-4">
+                     <div className="grid grid-cols-2 gap-4 mt-4">
                         <div className="p-4 rounded-lg border text-center">
                             <p className="text-sm font-medium text-muted-foreground">Total Points Earned</p>
-                            <p className="text-3xl font-bold">{userProfile.referralPoints || 0}</p>
+                            <p className="text-3xl font-bold">{totalPoints}</p>
                         </div>
                         <div className="p-4 rounded-lg border text-center">
                             <p className="text-sm font-medium text-muted-foreground">Referrals Used</p>
