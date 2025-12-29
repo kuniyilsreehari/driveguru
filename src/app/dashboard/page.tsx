@@ -898,8 +898,8 @@ function ExpertDashboardPage() {
       <div className="mx-auto max-w-4xl space-y-8">
         <Card>
             <CardHeader>
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                    <div className="flex items-start gap-4">
+                <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
+                    <div className="flex items-start gap-4 flex-1">
                         <Avatar className="h-16 w-16 sm:h-24 sm:w-24 text-3xl">
                           <AvatarImage src={userProfile.photoUrl} alt={`${userProfile.firstName} ${userProfile.lastName}`} />
                           <AvatarFallback>{getInitials(userProfile.firstName, userProfile.lastName)}</AvatarFallback>
@@ -927,10 +927,10 @@ function ExpertDashboardPage() {
                             </div>
                         </div>
                     </div>
-                    <div className="flex items-center gap-2 self-start sm:self-auto">
+                    <div className="flex w-full sm:w-auto items-center gap-2 self-start sm:self-auto">
                         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
                             <DialogTrigger asChild>
-                                <Button variant="outline">
+                                <Button variant="outline" className="flex-grow">
                                     <Edit className="mr-2 h-4 w-4" />
                                     Edit Profile
                                 </Button>
@@ -948,7 +948,7 @@ function ExpertDashboardPage() {
                                 />
                             </DialogContent>
                         </Dialog>
-                        <Button variant="outline" onClick={handleLogout}>
+                        <Button variant="outline" onClick={handleLogout} className="flex-grow">
                             <LogOut className="mr-2 h-4 w-4" />
                             Log Out
                         </Button>
