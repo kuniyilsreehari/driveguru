@@ -839,6 +839,10 @@ function ExpertDashboardPage() {
   const profileCompletion = calculateProfileCompletion(userProfile);
   const paymentQueryParam = searchParams.get('payment');
   const isLoading = isUserLoading || isProfileLoading || isAppConfigLoading || isRoleLoading || isLoadingReferrals;
+  const referralsCount = referredUsers?.length || 0;
+  const pointsPerReferral = appConfig?.referralRewardPoints || 0;
+  const totalPoints = referralsCount * pointsPerReferral;
+
 
   if (isLoading) {
     let message = "Finalizing session...";
@@ -889,8 +893,6 @@ function ExpertDashboardPage() {
     userProfile.experienceMonths ? `${userProfile.experienceMonths} months` : null,
   ].filter(Boolean).join(' ') || 'Not specified';
   
-  const totalPoints = (referredUsers?.length || 0) * (appConfig?.referralRewardPoints || 0);
-
   return (
     <div className="min-h-screen bg-background p-4 sm:p-8">
       <div className="mx-auto max-w-4xl space-y-8">
@@ -1128,12 +1130,13 @@ function ExpertDashboardPage() {
                         </div>
                         <div className="p-4 rounded-lg border text-center">
                             <p className="text-sm font-medium text-muted-foreground">Referrals Used</p>
-                            <p className="text-3xl font-bold">{referredUsers?.length || 0}</p>
+                            <p className="text-3xl font-bold">{referralsCount}</p>
                         </div>
                     </div>
                 </CardContent>
                 <CardFooter>
-                    <p className="text-xs text-muted-foreground">Share your link to earn points. Each referral earns you {appConfig?.referralRewardPoints || 0} points. 1 point = ₹1. Earnings can be redeemed upon request.</p>
+                    <p className="text-xs text-muted-foreground">
+                    </p>
                 </CardFooter>
             </Card>
         )}
