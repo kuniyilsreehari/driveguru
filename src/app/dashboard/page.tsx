@@ -630,20 +630,9 @@ function ExpertDashboardPage() {
 
   const { data: superAdminData, isLoading: isRoleLoading } = useDoc(superAdminDocRef);
   const isSuperAdmin = superAdminData !== null;
-  
-  const referralsQuery = useMemoFirebase(() => {
-    if (!firestore || !userProfile?.referralCode) return null;
-    return query(collection(firestore, 'users'), where('referredByCode', '==', userProfile.referralCode));
-  }, [firestore, userProfile?.referralCode]);
 
-  const { data: referredUsers, isLoading: isReferralsLoading } = useCollection(referralsQuery);
-  const referralCount = referredUsers?.length || 0;
+  const totalPoints = userProfile?.referralPoints || 0;
 
-  const totalPoints = useMemo(() => {
-      if (isAppConfigLoading || !appConfig || !appConfig.referralRewardPoints) return userProfile?.referralPoints || 0;
-      const pointsPerReferral = appConfig.referralRewardPoints;
-      return (userProfile?.referralPoints || 0);
-  }, [referralCount, userProfile?.referralPoints, appConfig, isAppConfigLoading]);
 
   // Logic for the profile completion prompt
   useEffect(() => {
@@ -662,8 +651,6 @@ function ExpertDashboardPage() {
   
         const filteredPrompts = allPrompts.filter(p => {
             const value = userProfile[p.field];
-            // A field is considered incomplete if it's null, undefined, or an empty string.
-            // We explicitly allow 0 for numeric fields like experience.
             return value === null || value === undefined || value === '';
         });
 
@@ -773,7 +760,12 @@ function ExpertDashboardPage() {
         fields.push(profile.address);
     }
 
-    const filledFields = fields.filter(field => field !== null && field !== undefined && field !== '').length;
+    const filledFields = fields.filter(field => {
+        if (typeof field === 'number') {
+            return field !== null && field !== undefined;
+        }
+        return field !== null && field !== undefined && field !== '';
+    }).length;
     const totalFields = fields.length;
     
     return Math.round((filledFields / totalFields) * 100);
@@ -837,7 +829,7 @@ function ExpertDashboardPage() {
 
   const profileCompletion = calculateProfileCompletion(userProfile);
   const paymentQueryParam = searchParams.get('payment');
-  const isLoading = isUserLoading || isProfileLoading || isAppConfigLoading || isRoleLoading || isReferralsLoading;
+  const isLoading = isUserLoading || isProfileLoading || isAppConfigLoading || isRoleLoading;
 
   if (isLoading) {
     let message = "Finalizing session...";
@@ -1118,14 +1110,10 @@ function ExpertDashboardPage() {
                             </Button>
                         </div>
                     </div>
-                    <div className="grid grid-cols-2 gap-4 mt-4">
+                    <div className="grid grid-cols-1 gap-4 mt-4">
                         <div className="p-4 rounded-lg border text-center">
                             <p className="text-sm font-medium text-muted-foreground">Total Points Earned</p>
                             <p className="text-3xl font-bold">{totalPoints}</p>
-                        </div>
-                        <div className="p-4 rounded-lg border text-center">
-                            <p className="text-sm font-medium text-muted-foreground">Times Used</p>
-                            <p className="text-3xl font-bold">{referralCount}</p>
                         </div>
                     </div>
                 </CardContent>
@@ -1212,5 +1200,3 @@ export default function DashboardPageWrapper() {
     </Suspense>
   )
 }
-
-    
