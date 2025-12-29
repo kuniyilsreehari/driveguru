@@ -630,8 +630,13 @@ function ExpertDashboardPage() {
 
   const { data: superAdminData, isLoading: isRoleLoading } = useDoc(superAdminDocRef);
   const isSuperAdmin = superAdminData !== null;
+  
+  const referralsUsedQuery = useMemoFirebase(() => {
+    if (!firestore || !userProfile?.referralCode) return null;
+    return query(collection(firestore, 'users'), where('referredByCode', '==', userProfile.referralCode));
+  }, [firestore, userProfile?.referralCode]);
 
-  const totalPoints = userProfile?.referralPoints || 0;
+  const { data: referredUsers, isLoading: isLoadingReferrals } = useCollection(referralsUsedQuery);
 
 
   // Logic for the profile completion prompt
@@ -695,7 +700,7 @@ function ExpertDashboardPage() {
 
   const handlePreviousPrompt = () => {
     if (promptIndex > 0) {
-        setPromptIndex(prev => prev - 1);
+        setPromptIndex(prev => prev + 1);
     }
   };
 
@@ -762,7 +767,7 @@ function ExpertDashboardPage() {
 
     const filledFields = fields.filter(field => {
         if (typeof field === 'number') {
-            return field !== null && field !== undefined;
+            return field !== null && field !== undefined; // Handles 0 as a valid entry
         }
         return field !== null && field !== undefined && field !== '';
     }).length;
@@ -829,7 +834,7 @@ function ExpertDashboardPage() {
 
   const profileCompletion = calculateProfileCompletion(userProfile);
   const paymentQueryParam = searchParams.get('payment');
-  const isLoading = isUserLoading || isProfileLoading || isAppConfigLoading || isRoleLoading;
+  const isLoading = isUserLoading || isProfileLoading || isAppConfigLoading || isRoleLoading || isLoadingReferrals;
 
   if (isLoading) {
     let message = "Finalizing session...";
@@ -1110,10 +1115,14 @@ function ExpertDashboardPage() {
                             </Button>
                         </div>
                     </div>
-                    <div className="grid grid-cols-1 gap-4 mt-4">
+                    <div className="grid grid-cols-2 gap-4 mt-4">
                         <div className="p-4 rounded-lg border text-center">
                             <p className="text-sm font-medium text-muted-foreground">Total Points Earned</p>
-                            <p className="text-3xl font-bold">{totalPoints}</p>
+                            <p className="text-3xl font-bold">{userProfile.referralPoints || 0}</p>
+                        </div>
+                        <div className="p-4 rounded-lg border text-center">
+                            <p className="text-sm font-medium text-muted-foreground">Referrals Used</p>
+                            <p className="text-3xl font-bold">{referredUsers?.length || 0}</p>
                         </div>
                     </div>
                 </CardContent>
