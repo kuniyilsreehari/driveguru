@@ -35,7 +35,7 @@ import { setDocumentNonBlocking, updateDocumentNonBlocking } from "@/firebase/no
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { Textarea } from "../ui/textarea";
-import { Card, CardDescription, CardHeader, CardTitle } from "../ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
 import { Icons } from "../icons";
 import { Checkbox } from "../ui/checkbox";
 import { generateAboutMe } from "@/ai/flows/generate-about-me-flow";
