@@ -35,7 +35,7 @@ import { setDocumentNonBlocking, updateDocumentNonBlocking } from "@/firebase/no
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { Textarea } from "../ui/textarea";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "../ui/card";
 import { Icons } from "../icons";
 import { Checkbox } from "../ui/checkbox";
 import { generateAboutMe } from "@/ai/flows/generate-about-me-flow";
@@ -467,7 +467,8 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
 
         const userDocRef = doc(firestore, "users", userProfile.id);
         
-        const { photoDataUri, ...restOfValues } = values;
+        // Exclude fields that the user is not allowed to edit
+        const { photoDataUri, role, countryCode, ...restOfValues } = values;
 
         const updatedData = {
           ...restOfValues,
@@ -485,7 +486,7 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
         onSuccess();
     } catch (error) {
         console.error("Profile update failed:", error);
-         if (error.name !== 'FirebaseError') {
+         if ((error as any).name !== 'FirebaseError') {
              toast({
                 variant: "destructive",
                 title: "Update Failed",
