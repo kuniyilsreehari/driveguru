@@ -91,28 +91,16 @@ export function LoginForm() {
   }, [user, isUserLoading, router]);
   
   useEffect(() => {
-    let verifier: RecaptchaVerifier | null = null;
     if (view === 'phone' && auth && recaptchaContainerRef.current) {
         if (!(window as any).recaptchaVerifier) {
-            verifier = new RecaptchaVerifier(auth, recaptchaContainerRef.current, {
+             (window as any).recaptchaVerifier = new RecaptchaVerifier(auth, recaptchaContainerRef.current, {
                 'size': 'invisible',
                 'callback': (response: any) => {
                     // reCAPTCHA solved, allow signInWithPhoneNumber.
                 }
             });
-            (window as any).recaptchaVerifier = verifier;
         }
     }
-
-    return () => {
-        if (verifier) {
-            verifier.clear();
-        }
-        if ((window as any).recaptchaVerifier) {
-            (window as any).recaptchaVerifier.clear();
-            (window as any).recaptchaVerifier = null;
-        }
-    };
   }, [view, auth]);
 
 
@@ -448,5 +436,3 @@ export function LoginForm() {
     </>
   );
 }
-
-    
