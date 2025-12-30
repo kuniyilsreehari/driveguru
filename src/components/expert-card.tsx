@@ -142,9 +142,6 @@ export function ExpertCard({ expert }: ExpertCardProps) {
 
     return (
         <Card key={expert.id} className="relative overflow-hidden transition-all hover:shadow-lg hover:border-primary/50">
-            {expert.isAvailable && (
-                <Badge className="absolute top-4 right-4 bg-green-500 text-white">Available</Badge>
-            )}
             <CardContent className="p-4">
                 <div className="flex items-start space-x-4">
                     <Link href={`/expert/${expert.id}`} className="block cursor-pointer">
@@ -156,7 +153,12 @@ export function ExpertCard({ expert }: ExpertCardProps) {
 
                     <div className="flex-1">
                         <Link href={`/expert/${expert.id}`} className="block cursor-pointer">
-                             <h3 className="text-xl font-bold">{getDisplayName(expert)}</h3>
+                            <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                                <h3 className="text-xl font-bold">{getDisplayName(expert)}</h3>
+                                {expert.isAvailable && (
+                                    <Badge className="bg-green-500 text-white">Available</Badge>
+                                )}
+                            </div>
                              {expert.companyName && (
                                 <p className="text-sm text-muted-foreground">{`${expert.firstName} ${expert.lastName}`}</p>
                             )}
