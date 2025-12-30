@@ -329,8 +329,9 @@ function HomePageContent() {
                                 </Button>
                             </div>
                              {!useAiSearch && userProfile?.tier !== 'Super Premier' && (
-                                <p className="text-xs text-primary mt-2 flex items-center gap-1">
-                                    <Lock className="h-3 w-3" /> This is a premium feature. <Link href="/dashboard#plan-management" className="underline hover:text-primary">Upgrade your plan</Link> to activate.
+                                <p className="text-xs text-primary mt-2">
+                                    <Lock className="h-3 w-3 inline-block mr-1" />
+                                    This is a premium feature. <Link href="/dashboard#plan-management" className="underline hover:text-primary">Upgrade your plan</Link> to activate.
                                 </p>
                             )}
                         </CardContent>
