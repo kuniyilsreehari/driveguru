@@ -10,7 +10,7 @@ const nextConfig: NextConfig = {
     ignoreDuringBuilds: true,
   },
   serverActions: {
-    bodySizeLimit: '4mb',
+    bodySizeLimit: '10mb',
   },
   images: {
     remotePatterns: [
