@@ -80,7 +80,27 @@ const phoneFormSchema = z.object({
   phoneNumber: z.string().min(10, { message: "Please enter a valid 10-digit phone number." }),
   referralCode: z.string().optional(),
   role: z.string({ required_error: "Please select your expert type." }),
+  firstName: z.string().optional(),
+  lastName: z.string().optional(),
+  companyName: z.string().optional(),
+}).refine(data => {
+    if (data.role === 'Freelancer') {
+        return !!data.firstName && !!data.lastName;
+    }
+    return true;
+}, {
+    message: "First and last name are required for Freelancers.",
+    path: ["firstName"],
+}).refine(data => {
+    if (data.role === 'Company' || data.role === 'Authorized Pro') {
+        return !!data.companyName;
+    }
+    return true;
+}, {
+    message: "Company name is required for this role.",
+    path: ["companyName"],
 });
+
 
 const otpFormSchema = z.object({
   otp: z.string().length(6, { message: "OTP must be 6 digits." }),
@@ -90,6 +110,15 @@ type AppConfig = {
     departments?: string[];
 };
 
+type PhoneSignupData = {
+    phoneNumber: string;
+    referralCode?: string;
+    role: string;
+    firstName?: string;
+    lastName?: string;
+    companyName?: string;
+}
+
 
 export function RegistrationForm() {
   const { toast } = useToast();
@@ -98,9 +127,7 @@ export function RegistrationForm() {
   const [confirmationResult, setConfirmationResult] = useState<any>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const recaptchaContainerRef = useRef<HTMLDivElement>(null);
-  const [phoneNumberForSignup, setPhoneNumberForSignup] = useState('');
-  const [referralCodeForSignup, setReferralCodeForSignup] = useState('');
-  const [roleForSignup, setRoleForSignup] = useState('Freelancer');
+  const [phoneSignupData, setPhoneSignupData] = useState<PhoneSignupData | null>(null);
 
   const auth = useAuth();
   const { user, isUserLoading } = useUser();
@@ -141,7 +168,14 @@ export function RegistrationForm() {
 
    const phoneForm = useForm<z.infer<typeof phoneFormSchema>>({
     resolver: zodResolver(phoneFormSchema),
-    defaultValues: { phoneNumber: "", referralCode: searchParams.get('ref') || "", role: "Freelancer" },
+    defaultValues: { 
+        phoneNumber: "", 
+        referralCode: searchParams.get('ref') || "", 
+        role: "Freelancer",
+        firstName: "",
+        lastName: "",
+        companyName: "",
+    },
   });
 
   const otpForm = useForm<z.infer<typeof otpFormSchema>>({
@@ -163,6 +197,7 @@ export function RegistrationForm() {
   }, [view, auth]);
 
   const selectedRole = form.watch("role");
+  const selectedPhoneRole = phoneForm.watch("role");
   const pincodeValue = form.watch("pincode");
 
   useEffect(() => {
@@ -442,9 +477,14 @@ export function RegistrationForm() {
     }
 
     const fullPhoneNumber = `+91${values.phoneNumber}`;
-    setPhoneNumberForSignup(fullPhoneNumber);
-    setReferralCodeForSignup(values.referralCode || '');
-    setRoleForSignup(values.role);
+    setPhoneSignupData({
+      phoneNumber: fullPhoneNumber,
+      referralCode: values.referralCode,
+      role: values.role,
+      firstName: values.firstName,
+      lastName: values.lastName,
+      companyName: values.companyName
+    });
 
     try {
         const verifier = (window as any).recaptchaVerifier;
@@ -469,7 +509,7 @@ export function RegistrationForm() {
   }
 
   async function onOtpSubmit(values: z.infer<typeof otpFormSchema>) {
-    if (!confirmationResult || !firestore) return;
+    if (!confirmationResult || !firestore || !phoneSignupData) return;
     setIsSubmitting(true);
     try {
         const result = await confirmationResult.confirm(values.otp);
@@ -481,15 +521,16 @@ export function RegistrationForm() {
             
             const userData = {
                 id: user.uid,
-                firstName: 'New',
-                lastName: 'User',
+                firstName: phoneSignupData.firstName || 'New',
+                lastName: phoneSignupData.lastName || 'User',
+                companyName: phoneSignupData.companyName || '',
                 email: null,
-                phoneNumber: phoneNumberForSignup,
-                role: roleForSignup,
+                phoneNumber: phoneSignupData.phoneNumber,
+                role: phoneSignupData.role,
                 verified: false,
                 isAvailable: true,
                 referralCode: generateReferralCode(),
-                referredByCode: referralCodeForSignup || null,
+                referredByCode: phoneSignupData.referralCode || null,
                 referralPoints: 0,
                 createdAt: serverTimestamp(),
             };
@@ -924,7 +965,7 @@ export function RegistrationForm() {
                   </FormItem>
               )}
             />
-             <FormField
+            <FormField
                 control={phoneForm.control}
                 name="role"
                 render={({ field }) => (
@@ -951,6 +992,48 @@ export function RegistrationForm() {
                 </FormItem>
                 )}
             />
+            
+            {selectedPhoneRole === 'Freelancer' && (
+                <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                        control={phoneForm.control}
+                        name="firstName"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>First Name</FormLabel>
+                                <FormControl><Input placeholder="John" {...field} /></FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={phoneForm.control}
+                        name="lastName"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Last Name</FormLabel>
+                                <FormControl><Input placeholder="Doe" {...field} /></FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                </div>
+            )}
+
+            {(selectedPhoneRole === 'Company' || selectedPhoneRole === 'Authorized Pro') && (
+                 <FormField
+                    control={phoneForm.control}
+                    name="companyName"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Company Name</FormLabel>
+                            <FormControl><Input placeholder="Your Company Inc." {...field} /></FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+            )}
+
             <Button type="submit" className="w-full" disabled={isSubmitting}>
                 {isSubmitting ? 'Sending...' : 'Send OTP'}
             </Button>
@@ -1000,3 +1083,4 @@ export function RegistrationForm() {
     </>
   );
 }
+
