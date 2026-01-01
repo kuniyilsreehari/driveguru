@@ -2,6 +2,7 @@
 
 "use client";
 
+import * as React from "react";
 import { useState, useEffect, useRef } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -1083,4 +1084,3 @@ export function RegistrationForm() {
     </>
   );
 }
-
