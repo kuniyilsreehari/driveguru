@@ -449,51 +449,59 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
 
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    if (!firestore) return;
+    if (!firestore || !user) return;
 
     try {
-        let finalPhotoUrl = values.photoUrl;
+      let finalPhotoUrl = values.photoUrl;
 
-        // If a new photo was uploaded, process it through the flow
-        if (values.photoDataUri) {
-            setIsUploading(true);
-            const photoResult = await updateUserPhoto({
-                userId: userProfile.id,
-                photoDataUri: values.photoDataUri,
-            });
-            finalPhotoUrl = photoResult.photoUrl;
-            setIsUploading(false);
-        }
-
-        const userDocRef = doc(firestore, "users", userProfile.id);
-        
-        // Exclude fields that the user is not allowed to edit
-        const { photoDataUri, ...restOfValues } = values;
-
-        const updatedData = {
-          ...restOfValues,
-          photoUrl: finalPhotoUrl,
-          phoneNumber: values.countryCode && values.phoneNumber ? `${values.countryCode} ${values.phoneNumber}` : "",
-        };
-
-        await updateDocumentNonBlocking(userDocRef, updatedData);
-
-        toast({
-          title: "Profile Updated",
-          description: "Your information has been successfully saved.",
+      // If a new photo was uploaded, process it through the flow
+      if (values.photoDataUri) {
+        setIsUploading(true);
+        const photoResult = await updateUserPhoto({
+          userId: user.uid,
+          photoDataUri: values.photoDataUri,
         });
-
-        onSuccess();
-    } catch (error) {
+        finalPhotoUrl = photoResult.photoUrl;
         setIsUploading(false);
-        console.error("Profile update failed:", error);
-         if ((error as any).name !== 'FirebaseError') {
-             toast({
-                variant: "destructive",
-                title: "Update Failed",
-                description: "Could not save profile. Please try again.",
-            });
-        }
+      }
+
+      const userDocRef = doc(firestore, 'users', user.uid);
+
+      // Construct the data to be updated
+      const { photoDataUri, ...restOfValues } = values;
+
+      const updatedData: Partial<ExpertUserProfile> = {
+        ...restOfValues,
+        photoUrl: finalPhotoUrl,
+        phoneNumber:
+          values.countryCode && values.phoneNumber
+            ? `${values.countryCode} ${values.phoneNumber}`
+            : '',
+      };
+
+      // Remove fields that the user is not allowed to edit
+      delete (updatedData as any).email;
+      delete (updatedData as any).role;
+
+
+      await updateDocumentNonBlocking(userDocRef, updatedData);
+
+      toast({
+        title: 'Profile Updated',
+        description: 'Your information has been successfully saved.',
+      });
+
+      onSuccess();
+    } catch (error) {
+      setIsUploading(false);
+      console.error('Profile update failed:', error);
+      if ((error as any).name !== 'FirebaseError') {
+        toast({
+          variant: 'destructive',
+          title: 'Update Failed',
+          description: 'Could not save profile. Please try again.',
+        });
+      }
     }
   }
 

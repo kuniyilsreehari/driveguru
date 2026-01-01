@@ -37,7 +37,7 @@ const updateUserPhotoFlow = ai.defineFlow(
   },
   async ({ userId, photoDataUri }) => {
     const adminApp = await getAdminApp();
-    const bucket = getStorage(adminApp).bucket(process.env.GCLOUD_STORAGE_BUCKET || 'studio-8621980584-11b8b.appspot.com');
+    const bucket = getStorage(adminApp).bucket();
 
     // Extract content type and base64 data from data URI
     const match = photoDataUri.match(/^data:(image\/[a-z]+);base64,(.*)$/);
