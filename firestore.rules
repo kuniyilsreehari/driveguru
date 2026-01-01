@@ -67,6 +67,11 @@ service cloud.firestore {
       let allAffectedKeys = request.resource.data.diff(resource.data).affectedKeys();
       return isManager() && isExistingDoc() && allAffectedKeys.hasOnly(editableFields);
     }
+    
+    // A super admin can update any field except id and createdAt
+    function isSuperAdminUpdatingUserDoc() {
+        return isSuperAdmin() && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['id', 'createdAt']);
+    }
 
     function isCreatingOwnLocationData(userId) {
       return isCreatingOwnUserDoc(userId) && requestData().userId == userId;
@@ -176,8 +181,7 @@ service cloud.firestore {
       allow create: if isOwner(userId);
 
       // A user can update their own document, or an admin/manager can update specific fields.
-      allow update: if isUpdatingOwnUserDoc(userId) || isManagerUpdatingUserDoc() ||
-                       (isSuperAdmin() && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['id', 'createdAt']));
+      allow update: if isUpdatingOwnUserDoc(userId) || isManagerUpdatingUserDoc() || isSuperAdminUpdatingUserDoc();
 
       // Users can delete their own account, and admins can delete any account.
       allow delete: if isOwner(userId) || isSuperAdmin();
