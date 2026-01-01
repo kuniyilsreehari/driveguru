@@ -53,7 +53,7 @@ service cloud.firestore {
       let isRoleUpdateAllowed = incomingRole in allowedRoles;
       
       // If the role is not being changed, we don't need to validate it.
-      let isRoleUnchanged = !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role']);
+      let isRoleUnchanged = !('role' in request.resource.data) || request.resource.data.role == resource.data.role;
 
       return isOwner(userId) && 
              isExistingDoc() &&
