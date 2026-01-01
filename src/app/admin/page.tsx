@@ -44,6 +44,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { PostVacancyForm } from '@/components/auth/post-vacancy-form';
+import { CreateUserForm } from '@/components/auth/create-user-form';
 import { useToast } from '@/hooks/use-toast';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
@@ -452,6 +453,8 @@ export default function AdminDashboardPage() {
   const [isVacancyPostDialogOpen, setIsVacancyPostDialogOpen] = useState(false);
   const [isVacancyEditDialogOpen, setIsVacancyEditDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isCreateUserDialogOpen, setIsCreateUserDialogOpen] = useState(false);
+
 
   const [selectedUser, setSelectedUser] = useState<ExpertUser | null>(null);
   const [selectedVacancy, setSelectedVacancy] = useState<Vacancy | null>(null);
@@ -502,10 +505,11 @@ export default function AdminDashboardPage() {
   const { data: superAdminData, isLoading: isRoleLoading } = useDoc(superAdminDocRef);
   const isSuperAdmin = !!superAdminData;
 
-  const usersCollectionRef = useMemoFirebase(() => {
+  const usersCollectionQuery = useMemoFirebase(() => {
     if (!firestore || !isSuperAdmin) return null;
-    return collection(firestore, 'users');
+    return query(collection(firestore, 'users'), orderBy('createdAt', 'desc'));
   }, [firestore, isSuperAdmin]);
+
 
   const vacanciesCollectionQuery = useMemoFirebase(() => {
     if (!firestore || !isSuperAdmin) return null;
@@ -518,7 +522,7 @@ export default function AdminDashboardPage() {
   }, [firestore, isSuperAdmin]);
 
 
-  const { data: usersData, isLoading: isUsersLoading } = useCollection<ExpertUser>(usersCollectionRef);
+  const { data: usersData, isLoading: isUsersLoading } = useCollection<ExpertUser>(usersCollectionQuery);
   const { data: vacancies, isLoading: isVacanciesLoading } = useCollection<Vacancy>(vacanciesCollectionQuery);
   const { data: payments, isLoading: isPaymentsLoading } = useCollection<Payment>(paymentsCollectionQuery);
   
@@ -947,7 +951,7 @@ export default function AdminDashboardPage() {
   const filteredUsers = useMemo(() => {
     if (!usersData) return [];
     
-    let sortedUsers = [...usersData].sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
+    let sortedUsers = [...usersData];
 
     return sortedUsers.filter(user => {
         if (!user) return false;
@@ -1101,12 +1105,29 @@ export default function AdminDashboardPage() {
                         <TabsContent value="users" className="mt-4">
                             <Card>
                                 <CardHeader>
-                                <div className="flex items-center gap-3">
-                                    <Users className="h-6 w-6" />
-                                    <div>
-                                    <CardTitle>Expert Users</CardTitle>
-                                    <CardDescription>Manage all registered users in the system.</CardDescription>
-                                    </div>
+                                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                                  <div className="flex items-center gap-3">
+                                      <Users className="h-6 w-6" />
+                                      <div>
+                                      <CardTitle>Expert Users</CardTitle>
+                                      <CardDescription>Manage all registered users in the system.</CardDescription>
+                                      </div>
+                                  </div>
+                                   <Dialog open={isCreateUserDialogOpen} onOpenChange={setIsCreateUserDialogOpen}>
+                                      <DialogTrigger asChild>
+                                          <Button className="w-full sm:w-auto">
+                                              <PlusCircle className="mr-2 h-4 w-4" />
+                                              Create New Expert
+                                          </Button>
+                                      </DialogTrigger>
+                                      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+                                          <DialogHeader>
+                                              <DialogTitle>Create a New Expert User</DialogTitle>
+                                              <DialogDescription>Fill in the details to add a new expert to the platform.</DialogDescription>
+                                          </DialogHeader>
+                                          <CreateUserForm onSuccess={() => setIsCreateUserDialogOpen(false)} />
+                                      </DialogContent>
+                                  </Dialog>
                                 </div>
                                 </CardHeader>
                                 <CardContent>
