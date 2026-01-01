@@ -143,7 +143,7 @@ type AppConfig = {
     referralRewardPoints?: number;
 };
 
-const UserTable = ({ users, allUsers, onTierChange, onVerificationToggle, onDelete, onEdit, onAwardReferral }: { users: ExpertUser[], allUsers: ExpertUser[], onTierChange: (expert: ExpertUser, tier: ExpertUser['tier']) => void, onVerificationToggle: (expert: ExpertUser) => void, onDelete: (expert: ExpertUser) => void, onEdit: (expert: ExpertUser) => void, onAwardReferral: (user: ExpertUser) => void }) => {
+const UserTable = ({ users, allUsers, onTierChange, onRoleChange, onVerificationToggle, onDelete, onEdit, onAwardReferral }: { users: ExpertUser[], allUsers: ExpertUser[], onTierChange: (expert: ExpertUser, tier: ExpertUser['tier']) => void, onRoleChange: (expert: ExpertUser, role: string) => void, onVerificationToggle: (expert: ExpertUser) => void, onDelete: (expert: ExpertUser) => void, onEdit: (expert: ExpertUser) => void, onAwardReferral: (user: ExpertUser) => void }) => {
     const getInitials = (firstName?: string, lastName?: string) => {
         if (firstName && lastName) {
             return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
@@ -245,6 +245,14 @@ const UserTable = ({ users, allUsers, onTierChange, onVerificationToggle, onDele
                                             <DropdownMenuItem onClick={() => onTierChange(expert, 'Standard')}><UserIcon className="mr-2 h-4 w-4" />Standard</DropdownMenuItem>
                                             <DropdownMenuItem onClick={() => onTierChange(expert, 'Premier')}><Crown className="mr-2 h-4 w-4" />Premier</DropdownMenuItem>
                                             <DropdownMenuItem onClick={() => onTierChange(expert, 'Super Premier')}><Sparkles className="mr-2 h-4 w-4" />Super Premier</DropdownMenuItem>
+                                        </DropdownMenuSubContent></DropdownMenuPortal>
+                                    </DropdownMenuSub>
+                                    <DropdownMenuSub>
+                                        <DropdownMenuSubTrigger><Briefcase className="mr-2 h-4 w-4" /><span>Change Role</span></DropdownMenuSubTrigger>
+                                        <DropdownMenuPortal><DropdownMenuSubContent>
+                                            <DropdownMenuItem onClick={() => onRoleChange(expert, 'Freelancer')}><UserIcon className="mr-2 h-4 w-4" />Freelancer</DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => onRoleChange(expert, 'Company')}><Building className="mr-2 h-4 w-4" />Company</DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => onRoleChange(expert, 'Authorized Pro')}><Briefcase className="mr-2 h-4 w-4" />Authorized Pro</DropdownMenuItem>
                                         </DropdownMenuSubContent></DropdownMenuPortal>
                                     </DropdownMenuSub>
                                     <DropdownMenuItem onClick={() => onEdit(expert)}><Edit className="mr-2 h-4 w-4" />Edit</DropdownMenuItem>
@@ -574,6 +582,16 @@ export default function AdminDashboardPage() {
     setIsDeleteDialogOpen(false);
     setSelectedUser(null);
   }
+
+  const handleRoleChange = (expert: ExpertUser, role: string) => {
+    if (!firestore) return;
+    const userDocRef = doc(firestore, 'users', expert.id);
+    updateDocumentNonBlocking(userDocRef, { role });
+    toast({
+        title: "User Role Updated",
+        description: `${expert.firstName} ${expert.lastName}'s role is now ${role}.`,
+    });
+  };
 
   const handleTierChange = (expert: ExpertUser, tier: ExpertUser['tier']) => {
     if (!firestore) return;
@@ -1117,16 +1135,16 @@ export default function AdminDashboardPage() {
                                             <TabsTrigger value="authorizedPros">Authorized Pros</TabsTrigger>
                                         </TabsList>
                                         <TabsContent value="all" className="mt-4">
-                                            <UserTable users={filteredUsers} allUsers={usersData || []} onTierChange={handleTierChange} onVerificationToggle={handleVerificationToggle} onDelete={openDeleteDialog} onEdit={openEditDialog} onAwardReferral={handleAwardReferral} />
+                                            <UserTable users={filteredUsers} allUsers={usersData || []} onTierChange={handleTierChange} onRoleChange={handleRoleChange} onVerificationToggle={handleVerificationToggle} onDelete={openDeleteDialog} onEdit={openEditDialog} onAwardReferral={handleAwardReferral} />
                                         </TabsContent>
                                         <TabsContent value="freelancers" className="mt-4">
-                                            <UserTable users={freelancers || []} allUsers={usersData || []} onTierChange={handleTierChange} onVerificationToggle={handleVerificationToggle} onDelete={openDeleteDialog} onEdit={openEditDialog} onAwardReferral={handleAwardReferral} />
+                                            <UserTable users={freelancers || []} allUsers={usersData || []} onTierChange={handleTierChange} onRoleChange={handleRoleChange} onVerificationToggle={handleVerificationToggle} onDelete={openDeleteDialog} onEdit={openEditDialog} onAwardReferral={handleAwardReferral} />
                                         </TabsContent>
                                         <TabsContent value="companies" className="mt-4">
-                                            <UserTable users={companies || []} allUsers={usersData || []} onTierChange={handleTierChange} onVerificationToggle={handleVerificationToggle} onDelete={openDeleteDialog} onEdit={openEditDialog} onAwardReferral={handleAwardReferral} />
+                                            <UserTable users={companies || []} allUsers={usersData || []} onTierChange={handleTierChange} onRoleChange={handleRoleChange} onVerificationToggle={handleVerificationToggle} onDelete={openDeleteDialog} onEdit={openEditDialog} onAwardReferral={handleAwardReferral} />
                                         </TabsContent>
                                         <TabsContent value="authorizedPros" className="mt-4">
-                                            <UserTable users={authorizedPros || []} allUsers={usersData || []} onTierChange={handleTierChange} onVerificationToggle={handleVerificationToggle} onDelete={openDeleteDialog} onEdit={openEditDialog} onAwardReferral={handleAwardReferral} />
+                                            <UserTable users={authorizedPros || []} allUsers={usersData || []} onTierChange={handleTierChange} onRoleChange={handleRoleChange} onVerificationToggle={handleVerificationToggle} onDelete={openDeleteDialog} onEdit={openEditDialog} onAwardReferral={handleAwardReferral} />
                                         </TabsContent>
                                     </Tabs>
                                 )}
