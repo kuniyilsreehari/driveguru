@@ -181,7 +181,7 @@ service cloud.firestore {
       allow create: if isOwner(userId);
 
       // A user can update their own document, or an admin/manager can update specific fields.
-      allow update: if isUpdatingOwnUserDoc(userId) || isManagerUpdatingUserDoc() || isSuperAdminUpdatingUserDoc();
+      allow update: if request.auth.uid == userId || isSuperAdmin();
 
       // Users can delete their own account, and admins can delete any account.
       allow delete: if isOwner(userId) || isSuperAdmin();
@@ -218,3 +218,5 @@ service cloud.firestore {
      * ===================================================== */
   }
 }
+
+    
