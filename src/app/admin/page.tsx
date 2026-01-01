@@ -947,7 +947,7 @@ export default function AdminDashboardPage() {
   const filteredUsers = useMemo(() => {
     if (!usersData) return [];
     
-    let sortedUsers = [...usersData].sort((a, b) => (a.firstName || '').localeCompare(b.firstName || ''));
+    let sortedUsers = [...usersData].sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
 
     return sortedUsers.filter(user => {
         if (!user) return false;
@@ -1734,4 +1734,3 @@ export default function AdminDashboardPage() {
   );
 }
 
-    
