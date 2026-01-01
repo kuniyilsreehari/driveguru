@@ -1,15 +1,18 @@
 
 'use server';
 /**
- * @fileOverview A flow for updating a user's profile photo.
+ * @fileOverview A flow for updating a user's profile photo by uploading it to Firebase Storage.
  *
- * - updateUserPhoto - A function that takes a user ID and a photo data URI and returns a URL.
+ * - updateUserPhoto - A function that takes a user ID and a photo data URI, uploads it, and returns a public URL.
  * - UpdateUserPhotoInput - The input type for the updateUserPhoto function.
  * - UpdateUserPhotoOutput - The return type for the updateUserPhoto function.
  */
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
+import { getAdminApp } from './get-admin-app';
+import { getStorage } from 'firebase-admin/storage';
+import { v4 as uuidv4 } from 'uuid';
 
 const UpdateUserPhotoInputSchema = z.object({
   userId: z.string().describe('The ID of the user whose photo is being updated.'),
@@ -33,19 +36,36 @@ const updateUserPhotoFlow = ai.defineFlow(
     outputSchema: UpdateUserPhotoOutputSchema,
   },
   async ({ userId, photoDataUri }) => {
-    // In a real-world scenario, you would upload the photo to a storage service
-    // like Firebase Storage here and get a public URL.
-    // For now, we will just return the data URI as the URL.
+    const adminApp = await getAdminApp();
+    const bucket = getStorage(adminApp).bucket(process.env.GCLOUD_STORAGE_BUCKET || 'studio-8621980584-11b8b.appspot.com');
+
+    // Extract content type and base64 data from data URI
+    const match = photoDataUri.match(/^data:(image\/[a-z]+);base64,(.*)$/);
+    if (!match) {
+      throw new Error('Invalid data URI format.');
+    }
+    const contentType = match[1];
+    const base64Data = match[2];
+    const buffer = Buffer.from(base64Data, 'base64');
     
-    // Example for future Firebase Storage integration:
-    // const storage = getStorage();
-    // const storageRef = ref(storage, `profile-photos/${userId}`);
-    // await uploadString(storageRef, photoDataUri, 'data_url');
-    // const downloadUrl = await getDownloadURL(storageRef);
-    // return { photoUrl: downloadUrl };
+    // Define the path in Firebase Storage
+    const filePath = `profile-photos/${userId}/${uuidv4()}`;
+    const file = bucket.file(filePath);
+
+    // Upload the file
+    await file.save(buffer, {
+      metadata: {
+        contentType: contentType,
+      },
+    });
+
+    // Make the file public and get the URL
+    await file.makePublic();
+    
+    const publicUrl = file.publicUrl();
 
     return {
-      photoUrl: photoDataUri,
+      photoUrl: publicUrl,
     };
   }
 );

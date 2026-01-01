@@ -68,7 +68,6 @@ const formSchema = z.object({
   countryCode: z.string().optional(),
   phoneNumber: z.string().optional(),
   showPhoneNumberOnProfile: z.boolean().default(true),
-  role: z.string({ required_error: "Please select your expert type." }),
   department: z.string().optional(),
   companyName: z.string().optional(),
   businessDescription: z.string().optional(),
@@ -208,7 +207,6 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
       countryCode: countryCode,
       phoneNumber: phoneNumber,
       showPhoneNumberOnProfile: userProfile.showPhoneNumberOnProfile === undefined ? true : userProfile.showPhoneNumberOnProfile,
-      role: userProfile.role || "",
       department: userProfile.department || "",
       companyName: userProfile.companyName || "",
       businessDescription: userProfile.businessDescription || "",
@@ -244,7 +242,7 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
   });
 
 
-  const selectedRole = form.watch("role");
+  const selectedRole = userProfile.role;
   const photoUrl = form.watch("photoUrl");
   const photoDataUri = form.watch("photoDataUri");
   const pincodeValue = form.watch("pincode");
@@ -352,7 +350,7 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
       const formData = form.getValues();
       const result = await generateAboutMe({
         firstName: formData.firstName,
-        role: formData.role,
+        role: selectedRole,
         skills: formData.skills || '',
         yearsOfExperience: formData.experienceYears || 0,
         qualification: formData.qualification || '',
@@ -388,7 +386,7 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
     try {
         const formData = form.getValues();
         const result = await suggestSkills({
-            role: formData.role,
+            role: selectedRole,
             qualification: formData.qualification || '',
             existingSkills: formData.skills || '',
         });
@@ -458,17 +456,19 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
 
         // If a new photo was uploaded, process it through the flow
         if (values.photoDataUri) {
+            setIsUploading(true);
             const photoResult = await updateUserPhoto({
                 userId: userProfile.id,
                 photoDataUri: values.photoDataUri,
             });
             finalPhotoUrl = photoResult.photoUrl;
+            setIsUploading(false);
         }
 
         const userDocRef = doc(firestore, "users", userProfile.id);
         
         // Exclude fields that the user is not allowed to edit
-        const { photoDataUri, role, countryCode, ...restOfValues } = values;
+        const { photoDataUri, ...restOfValues } = values;
 
         const updatedData = {
           ...restOfValues,
@@ -485,6 +485,7 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
 
         onSuccess();
     } catch (error) {
+        setIsUploading(false);
         console.error("Profile update failed:", error);
          if ((error as any).name !== 'FirebaseError') {
              toast({
@@ -571,35 +572,16 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
               </div>
           </div>
 
-          <FormField
-            control={form.control}
-            name="role"
-            render={({ field }) => (
-              <FormItem>
-                  <FormLabel>Are you an individual or representing a company?</FormLabel>
-                  <FormControl>
-                      <div className="grid grid-cols-3 gap-2 text-center">
-                          {expertTypes.map((type) => (
-                              <div 
-                                  key={type.name} 
-                                  className={cn(
-                                      "p-2 border rounded-lg flex flex-col items-center justify-center space-y-1 cursor-pointer transition-colors h-24",
-                                      field.value === type.name 
-                                          ? "bg-accent/20 border-primary" 
-                                          : "hover:bg-accent/10 hover:border-accent"
-                                  )}
-                                  onClick={() => form.setValue('role', type.name, { shouldValidate: true })}
-                              >
-                                  {type.icon}
-                                  <span className="text-xs font-semibold">{type.name}</span>
-                              </div>
-                          ))}
-                      </div>
-                  </FormControl>
-                  <FormMessage />
-              </FormItem>
-            )}
-          />
+          <div 
+              className={cn(
+                  "p-4 border rounded-lg flex flex-col items-center justify-center space-y-1 transition-colors h-24",
+                  "bg-accent/20 border-primary" 
+              )}
+          >
+              {expertTypes.find(t => t.name === selectedRole)?.icon}
+              <span className="text-sm font-semibold">{selectedRole}</span>
+          </div>
+
           {(selectedRole === 'Company' || selectedRole === 'Authorized Pro') && (
             <>
               <FormField
@@ -1230,9 +1212,9 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
           </div>
 
 
-          <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
+          <Button type="submit" className="w-full" disabled={form.formState.isSubmitting || isUploading}>
             <Save className="mr-2 h-4 w-4" />
-            {form.formState.isSubmitting ? 'Saving...' : 'Save Changes'}
+            {form.formState.isSubmitting || isUploading ? 'Saving...' : 'Save Changes'}
           </Button>
         </form>
       </Form>

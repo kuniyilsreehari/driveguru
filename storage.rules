@@ -3,14 +3,20 @@ rules_version = '2';
 
 service firebase.storage {
   match /b/{bucket}/o {
-    // Allow public read access to all files.
-    // THIS IS INSECURE if you store sensitive data.
-    // For this sample app, profile pictures are public.
-    // In a real app, you would restrict this.
+    // Allow public read access for all files.
+    // This is useful for public assets like profile pictures.
     match /{allPaths=**} {
       allow read: if true;
     }
+
+    // Rules for profile photos
+    match /profile-photos/{userId}/{fileName} {
+      // Allow a user to create/upload their own profile picture.
+      allow create: if request.auth != null && request.auth.uid == userId;
+
+      // Allow a user to delete their own profile pictures.
+      // You might want to restrict this further in a real app.
+      allow delete: if request.auth != null && request.auth.uid == userId;
+    }
   }
 }
-
-    
