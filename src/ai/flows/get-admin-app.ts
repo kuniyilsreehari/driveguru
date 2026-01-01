@@ -32,6 +32,7 @@ export async function getAdminApp(): Promise<App> {
     // Initialize the Firebase Admin App using Application Default Credentials.
     const newApp = initializeApp({
       credential: applicationDefault(),
+      storageBucket: "studio-8621980584-11b8b.appspot.com",
     });
 
     // Cache the newly created app on the global object.
