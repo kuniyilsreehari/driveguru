@@ -70,7 +70,7 @@ service cloud.firestore {
     
     // A super admin can update any field except id and createdAt
     function isSuperAdminUpdatingUserDoc() {
-        return isSuperAdmin() && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['id', 'createdAt']);
+        return isSuperAdmin() && isExistingDoc() && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['id', 'createdAt']);
     }
 
     function isCreatingOwnLocationData(userId) {
