@@ -12,6 +12,7 @@ import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 import { getAdminApp } from './get-admin-app';
 import { getStorage } from 'firebase-admin/storage';
+import { v4 as uuidv4 } from 'uuid';
 
 const UpdateUserPhotoInputSchema = z.object({
   userId: z.string().describe('The ID of the user whose photo is being updated.'),
@@ -64,11 +65,9 @@ const updateUserPhotoFlow = ai.defineFlow(
     // Make the file public and get the URL
     await file.makePublic();
     
-    // Add a timestamp to the URL to force the browser to reload the image
-    const publicUrl = `${file.publicUrl()}?t=${new Date().getTime()}`;
-
+    // Return the clean public URL. The client will handle cache-busting.
     return {
-      photoUrl: publicUrl,
+      photoUrl: file.publicUrl(),
     };
   }
 );

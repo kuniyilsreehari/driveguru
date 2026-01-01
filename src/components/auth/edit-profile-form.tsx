@@ -474,7 +474,6 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
       };
       
       delete (updatedData as any).email;
-      delete (updatedData as any).role;
       
       await updateDocumentNonBlocking(userDocRef, updatedData);
 
@@ -546,7 +545,7 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
           
           <div className="flex items-center gap-4">
               <Avatar className="h-20 w-20 text-3xl">
-                <AvatarImage src={photoUrl || undefined} />
+                <AvatarImage src={photoUrl ? `${photoUrl}?t=${new Date().getTime()}` : undefined} />
                 <AvatarFallback>{getInitials(form.getValues('firstName'), form.getValues('lastName'))}</AvatarFallback>
               </Avatar>
               <div className="flex-grow">
