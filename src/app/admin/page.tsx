@@ -184,7 +184,7 @@ const UserTable = ({ users, allUsers, onTierChange, onRoleChange, onVerification
                         <TableRow key={expert.id}>
                         <TableCell>
                             <Avatar>
-                                <AvatarImage src={expert.photoUrl} alt={`${expert.firstName} ${expert.lastName}`} />
+                                <AvatarImage src={expert.photoUrl || undefined} alt={`${expert.firstName} ${expert.lastName}`} />
                                 <AvatarFallback>{getInitials(expert.firstName, expert.lastName)}</AvatarFallback>
                             </Avatar>
                         </TableCell>

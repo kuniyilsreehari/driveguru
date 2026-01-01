@@ -35,7 +35,7 @@ import { setDocumentNonBlocking, updateDocumentNonBlocking } from "@/firebase/no
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { Textarea } from "../ui/textarea";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "../ui/card";
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "../ui/card";
 import { Icons } from "../icons";
 import { Checkbox } from "../ui/checkbox";
 import { generateAboutMe } from "@/ai/flows/generate-about-me-flow";
@@ -424,8 +424,7 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
         const reader = new FileReader();
         reader.onload = async (e) => {
             const dataUrl = e.target?.result as string;
-            // Set for instant preview
-            form.setValue('photoUrl', dataUrl, { shouldValidate: true }); 
+            
             try {
                 const photoResult = await updateUserPhoto({
                     userId: user.uid,
@@ -444,8 +443,6 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
                     title: "Upload Failed",
                     description: "Could not upload your photo. Please try again.",
                 });
-                // Revert to original photo if upload fails
-                form.setValue('photoUrl', userProfile.photoUrl || '', { shouldValidate: true });
             } finally {
                 setIsUploading(false);
             }
@@ -475,6 +472,9 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
             ? `${values.countryCode} ${values.phoneNumber}`
             : '',
       };
+      
+      delete (updatedData as any).email;
+      delete (updatedData as any).role;
       
       await updateDocumentNonBlocking(userDocRef, updatedData);
 
@@ -546,7 +546,7 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
           
           <div className="flex items-center gap-4">
               <Avatar className="h-20 w-20 text-3xl">
-                <AvatarImage src={photoUrl} />
+                <AvatarImage src={photoUrl || undefined} />
                 <AvatarFallback>{getInitials(form.getValues('firstName'), form.getValues('lastName'))}</AvatarFallback>
               </Avatar>
               <div className="flex-grow">
