@@ -47,7 +47,7 @@ service cloud.firestore {
     function isUpdatingOwnUserDoc(userId) {
       // All fields a user is allowed to edit on their own.
       let editableFields = [
-        'firstName', 'lastName', 'photoUrl', 'state', 'city', 'pincode', 'address', 'countryCode',
+        'firstName', 'lastName', 'photoUrl', 'state', 'city', 'pincode', 'address', 'latitude', 'longitude', 'countryCode',
         'phoneNumber', 'showPhoneNumberOnProfile', 'department', 'companyName', 'businessDescription', 'category', 'profession',
         'pricingModel', 'pricingValue',
         'experienceYears', 'experienceMonths', 'gender', 'qualification', 'collegeName',
@@ -213,4 +213,3 @@ service cloud.firestore {
      * ===================================================== */
   }
 }
-    
