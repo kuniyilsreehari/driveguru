@@ -12,7 +12,6 @@ import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 import { getAdminApp } from './get-admin-app';
 import { getStorage } from 'firebase-admin/storage';
-import { v4 as uuidv4 } from 'uuid';
 
 const UpdateUserPhotoInputSchema = z.object({
   userId: z.string().describe('The ID of the user whose photo is being updated.'),
@@ -48,7 +47,6 @@ const updateUserPhotoFlow = ai.defineFlow(
     const base64Data = match[2];
     const buffer = Buffer.from(base64Data, 'base64');
     
-    // Define the path in Firebase Storage using a consistent filename
     const fileExtension = contentType.split('/')[1] || 'jpg';
     const filePath = `profile-photos/${userId}/profile.${fileExtension}`;
     const file = bucket.file(filePath);

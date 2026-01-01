@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import * as React from "react";
@@ -10,6 +9,7 @@ import * as z from "zod";
 import { User as UserIcon, Mail, Lock, Eye, EyeOff, Briefcase, MapPin, Phone, LocateIcon, Loader2, Building, Home, ArrowRight, MessageSquare, Gift, PenSquare, Factory, Shield, Save, Linkedin, Github, Globe, Twitter, Type, List, Youtube } from "lucide-react";
 import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, getAdditionalUserInfo, RecaptchaVerifier, signInWithPhoneNumber, EmailAuthProvider, linkWithCredential } from 'firebase/auth';
 import { doc, serverTimestamp, collection, query, where, getDocs, limit } from 'firebase/firestore';
+import { getStorage, ref as storageRef, uploadString, getDownloadURL } from "firebase/storage";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -40,7 +40,6 @@ import { Icons } from "../icons";
 import { Checkbox } from "../ui/checkbox";
 import { generateAboutMe } from "@/ai/flows/generate-about-me-flow";
 import { suggestSkills } from "@/ai/flows/suggest-skills-flow";
-import { updateUserPhoto } from "@/ai/flows/update-profile-photo-flow";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Upload } from "lucide-react";
 import { Separator } from "../ui/separator";
@@ -419,43 +418,46 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file && user) {
-        setIsUploading(true);
-        const reader = new FileReader();
-        reader.onload = async (e) => {
-            const dataUrl = e.target?.result as string;
-            
-            try {
-                const photoResult = await updateUserPhoto({
-                    userId: user.uid,
-                    photoDataUri: dataUrl,
-                });
-                // Once uploaded, set the permanent URL in the form
-                form.setValue('photoUrl', photoResult.photoUrl, { shouldValidate: true });
-                 toast({
-                    title: "Photo Uploaded!",
-                    description: "Your new photo is ready. Click 'Save Changes' to confirm.",
-                });
-            } catch (error) {
-                console.error("Photo upload failed:", error);
-                toast({
-                    variant: "destructive",
-                    title: "Upload Failed",
-                    description: "Could not upload your photo. Please try again.",
-                });
-            } finally {
-                setIsUploading(false);
-            }
-        };
-        reader.onerror = () => {
-            setIsUploading(false);
-            toast({
-                variant: "destructive",
-                title: "Upload Failed",
-                description: "Could not read the image file.",
-            });
-        };
-        reader.readAsDataURL(file);
+    if (file && user && auth) {
+      setIsUploading(true);
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        const dataUrl = e.target?.result as string;
+
+        try {
+          const storage = getStorage(auth.app);
+          const fileExtension = file.type.split('/')[1] || 'jpg';
+          const filePath = `profile-photos/${user.uid}/profile.${fileExtension}`;
+          const imageRef = storageRef(storage, filePath);
+
+          await uploadString(imageRef, dataUrl, 'data_url');
+          const photoUrl = await getDownloadURL(imageRef);
+          
+          form.setValue('photoUrl', photoUrl, { shouldValidate: true });
+          toast({
+            title: "Photo Uploaded!",
+            description: "Your new photo is ready. Click 'Save Changes' to confirm.",
+          });
+        } catch (error) {
+          console.error("Photo upload failed:", error);
+          toast({
+            variant: "destructive",
+            title: "Upload Failed",
+            description: "Could not upload your photo. Please try again.",
+          });
+        } finally {
+          setIsUploading(false);
+        }
+      };
+      reader.onerror = () => {
+        setIsUploading(false);
+        toast({
+          variant: "destructive",
+          title: "Upload Failed",
+          description: "Could not read the image file.",
+        });
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -545,7 +547,7 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
           
           <div className="flex items-center gap-4">
               <Avatar className="h-20 w-20 text-3xl">
-                <AvatarImage src={photoUrl ? `${photoUrl}?t=${new Date().getTime()}` : undefined} />
+                <AvatarImage src={photoUrl ? `${photoUrl}` : undefined} />
                 <AvatarFallback>{getInitials(form.getValues('firstName'), form.getValues('lastName'))}</AvatarFallback>
               </Avatar>
               <div className="flex-grow">
