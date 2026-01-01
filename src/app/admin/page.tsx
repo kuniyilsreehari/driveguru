@@ -190,6 +190,12 @@ const UserTable = ({ users, allUsers, onTierChange, onRoleChange, onVerification
                         </TableCell>
                         <TableCell>
                             <div className="font-medium">{expert.firstName} {expert.lastName}</div>
+                            {expert.companyName && (
+                                <div className="text-xs text-muted-foreground flex items-center gap-1">
+                                    <Building className="h-3 w-3" />
+                                    {expert.companyName}
+                                </div>
+                            )}
                             <div className="text-xs text-muted-foreground">{expert.email}</div>
                             {expert.phoneNumber && (
                                 <div className="text-xs text-muted-foreground flex items-center gap-1">
