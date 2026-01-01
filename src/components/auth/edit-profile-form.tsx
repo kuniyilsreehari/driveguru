@@ -66,6 +66,7 @@ const formSchema = z.object({
   countryCode: z.string().optional(),
   phoneNumber: z.string().optional(),
   showPhoneNumberOnProfile: z.boolean().default(true),
+  role: z.string({ required_error: "Please select your expert type." }),
   department: z.string().optional(),
   companyName: z.string().optional(),
   businessDescription: z.string().optional(),
@@ -204,6 +205,7 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
       countryCode: countryCode,
       phoneNumber: phoneNumber,
       showPhoneNumberOnProfile: userProfile.showPhoneNumberOnProfile === undefined ? true : userProfile.showPhoneNumberOnProfile,
+      role: userProfile.role || "Freelancer",
       department: userProfile.department || "",
       companyName: userProfile.companyName || "",
       businessDescription: userProfile.businessDescription || "",
@@ -239,7 +241,7 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
   });
 
 
-  const selectedRole = userProfile.role;
+  const selectedRole = form.watch("role");
   const photoUrl = form.watch("photoUrl");
   const pincodeValue = form.watch("pincode");
 
@@ -433,7 +435,7 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
           await uploadString(imageRef, dataUrl, 'data_url');
           const photoUrl = await getDownloadURL(imageRef);
           
-          form.setValue('photoUrl', photoUrl, { shouldValidate: true });
+          form.setValue('photoUrl', `${photoUrl}?t=${new Date().getTime()}`, { shouldValidate: true });
           toast({
             title: "Photo Uploaded!",
             description: "Your new photo is ready. Click 'Save Changes' to confirm.",
@@ -571,15 +573,33 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
               </div>
           </div>
 
-          <div 
-              className={cn(
-                  "p-4 border rounded-lg flex flex-col items-center justify-center space-y-1 transition-colors h-24",
-                  "bg-accent/20 border-primary" 
-              )}
-          >
-              {expertTypes.find(t => t.name === selectedRole)?.icon}
-              <span className="text-sm font-semibold">{selectedRole}</span>
-          </div>
+          <FormField
+            control={form.control}
+            name="role"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Your Role</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select your expert role" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {expertTypes.map((type) => (
+                      <SelectItem key={type.name} value={type.name}>
+                        <div className="flex items-center gap-2">
+                          {React.cloneElement(type.icon, { className: "w-4 h-4" })}
+                          {type.name}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
           {(selectedRole === 'Company' || selectedRole === 'Authorized Pro') && (
             <>
