@@ -180,8 +180,8 @@ service cloud.firestore {
       // VERY PERMISSIVE: Any signed-in user can create their own user document.
       allow create: if isOwner(userId);
 
-      // A user can update their own document, or an admin/manager can update specific fields.
-      allow update: if request.auth.uid == userId || isSuperAdmin();
+      // A user can update their own document, or a super admin can update any document.
+      allow update: if isUpdatingOwnUserDoc(userId) || isSuperAdminUpdatingUserDoc();
 
       // Users can delete their own account, and admins can delete any account.
       allow delete: if isOwner(userId) || isSuperAdmin();
@@ -218,5 +218,3 @@ service cloud.firestore {
      * ===================================================== */
   }
 }
-
-    
