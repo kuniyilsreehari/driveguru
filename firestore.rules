@@ -43,21 +43,13 @@ service cloud.firestore {
       return isOwner(userId);
     }
     
-    // A user can update certain fields of their own profile.
+    // A user can update their own profile, but cannot change protected fields.
     function isUpdatingOwnUserDoc(userId) {
-      // All fields a user is allowed to edit on their own.
-      let editableFields = [
-        'firstName', 'lastName', 'photoUrl', 'state', 'city', 'pincode', 'address', 'latitude', 'longitude', 'countryCode',
-        'phoneNumber', 'showPhoneNumberOnProfile', 'department', 'companyName', 'businessDescription', 'category', 'profession',
-        'pricingModel', 'pricingValue',
-        'experienceYears', 'experienceMonths', 'gender', 'qualification', 'collegeName',
-        'skills', 'aboutMe', 'aboutYourDream', 'associatedProjectsName',
-        'linkedinUrl', 'twitterUrl', 'githubUrl', 'portfolioUrl', 'facebookUrl', 'instagramUrl', 'youtubeUrl',
-        'isAvailable', 'following'
-      ];
-      let allAffectedKeys = request.resource.data.diff(resource.data).affectedKeys();
+      let protectedFields = ['id', 'createdAt', 'role', 'tier', 'verified', 'referralPoints', 'cashPaymentStatus', 'referredByCode'];
       
-      return isOwner(userId) && isExistingDoc() && allAffectedKeys.hasOnly(editableFields);
+      return isOwner(userId) && 
+             isExistingDoc() && 
+             !request.resource.data.diff(resource.data).affectedKeys().hasAny(protectedFields);
     }
 
     // A manager can only update verification and cash payment status.
