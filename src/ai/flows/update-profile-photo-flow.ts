@@ -12,7 +12,6 @@ import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 import { getAdminApp } from './get-admin-app';
 import { getStorage } from 'firebase-admin/storage';
-import { v4 as uuidv4 } from 'uuid';
 
 const UpdateUserPhotoInputSchema = z.object({
   userId: z.string().describe('The ID of the user whose photo is being updated.'),
@@ -48,21 +47,25 @@ const updateUserPhotoFlow = ai.defineFlow(
     const base64Data = match[2];
     const buffer = Buffer.from(base64Data, 'base64');
     
-    // Define the path in Firebase Storage
-    const filePath = `profile-photos/${userId}/${uuidv4()}`;
+    // Define the path in Firebase Storage using a consistent filename
+    const fileExtension = contentType.split('/')[1] || 'jpg';
+    const filePath = `profile-photos/${userId}/profile.${fileExtension}`;
     const file = bucket.file(filePath);
 
     // Upload the file
     await file.save(buffer, {
       metadata: {
         contentType: contentType,
+        // Add cache control to ensure the browser fetches the new image
+        cacheControl: 'no-cache, max-age=0',
       },
     });
 
     // Make the file public and get the URL
     await file.makePublic();
     
-    const publicUrl = file.publicUrl();
+    // Add a timestamp to the URL to force the browser to reload the image
+    const publicUrl = `${file.publicUrl()}?t=${new Date().getTime()}`;
 
     return {
       photoUrl: publicUrl,
