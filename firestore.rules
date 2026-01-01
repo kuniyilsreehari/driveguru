@@ -45,10 +45,13 @@ service cloud.firestore {
     
     // A user can update their own profile, but cannot change protected fields.
     function isUpdatingOwnUserDoc(userId) {
-      let protectedFields = ['id', 'createdAt', 'role', 'tier', 'verified', 'referralPoints', 'cashPaymentStatus', 'referredByCode'];
-      
+      let protectedFields = ['id', 'createdAt', 'tier', 'verified', 'referralPoints', 'cashPaymentStatus', 'referredByCode'];
+      let newRole = requestData().role;
+      let isAdminRole = newRole == 'Super Admin' || newRole == 'Manager';
+
       return isOwner(userId) && 
-             isExistingDoc() && 
+             isExistingDoc() &&
+             !isAdminRole && // Prevent self-promotion to admin roles
              !request.resource.data.diff(resource.data).affectedKeys().hasAny(protectedFields);
     }
 
@@ -205,3 +208,5 @@ service cloud.firestore {
      * ===================================================== */
   }
 }
+
+    
