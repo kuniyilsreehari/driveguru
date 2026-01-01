@@ -60,7 +60,6 @@ const formSchema = z.object({
   firstName: z.string().min(1, { message: "First name is required." }),
   lastName: z.string().min(1, { message: "Last name is required." }),
   photoUrl: z.string().optional().or(z.literal('')),
-  photoDataUri: z.string().optional(), // For holding the new image data
   state: z.string().optional(),
   city: z.string().optional(),
   pincode: z.string().optional(),
@@ -199,7 +198,6 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
       firstName: userProfile.firstName || "",
       lastName: userProfile.lastName || "",
       photoUrl: userProfile.photoUrl || "",
-      photoDataUri: "",
       state: userProfile.state || "",
       city: userProfile.city || "",
       pincode: userProfile.pincode || "",
@@ -244,7 +242,6 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
 
   const selectedRole = userProfile.role;
   const photoUrl = form.watch("photoUrl");
-  const photoDataUri = form.watch("photoDataUri");
   const pincodeValue = form.watch("pincode");
 
   useEffect(() => {
@@ -422,28 +419,46 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (file) {
-      setIsUploading(true);
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const dataUrl = e.target?.result as string;
-        form.setValue('photoDataUri', dataUrl, { shouldValidate: true });
-        form.setValue('photoUrl', dataUrl, { shouldValidate: true }); // Also update photoUrl for instant preview
-        toast({
-            title: "Image Ready",
-            description: "Your new profile picture is ready. Click 'Save Changes' to apply it.",
-        });
-        setIsUploading(false);
-      };
-      reader.onerror = () => {
-        setIsUploading(false);
-        toast({
-          variant: "destructive",
-          title: "Upload Failed",
-          description: "Could not read the image file.",
-        });
-      };
-      reader.readAsDataURL(file);
+    if (file && user) {
+        setIsUploading(true);
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            const dataUrl = e.target?.result as string;
+            // Set for instant preview
+            form.setValue('photoUrl', dataUrl, { shouldValidate: true }); 
+            try {
+                const photoResult = await updateUserPhoto({
+                    userId: user.uid,
+                    photoDataUri: dataUrl,
+                });
+                // Once uploaded, set the permanent URL in the form
+                form.setValue('photoUrl', photoResult.photoUrl, { shouldValidate: true });
+                 toast({
+                    title: "Photo Uploaded!",
+                    description: "Your new photo is ready. Click 'Save Changes' to confirm.",
+                });
+            } catch (error) {
+                console.error("Photo upload failed:", error);
+                toast({
+                    variant: "destructive",
+                    title: "Upload Failed",
+                    description: "Could not upload your photo. Please try again.",
+                });
+                // Revert to original photo if upload fails
+                form.setValue('photoUrl', userProfile.photoUrl || '', { shouldValidate: true });
+            } finally {
+                setIsUploading(false);
+            }
+        };
+        reader.onerror = () => {
+            setIsUploading(false);
+            toast({
+                variant: "destructive",
+                title: "Upload Failed",
+                description: "Could not read the image file.",
+            });
+        };
+        reader.readAsDataURL(file);
     }
   };
 
@@ -452,38 +467,15 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
     if (!firestore || !user) return;
 
     try {
-      let finalPhotoUrl = values.photoUrl;
-
-      // If a new photo was uploaded, process it through the flow
-      if (values.photoDataUri) {
-        setIsUploading(true);
-        const photoResult = await updateUserPhoto({
-          userId: user.uid,
-          photoDataUri: values.photoDataUri,
-        });
-        finalPhotoUrl = photoResult.photoUrl;
-        setIsUploading(false);
-      }
-
       const userDocRef = doc(firestore, 'users', user.uid);
-
-      // Construct the data to be updated
-      const { photoDataUri, ...restOfValues } = values;
-
       const updatedData: Partial<ExpertUserProfile> = {
-        ...restOfValues,
-        photoUrl: finalPhotoUrl,
+        ...values,
         phoneNumber:
           values.countryCode && values.phoneNumber
             ? `${values.countryCode} ${values.phoneNumber}`
             : '',
       };
-
-      // Remove fields that the user is not allowed to edit
-      delete (updatedData as any).email;
-      delete (updatedData as any).role;
-
-
+      
       await updateDocumentNonBlocking(userDocRef, updatedData);
 
       toast({
@@ -493,8 +485,6 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
 
       onSuccess();
     } catch (error) {
-      setIsUploading(false);
-      console.error('Profile update failed:', error);
       if ((error as any).name !== 'FirebaseError') {
         toast({
           variant: 'destructive',
@@ -564,7 +554,7 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
                   <div className="flex items-center gap-2 mt-2">
                       <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()} disabled={isUploading}>
                           {isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
-                          {isUploading ? 'Processing...' : 'Upload Image'}
+                          {isUploading ? 'Uploading...' : 'Upload Image'}
                       </Button>
                       <p className="text-xs text-muted-foreground">PNG, JPG, GIF.</p>
                       <FormControl>
