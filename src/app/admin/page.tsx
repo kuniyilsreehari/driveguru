@@ -68,7 +68,7 @@ type ExpertUser = {
     firstName: string;
     lastName: string;
     email: string;
-    role: string;
+    role: 'super_admin' | 'manager' | 'freelancer' | 'company' | 'authorized_pro';
     photoUrl?: string;
     city?: string;
     state?: string;
@@ -143,7 +143,7 @@ type AppConfig = {
     referralRewardPoints?: number;
 };
 
-const UserTable = ({ users, allUsers, onTierChange, onRoleChange, onVerificationToggle, onDelete, onEdit, onAwardReferral }: { users: ExpertUser[], allUsers: ExpertUser[], onTierChange: (expert: ExpertUser, tier: ExpertUser['tier']) => void, onRoleChange: (expert: ExpertUser, role: string) => void, onVerificationToggle: (expert: ExpertUser) => void, onDelete: (expert: ExpertUser) => void, onEdit: (expert: ExpertUser) => void, onAwardReferral: (user: ExpertUser) => void }) => {
+const UserTable = ({ users, allUsers, onTierChange, onRoleChange, onVerificationToggle, onDelete, onEdit, onAwardReferral }: { users: ExpertUser[], allUsers: ExpertUser[], onTierChange: (expert: ExpertUser, tier: ExpertUser['tier']) => void, onRoleChange: (expert: ExpertUser, role: ExpertUser['role']) => void, onVerificationToggle: (expert: ExpertUser) => void, onDelete: (expert: ExpertUser) => void, onEdit: (expert: ExpertUser) => void, onAwardReferral: (user: ExpertUser) => void }) => {
     const getInitials = (firstName?: string, lastName?: string) => {
         if (firstName && lastName) {
             return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
@@ -256,9 +256,9 @@ const UserTable = ({ users, allUsers, onTierChange, onRoleChange, onVerification
                                     <DropdownMenuSub>
                                         <DropdownMenuSubTrigger><Briefcase className="mr-2 h-4 w-4" /><span>Change Role</span></DropdownMenuSubTrigger>
                                         <DropdownMenuPortal><DropdownMenuSubContent>
-                                            <DropdownMenuItem onClick={() => onRoleChange(expert, 'Freelancer')}><UserIcon className="mr-2 h-4 w-4" />Freelancer</DropdownMenuItem>
-                                            <DropdownMenuItem onClick={() => onRoleChange(expert, 'Company')}><Building className="mr-2 h-4 w-4" />Company</DropdownMenuItem>
-                                            <DropdownMenuItem onClick={() => onRoleChange(expert, 'Authorized Pro')}><Briefcase className="mr-2 h-4 w-4" />Authorized Pro</DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => onRoleChange(expert, 'freelancer')}><UserIcon className="mr-2 h-4 w-4" />Freelancer</DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => onRoleChange(expert, 'company')}><Building className="mr-2 h-4 w-4" />Company</DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => onRoleChange(expert, 'authorized_pro')}><Briefcase className="mr-2 h-4 w-4" />Authorized Pro</DropdownMenuItem>
                                         </DropdownMenuSubContent></DropdownMenuPortal>
                                     </DropdownMenuSub>
                                     <DropdownMenuItem onClick={() => onEdit(expert)}><Edit className="mr-2 h-4 w-4" />Edit</DropdownMenuItem>
@@ -589,7 +589,7 @@ export default function AdminDashboardPage() {
     setSelectedUser(null);
   }
 
-  const handleRoleChange = (expert: ExpertUser, role: string) => {
+  const handleRoleChange = (expert: ExpertUser, role: ExpertUser['role']) => {
     if (!firestore) return;
     const userDocRef = doc(firestore, 'users', expert.id);
     updateDocumentNonBlocking(userDocRef, { role });
@@ -969,9 +969,9 @@ export default function AdminDashboardPage() {
     });
 }, [usersData, searchQuery, activeFilter]);
 
-  const freelancers = filteredUsers?.filter(user => user.role === 'Freelancer');
-  const companies = filteredUsers?.filter(user => user.role === 'Company');
-  const authorizedPros = filteredUsers?.filter(user => user.role === 'Authorized Pro');
+  const freelancers = filteredUsers?.filter(user => user.role === 'freelancer');
+  const companies = filteredUsers?.filter(user => user.role === 'company');
+  const authorizedPros = filteredUsers?.filter(user => user.role === 'authorized_pro');
   
   const isLoading = isUserLoading || isRoleLoading;
 
@@ -1733,3 +1733,5 @@ export default function AdminDashboardPage() {
     </>
   );
 }
+
+    

@@ -47,7 +47,7 @@ service cloud.firestore {
     function isUpdatingOwnUserDoc(userId) {
       let protectedFields = ['id', 'createdAt', 'tier', 'verified', 'referralPoints', 'cashPaymentStatus', 'referredByCode'];
       let incomingRole = requestData().role;
-      let allowedRoles = ["Freelancer", "Company", "Authorized Pro"];
+      let allowedRoles = ["freelancer", "company", "authorized_pro"];
 
       // Check if the role is being changed to a valid, non-admin role.
       let isRoleUpdateAllowed = incomingRole in allowedRoles;
@@ -93,7 +93,7 @@ service cloud.firestore {
     function isPremiumCompanyUser() {
       let userDoc = get(/databases/$(database)/documents/users/$(request.auth.uid));
       return isSignedIn() &&
-             userDoc.data.role == 'Company' &&
+             userDoc.data.role == 'company' &&
              (userDoc.data.tier == 'Premier' || userDoc.data.tier == 'Super Premier');
     }
 
