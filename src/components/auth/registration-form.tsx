@@ -79,6 +79,7 @@ const formSchema = z.object({
 const phoneFormSchema = z.object({
   phoneNumber: z.string().min(10, { message: "Please enter a valid 10-digit phone number." }),
   referralCode: z.string().optional(),
+  role: z.string({ required_error: "Please select your expert type." }),
 });
 
 const otpFormSchema = z.object({
@@ -99,6 +100,7 @@ export function RegistrationForm() {
   const recaptchaContainerRef = useRef<HTMLDivElement>(null);
   const [phoneNumberForSignup, setPhoneNumberForSignup] = useState('');
   const [referralCodeForSignup, setReferralCodeForSignup] = useState('');
+  const [roleForSignup, setRoleForSignup] = useState('Freelancer');
 
   const auth = useAuth();
   const { user, isUserLoading } = useUser();
@@ -139,7 +141,7 @@ export function RegistrationForm() {
 
    const phoneForm = useForm<z.infer<typeof phoneFormSchema>>({
     resolver: zodResolver(phoneFormSchema),
-    defaultValues: { phoneNumber: "", referralCode: searchParams.get('ref') || "" },
+    defaultValues: { phoneNumber: "", referralCode: searchParams.get('ref') || "", role: "Freelancer" },
   });
 
   const otpForm = useForm<z.infer<typeof otpFormSchema>>({
@@ -442,6 +444,7 @@ export function RegistrationForm() {
     const fullPhoneNumber = `+91${values.phoneNumber}`;
     setPhoneNumberForSignup(fullPhoneNumber);
     setReferralCodeForSignup(values.referralCode || '');
+    setRoleForSignup(values.role);
 
     try {
         const verifier = (window as any).recaptchaVerifier;
@@ -482,7 +485,7 @@ export function RegistrationForm() {
                 lastName: 'User',
                 email: null,
                 phoneNumber: phoneNumberForSignup,
-                role: 'Freelancer', // Default role for phone signup
+                role: roleForSignup,
                 verified: false,
                 isAvailable: true,
                 referralCode: generateReferralCode(),
@@ -920,6 +923,33 @@ export function RegistrationForm() {
                       <FormMessage />
                   </FormItem>
               )}
+            />
+             <FormField
+                control={phoneForm.control}
+                name="role"
+                render={({ field }) => (
+                <FormItem>
+                    <FormLabel>Your Role</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select your expert role" />
+                            </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                            {expertTypes.map((type) => (
+                            <SelectItem key={type.name} value={type.name}>
+                                <div className="flex items-center gap-2">
+                                {React.cloneElement(type.icon, { className: "w-4 h-4" })}
+                                {type.name}
+                                </div>
+                            </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                    <FormMessage />
+                </FormItem>
+                )}
             />
             <Button type="submit" className="w-full" disabled={isSubmitting}>
                 {isSubmitting ? 'Sending...' : 'Send OTP'}
