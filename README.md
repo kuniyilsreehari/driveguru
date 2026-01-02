@@ -1,3 +1,4 @@
+
 np# Firebase Studio - DriveGuru
 
 This is a Next.js starter project for DriveGuru, built in Firebase Studio.
@@ -25,9 +26,19 @@ CASHFREE_SECRET="your_cashfree_secret_key"
 
 **IMPORTANT:** Never commit the `.env` file to a public repository. It contains sensitive information.
 
-### 3. Run the Application
+### 3. Authenticate for Local Development (for Admin Features)
 
-After saving your `.env` file, you can run the development server:
+If you are using admin features locally (like creating users from the admin dashboard), you need to authenticate with Google Cloud. Run the following command in your terminal and follow the instructions in your browser:
+
+```bash
+gcloud auth application-default login
+```
+
+This is a one-time setup step for your local machine.
+
+### 4. Run the Application
+
+After saving your `.env` file and authenticating, you can run the development server:
 
 ```bash
 npm run dev

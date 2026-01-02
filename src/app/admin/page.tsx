@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
@@ -1113,21 +1112,6 @@ export default function AdminDashboardPage() {
                                       <CardDescription>Manage all registered users in the system.</CardDescription>
                                       </div>
                                   </div>
-                                   <Dialog open={isCreateUserDialogOpen} onOpenChange={setIsCreateUserDialogOpen}>
-                                      <DialogTrigger asChild>
-                                          <Button className="w-full sm:w-auto">
-                                              <PlusCircle className="mr-2 h-4 w-4" />
-                                              Create New Expert
-                                          </Button>
-                                      </DialogTrigger>
-                                      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
-                                          <DialogHeader>
-                                              <DialogTitle>Create a New Expert User</DialogTitle>
-                                              <DialogDescription>Fill in the details to add a new expert to the platform.</DialogDescription>
-                                          </DialogHeader>
-                                          <CreateUserForm onSuccess={() => setIsCreateUserDialogOpen(false)} />
-                                      </DialogContent>
-                                  </Dialog>
                                 </div>
                                 </CardHeader>
                                 <CardContent>
@@ -1754,4 +1738,3 @@ export default function AdminDashboardPage() {
     </>
   );
 }
-

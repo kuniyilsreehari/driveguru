@@ -43,8 +43,11 @@ export async function getAdminApp(): Promise<App> {
   } catch (e: any) {
     console.error("Firebase Admin SDK Initialization Error:", e);
     // Provide a more helpful error message for local development.
-    throw new Error(
-      `Failed to initialize Firebase Admin SDK. This is likely because Application Default Credentials are not configured for your local environment. Please run 'gcloud auth application-default login' in your terminal and try again. Original Error: ${e.message}`
-    );
+    if (e.message?.includes('Could not find')) {
+         throw new Error(
+            `Failed to initialize Firebase Admin SDK. Application Default Credentials are not configured for your local environment. Please run 'gcloud auth application-default login' in your terminal and try again. Original Error: ${e.message}`
+        );
+    }
+    throw new Error(`Failed to initialize Firebase Admin SDK. Original Error: ${e.message}`);
   }
 }
