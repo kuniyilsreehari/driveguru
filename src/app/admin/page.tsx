@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
@@ -68,7 +69,7 @@ type ExpertUser = {
     firstName: string;
     lastName: string;
     email: string;
-    role: 'super_admin' | 'manager' | 'freelancer' | 'company' | 'authorized_pro';
+    role: 'Super Admin' | 'Manager' | 'Freelancer' | 'Company' | 'Authorized Pro';
     photoUrl?: string;
     city?: string;
     state?: string;
@@ -256,9 +257,9 @@ const UserTable = ({ users, allUsers, onTierChange, onRoleChange, onVerification
                                     <DropdownMenuSub>
                                         <DropdownMenuSubTrigger><Briefcase className="mr-2 h-4 w-4" /><span>Change Role</span></DropdownMenuSubTrigger>
                                         <DropdownMenuPortal><DropdownMenuSubContent>
-                                            <DropdownMenuItem onClick={() => onRoleChange(expert, 'freelancer')}><UserIcon className="mr-2 h-4 w-4" />Freelancer</DropdownMenuItem>
-                                            <DropdownMenuItem onClick={() => onRoleChange(expert, 'company')}><Building className="mr-2 h-4 w-4" />Company</DropdownMenuItem>
-                                            <DropdownMenuItem onClick={() => onRoleChange(expert, 'authorized_pro')}><Briefcase className="mr-2 h-4 w-4" />Authorized Pro</DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => onRoleChange(expert, 'Freelancer')}><UserIcon className="mr-2 h-4 w-4" />Freelancer</DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => onRoleChange(expert, 'Company')}><Building className="mr-2 h-4 w-4" />Company</DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => onRoleChange(expert, 'Authorized Pro')}><Briefcase className="mr-2 h-4 w-4" />Authorized Pro</DropdownMenuItem>
                                         </DropdownMenuSubContent></DropdownMenuPortal>
                                     </DropdownMenuSub>
                                     <DropdownMenuItem onClick={() => onEdit(expert)}><Edit className="mr-2 h-4 w-4" />Edit</DropdownMenuItem>
@@ -950,7 +951,11 @@ export default function AdminDashboardPage() {
   const filteredUsers = useMemo(() => {
     if (!usersData) return [];
     
-    let sortedUsers = [...usersData];
+    let sortedUsers = [...usersData].sort((a, b) => {
+        const dateA = a.createdAt?.toDate() || new Date(0);
+        const dateB = b.createdAt?.toDate() || new Date(0);
+        return dateB.getTime() - dateA.getTime();
+    });
 
     return sortedUsers.filter(user => {
         if (!user) return false;
@@ -972,9 +977,9 @@ export default function AdminDashboardPage() {
     });
 }, [usersData, searchQuery, activeFilter]);
 
-  const freelancers = filteredUsers?.filter(user => user.role === 'freelancer');
-  const companies = filteredUsers?.filter(user => user.role === 'company');
-  const authorizedPros = filteredUsers?.filter(user => user.role === 'authorized_pro');
+  const freelancers = filteredUsers?.filter(user => user.role === 'Freelancer');
+  const companies = filteredUsers?.filter(user => user.role === 'Company');
+  const authorizedPros = filteredUsers?.filter(user => user.role === 'Authorized Pro');
   
   const isLoading = isUserLoading || isRoleLoading;
 
@@ -1609,20 +1614,12 @@ export default function AdminDashboardPage() {
                                 <Users className="h-6 w-6" />
                                 <div>
                                     <CardTitle>Expert User Management</CardTitle>
-                                    <CardDescription>Bulk import and export expert users using a CSV template.</CardDescription>
+                                    <CardDescription>Bulk create, update, or export expert users.</CardDescription>
                                 </div>
                             </div>
                         </CardHeader>
                         <CardContent>
-                            <div className="flex flex-col sm:flex-row gap-4">
-                                <div className='flex-1'>
-                                    <h4 className="font-semibold text-sm">Export Users as CSV</h4>
-                                    <p className="text-xs text-muted-foreground mb-2">Download a CSV template with all current expert users. Use this file for bulk updates.</p>
-                                    <Button onClick={handleExportUsersCsv} disabled={!usersData || usersData.length === 0} className="w-full">
-                                        <Download className="mr-2 h-4 w-4" />
-                                        Export Users (CSV)
-                                    </Button>
-                                </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className='flex-1'>
                                     <h4 className="font-semibold text-sm">Import Users from CSV</h4>
                                     <p className="text-xs text-muted-foreground mb-2">Upload a CSV file to bulk create or update users. Matches based on 'id' or 'email'.</p>
@@ -1635,6 +1632,14 @@ export default function AdminDashboardPage() {
                                         </Button>
                                         <Input id="import-users-csv" type="file" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" accept=".csv" onChange={handleImportUsersCsv} disabled={isImporting} />
                                     </div>
+                                </div>
+                                <div className='flex-1'>
+                                    <h4 className="font-semibold text-sm">Export Users to Excel (CSV)</h4>
+                                    <p className="text-xs text-muted-foreground mb-2">Download a CSV file of all expert users. This can be opened in Excel or used as a template.</p>
+                                    <Button onClick={handleExportUsersCsv} disabled={!usersData || usersData.length === 0} className="w-full">
+                                        <Download className="mr-2 h-4 w-4" />
+                                        Export Users (CSV)
+                                    </Button>
                                 </div>
                             </div>
                         </CardContent>
