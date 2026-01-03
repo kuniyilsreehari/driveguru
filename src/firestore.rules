@@ -222,7 +222,7 @@ service cloud.firestore {
                        // Any signed in user can update ONLY the likes array
                        (isSignedIn() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes'])) ||
                        // The author can update the content and imageUrl, but not likes or other fields
-                       (isPostAuthor(postId) && request.resource.data.diff(resource.data).affectedKeys().hasAny(['content', 'imageUrl']));
+                       (isPostAuthor(postId) && request.resource.data.diff(resource.data).hasAny(['content', 'imageUrl']));
 
         
         // Users can delete their own posts, or a super admin can.
@@ -235,7 +235,7 @@ service cloud.firestore {
             // Anyone can read comments
             allow read: if true;
             // Any signed-in user can create a comment
-            allow create: if isSignedIn() && requestData().authorId == request.auth.uid;
+            allow create: if isSignedIn() && request.resource.data.authorId == request.auth.uid;
             
             // Refined update rule for comments
             allow update: if isSuperAdmin() || // Super admins can do anything
@@ -280,9 +280,24 @@ service cloud.firestore {
 
         match /posts/{postId} {
             // Only group members can read or list posts within the group
-            allow read, list: if isGroupMember(); 
+            allow list: if isGroupMember();
+            allow get: if true;
             allow create: if isGroupMember() && request.resource.data.authorId == request.auth.uid;
-            allow update, delete: if (isGroupMember() && resource.data.authorId == request.auth.uid) || isSuperAdmin();
+            
+            allow update: if isSuperAdmin() || // Super admins can do anything
+                           // Any signed in user can update ONLY the likes array
+                           (isGroupMember() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes'])) ||
+                           // The author can update the content
+                           (isGroupMember() && resource.data.authorId == request.auth.uid && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['content']));
+
+            allow delete: if (isGroupMember() && resource.data.authorId == request.auth.uid) || isSuperAdmin();
+
+            match /comments/{commentId} {
+                allow read: if isGroupMember();
+                allow create: if isGroupMember() && request.resource.data.authorId == request.auth.uid;
+                allow update: if isSuperAdmin() || (isGroupMember() && resource.data.authorId == request.auth.uid && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['content']));
+                allow delete: if (isGroupMember() && resource.data.authorId == request.auth.uid) || isSuperAdmin() || isGroupCreator();
+            }
         }
     }
     

@@ -12,7 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, ChevronLeft, Users, Rss, UserPlus, UserMinus, Hash, Edit, Send, MoreHorizontal, Trash2, Pen } from 'lucide-react';
+import { Loader2, ChevronLeft, Users, Rss, UserPlus, UserMinus, Hash, Edit, Send, MoreHorizontal, Trash2, Pen, Heart, Share2, LogIn, MessageSquareReply, MessageSquare } from 'lucide-react';
 import { formatDistanceToNowStrict } from 'date-fns';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
@@ -49,6 +49,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { PostForm } from '@/components/post-form';
+import { LikesDialog } from '@/components/likes-dialog';
 
 type GroupPost = {
     id: string;
@@ -60,6 +61,17 @@ type GroupPost = {
     createdAt: Timestamp;
     likes?: string[];
 };
+
+type Comment = {
+    id: string;
+    parentId: string | null;
+    authorId: string;
+    content: string;
+    createdAt: Timestamp;
+    likes?: string[];
+    replies?: Comment[];
+}
+
 
 type UserProfile = {
     id: string;
@@ -78,6 +90,10 @@ const postFormSchema = z.object({
   content: z.string().min(2, 'Post must be at least 2 characters.').max(500, 'Post cannot exceed 500 characters.'),
 });
 
+const commentFormSchema = z.object({
+  content: z.string().min(1, 'Comment cannot be empty.'),
+});
+
 
 function getInitials(name?: string | null) {
     if (!name) return 'AN';
@@ -89,6 +105,386 @@ function getInitials(name?: string | null) {
         return names[0].substring(0, 2).toUpperCase();
     }
     return names[0] ? names[0].charAt(0).toUpperCase() : 'U';
+}
+
+function CommenterInfo({ authorId }: { authorId: string }) {
+    const firestore = useFirestore();
+    const commenterDocRef = useMemoFirebase(() => {
+        if (!firestore) return null;
+        return doc(firestore, 'users', authorId);
+    }, [firestore, authorId]);
+    
+    const { data: commenter, isLoading } = useDoc<UserProfile>(commenterDocRef);
+
+    if (isLoading || !commenter) {
+        return (
+             <div className="flex items-center gap-3">
+                <Avatar className="h-8 w-8">
+                    <AvatarFallback><Loader2 className="h-4 w-4 animate-spin" /></AvatarFallback>
+                </Avatar>
+                <div className="flex-1">
+                    <p className="text-sm font-semibold">Loading...</p>
+                </div>
+            </div>
+        );
+    }
+    
+    const displayName = `${commenter.firstName || 'Anonymous'} ${commenter.lastName || ''}`.trim();
+    const displayInitials = getInitials(displayName);
+
+    return (
+        <div className="flex items-center gap-3">
+            <Link href={`/expert/${authorId}`}>
+                <Avatar className="h-8 w-8">
+                    <AvatarImage src={commenter.photoUrl} />
+                    <AvatarFallback>{displayInitials}</AvatarFallback>
+                </Avatar>
+            </Link>
+            <div className="flex-1">
+                <Link href={`/expert/${authorId}`} className="hover:underline">
+                    <p className="text-sm font-semibold">{displayName}</p>
+                </Link>
+            </div>
+        </div>
+    );
+}
+
+function CommentThread({ comment, postId, allComments, onDelete, postAuthorId }: { comment: Comment, postId: string, allComments: Comment[], onDelete: (commentId: string) => void, postAuthorId: string }) {
+    const { user } = useUser();
+    const firestore = useFirestore();
+    const { toast } = useToast();
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [showReplyForm, setShowReplyForm] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
+    const [editedContent, setEditedContent] = useState(comment.content);
+    
+    const superAdminDocRef = useMemoFirebase(() => {
+        if (!user) return null;
+        return doc(firestore, 'roles_super_admin', user.uid);
+    }, [firestore, user]);
+    const { data: superAdminData } = useDoc(superAdminDocRef);
+    const isSuperAdmin = !!superAdminData;
+
+    const replies = useMemo(() => allComments.filter(c => c.parentId === comment.id), [allComments, comment.id]);
+
+    const form = useForm<z.infer<typeof commentFormSchema>>({
+        resolver: zodResolver(commentFormSchema),
+        defaultValues: { content: '' },
+    });
+
+    async function onSubmit(values: z.infer<typeof commentFormSchema>) {
+        if (!user || !firestore) {
+            toast({ variant: 'destructive', title: 'You must be logged in to comment.' });
+            return;
+        }
+        setIsSubmitting(true);
+        const commentRef = collection(firestore, 'posts', postId, 'comments');
+        try {
+            await addDocumentNonBlocking(commentRef, {
+                authorId: user.uid,
+                content: values.content,
+                createdAt: serverTimestamp(),
+                parentId: comment.id,
+            });
+            form.reset();
+            setShowReplyForm(false);
+        } catch (error) {
+            if ((error as any).name !== 'FirebaseError') {
+                toast({ variant: 'destructive', title: 'Failed to post reply.' });
+            }
+        } finally {
+            setIsSubmitting(false);
+        }
+    }
+    
+    const handleLikeComment = async () => {
+        if (!user || !firestore) {
+            toast({ variant: 'destructive', title: 'You must be logged in to like a comment.' });
+            return;
+        }
+
+        const commentRef = doc(firestore, 'posts', postId, 'comments', comment.id);
+        const hasLiked = comment.likes?.includes(user.uid);
+        const updateAction = hasLiked ? arrayRemove(user.uid) : arrayUnion(user.uid);
+        
+        try {
+            await updateDoc(commentRef, { likes: updateAction });
+        } catch (error) {
+            console.error("Error liking comment:", error);
+            if ((error as any).name !== 'FirebaseError') {
+                 toast({ variant: 'destructive', title: 'Error', description: 'Could not update like status.' });
+            }
+        }
+    };
+
+    const handleUpdateComment = async () => {
+        if (!firestore) return;
+        const commentDocRef = doc(firestore, 'posts', postId, 'comments', comment.id);
+        
+        try {
+            await updateDocumentNonBlocking(commentDocRef, { content: editedContent });
+            toast({ title: "Comment updated." });
+            setIsEditing(false);
+        } catch(error) {
+            if ((error as any).name !== 'FirebaseError') {
+                toast({ variant: 'destructive', title: 'Failed to update comment.' });
+            }
+        }
+    }
+    
+    const canManageComment = user && (user.uid === comment.authorId || user.uid === postAuthorId || isSuperAdmin);
+    const canEditComment = user && user.uid === comment.authorId;
+    const hasLiked = user ? comment.likes?.includes(user.uid) : false;
+    const canViewLikes = comment.likes && comment.likes.length > 0;
+
+    return (
+        <div className="flex items-start gap-3">
+             {comment.parentId && <div className="w-4 shrink-0 border-l-2 border-border/50 h-full ml-4" />}
+            <div className="flex-1 space-y-2">
+                <div className="flex items-center justify-between">
+                    <CommenterInfo authorId={comment.authorId} />
+                    {canManageComment && (
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-6 w-6">
+                                    <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent>
+                                {canEditComment && 
+                                    <DropdownMenuItem onClick={() => setIsEditing(true)}>
+                                        <Pen className="mr-2 h-4 w-4" /> Edit
+                                    </DropdownMenuItem>
+                                }
+                                <DropdownMenuItem onClick={() => onDelete(comment.id)} className="text-destructive focus:text-destructive">
+                                    <Trash2 className="mr-2 h-4 w-4" /> Delete
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    )}
+                </div>
+                <div className="pl-11">
+                    {isEditing ? (
+                        <div className="space-y-2">
+                            <Textarea 
+                                value={editedContent}
+                                onChange={(e) => setEditedContent(e.target.value)}
+                                className="text-sm"
+                            />
+                            <div className="flex justify-end gap-2">
+                                <Button variant="ghost" size="sm" onClick={() => setIsEditing(false)}>Cancel</Button>
+                                <Button size="sm" onClick={handleUpdateComment}>Save</Button>
+                            </div>
+                        </div>
+                    ) : (
+                         <p className="text-sm">{comment.content}</p>
+                    )}
+                
+                    <div className="flex items-center gap-4 text-xs text-muted-foreground mt-1">
+                        <p title={comment.createdAt?.toDate().toLocaleString()}>
+                            {comment.createdAt ? `${formatDistanceToNowStrict(new Date(comment.createdAt.seconds * 1000))} ago` : 'just now'}
+                        </p>
+                        {user && (
+                            <>
+                                <button onClick={() => setShowReplyForm(!showReplyForm)} className="hover:underline flex items-center gap-1">
+                                    <MessageSquareReply className="h-3 w-3" />
+                                    Reply
+                                </button>
+                                <div className="flex items-center gap-2">
+                                    <button onClick={handleLikeComment} className="hover:underline flex items-center gap-1">
+                                        <Heart className={cn("h-3 w-3", hasLiked && "fill-red-500 text-red-500")} />
+                                        <span>Like</span>
+                                    </button>
+                                     {canViewLikes ? (
+                                        <LikesDialog userIds={comment.likes!}>
+                                            <button className="text-xs text-muted-foreground hover:underline">
+                                                {comment.likes?.length || 0}
+                                            </button>
+                                        </LikesDialog>
+                                    ) : (
+                                        <span className="text-xs text-muted-foreground">
+                                            {comment.likes?.length || 0}
+                                        </span>
+                                    )}
+                                </div>
+                            </>
+                        )}
+                    </div>
+
+                    {showReplyForm && user && (
+                        <div className="mt-2">
+                            <Form {...form}>
+                                <form onSubmit={form.handleSubmit(onSubmit)} className="flex items-center gap-2">
+                                    <FormField
+                                        control={form.control}
+                                        name="content"
+                                        render={({ field }) => (
+                                            <FormItem className="flex-1">
+                                                <FormControl>
+                                                    <Input placeholder={`Reply to this comment...`} {...field} />
+                                                </FormControl>
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <Button type="submit" size="icon" disabled={isSubmitting}>
+                                        {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                                    </Button>
+                                </form>
+                            </Form>
+                        </div>
+                    )}
+                </div>
+                
+                 {replies.length > 0 && (
+                    <div className="pt-2 space-y-4">
+                        {replies.map(reply => (
+                            <CommentThread key={reply.id} comment={reply} postId={postId} allComments={allComments || []} onDelete={onDelete} postAuthorId={postAuthorId} />
+                        ))}
+                    </div>
+                )}
+            </div>
+        </div>
+    )
+}
+
+function CommentsSection({ postId, postAuthorId }: { postId: string, postAuthorId: string }) {
+    const firestore = useFirestore();
+    const { user, isUserLoading } = useUser();
+    const { toast } = useToast();
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isCommentDeleteDialogOpen, setIsCommentDeleteDialogOpen] = useState(false);
+    const [selectedCommentId, setSelectedCommentId] = useState<string | null>(null);
+    
+    const commentsQuery = useMemoFirebase(() => {
+        if (!firestore) return null;
+        return query(collection(firestore, 'posts', postId, 'comments'), orderBy('createdAt', 'asc'));
+    }, [firestore, postId]);
+
+    const { data: comments, isLoading: isLoadingComments } = useCollection<Comment>(commentsQuery);
+    
+    const form = useForm<z.infer<typeof commentFormSchema>>({
+        resolver: zodResolver(commentFormSchema),
+        defaultValues: { content: '' },
+    });
+
+    async function onSubmit(values: z.infer<typeof commentFormSchema>) {
+        if (!user || !firestore) {
+            toast({ variant: 'destructive', title: 'You must be logged in to comment.' });
+            return;
+        }
+        setIsSubmitting(true);
+        const commentRef = collection(firestore, 'posts', postId, 'comments');
+        try {
+            await addDocumentNonBlocking(commentRef, {
+                authorId: user.uid,
+                content: values.content,
+                createdAt: serverTimestamp(),
+                parentId: null
+            });
+            form.reset();
+        } catch (error) {
+            if ((error as any).name !== 'FirebaseError') {
+                toast({ variant: 'destructive', title: 'Failed to post comment.' });
+            }
+        } finally {
+            setIsSubmitting(false);
+        }
+    }
+    
+    const openDeleteDialog = (commentId: string) => {
+        setSelectedCommentId(commentId);
+        setIsCommentDeleteDialogOpen(true);
+    };
+
+    const handleDeleteComment = () => {
+        if (!firestore || !selectedCommentId) return;
+        const commentDocRef = doc(firestore, 'posts', postId, 'comments', selectedCommentId);
+        deleteDocumentNonBlocking(commentDocRef).then(() => {
+            toast({ title: "Comment deleted." });
+        }).catch(error => {
+            if ((error as any).name !== 'FirebaseError') {
+                toast({ variant: 'destructive', title: 'Failed to delete comment.' });
+            }
+        });
+        setIsCommentDeleteDialogOpen(false);
+        setSelectedCommentId(null);
+    };
+    
+    const topLevelComments = useMemo(() => {
+        return comments?.filter(c => !c.parentId) || [];
+    }, [comments]);
+
+
+    return (
+      <>
+        <div className="pt-4 space-y-4">
+            <Separator />
+            {isUserLoading ? (
+                 <div className="flex items-center justify-center h-10">
+                    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                </div>
+            ) : user ? (
+                 <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="flex items-center gap-2">
+                        <FormField
+                            control={form.control}
+                            name="content"
+                            render={({ field }) => (
+                                <FormItem className="flex-1">
+                                    <FormControl>
+                                        <Input placeholder="Write a comment..." {...field} />
+                                    </FormControl>
+                                </FormItem>
+                            )}
+                        />
+                        <Button type="submit" size="icon" disabled={isSubmitting}>
+                            {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                        </Button>
+                    </form>
+                 </Form>
+            ) : (
+                <div className="text-center py-2">
+                    <Button variant="outline" size="sm" asChild>
+                        <Link href="/login">
+                            <LogIn className="mr-2 h-4 w-4" />
+                            Log in to comment
+                        </Link>
+                    </Button>
+                </div>
+            )}
+             <Separator />
+
+             {isLoadingComments ? (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span>Loading comments...</span>
+                </div>
+            ) : (
+                <div className="space-y-4">
+                    {topLevelComments.map(comment => (
+                        <CommentThread key={comment.id} comment={comment} postId={postId} allComments={comments || []} onDelete={openDeleteDialog} postAuthorId={postAuthorId}/>
+                    ))}
+                </div>
+            )}
+        </div>
+        <AlertDialog open={isCommentDeleteDialogOpen} onOpenChange={setIsCommentDeleteDialogOpen}>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        This will permanently delete this comment and all of its replies. This action cannot be undone.
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDeleteComment} className="bg-destructive hover:bg-destructive/90">
+                        Delete
+                    </AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
+      </>
+    );
 }
 
 function GroupHeader({ group, onMembershipChange }: { group: Group, onMembershipChange: () => void }) {
@@ -288,9 +684,9 @@ function GroupFeed({ group }: { group: Group }) {
 
         setIsSubmitting(true);
         const postsCollectionRef = collection(firestore, 'groups', group.id, 'posts');
-        const newPostDocRef = doc(postsCollectionRef);
-
+        
         try {
+            const newPostDocRef = doc(postsCollectionRef); // Create a reference with a new ID first
             const newPost = {
                 id: newPostDocRef.id,
                 content: values.content,
