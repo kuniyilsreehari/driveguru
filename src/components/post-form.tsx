@@ -41,6 +41,7 @@ export function PostForm({ userProfile, groupId }: PostFormProps) {
     defaultValues: {
       content: '',
     },
+    mode: 'onChange', // Validate on change to enable/disable button
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
@@ -108,7 +109,7 @@ export function PostForm({ userProfile, groupId }: PostFormProps) {
         
         <div className="flex justify-end items-center gap-4">
             <p className="text-xs text-muted-foreground">{form.watch('content').length} / 500</p>
-            <Button type="submit" disabled={isSubmitting}>
+            <Button type="submit" disabled={isSubmitting || !form.formState.isValid}>
               {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
               {isSubmitting ? 'Posting...' : 'Post'}
             </Button>
