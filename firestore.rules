@@ -1,4 +1,5 @@
 
+
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -281,7 +282,8 @@ service cloud.firestore {
             // Only group members can read or list posts within the group
             allow read, list: if isGroupMember(); 
             allow create: if isGroupMember() && request.resource.data.authorId == request.auth.uid;
-            allow update, delete: if (isGroupMember() && resource.data.authorId == request.auth.uid) || isSuperAdmin();
+            allow update: if (isGroupMember() && resource.data.authorId == request.auth.uid && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['content'])) || isSuperAdmin();
+            allow delete: if (isGroupMember() && resource.data.authorId == request.auth.uid) || isSuperAdmin();
         }
     }
     

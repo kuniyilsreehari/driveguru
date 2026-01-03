@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { Suspense, useMemo, useState } from 'react';
@@ -11,7 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, ChevronLeft, Users, Rss, UserPlus, UserMinus, Hash, Edit, Send, MoreHorizontal, Trash2 } from 'lucide-react';
+import { Loader2, ChevronLeft, Users, Rss, UserPlus, UserMinus, Hash, Edit, Send, MoreHorizontal, Trash2, Pen } from 'lucide-react';
 import { formatDistanceToNowStrict } from 'date-fns';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
@@ -249,6 +250,8 @@ function GroupFeed({ group }: { group: Group }) {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isPostDeleteDialogOpen, setIsPostDeleteDialogOpen] = useState(false);
     const [selectedPost, setSelectedPost] = useState<GroupPost | null>(null);
+    const [editingPostId, setEditingPostId] = useState<string | null>(null);
+    const [editedPostContent, setEditedPostContent] = useState('');
 
     const isMember = user ? group.members.includes(user.uid) : false;
 
@@ -345,6 +348,31 @@ function GroupFeed({ group }: { group: Group }) {
         setSelectedPost(null);
     }
 
+    const handleEditPost = (post: GroupPost) => {
+        setEditingPostId(post.id);
+        setEditedPostContent(post.content);
+    };
+
+    const handleCancelEdit = () => {
+        setEditingPostId(null);
+        setEditedPostContent('');
+    };
+
+    const handleUpdatePost = async () => {
+        if (!firestore || !editingPostId) return;
+        
+        const postDocRef = doc(firestore, 'groups', group.id, 'posts', editingPostId);
+        try {
+            await updateDocumentNonBlocking(postDocRef, { content: editedPostContent });
+            toast({ title: 'Post updated' });
+            handleCancelEdit();
+        } catch (error) {
+             if ((error as any).name !== 'FirebaseError') {
+                toast({ variant: 'destructive', title: 'Failed to update post.' });
+            }
+        }
+    };
+
 
     if (isLoading || isUserLoading || isCurrentUserProfileLoading) {
         return (
@@ -376,7 +404,9 @@ function GroupFeed({ group }: { group: Group }) {
 
                 {posts && posts.length > 0 ? (
                     posts.map(post => {
-                        const canDelete = user && (user.uid === post.authorId || isSuperAdmin);
+                        const canEdit = user && user.uid === post.authorId;
+                        const canDelete = canEdit || isSuperAdmin;
+                        const isEditingThisPost = editingPostId === post.id;
                         return (
                             <Card key={post.id}>
                                 <CardHeader>
@@ -397,7 +427,7 @@ function GroupFeed({ group }: { group: Group }) {
                                                 </CardDescription>
                                             </div>
                                         </div>
-                                        {canDelete && (
+                                        {(canEdit || canDelete) && (
                                             <DropdownMenu>
                                                 <DropdownMenuTrigger asChild>
                                                     <Button variant="ghost" className="h-8 w-8 p-0">
@@ -405,18 +435,42 @@ function GroupFeed({ group }: { group: Group }) {
                                                     </Button>
                                                 </DropdownMenuTrigger>
                                                 <DropdownMenuContent align="end">
-                                                    <DropdownMenuItem onClick={() => openDeleteDialog(post)} className="text-destructive focus:text-destructive">
-                                                        <Trash2 className="mr-2 h-4 w-4" />
-                                                        <span>Delete</span>
-                                                    </DropdownMenuItem>
+                                                    {canEdit && (
+                                                        <DropdownMenuItem onClick={() => handleEditPost(post)}>
+                                                            <Pen className="mr-2 h-4 w-4" />
+                                                            <span>Edit</span>
+                                                        </DropdownMenuItem>
+                                                    )}
+                                                    {canDelete && (
+                                                        <DropdownMenuItem onClick={() => openDeleteDialog(post)} className="text-destructive focus:text-destructive">
+                                                            <Trash2 className="mr-2 h-4 w-4" />
+                                                            <span>Delete</span>
+                                                        </DropdownMenuItem>
+                                                    )}
                                                 </DropdownMenuContent>
                                             </DropdownMenu>
                                         )}
                                     </div>
                                 </CardHeader>
                                 <CardContent>
-                                    <p className="text-sm whitespace-pre-wrap mb-4">{post.content}</p>
-                                    {post.imageUrl && (
+                                    {isEditingThisPost ? (
+                                        <div className="space-y-2">
+                                            <Textarea
+                                                value={editedPostContent}
+                                                onChange={(e) => setEditedPostContent(e.target.value)}
+                                                className="text-sm whitespace-pre-wrap mb-4"
+                                                rows={4}
+                                            />
+                                            <div className="flex justify-end gap-2">
+                                                <Button variant="ghost" size="sm" onClick={handleCancelEdit}>Cancel</Button>
+                                                <Button size="sm" onClick={handleUpdatePost}>Save Changes</Button>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <p className="text-sm whitespace-pre-wrap mb-4">{post.content}</p>
+                                    )}
+
+                                    {post.imageUrl && !isEditingThisPost && (
                                         <div className="relative rounded-lg overflow-hidden border aspect-video">
                                             <Image
                                                 src={post.imageUrl}
