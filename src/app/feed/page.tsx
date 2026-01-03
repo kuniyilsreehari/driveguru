@@ -812,7 +812,7 @@ function FeedContent() {
                                         </span>
                                     )}
 
-                                    <ShareDialog expertId={post.authorId} expertName={post.authorName}>
+                                    <ShareDialog shareDetails={{ type: 'expert-profile', expertId: post.authorId, expertName: post.authorName }}>
                                         <Button variant="ghost" size="sm">
                                             <Share2 className="mr-2 h-4 w-4" />
                                             Share
