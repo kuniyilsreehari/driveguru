@@ -256,11 +256,16 @@ service cloud.firestore {
             return isSignedIn() && resource.data.creatorId == request.auth.uid;
         }
 
+        // Use a get() call to check membership for sub-collection reads
         function isGroupMember() {
-            return isSignedIn() && request.auth.uid in resource.data.members;
+            let groupDoc = get(/databases/$(database)/documents/groups/$(groupId));
+            return isSignedIn() && request.auth.uid in groupDoc.data.members;
         }
         
-        allow read, list: if isSignedIn();
+        // Allow anyone to view a single group's details and list all groups
+        allow get: if true;
+        allow list: if true;
+        
         allow create: if isSignedIn() && requestData().creatorId == request.auth.uid && request.auth.uid in requestData().members;
         
         // Only creator can edit name/description. Members can join/leave.
@@ -270,8 +275,9 @@ service cloud.firestore {
         allow delete: if isSuperAdmin() || isGroupCreator();
 
         match /posts/{postId} {
-            allow read, list: if isGroupMember();
-            allow create: if isGroupMember() && requestData().authorId == request.auth.uid;
+            // Only group members can read or list posts within the group
+            allow read, list: if isGroupMember(); 
+            allow create: if isGroupMember() && request.resource.data.authorId == request.auth.uid;
             allow update, delete: if (isGroupMember() && resource.data.authorId == request.auth.uid) || isSuperAdmin();
         }
     }
