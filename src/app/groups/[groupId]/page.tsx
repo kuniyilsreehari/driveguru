@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, ChevronLeft, Users, Rss, UserPlus, UserMinus, Hash, Edit, Send } from 'lucide-react';
+import { Loader2, ChevronLeft, Users, Rss, UserPlus, UserMinus, Hash, Edit, Send, MoreHorizontal, Trash2 } from 'lucide-react';
 import { formatDistanceToNowStrict } from 'date-fns';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
@@ -27,6 +27,22 @@ import {
   DialogFooter,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -231,6 +247,8 @@ function GroupFeed({ group }: { group: Group }) {
     const { user, isUserLoading } = useUser();
     const { toast } = useToast();
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isPostDeleteDialogOpen, setIsPostDeleteDialogOpen] = useState(false);
+    const [selectedPost, setSelectedPost] = useState<GroupPost | null>(null);
 
     const isMember = user ? group.members.includes(user.uid) : false;
 
@@ -246,6 +264,13 @@ function GroupFeed({ group }: { group: Group }) {
         return doc(firestore, 'users', user.uid);
     }, [user, firestore]);
     const { data: currentUserProfile, isLoading: isCurrentUserProfileLoading } = useDoc<UserProfile>(currentUserDocRef);
+    
+    const superAdminDocRef = useMemoFirebase(() => {
+        if (!user) return null;
+        return doc(firestore, 'roles_super_admin', user.uid);
+    }, [firestore, user]);
+    const { data: superAdminData } = useDoc(superAdminDocRef);
+    const isSuperAdmin = !!superAdminData;
 
     const postForm = useForm<z.infer<typeof postFormSchema>>({
         resolver: zodResolver(postFormSchema),
@@ -293,6 +318,32 @@ function GroupFeed({ group }: { group: Group }) {
             setIsSubmitting(false);
         }
     }
+    
+    const openDeleteDialog = (post: GroupPost) => {
+        setSelectedPost(post);
+        setIsPostDeleteDialogOpen(true);
+    }
+    
+    const handleDeletePost = () => {
+        if (!selectedPost || !firestore) return;
+        const postDocRef = doc(firestore, 'groups', group.id, 'posts', selectedPost.id);
+        deleteDocumentNonBlocking(postDocRef).then(() => {
+            toast({
+                title: "Post Deleted",
+                description: "The post has been successfully removed.",
+            });
+        }).catch(error => {
+            if ((error as any).name !== 'FirebaseError') {
+                toast({
+                    variant: 'destructive',
+                    title: "Deletion Failed",
+                    description: "Could not delete the post. Please try again.",
+                });
+            }
+        });
+        setIsPostDeleteDialogOpen(false);
+        setSelectedPost(null);
+    }
 
 
     if (isLoading || isUserLoading || isCurrentUserProfileLoading) {
@@ -304,7 +355,7 @@ function GroupFeed({ group }: { group: Group }) {
         );
     }
     
-    if (!isMember && !user) {
+    if (!isMember) {
         return (
             <Card className="text-center p-8">
                 <CardTitle>This is a private group.</CardTitle>
@@ -314,57 +365,95 @@ function GroupFeed({ group }: { group: Group }) {
     }
 
     return (
-        <div className="space-y-6">
-            <h2 className="text-2xl font-bold flex items-center gap-2"><Rss className="h-6 w-6"/> Group Feed</h2>
-            <PostForm 
-                form={postForm}
-                onSubmit={onPostSubmit}
-                isSubmitting={isSubmitting}
-            />
+        <>
+            <div className="space-y-6">
+                <h2 className="text-2xl font-bold flex items-center gap-2"><Rss className="h-6 w-6"/> Group Feed</h2>
+                <PostForm 
+                    form={postForm}
+                    onSubmit={onPostSubmit}
+                    isSubmitting={isSubmitting}
+                />
 
-            {posts && posts.length > 0 ? (
-                posts.map(post => (
-                     <Card key={post.id}>
-                        <CardHeader>
-                            <div className="flex items-center gap-3">
-                                <Link href={`/expert/${post.authorId}`}>
-                                    <Avatar>
-                                        <AvatarImage src={post.authorPhotoUrl} />
-                                        <AvatarFallback>{getInitials(post.authorName)}</AvatarFallback>
-                                    </Avatar>
-                                </Link>
-                                <div>
-                                    <Link href={`/expert/${post.authorId}`} className="hover:underline">
-                                        <CardTitle className="text-base">{post.authorName}</CardTitle>
-                                    </Link>
-                                    <CardDescription className="text-xs">
-                                        {post.createdAt ? `${formatDistanceToNowStrict(post.createdAt.toDate())} ago` : '...'}
-                                    </CardDescription>
-                                </div>
-                            </div>
-                        </CardHeader>
-                        <CardContent>
-                             <p className="text-sm whitespace-pre-wrap mb-4">{post.content}</p>
-                            {post.imageUrl && (
-                                <div className="relative rounded-lg overflow-hidden border aspect-video">
-                                    <Image
-                                        src={post.imageUrl}
-                                        alt={`Post image from ${post.authorName}`}
-                                        fill
-                                        className="object-cover"
-                                    />
-                                </div>
-                            )}
-                        </CardContent>
+                {posts && posts.length > 0 ? (
+                    posts.map(post => {
+                        const canDelete = user && (user.uid === post.authorId || isSuperAdmin);
+                        return (
+                            <Card key={post.id}>
+                                <CardHeader>
+                                    <div className="flex items-start justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <Link href={`/expert/${post.authorId}`}>
+                                                <Avatar>
+                                                    <AvatarImage src={post.authorPhotoUrl} />
+                                                    <AvatarFallback>{getInitials(post.authorName)}</AvatarFallback>
+                                                </Avatar>
+                                            </Link>
+                                            <div>
+                                                <Link href={`/expert/${post.authorId}`} className="hover:underline">
+                                                    <CardTitle className="text-base">{post.authorName}</CardTitle>
+                                                </Link>
+                                                <CardDescription className="text-xs">
+                                                    {post.createdAt ? `${formatDistanceToNowStrict(post.createdAt.toDate())} ago` : '...'}
+                                                </CardDescription>
+                                            </div>
+                                        </div>
+                                        {canDelete && (
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button variant="ghost" className="h-8 w-8 p-0">
+                                                        <MoreHorizontal className="h-4 w-4" />
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent align="end">
+                                                    <DropdownMenuItem onClick={() => openDeleteDialog(post)} className="text-destructive focus:text-destructive">
+                                                        <Trash2 className="mr-2 h-4 w-4" />
+                                                        <span>Delete</span>
+                                                    </DropdownMenuItem>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                        )}
+                                    </div>
+                                </CardHeader>
+                                <CardContent>
+                                    <p className="text-sm whitespace-pre-wrap mb-4">{post.content}</p>
+                                    {post.imageUrl && (
+                                        <div className="relative rounded-lg overflow-hidden border aspect-video">
+                                            <Image
+                                                src={post.imageUrl}
+                                                alt={`Post image from ${post.authorName}`}
+                                                fill
+                                                className="object-cover"
+                                            />
+                                        </div>
+                                    )}
+                                </CardContent>
+                            </Card>
+                        )
+                    })
+                ) : (
+                    <Card className="text-center p-8">
+                        <CardTitle>The feed is empty.</CardTitle>
+                        <CardDescription className="mt-2">Be the first to post in this group!</CardDescription>
                     </Card>
-                ))
-            ) : (
-                <Card className="text-center p-8">
-                    <CardTitle>The feed is empty.</CardTitle>
-                    <CardDescription className="mt-2">Be the first to post in this group!</CardDescription>
-                </Card>
-            )}
-        </div>
+                )}
+            </div>
+             <AlertDialog open={isPostDeleteDialogOpen} onOpenChange={setIsPostDeleteDialogOpen}>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This action cannot be undone. This will permanently delete this post.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDeletePost} className="bg-destructive hover:bg-destructive/90">
+                      Delete
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+        </>
     );
 }
 
