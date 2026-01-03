@@ -27,9 +27,10 @@ const formSchema = z.object({
 
 interface PostFormProps {
   userProfile: ExpertUser;
+  groupId?: string; // Add groupId as an optional prop
 }
 
-export function PostForm({ userProfile }: PostFormProps) {
+export function PostForm({ userProfile, groupId }: PostFormProps) {
   const { toast } = useToast();
   const firestore = useFirestore();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -45,27 +46,29 @@ export function PostForm({ userProfile }: PostFormProps) {
     if (!firestore || !userProfile) return;
 
     setIsSubmitting(true);
+    
+    // Determine the correct collection path
+    const collectionPath = groupId ? `groups/${groupId}/posts` : 'posts';
 
     try {
-      // Correctly create a document reference first
-      const newPostRef = doc(collection(firestore, 'posts'));
+      const newPostRef = doc(collection(firestore, collectionPath));
       
       const newPost = {
-        id: newPostRef.id, // Add the ID to the document data
+        id: newPostRef.id,
         content: values.content,
         authorId: userProfile.id,
         authorName: `${userProfile.firstName} ${userProfile.lastName}`,
         authorPhotoUrl: userProfile.photoUrl || '',
         createdAt: serverTimestamp(),
         likes: [],
+        ...(groupId && { groupId }), // Add groupId if it exists
       };
       
-      // Use the new reference to set the document
       await setDocumentNonBlocking(newPostRef, newPost);
       
       toast({
         title: 'Post Published!',
-        description: 'Your update is now live on the public feed.',
+        description: 'Your update is now live.',
       });
       form.reset();
     } catch (error) {
@@ -92,7 +95,7 @@ export function PostForm({ userProfile }: PostFormProps) {
               <FormLabel className="sr-only">Post Content</FormLabel>
               <FormControl>
                 <Textarea
-                  placeholder="What's on your mind? Share an update, a project you've completed, or a new skill you've learned..."
+                  placeholder="What's on your mind? Share an update..."
                   className="min-h-[100px]"
                   {...field}
                 />

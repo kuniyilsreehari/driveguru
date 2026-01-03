@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { User as UserIcon, LogOut, LayoutDashboard, MessageSquare, Home, Award, Briefcase, Moon, Sun, Menu, Download, Info, Rss } from 'lucide-react';
+import { User as UserIcon, LogOut, LayoutDashboard, MessageSquare, Home, Award, Briefcase, Moon, Sun, Menu, Download, Info, Rss, Users } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useTheme } from 'next-themes';
@@ -116,6 +116,12 @@ export function Header() {
                 </Link>
               </Button>
               <Button asChild variant="ghost">
+                <Link href="/groups">
+                    <Users className="mr-2 h-4 w-4" />
+                    Groups
+                </Link>
+              </Button>
+              <Button asChild variant="ghost">
                 <Link href="/vacancies">
                     <Briefcase className="mr-2 h-4 w-4" />
                     Vacancies
@@ -174,6 +180,11 @@ export function Header() {
                         </Link>
                     </Button>
                     <Button asChild variant="ghost" className="justify-start" onClick={() => setIsMobileMenuOpen(false)}>
+                        <Link href="/groups">
+                            <Users className="mr-2 h-4 w-4" /> Groups
+                        </Link>
+                    </Button>
+                    <Button asChild variant="ghost" className="justify-start" onClick={() => setIsMobileMenuOpen(false)}>
                         <Link href="/vacancies">
                             <Briefcase className="mr-2 h-4 w-4" /> Vacancies
                         </Link>
@@ -216,6 +227,12 @@ export function Header() {
                     Feed
                 </Link>
             </Button>
+             <Button asChild variant="ghost">
+                <Link href="/groups">
+                    <Users className="mr-2 h-4 w-4" />
+                    Groups
+                </Link>
+              </Button>
              <Button asChild variant="ghost">
                 <Link href="/vacancies">
                     <Briefcase className="mr-2 h-4 w-4" />

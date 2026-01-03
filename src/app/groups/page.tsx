@@ -1,0 +1,265 @@
+
+'use client';
+
+import { Suspense, useState } from 'react';
+import Link from 'next/link';
+import { collection, query, orderBy, serverTimestamp } from 'firebase/firestore';
+import { useFirestore, useCollection, useMemoFirebase, useUser, addDocumentNonBlocking } from '@/firebase';
+import { Button } from '@/components/ui/button';
+import { Loader2, ChevronLeft, Users, PlusCircle, ArrowRight, Search, Hash } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { useToast } from '@/hooks/use-toast';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+
+export type Group = {
+    id: string;
+    name: string;
+    description: string;
+    creatorId: string;
+    members: string[];
+    createdAt: any;
+};
+
+const createGroupSchema = z.object({
+  name: z.string().min(3, 'Group name must be at least 3 characters.').max(50, 'Group name cannot exceed 50 characters.'),
+  description: z.string().min(10, 'Description must be at least 10 characters.').max(250, 'Description cannot exceed 250 characters.'),
+});
+
+
+function CreateGroupDialog({ onGroupCreated }: { onGroupCreated: () => void }) {
+    const { user } = useUser();
+    const firestore = useFirestore();
+    const { toast } = useToast();
+    const [isOpen, setIsOpen] = useState(false);
+
+    const form = useForm<z.infer<typeof createGroupSchema>>({
+        resolver: zodResolver(createGroupSchema),
+        defaultValues: {
+            name: '',
+            description: '',
+        },
+    });
+
+    const onSubmit = async (values: z.infer<typeof createGroupSchema>) => {
+        if (!user || !firestore) {
+            toast({ variant: 'destructive', title: 'You must be logged in to create a group.' });
+            return;
+        }
+
+        const newGroupData = {
+            name: values.name,
+            description: values.description,
+            creatorId: user.uid,
+            members: [user.uid], // Creator is the first member
+            createdAt: serverTimestamp(),
+        };
+
+        try {
+            await addDocumentNonBlocking(collection(firestore, 'groups'), newGroupData);
+            toast({
+                title: 'Group Created!',
+                description: `Your group "${values.name}" is now live.`,
+            });
+            form.reset();
+            setIsOpen(false);
+            onGroupCreated();
+        } catch (error) {
+            console.error('Error creating group:', error);
+            if ((error as any).name !== 'FirebaseError') {
+                 toast({ variant: 'destructive', title: 'Error', description: 'Could not create the group. Please try again.' });
+            }
+        }
+    };
+
+    return (
+        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+            <DialogTrigger asChild>
+                <Button>
+                    <PlusCircle className="mr-2 h-4 w-4" /> Create New Group
+                </Button>
+            </DialogTrigger>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Create a New Professional Group</DialogTitle>
+                    <DialogDescription>Start a community around a profession, skill, or interest.</DialogDescription>
+                </DialogHeader>
+                <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                        <FormField
+                            control={form.control}
+                            name="name"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Group Name</FormLabel>
+                                    <FormControl>
+                                        <Input placeholder="e.g., React Developers India" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="description"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Group Description</FormLabel>
+                                    <FormControl>
+                                        <Textarea placeholder="What is this group about?" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <DialogFooter>
+                            <Button type="submit" disabled={form.formState.isSubmitting}>
+                                {form.formState.isSubmitting ? (
+                                    <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Creating...</>
+                                ) : 'Create Group'}
+                            </Button>
+                        </DialogFooter>
+                    </form>
+                </Form>
+            </DialogContent>
+        </Dialog>
+    );
+}
+
+
+function GroupsList() {
+    const firestore = useFirestore();
+    const [searchQuery, setSearchQuery] = useState('');
+
+    const groupsQuery = useMemoFirebase(() => {
+        if (!firestore) return null;
+        return query(collection(firestore, 'groups'), orderBy('createdAt', 'desc'));
+    }, [firestore]);
+
+    const { data: allGroups, isLoading, error } = useCollection<Group>(groupsQuery);
+    
+    const filteredGroups = allGroups?.filter(group => 
+        group.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        group.description.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
+    if (isLoading) {
+        return (
+            <div className="flex h-64 w-full items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <p className="ml-4 text-muted-foreground">Loading groups...</p>
+            </div>
+        );
+    }
+    
+    if (error) {
+        return (
+             <div className="text-center py-16 text-destructive">
+                <h2 className="text-2xl font-semibold">Error Loading Groups</h2>
+                <p className="text-sm mt-2">{error.message}</p>
+            </div>
+        )
+    }
+
+    return (
+        <div className="space-y-6">
+            <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                    placeholder="Search for groups..."
+                    className="pl-10"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                />
+            </div>
+
+            {filteredGroups && filteredGroups.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {filteredGroups.map(group => (
+                        <Card key={group.id} className="flex flex-col hover:shadow-lg transition-shadow">
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2">
+                                    <Hash className="h-5 w-5 text-primary"/>
+                                    {group.name}
+                                </CardTitle>
+                                <CardDescription className="line-clamp-2 h-[40px]">{group.description}</CardDescription>
+                            </CardHeader>
+                            <CardContent className="flex-grow">
+                                <div className="text-sm text-muted-foreground flex items-center gap-2">
+                                    <Users className="h-4 w-4" />
+                                    <span>{group.members.length} {group.members.length === 1 ? 'member' : 'members'}</span>
+                                </div>
+                            </CardContent>
+                            <CardFooter>
+                                <Button asChild className="w-full">
+                                    <Link href={`/groups/${group.id}`}>
+                                        View Group <ArrowRight className="ml-2 h-4 w-4" />
+                                    </Link>
+                                </Button>
+                            </CardFooter>
+                        </Card>
+                    ))}
+                </div>
+            ) : (
+                <div className="text-center py-16">
+                    <h2 className="text-2xl font-semibold">No Groups Found</h2>
+                    <p className="text-muted-foreground mt-2">
+                        {allGroups && allGroups.length > 0 
+                            ? "No groups match your search. Try a different query." 
+                            : "Be the first to create a group and start a community!"}
+                    </p>
+                </div>
+            )}
+        </div>
+    );
+}
+
+export default function GroupsPage() {
+    const { user } = useUser();
+
+    return (
+        <div className="min-h-screen bg-background p-4 sm:p-8">
+            <div className="mx-auto max-w-6xl">
+                <header className="pb-8">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                        <div>
+                            <div className="flex items-center gap-3 mb-2">
+                                <Users className="h-10 w-10 text-primary" />
+                                <h1 className="text-4xl sm:text-5xl font-bold">Professional Groups</h1>
+                            </div>
+                            <p className="text-muted-foreground">Connect, share, and grow with experts in your field.</p>
+                        </div>
+                        {user && <CreateGroupDialog onGroupCreated={() => {}} />}
+                    </div>
+                </header>
+                <main>
+                    <div className="mb-6">
+                        <Button variant="outline" asChild>
+                            <Link href="/"><ChevronLeft className="mr-2 h-4 w-4" /> Back to Home</Link>
+                        </Button>
+                    </div>
+                    <Suspense fallback={
+                        <div className="flex h-64 w-full items-center justify-center">
+                            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                        </div>
+                    }>
+                        <GroupsList />
+                    </Suspense>
+                </main>
+            </div>
+        </div>
+    )
+}
