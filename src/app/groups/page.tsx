@@ -7,7 +7,7 @@ import { collection, query, orderBy, serverTimestamp } from 'firebase/firestore'
 import { useFirestore, useCollection, useMemoFirebase, useUser, addDocumentNonBlocking } from '@/firebase';
 import { Button } from '@/components/ui/button';
 import { Loader2, ChevronLeft, Users, PlusCircle, ArrowRight, Search, Hash } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
