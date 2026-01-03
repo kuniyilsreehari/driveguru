@@ -611,6 +611,17 @@ function FeedContent() {
 
     return (
         <>
+            <div className="mb-6 w-full">
+                <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                        placeholder="Search feed by content or author..."
+                        className="pl-10"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                </div>
+            </div>
             <div className="space-y-6">
                 {filteredPosts.map(post => {
                     const hasLiked = user ? post.likes?.includes(user.uid) : false;
@@ -734,8 +745,6 @@ function FeedContent() {
 }
 
 export default function FeedPage() {
-    const [searchQuery, setSearchQuery] = useState('');
-
     return (
         <div className="min-h-screen bg-background p-4 sm:p-8">
             <div className="mx-auto max-w-2xl">
@@ -747,19 +756,10 @@ export default function FeedPage() {
                     <p className="text-muted-foreground">Updates from all experts and companies on the platform.</p>
                 </header>
                 <main>
-                    <div className="mb-6 flex flex-col sm:flex-row gap-4 justify-between items-center">
+                    <div className="mb-6">
                         <Button variant="outline" asChild>
                             <Link href="/"><ChevronLeft className="mr-2 h-4 w-4" /> Back to Home</Link>
                         </Button>
-                        <div className="relative w-full sm:w-64">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                            <Input
-                                placeholder="Search feed..."
-                                className="pl-10"
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                            />
-                        </div>
                     </div>
                     <Suspense fallback={
                         <div className="flex h-64 w-full items-center justify-center">
