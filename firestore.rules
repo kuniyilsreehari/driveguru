@@ -256,14 +256,15 @@ service cloud.firestore {
             return isSignedIn() && resource.data.creatorId == request.auth.uid;
         }
 
-        // CORRECTED: This function now uses get() to fetch the group document
-        // and check the 'members' array.
         function isGroupMember() {
+            // Correctly use get() to check membership against the group document.
+            // 'groupId' is available here as a wildcard from the path.
             return isSignedIn() && request.auth.uid in get(/databases/$(database)/documents/groups/$(groupId)).data.members;
         }
         
         allow get: if isSignedIn();
-        allow list: if isSignedIn();
+        allow list: if isSignedIn(); // This rule allows listing all groups
+        
         allow create: if isSignedIn() && requestData().creatorId == request.auth.uid && request.auth.uid in requestData().members;
         
         // Only creator can edit name/description. Members can join/leave.
@@ -273,8 +274,10 @@ service cloud.firestore {
         allow delete: if isSuperAdmin() || isGroupCreator();
 
         match /posts/{postId} {
-            // This rule allows a member to list, read, create, and manage their own posts.
-            allow read, write: if isGroupMember();
+            // This rule now correctly allows a member to list posts, and perform other actions.
+            allow read, list: if isGroupMember();
+            allow create: if isGroupMember() && requestData().authorId == request.auth.uid;
+            allow update, delete: if (isGroupMember() && resource.data.authorId == request.auth.uid) || isSuperAdmin();
         }
     }
     
@@ -298,5 +301,3 @@ service cloud.firestore {
      * ===================================================== */
   }
 }
-
-    
