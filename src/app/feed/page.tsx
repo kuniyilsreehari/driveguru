@@ -13,7 +13,7 @@ import { Form, FormControl, FormField, FormItem } from '@/components/ui/form';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Loader2, ChevronLeft, Rss, Search, Heart, Share2, MoreHorizontal, Trash2, Send, LogIn } from 'lucide-react';
+import { Loader2, ChevronLeft, Rss, Search, Heart, Share2, MoreHorizontal, Trash2, Send, LogIn, MessageSquareReply, MessageSquare } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
@@ -51,11 +51,11 @@ type Post = {
 
 type Comment = {
     id: string;
+    parentId: string | null;
     authorId: string;
-    authorName: string;
-    authorPhotoUrl?: string;
     content: string;
     createdAt: Timestamp;
+    replies?: Comment[];
 }
 
 type UserProfile = {
@@ -75,14 +75,13 @@ function getInitials(name?: string | null) {
     if (names.length > 1 && names[names.length - 1]) {
         return `${names[0].charAt(0)}${names[names.length - 1].charAt(0)}`.toUpperCase();
     }
-    // Handle cases where there's only a first name or name is a single word
     if (names[0] && names[0].length > 1) {
         return names[0].substring(0, 2).toUpperCase();
     }
     return name.substring(0, 2).toUpperCase();
 }
 
-function CommenterInfo({ authorId, content, timestamp, canDelete, onDelete }: { authorId: string, content: string, timestamp: Timestamp | null, canDelete: boolean, onDelete: () => void }) {
+function CommenterInfo({ authorId }: { authorId: string }) {
     const firestore = useFirestore();
     const commenterDocRef = useMemoFirebase(() => {
         if (!firestore) return null;
@@ -91,37 +90,108 @@ function CommenterInfo({ authorId, content, timestamp, canDelete, onDelete }: { 
     
     const { data: commenter, isLoading } = useDoc<UserProfile>(commenterDocRef);
 
-    if (isLoading) {
+    if (isLoading || !commenter) {
         return (
-            <div className="flex items-start gap-3">
+             <div className="flex items-center gap-3">
                 <Avatar className="h-8 w-8">
                     <AvatarFallback><Loader2 className="h-4 w-4 animate-spin" /></AvatarFallback>
                 </Avatar>
-                <div className="flex-1 bg-secondary rounded-lg px-3 py-2">
-                    <p className="text-xs font-semibold">Loading...</p>
-                    <p className="text-sm">{content}</p>
+                <div className="flex-1">
+                    <p className="text-sm font-semibold">Loading...</p>
                 </div>
             </div>
         );
     }
     
-    const displayName = commenter ? `${commenter.firstName} ${commenter.lastName}` : 'Anonymous';
-    const displayInitials = commenter ? getInitials(`${commenter.firstName} ${commenter.lastName}`) : 'A';
+    const displayName = `${commenter.firstName} ${commenter.lastName}`;
+    const displayInitials = getInitials(displayName);
 
     return (
-        <div className="flex items-start gap-3">
+        <div className="flex items-center gap-3">
             <Link href={`/expert/${authorId}`}>
                 <Avatar className="h-8 w-8">
-                    <AvatarImage src={commenter?.photoUrl} />
+                    <AvatarImage src={commenter.photoUrl} />
                     <AvatarFallback>{displayInitials}</AvatarFallback>
                 </Avatar>
             </Link>
             <div className="flex-1">
-                <div className="bg-secondary rounded-lg px-3 py-2">
+                <Link href={`/expert/${authorId}`} className="hover:underline">
+                    <p className="text-sm font-semibold">{displayName}</p>
+                </Link>
+            </div>
+        </div>
+    );
+}
+
+function CommentThread({ comment, postId, allComments }: { comment: Comment, postId: string, allComments: Comment[] }) {
+    const { user } = useUser();
+    const firestore = useFirestore();
+    const { toast } = useToast();
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [showReplyForm, setShowReplyForm] = useState(false);
+    
+    const superAdminDocRef = useMemoFirebase(() => {
+        if (!user) return null;
+        return doc(firestore, 'roles_super_admin', user.uid);
+    }, [firestore, user]);
+    const { data: superAdminData } = useDoc(superAdminDocRef);
+    const isSuperAdmin = !!superAdminData;
+
+    const replies = allComments.filter(c => c.parentId === comment.id);
+
+    const form = useForm<z.infer<typeof commentFormSchema>>({
+        resolver: zodResolver(commentFormSchema),
+        defaultValues: { content: '' },
+    });
+
+    async function onSubmit(values: z.infer<typeof commentFormSchema>) {
+        if (!user || !firestore) {
+            toast({ variant: 'destructive', title: 'You must be logged in to comment.' });
+            return;
+        }
+        setIsSubmitting(true);
+        const commentRef = collection(firestore, 'posts', postId, 'comments');
+        try {
+            await addDocumentNonBlocking(commentRef, {
+                authorId: user.uid,
+                content: values.content,
+                createdAt: serverTimestamp(),
+                parentId: comment.id,
+            });
+            form.reset();
+            setShowReplyForm(false);
+        } catch (error) {
+            if ((error as any).name !== 'FirebaseError') {
+                toast({ variant: 'destructive', title: 'Failed to post reply.' });
+            }
+        } finally {
+            setIsSubmitting(false);
+        }
+    }
+
+    const handleDeleteComment = (commentId: string) => {
+        if (!firestore) return;
+        const commentDocRef = doc(firestore, 'posts', postId, 'comments', commentId);
+        deleteDocumentNonBlocking(commentDocRef).then(() => {
+            toast({ title: "Comment deleted." });
+        }).catch(error => {
+            if ((error as any).name !== 'FirebaseError') {
+                toast({ variant: 'destructive', title: 'Failed to delete comment.' });
+            }
+        });
+    }
+    
+    const canDelete = user && (user.uid === comment.authorId || isSuperAdmin);
+
+    return (
+        <div className="flex items-start gap-3">
+             <div className="w-8 shrink-0"> {/* Spacer for alignment */}
+                {comment.parentId && <div className="h-full w-px bg-border ml-4" />}
+            </div>
+            <div className="flex-1 space-y-2">
+                <div className="bg-secondary rounded-lg p-3">
                     <div className="flex items-center justify-between">
-                        <Link href={`/expert/${authorId}`} className="hover:underline">
-                            <p className="text-sm font-semibold">{displayName}</p>
-                        </Link>
+                         <CommenterInfo authorId={comment.authorId} />
                          {canDelete && (
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
@@ -130,23 +200,61 @@ function CommenterInfo({ authorId, content, timestamp, canDelete, onDelete }: { 
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent>
-                                    <DropdownMenuItem onClick={onDelete} className="text-destructive focus:text-destructive">
+                                    <DropdownMenuItem onClick={() => handleDeleteComment(comment.id)} className="text-destructive focus:text-destructive">
                                         <Trash2 className="mr-2 h-4 w-4" /> Delete
                                     </DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>
                         )}
                     </div>
-                    <p className="text-sm">{content}</p>
+                    <p className="text-sm pl-11">{comment.content}</p>
                 </div>
-                 <p className="text-xs text-muted-foreground mt-1 pl-1">
-                    {timestamp ? formatDistanceToNow(new Date(timestamp.seconds * 1000), { addSuffix: true }) : 'just now'}
-                </p>
+                 <div className="pl-11 flex items-center gap-4">
+                    <p className="text-xs text-muted-foreground">
+                        {comment.createdAt ? formatDistanceToNow(new Date(comment.createdAt.seconds * 1000), { addSuffix: true }) : 'just now'}
+                    </p>
+                     {user && (
+                        <Button variant="ghost" size="xs" onClick={() => setShowReplyForm(!showReplyForm)}>
+                            <MessageSquareReply className="mr-1 h-3 w-3"/>
+                            Reply
+                        </Button>
+                    )}
+                </div>
+
+                {showReplyForm && user && (
+                    <div className="pl-11">
+                         <Form {...form}>
+                            <form onSubmit={form.handleSubmit(onSubmit)} className="flex items-center gap-2">
+                                <FormField
+                                    control={form.control}
+                                    name="content"
+                                    render={({ field }) => (
+                                        <FormItem className="flex-1">
+                                            <FormControl>
+                                                <Input placeholder={`Reply to this comment...`} {...field} />
+                                            </FormControl>
+                                        </FormItem>
+                                    )}
+                                />
+                                <Button type="submit" size="icon" disabled={isSubmitting}>
+                                    {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                                </Button>
+                            </form>
+                        </Form>
+                    </div>
+                )}
+                
+                 {replies.length > 0 && (
+                    <div className="pt-2 space-y-4 border-l-2 border-border/50 ml-4">
+                        {replies.map(reply => (
+                            <CommentThread key={reply.id} comment={reply} postId={postId} allComments={allComments} />
+                        ))}
+                    </div>
+                )}
             </div>
         </div>
     )
 }
-
 
 function CommentsSection({ postId }: { postId: string }) {
     const firestore = useFirestore();
@@ -154,13 +262,6 @@ function CommentsSection({ postId }: { postId: string }) {
     const { toast } = useToast();
     const [isSubmitting, setIsSubmitting] = useState(false);
     
-    const superAdminDocRef = useMemoFirebase(() => {
-      if (!user) return null;
-      return doc(firestore, 'roles_super_admin', user.uid);
-    }, [firestore, user]);
-    const { data: superAdminData } = useDoc(superAdminDocRef);
-    const isSuperAdmin = !!superAdminData;
-
     const commentsQuery = useMemoFirebase(() => {
         if (!firestore) return null;
         return query(collection(firestore, 'posts', postId, 'comments'), orderBy('createdAt', 'asc'));
@@ -183,10 +284,9 @@ function CommentsSection({ postId }: { postId: string }) {
         try {
             await addDocumentNonBlocking(commentRef, {
                 authorId: user.uid,
-                authorName: user.displayName || 'Anonymous',
-                authorPhotoUrl: user.photoURL || '',
                 content: values.content,
                 createdAt: serverTimestamp(),
+                parentId: null
             });
             form.reset();
         } catch (error) {
@@ -198,42 +298,14 @@ function CommentsSection({ postId }: { postId: string }) {
         }
     }
     
-    const handleDeleteComment = (commentId: string) => {
-        const commentDocRef = doc(firestore, 'posts', postId, 'comments', commentId);
-        deleteDocumentNonBlocking(commentDocRef).then(() => {
-            toast({ title: "Comment deleted." });
-        }).catch(error => {
-            if ((error as any).name !== 'FirebaseError') {
-                toast({ variant: 'destructive', title: 'Failed to delete comment.' });
-            }
-        });
-    }
+    const topLevelComments = useMemo(() => {
+        return comments?.filter(c => !c.parentId) || [];
+    }, [comments]);
+
 
     return (
         <div className="pt-4 space-y-4">
             <Separator />
-            {isLoadingComments ? (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    <span>Loading comments...</span>
-                </div>
-            ) : (
-                <div className="space-y-4">
-                    {comments && comments.map(comment => {
-                         const canDelete = user && (user.uid === comment.authorId || isSuperAdmin);
-                        return (
-                            <CommenterInfo 
-                                key={comment.id}
-                                authorId={comment.authorId}
-                                content={comment.content}
-                                timestamp={comment.createdAt}
-                                canDelete={canDelete}
-                                onDelete={() => handleDeleteComment(comment.id)}
-                            />
-                        )
-                    })}
-                </div>
-            )}
             {isUserLoading ? (
                  <div className="flex items-center justify-center h-10">
                     <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
@@ -241,7 +313,7 @@ function CommentsSection({ postId }: { postId: string }) {
             ) : user ? (
                  <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="flex items-center gap-2">
-                         <FormField
+                        <FormField
                             control={form.control}
                             name="content"
                             render={({ field }) => (
@@ -265,6 +337,20 @@ function CommentsSection({ postId }: { postId: string }) {
                             Log in to comment
                         </Link>
                     </Button>
+                </div>
+            )}
+             <Separator />
+
+             {isLoadingComments ? (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span>Loading comments...</span>
+                </div>
+            ) : (
+                <div className="space-y-4">
+                    {topLevelComments.map(comment => (
+                        <CommentThread key={comment.id} comment={comment} postId={postId} allComments={comments || []} />
+                    ))}
                 </div>
             )}
         </div>
@@ -501,5 +587,7 @@ export default function FeedPage() {
         </div>
     )
 }
+
+    
 
     
