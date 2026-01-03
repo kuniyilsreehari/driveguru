@@ -13,7 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, ChevronLeft, Users, Rss, UserPlus, UserMinus, Hash, Edit, Send, MoreHorizontal, Trash2, Pen, Heart, Share2, LogIn, MessageSquareReply, MessageSquare, Upload, Image as ImageIcon, X } from 'lucide-react';
+import { Loader2, ChevronLeft, Users, Rss, UserPlus, UserMinus, Hash, Edit, Send, MoreHorizontal, Trash2, Pen, Heart, Share2, LogIn, MessageSquareReply, MessageSquare, Upload, Image as ImageIcon, X, Search } from 'lucide-react';
 import { formatDistanceToNowStrict } from 'date-fns';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
@@ -650,6 +650,7 @@ function GroupFeed({ group }: { group: Group }) {
     const [selectedPost, setSelectedPost] = useState<GroupPost | null>(null);
     const [editingPostId, setEditingPostId] = useState<string | null>(null);
     const [editedPostContent, setEditedPostContent] = useState('');
+    const [searchQuery, setSearchQuery] = useState('');
 
     const isMember = user ? group.members.includes(user.uid) : false;
 
@@ -672,6 +673,17 @@ function GroupFeed({ group }: { group: Group }) {
     }, [firestore, user]);
     const { data: superAdminData } = useDoc(superAdminDocRef);
     const isSuperAdmin = !!superAdminData;
+    
+    const filteredPosts = useMemo(() => {
+        if (!posts) return [];
+        if (!searchQuery) return posts;
+
+        const lowercasedQuery = searchQuery.toLowerCase();
+        return posts.filter(post => 
+            post.content.toLowerCase().includes(lowercasedQuery) ||
+            post.authorName.toLowerCase().includes(lowercasedQuery)
+        );
+    }, [posts, searchQuery]);
 
     const postForm = useForm<z.infer<typeof postFormSchema>>({
         resolver: zodResolver(postFormSchema),
@@ -791,14 +803,25 @@ function GroupFeed({ group }: { group: Group }) {
         <>
             <div className="space-y-6">
                 <h2 className="text-2xl font-bold flex items-center gap-2"><Rss className="h-6 w-6"/> Group Feed</h2>
+                
+                <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                        placeholder="Search posts..."
+                        className="pl-10"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                </div>
+                
                 <PostForm 
                     form={postForm}
                     onSubmit={onPostSubmit}
                     isSubmitting={isSubmitting}
                 />
 
-                {posts && posts.length > 0 ? (
-                    posts.map(post => {
+                {filteredPosts && filteredPosts.length > 0 ? (
+                    filteredPosts.map(post => {
                         const canEdit = user && user.uid === post.authorId;
                         const canDelete = canEdit || isSuperAdmin;
                         const isEditingThisPost = editingPostId === post.id;
