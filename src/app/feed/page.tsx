@@ -82,7 +82,7 @@ function getInitials(name?: string | null) {
     return name.substring(0, 2).toUpperCase();
 }
 
-function CommenterInfo({ authorId }: { authorId: string }) {
+function CommenterInfo({ authorId, content, timestamp, canDelete, onDelete }: { authorId: string, content: string, timestamp: Timestamp | null, canDelete: boolean, onDelete: () => void }) {
     const firestore = useFirestore();
     const commenterDocRef = useMemoFirebase(() => {
         if (!firestore) return null;
@@ -93,21 +93,20 @@ function CommenterInfo({ authorId }: { authorId: string }) {
 
     if (isLoading) {
         return (
-            <div className="flex items-center gap-3">
+            <div className="flex items-start gap-3">
                 <Avatar className="h-8 w-8">
                     <AvatarFallback><Loader2 className="h-4 w-4 animate-spin" /></AvatarFallback>
                 </Avatar>
-                <div className="flex-1">
-                    <div className="bg-secondary rounded-lg px-3 py-2">
-                        <p className="text-xs font-semibold">Loading...</p>
-                    </div>
+                <div className="flex-1 bg-secondary rounded-lg px-3 py-2">
+                    <p className="text-xs font-semibold">Loading...</p>
+                    <p className="text-sm">{content}</p>
                 </div>
             </div>
         );
     }
     
-    const displayName = commenter ? `${commenter.firstName} ${commenter.lastName}` : 'Anonymous User';
-    const displayInitials = commenter ? getInitials(`${commenter.firstName} ${commenter.lastName}`) : 'AU';
+    const displayName = commenter ? `${commenter.firstName} ${commenter.lastName}` : 'Anonymous';
+    const displayInitials = commenter ? getInitials(`${commenter.firstName} ${commenter.lastName}`) : 'A';
 
     return (
         <div className="flex items-start gap-3">
@@ -121,12 +120,28 @@ function CommenterInfo({ authorId }: { authorId: string }) {
                 <div className="bg-secondary rounded-lg px-3 py-2">
                     <div className="flex items-center justify-between">
                         <Link href={`/expert/${authorId}`} className="hover:underline">
-                            <p className="text-xs font-semibold">{displayName}</p>
+                            <p className="text-sm font-semibold">{displayName}</p>
                         </Link>
-                        {/* Placeholder for delete button */}
+                         {canDelete && (
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="h-6 w-6">
+                                        <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent>
+                                    <DropdownMenuItem onClick={onDelete} className="text-destructive focus:text-destructive">
+                                        <Trash2 className="mr-2 h-4 w-4" /> Delete
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        )}
                     </div>
-                    {/* Comment content will be rendered outside this component */}
+                    <p className="text-sm">{content}</p>
                 </div>
+                 <p className="text-xs text-muted-foreground mt-1 pl-1">
+                    {timestamp ? formatDistanceToNow(new Date(timestamp.seconds * 1000), { addSuffix: true }) : 'just now'}
+                </p>
             </div>
         </div>
     )
@@ -168,7 +183,7 @@ function CommentsSection({ postId }: { postId: string }) {
         try {
             await addDocumentNonBlocking(commentRef, {
                 authorId: user.uid,
-                authorName: user.displayName || 'Anonymous', // Keep for fallback, though UI won't use it
+                authorName: user.displayName || 'Anonymous',
                 authorPhotoUrl: user.photoURL || '',
                 content: values.content,
                 createdAt: serverTimestamp(),
@@ -207,34 +222,14 @@ function CommentsSection({ postId }: { postId: string }) {
                     {comments && comments.map(comment => {
                          const canDelete = user && (user.uid === comment.authorId || isSuperAdmin);
                         return (
-                            <div key={comment.id} className="flex items-start gap-3">
-                                <CommenterInfo authorId={comment.authorId} />
-                                <div className="flex-1" style={{ marginTop: '-42px', marginLeft: '44px' }}>
-                                    <div className="bg-secondary rounded-lg px-3 py-2">
-                                        <div className="flex items-center justify-between">
-                                            {/* Name is now rendered inside CommenterInfo */}
-                                            {canDelete && (
-                                                <DropdownMenu>
-                                                    <DropdownMenuTrigger asChild>
-                                                        <Button variant="ghost" size="icon" className="h-6 w-6">
-                                                            <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
-                                                        </Button>
-                                                    </DropdownMenuTrigger>
-                                                    <DropdownMenuContent>
-                                                        <DropdownMenuItem onClick={() => handleDeleteComment(comment.id)} className="text-destructive focus:text-destructive">
-                                                            <Trash2 className="mr-2 h-4 w-4" /> Delete
-                                                        </DropdownMenuItem>
-                                                    </DropdownMenuContent>
-                                                </DropdownMenu>
-                                            )}
-                                        </div>
-                                        <p className="text-sm">{comment.content}</p>
-                                    </div>
-                                    <p className="text-xs text-muted-foreground mt-1">
-                                         {comment.createdAt ? formatDistanceToNow(new Date(comment.createdAt.seconds * 1000), { addSuffix: true }) : 'just now'}
-                                    </p>
-                                </div>
-                            </div>
+                            <CommenterInfo 
+                                key={comment.id}
+                                authorId={comment.authorId}
+                                content={comment.content}
+                                timestamp={comment.createdAt}
+                                canDelete={canDelete}
+                                onDelete={() => handleDeleteComment(comment.id)}
+                            />
                         )
                     })}
                 </div>
@@ -506,3 +501,5 @@ export default function FeedPage() {
         </div>
     )
 }
+
+    
