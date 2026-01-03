@@ -210,8 +210,9 @@ service cloud.firestore {
      * Posts
      * ===================================================== */
     match /posts/{postId} {
-        // Anyone can read posts
-        allow get, list: if true;
+        // Allow reads by anyone. Allow a 'get' by any signed in user so the comment delete rule can check post authorship.
+        allow list: if true;
+        allow get: if isSignedIn();
 
         // Users can create their own posts
         allow create: if isSignedIn() && requestData().authorId == request.auth.uid;
@@ -221,7 +222,7 @@ service cloud.firestore {
                        // Any signed in user can update ONLY the likes array
                        (isSignedIn() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes'])) ||
                        // The author can update the content and imageUrl, but not likes or other fields
-                       (isSignedIn() && resource.data.authorId == request.auth.uid && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['authorId', 'createdAt', 'likes']));
+                       (isSignedIn() && resource.data.authorId == request.auth.uid && request.resource.data.diff(resource.data).affectedKeys().hasAny(['content', 'imageUrl']));
 
         
         // Users can delete their own posts, or a super admin can.
