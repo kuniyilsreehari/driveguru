@@ -3,15 +3,16 @@
 
 import { Suspense, useMemo } from 'react';
 import Link from 'next/link';
-import { collection, query, orderBy, Timestamp, doc } from 'firebase/firestore';
-import { useFirestore, useCollection, useMemoFirebase, useUser, useDoc } from '@/firebase';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { collection, query, orderBy, Timestamp, doc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
+import { useFirestore, useCollection, useMemoFirebase, useUser } from '@/firebase';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Loader2, ChevronLeft, Rss, UserPlus, Search } from 'lucide-react';
+import { Loader2, ChevronLeft, Rss, Search, Heart } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
-import type { ExpertUser } from '@/components/expert-card';
+import { cn } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
+
 
 type Post = {
     id: string;
@@ -20,6 +21,7 @@ type Post = {
     authorPhotoUrl?: string;
     content: string;
     createdAt: Timestamp;
+    likes?: string[];
 };
 
 function getInitials(name: string) {
@@ -33,6 +35,7 @@ function getInitials(name: string) {
 function FeedContent() {
     const firestore = useFirestore();
     const { user, isUserLoading } = useUser();
+    const { toast } = useToast();
 
     const postsQuery = useMemoFirebase(() => {
         if (!firestore) return null;
@@ -43,6 +46,35 @@ function FeedContent() {
     }, [firestore]);
 
     const { data: posts, isLoading: isLoadingPosts } = useCollection<Post>(postsQuery);
+
+    const handleLike = async (post: Post) => {
+        if (!user || !firestore) {
+            toast({
+                variant: 'destructive',
+                title: 'Authentication Required',
+                description: 'You must be logged in to like a post.',
+            });
+            return;
+        }
+
+        const postRef = doc(firestore, 'posts', post.id);
+        const hasLiked = post.likes?.includes(user.uid);
+        const updateAction = hasLiked ? arrayRemove(user.uid) : arrayUnion(user.uid);
+
+        try {
+            await updateDoc(postRef, {
+                likes: updateAction,
+            });
+        } catch (error) {
+            console.error('Error updating like:', error);
+            toast({
+                variant: 'destructive',
+                title: 'Error',
+                description: 'Could not update like status. Please try again.',
+            });
+        }
+    };
+
 
     const isLoading = isUserLoading || isLoadingPosts;
     
@@ -77,31 +109,45 @@ function FeedContent() {
 
     return (
         <div className="space-y-6">
-            {posts.map(post => (
-                <Card key={post.id}>
-                    <CardHeader>
-                        <div className="flex items-center gap-3">
-                            <Link href={`/expert/${post.authorId}`}>
-                                <Avatar>
-                                    <AvatarImage src={post.authorPhotoUrl} />
-                                    <AvatarFallback>{getInitials(post.authorName)}</AvatarFallback>
-                                </Avatar>
-                            </Link>
-                            <div>
-                                <Link href={`/expert/${post.authorId}`} className="hover:underline">
-                                    <CardTitle className="text-base">{post.authorName}</CardTitle>
+            {posts.map(post => {
+                const hasLiked = user ? post.likes?.includes(user.uid) : false;
+                return (
+                    <Card key={post.id}>
+                        <CardHeader>
+                            <div className="flex items-center gap-3">
+                                <Link href={`/expert/${post.authorId}`}>
+                                    <Avatar>
+                                        <AvatarImage src={post.authorPhotoUrl} />
+                                        <AvatarFallback>{getInitials(post.authorName)}</AvatarFallback>
+                                    </Avatar>
                                 </Link>
-                                <CardDescription className="text-xs">
-                                    {post.createdAt ? formatDistanceToNow(new Date(post.createdAt.seconds * 1000), { addSuffix: true }) : '...'}
-                                </CardDescription>
+                                <div>
+                                    <Link href={`/expert/${post.authorId}`} className="hover:underline">
+                                        <CardTitle className="text-base">{post.authorName}</CardTitle>
+                                    </Link>
+                                    <CardDescription className="text-xs">
+                                        {post.createdAt ? formatDistanceToNow(new Date(post.createdAt.seconds * 1000), { addSuffix: true }) : '...'}
+                                    </CardDescription>
+                                </div>
                             </div>
-                        </div>
-                    </CardHeader>
-                    <CardContent>
-                        <p className="text-sm whitespace-pre-wrap">{post.content}</p>
-                    </CardContent>
-                </Card>
-            ))}
+                        </CardHeader>
+                        <CardContent>
+                            <p className="text-sm whitespace-pre-wrap">{post.content}</p>
+                        </CardContent>
+                        <CardFooter>
+                            <div className="flex items-center gap-2">
+                                <Button variant="ghost" size="sm" onClick={() => handleLike(post)}>
+                                    <Heart className={cn("mr-2 h-4 w-4", hasLiked && "fill-red-500 text-red-500")} />
+                                    Like
+                                </Button>
+                                <span className="text-xs text-muted-foreground">
+                                    {post.likes?.length || 0} {post.likes?.length === 1 ? 'like' : 'likes'}
+                                </span>
+                            </div>
+                        </CardFooter>
+                    </Card>
+                )
+            })}
         </div>
     );
 }
@@ -135,3 +181,5 @@ export default function FeedPage() {
         </div>
     )
 }
+
+    
