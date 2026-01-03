@@ -18,7 +18,6 @@ import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
 import type { Group } from '@/app/groups/page';
-import { PostForm } from '@/components/post-form';
 import {
   Dialog,
   DialogContent,
@@ -231,62 +230,67 @@ function GroupFeed({ group }: { group: Group }) {
     const { user, isUserLoading } = useUser();
     const { toast } = useToast();
     const [isSubmitting, setIsSubmitting] = useState(false);
-    
+
     const isMember = user ? group.members.includes(user.uid) : false;
 
     const postsQuery = useMemoFirebase(() => {
-        if (!firestore) return null;
+        if (!firestore || !isMember) return null; // Don't fetch if not a member
         return query(collection(firestore, 'groups', group.id, 'posts'), orderBy('createdAt', 'desc'));
-    }, [firestore, group.id]);
+    }, [firestore, group.id, isMember]);
 
     const { data: posts, isLoading } = useCollection<GroupPost>(postsQuery);
 
+    const currentUserDocRef = useMemoFirebase(() => {
+        if (!user) return null;
+        return doc(firestore, 'users', user.uid);
+    }, [user, firestore]);
+    const { data: currentUserProfile } = useDoc<UserProfile>(currentUserDocRef);
+
     const form = useForm<z.infer<typeof postFormSchema>>({
-      resolver: zodResolver(postFormSchema),
-      defaultValues: {
-        content: '',
-      },
-      mode: 'onChange',
+        resolver: zodResolver(postFormSchema),
+        defaultValues: {
+            content: '',
+        },
+        mode: 'onChange',
     });
 
     async function onSubmit(values: z.infer<typeof postFormSchema>) {
-      if (!firestore || !user) return;
+        if (!firestore || !user || !currentUserProfile) return;
 
-      setIsSubmitting(true);
-      const collectionPath = `groups/${group.id}/posts`;
-      const postsCollectionRef = collection(firestore, collectionPath);
-      const newPostDocRef = doc(postsCollectionRef);
+        setIsSubmitting(true);
+        const postsCollectionRef = collection(firestore, 'groups', group.id, 'posts');
+        const newPostDocRef = doc(postsCollectionRef);
 
-      try {
-        const newPost = {
-          id: newPostDocRef.id,
-          content: values.content,
-          authorId: user.uid,
-          authorName: `${(user as any).firstName} ${(user as any).lastName}`,
-          authorPhotoUrl: (user as any).photoUrl || '',
-          createdAt: serverTimestamp(),
-          likes: [],
-          groupId: group.id,
-        };
-        
-        await setDocumentNonBlocking(newPostDocRef, newPost);
-        
-        toast({
-          title: 'Post Published!',
-          description: 'Your update is now live in the group feed.',
-        });
-        form.reset();
-      } catch (error) {
-        if ((error as any).name !== 'FirebaseError') {
-          toast({
-            variant: 'destructive',
-            title: 'Failed to Post',
-            description: 'An unexpected error occurred. Please try again.',
-          });
+        try {
+            const newPost = {
+                id: newPostDocRef.id,
+                content: values.content,
+                authorId: user.uid,
+                authorName: `${currentUserProfile.firstName || ''} ${currentUserProfile.lastName || ''}`.trim(),
+                authorPhotoUrl: currentUserProfile.photoUrl || '',
+                createdAt: serverTimestamp(),
+                likes: [],
+                groupId: group.id,
+            };
+
+            await updateDocumentNonBlocking(newPostDocRef, newPost);
+
+            toast({
+                title: 'Post Published!',
+                description: 'Your update is now live in the group feed.',
+            });
+            form.reset();
+        } catch (error) {
+            if ((error as any).name !== 'FirebaseError') {
+                toast({
+                    variant: 'destructive',
+                    title: 'Failed to Post',
+                    description: 'An unexpected error occurred. Please try again.',
+                });
+            }
+        } finally {
+            setIsSubmitting(false);
         }
-      } finally {
-        setIsSubmitting(false);
-      }
     }
 
 

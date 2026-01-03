@@ -258,13 +258,16 @@ service cloud.firestore {
 
         // Use a get() call to check membership for sub-collection reads
         function isGroupMember() {
+            if (!isSignedIn()) {
+                return false;
+            }
             let groupDoc = get(/databases/$(database)/documents/groups/$(groupId));
-            return isSignedIn() && request.auth.uid in groupDoc.data.members;
+            return request.auth.uid in groupDoc.data.members;
         }
         
         // Allow anyone to view a single group's details and list all groups
         allow get: if true;
-        allow list: if true; // Changed from isSignedIn() to true
+        allow list: if true;
         
         allow create: if isSignedIn() && requestData().creatorId == request.auth.uid && request.auth.uid in requestData().members;
         
@@ -277,7 +280,7 @@ service cloud.firestore {
         match /posts/{postId} {
             // Only group members can read or list posts within the group
             allow read, list: if isGroupMember(); 
-            allow create: if isGroupMember() && requestData().authorId == request.auth.uid;
+            allow create: if isGroupMember() && request.resource.data.authorId == request.auth.uid;
             allow update, delete: if (isGroupMember() && resource.data.authorId == request.auth.uid) || isSuperAdmin();
         }
     }
