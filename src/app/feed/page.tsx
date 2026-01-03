@@ -13,7 +13,7 @@ import { Form, FormControl, FormField, FormItem } from '@/components/ui/form';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Loader2, ChevronLeft, Rss, Search, Heart, Share2, MoreHorizontal, Trash2, Send } from 'lucide-react';
+import { Loader2, ChevronLeft, Rss, Search, Heart, Share2, MoreHorizontal, Trash2, Send, LogIn } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
@@ -63,8 +63,9 @@ const commentFormSchema = z.object({
 });
 
 function getInitials(name: string) {
-    const names = name.split(' ');
-    if (names.length > 1) {
+    if (!name) return 'AN';
+    const names = name.trim().split(' ');
+    if (names.length > 1 && names[names.length - 1]) {
         return `${names[0].charAt(0)}${names[names.length - 1].charAt(0)}`.toUpperCase();
     }
     return name.substring(0, 2).toUpperCase();
@@ -175,7 +176,11 @@ function CommentsSection({ postId }: { postId: string }) {
                     })}
                 </div>
             )}
-            {user && (
+            {isUserLoading ? (
+                 <div className="flex items-center justify-center h-10">
+                    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                </div>
+            ) : user ? (
                  <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="flex items-center gap-2">
                          <FormField
@@ -194,6 +199,15 @@ function CommentsSection({ postId }: { postId: string }) {
                         </Button>
                     </form>
                  </Form>
+            ) : (
+                <div className="text-center py-2">
+                    <Button variant="outline" size="sm" asChild>
+                        <Link href="/login">
+                            <LogIn className="mr-2 h-4 w-4" />
+                            Log in to comment
+                        </Link>
+                    </Button>
+                </div>
             )}
         </div>
     );
@@ -346,8 +360,9 @@ function FeedContent() {
                                 </div>
                             </CardHeader>
                             <CardContent>
+                                <p className="text-sm whitespace-pre-wrap mb-4">{post.content}</p>
                                 {post.imageUrl && (
-                                    <div className="mb-4 relative rounded-lg overflow-hidden border aspect-[4/5]">
+                                    <div className="relative rounded-lg overflow-hidden border aspect-[4/5]">
                                         <Image
                                             src={post.imageUrl}
                                             alt={`Post image from ${post.authorName}`}
@@ -356,7 +371,6 @@ function FeedContent() {
                                         />
                                     </div>
                                 )}
-                                <p className="text-sm whitespace-pre-wrap">{post.content}</p>
                             </CardContent>
                             <CardFooter className="flex-col items-start">
                                 <div className="flex items-center gap-2 w-full">
@@ -429,3 +443,5 @@ export default function FeedPage() {
         </div>
     )
 }
+
+    
