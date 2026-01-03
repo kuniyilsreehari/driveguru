@@ -9,8 +9,9 @@ import { collection, query, orderBy, Timestamp, doc, updateDoc, arrayUnion, arra
 import { useFirestore, useDoc, useCollection, useMemoFirebase, useUser, deleteDocumentNonBlocking, addDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, ChevronLeft, Users, Rss, UserPlus, UserMinus, Hash } from 'lucide-react';
+import { Loader2, ChevronLeft, Users, Rss, UserPlus, UserMinus, Hash, Edit } from 'lucide-react';
 import { formatDistanceToNowStrict } from 'date-fns';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
@@ -18,6 +19,19 @@ import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
 import type { Group } from '@/app/groups/page';
 import { PostForm } from '@/components/post-form';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
 
 type GroupPost = {
     id: string;
@@ -38,6 +52,12 @@ type UserProfile = {
     profession?: string;
 }
 
+const editGroupSchema = z.object({
+  name: z.string().min(3, 'Group name must be at least 3 characters.').max(50, 'Group name cannot exceed 50 characters.'),
+  description: z.string().min(10, 'Description must be at least 10 characters.').max(250, 'Description cannot exceed 250 characters.'),
+});
+
+
 function getInitials(name?: string | null) {
     if (!name) return 'AN';
     const names = name.trim().split(' ').filter(Boolean);
@@ -55,10 +75,19 @@ function GroupHeader({ group, onMembershipChange }: { group: Group, onMembership
     const firestore = useFirestore();
     const { toast } = useToast();
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isEditOpen, setIsEditOpen] = useState(false);
 
     const isMember = user ? group.members.includes(user.uid) : false;
     const isCreator = user ? group.creatorId === user.uid : false;
-
+    
+    const form = useForm<z.infer<typeof editGroupSchema>>({
+        resolver: zodResolver(editGroupSchema),
+        defaultValues: {
+            name: group.name,
+            description: group.description,
+        },
+    });
+    
     const handleToggleMembership = async () => {
         if (!user || !firestore) {
             toast({ variant: 'destructive', title: 'You must be logged in.' });
@@ -90,6 +119,27 @@ function GroupHeader({ group, onMembershipChange }: { group: Group, onMembership
             setIsSubmitting(false);
         }
     };
+
+    const onEditSubmit = async (values: z.infer<typeof editGroupSchema>) => {
+        if (!firestore) return;
+        setIsSubmitting(true);
+        const groupDocRef = doc(firestore, 'groups', group.id);
+        
+        try {
+            await updateDocumentNonBlocking(groupDocRef, {
+                name: values.name,
+                description: values.description,
+            });
+            toast({ title: "Group Updated", description: "Your group details have been saved." });
+            setIsEditOpen(false);
+        } catch (error) {
+            if ((error as any).name !== 'FirebaseError') {
+                 toast({ variant: 'destructive', title: 'Update Failed', description: 'Could not save group details.' });
+            }
+        } finally {
+             setIsSubmitting(false);
+        }
+    };
     
     return (
         <Card className="mb-8">
@@ -102,12 +152,64 @@ function GroupHeader({ group, onMembershipChange }: { group: Group, onMembership
                         </div>
                         <p className="text-muted-foreground">{group.description}</p>
                     </div>
-                    {user && !isCreator && (
-                        <Button onClick={handleToggleMembership} disabled={isSubmitting}>
-                           {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : isMember ? <UserMinus className="mr-2 h-4 w-4"/> : <UserPlus className="mr-2 h-4 w-4"/> }
-                           {isMember ? 'Leave Group' : 'Join Group'}
-                        </Button>
-                    )}
+                    <div className="flex items-center gap-2">
+                        {isCreator && (
+                             <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+                                <DialogTrigger asChild>
+                                    <Button variant="outline">
+                                        <Edit className="mr-2 h-4 w-4"/> Edit Group
+                                    </Button>
+                                </DialogTrigger>
+                                <DialogContent>
+                                    <DialogHeader>
+                                        <DialogTitle>Edit Group Details</DialogTitle>
+                                        <DialogDescription>Update the name and description for your group.</DialogDescription>
+                                    </DialogHeader>
+                                     <Form {...form}>
+                                        <form onSubmit={form.handleSubmit(onEditSubmit)} className="space-y-4">
+                                            <FormField
+                                                control={form.control}
+                                                name="name"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel>Group Name</FormLabel>
+                                                        <FormControl>
+                                                            <Input placeholder="e.g., React Developers India" {...field} />
+                                                        </FormControl>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+                                            <FormField
+                                                control={form.control}
+                                                name="description"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel>Group Description</FormLabel>
+                                                        <FormControl>
+                                                            <Textarea placeholder="What is this group about?" {...field} />
+                                                        </FormControl>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+                                            <DialogFooter>
+                                                <Button type="submit" disabled={isSubmitting}>
+                                                    {isSubmitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...</> : 'Save Changes'}
+                                                </Button>
+                                            </DialogFooter>
+                                        </form>
+                                    </Form>
+                                </DialogContent>
+                            </Dialog>
+                        )}
+                        {user && !isCreator && (
+                            <Button onClick={handleToggleMembership} disabled={isSubmitting}>
+                               {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : isMember ? <UserMinus className="mr-2 h-4 w-4"/> : <UserPlus className="mr-2 h-4 w-4"/> }
+                               {isMember ? 'Leave Group' : 'Join Group'}
+                            </Button>
+                        )}
+                    </div>
                 </div>
             </CardHeader>
             <CardFooter>
