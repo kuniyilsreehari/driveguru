@@ -1,14 +1,10 @@
 
-
 'use client';
 
 import { useState } from 'react';
-import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { collection, serverTimestamp, doc } from 'firebase/firestore';
-import { useFirestore, setDocumentNonBlocking } from '@/firebase';
-import { Button } from '@/components/ui/button';
 import {
   Form,
   FormControl,
@@ -18,74 +14,20 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Textarea } from '@/components/ui/textarea';
-import { useToast } from '@/hooks/use-toast';
+import { Button } from '@/components/ui/button';
 import { Loader2, Send } from 'lucide-react';
-import type { ExpertUser } from '@/components/expert-card';
 
 const formSchema = z.object({
   content: z.string().min(2, 'Post must be at least 2 characters.').max(500, 'Post cannot exceed 500 characters.'),
 });
 
 interface PostFormProps {
-  userProfile: ExpertUser;
-  groupId?: string; // Add groupId as an optional prop
+  form: any;
+  onSubmit: (values: z.infer<typeof formSchema>) => Promise<void>;
+  isSubmitting: boolean;
 }
 
-export function PostForm({ userProfile, groupId }: PostFormProps) {
-  const { toast } = useToast();
-  const firestore = useFirestore();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      content: '',
-    },
-    mode: 'onChange', // Validate on change to enable/disable button
-  });
-
-  async function onSubmit(values: z.infer<typeof formSchema>) {
-    if (!firestore || !userProfile) return;
-
-    setIsSubmitting(true);
-    
-    // Determine the correct collection path
-    const collectionPath = groupId ? `groups/${groupId}/posts` : 'posts';
-    const postsCollectionRef = collection(firestore, collectionPath);
-    const newPostDocRef = doc(postsCollectionRef); // Generate a new doc ref with an ID
-
-    try {
-      const newPost = {
-        id: newPostDocRef.id, // Use the ID from the generated ref
-        content: values.content,
-        authorId: userProfile.id,
-        authorName: `${userProfile.firstName} ${userProfile.lastName}`,
-        authorPhotoUrl: userProfile.photoUrl || '',
-        createdAt: serverTimestamp(),
-        likes: [],
-        ...(groupId && { groupId }), // Add groupId if it exists
-      };
-      
-      await setDocumentNonBlocking(newPostDocRef, newPost);
-      
-      toast({
-        title: 'Post Published!',
-        description: 'Your update is now live.',
-      });
-      form.reset();
-    } catch (error) {
-       if ((error as any).name !== 'FirebaseError') {
-        toast({
-          variant: 'destructive',
-          title: 'Failed to Post',
-          description: 'An unexpected error occurred. Please try again.',
-        });
-      }
-    } finally {
-      setIsSubmitting(false);
-    }
-  }
-
+export function PostForm({ form, onSubmit, isSubmitting }: PostFormProps) {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -118,4 +60,3 @@ export function PostForm({ userProfile, groupId }: PostFormProps) {
     </Form>
   );
 }
-

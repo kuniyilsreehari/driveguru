@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, ChevronLeft, Users, Rss, UserPlus, UserMinus, Hash, Edit } from 'lucide-react';
+import { Loader2, ChevronLeft, Users, Rss, UserPlus, UserMinus, Hash, Edit, Send } from 'lucide-react';
 import { formatDistanceToNowStrict } from 'date-fns';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
@@ -55,6 +55,10 @@ type UserProfile = {
 const editGroupSchema = z.object({
   name: z.string().min(3, 'Group name must be at least 3 characters.').max(50, 'Group name cannot exceed 50 characters.'),
   description: z.string().min(10, 'Description must be at least 10 characters.').max(250, 'Description cannot exceed 250 characters.'),
+});
+
+const postFormSchema = z.object({
+  content: z.string().min(2, 'Post must be at least 2 characters.').max(500, 'Post cannot exceed 500 characters.'),
 });
 
 
@@ -225,6 +229,8 @@ function GroupHeader({ group, onMembershipChange }: { group: Group, onMembership
 function GroupFeed({ group }: { group: Group }) {
     const firestore = useFirestore();
     const { user, isUserLoading } = useUser();
+    const { toast } = useToast();
+    const [isSubmitting, setIsSubmitting] = useState(false);
     
     const isMember = user ? group.members.includes(user.uid) : false;
 
@@ -234,6 +240,55 @@ function GroupFeed({ group }: { group: Group }) {
     }, [firestore, group.id]);
 
     const { data: posts, isLoading } = useCollection<GroupPost>(postsQuery);
+
+    const form = useForm<z.infer<typeof postFormSchema>>({
+      resolver: zodResolver(postFormSchema),
+      defaultValues: {
+        content: '',
+      },
+      mode: 'onChange',
+    });
+
+    async function onSubmit(values: z.infer<typeof postFormSchema>) {
+      if (!firestore || !user) return;
+
+      setIsSubmitting(true);
+      const collectionPath = `groups/${group.id}/posts`;
+      const postsCollectionRef = collection(firestore, collectionPath);
+      const newPostDocRef = doc(postsCollectionRef);
+
+      try {
+        const newPost = {
+          id: newPostDocRef.id,
+          content: values.content,
+          authorId: user.uid,
+          authorName: `${(user as any).firstName} ${(user as any).lastName}`,
+          authorPhotoUrl: (user as any).photoUrl || '',
+          createdAt: serverTimestamp(),
+          likes: [],
+          groupId: group.id,
+        };
+        
+        await setDocumentNonBlocking(newPostDocRef, newPost);
+        
+        toast({
+          title: 'Post Published!',
+          description: 'Your update is now live in the group feed.',
+        });
+        form.reset();
+      } catch (error) {
+        if ((error as any).name !== 'FirebaseError') {
+          toast({
+            variant: 'destructive',
+            title: 'Failed to Post',
+            description: 'An unexpected error occurred. Please try again.',
+          });
+        }
+      } finally {
+        setIsSubmitting(false);
+      }
+    }
+
 
     if (isLoading || isUserLoading) {
         return (
@@ -256,7 +311,36 @@ function GroupFeed({ group }: { group: Group }) {
     return (
         <div className="space-y-6">
             <h2 className="text-2xl font-bold flex items-center gap-2"><Rss className="h-6 w-6"/> Group Feed</h2>
-            <PostForm userProfile={user as any} groupId={group.id} />
+            <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                    <FormField
+                    control={form.control}
+                    name="content"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel className="sr-only">Post Content</FormLabel>
+                        <FormControl>
+                            <Textarea
+                            placeholder="What's on your mind? Share an update..."
+                            className="min-h-[100px]"
+                            {...field}
+                            />
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                    />
+                    
+                    <div className="flex justify-end items-center gap-4">
+                        <p className="text-xs text-muted-foreground">{form.watch('content').length} / 500</p>
+                        <Button type="submit" disabled={isSubmitting || !form.formState.isValid}>
+                        {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
+                        {isSubmitting ? 'Posting...' : 'Post'}
+                        </Button>
+                    </div>
+                </form>
+            </Form>
+
             {posts && posts.length > 0 ? (
                 posts.map(post => (
                      <Card key={post.id}>
