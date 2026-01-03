@@ -211,9 +211,13 @@ service cloud.firestore {
         // Users can create their own posts
         allow create: if isSignedIn() && requestData().authorId == request.auth.uid;
         
-        // Users can update their own posts (including likes), or a super admin can.
-        allow update: if (isSignedIn() && resource.data.authorId == request.auth.uid) || isSuperAdmin()
-                    || (isSignedIn() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes']));
+        // Let's refine the update rule
+        allow update: if isSuperAdmin() || // Super admins can do anything
+                       // Any signed in user can update ONLY the likes array
+                       (isSignedIn() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes'])) ||
+                       // The author can update the content and imageUrl, but not likes or other fields
+                       (isSignedIn() && resource.data.authorId == request.auth.uid && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['authorId', 'createdAt', 'likes']));
+
         
         // Users can delete their own posts, or a super admin can.
         allow delete: if (isSignedIn() && resource.data.authorId == request.auth.uid) || isSuperAdmin();
@@ -226,8 +230,16 @@ service cloud.firestore {
             allow get, list: if true;
             // Any signed-in user can create a comment
             allow create: if isSignedIn() && requestData().authorId == request.auth.uid;
-            // Only the author or a super admin can delete/update
-            allow update, delete: if (isSignedIn() && resource.data.authorId == request.auth.uid) || isSuperAdmin();
+            
+            // Refined update rule for comments
+            allow update: if isSuperAdmin() || // Super admins can do anything
+                           // Any signed-in user can update ONLY the likes array
+                           (isSignedIn() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes'])) ||
+                           // The author can update ONLY the content
+                           (isSignedIn() && resource.data.authorId == request.auth.uid && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['content']));
+
+            // Only the author or a super admin can delete
+            allow delete: if (isSignedIn() && resource.data.authorId == request.auth.uid) || isSuperAdmin();
         }
     }
     

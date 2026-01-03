@@ -6,15 +6,16 @@ import { Suspense, useMemo, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { collection, query, orderBy, Timestamp, doc, updateDoc, arrayUnion, arrayRemove, serverTimestamp } from 'firebase/firestore';
-import { useFirestore, useCollection, useMemoFirebase, useUser, useDoc, deleteDocumentNonBlocking, addDocumentNonBlocking } from '@/firebase';
+import { useFirestore, useCollection, useMemoFirebase, useUser, useDoc, deleteDocumentNonBlocking, addDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Form, FormControl, FormField, FormItem } from '@/components/ui/form';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Loader2, ChevronLeft, Rss, Search, Heart, Share2, MoreHorizontal, Trash2, Send, LogIn, MessageSquareReply, MessageSquare } from 'lucide-react';
+import { Loader2, ChevronLeft, Rss, Search, Heart, Share2, MoreHorizontal, Trash2, Send, LogIn, MessageSquareReply, MessageSquare, Pen } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
@@ -73,14 +74,14 @@ const commentFormSchema = z.object({
 
 function getInitials(name?: string | null) {
     if (!name) return 'AN';
-    const names = name.trim().split(' ');
+    const names = name.trim().split(' ').filter(Boolean);
     if (names.length > 1 && names[names.length - 1]) {
         return `${names[0].charAt(0)}${names[names.length - 1].charAt(0)}`.toUpperCase();
     }
     if (names[0] && names[0].length > 1) {
         return names[0].substring(0, 2).toUpperCase();
     }
-    return name.substring(0, 2).toUpperCase();
+    return 'U';
 }
 
 function CommenterInfo({ authorId }: { authorId: string }) {
@@ -131,6 +132,8 @@ function CommentThread({ comment, postId, allComments }: { comment: Comment, pos
     const { toast } = useToast();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [showReplyForm, setShowReplyForm] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
+    const [editedContent, setEditedContent] = useState(comment.content);
     
     const superAdminDocRef = useMemoFirebase(() => {
         if (!user) return null;
@@ -203,8 +206,23 @@ function CommentThread({ comment, postId, allComments }: { comment: Comment, pos
             }
         });
     }
+
+    const handleUpdateComment = async () => {
+        if (!firestore) return;
+        const commentDocRef = doc(firestore, 'posts', postId, 'comments', comment.id);
+        
+        try {
+            await updateDocumentNonBlocking(commentDocRef, { content: editedContent });
+            toast({ title: "Comment updated." });
+            setIsEditing(false);
+        } catch(error) {
+            if ((error as any).name !== 'FirebaseError') {
+                toast({ variant: 'destructive', title: 'Failed to update comment.' });
+            }
+        }
+    }
     
-    const canDelete = user && (user.uid === comment.authorId || isSuperAdmin);
+    const canInteract = user && (user.uid === comment.authorId || isSuperAdmin);
     const hasLiked = user ? comment.likes?.includes(user.uid) : false;
 
     return (
@@ -214,7 +232,7 @@ function CommentThread({ comment, postId, allComments }: { comment: Comment, pos
                 <div className="bg-secondary rounded-lg p-3">
                     <div className="flex items-center justify-between">
                          <CommenterInfo authorId={comment.authorId} />
-                         {canDelete && (
+                         {canInteract && (
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <Button variant="ghost" size="icon" className="h-6 w-6">
@@ -222,6 +240,11 @@ function CommentThread({ comment, postId, allComments }: { comment: Comment, pos
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent>
+                                    {user?.uid === comment.authorId && 
+                                        <DropdownMenuItem onClick={() => setIsEditing(true)}>
+                                            <Pen className="mr-2 h-4 w-4" /> Edit
+                                        </DropdownMenuItem>
+                                    }
                                     <DropdownMenuItem onClick={() => handleDeleteComment(comment.id)} className="text-destructive focus:text-destructive">
                                         <Trash2 className="mr-2 h-4 w-4" /> Delete
                                     </DropdownMenuItem>
@@ -229,7 +252,21 @@ function CommentThread({ comment, postId, allComments }: { comment: Comment, pos
                             </DropdownMenu>
                         )}
                     </div>
-                    <p className="text-sm pl-11">{comment.content}</p>
+                    {isEditing ? (
+                        <div className="pl-11 mt-2 space-y-2">
+                            <Textarea 
+                                value={editedContent}
+                                onChange={(e) => setEditedContent(e.target.value)}
+                                className="text-sm"
+                            />
+                            <div className="flex justify-end gap-2">
+                                <Button variant="ghost" size="sm" onClick={() => setIsEditing(false)}>Cancel</Button>
+                                <Button size="sm" onClick={handleUpdateComment}>Save</Button>
+                            </div>
+                        </div>
+                    ) : (
+                         <p className="text-sm pl-11">{comment.content}</p>
+                    )}
                 </div>
                  <div className="pl-11 flex items-center gap-4">
                     <p className="text-xs text-muted-foreground">
@@ -396,6 +433,8 @@ function FeedContent() {
     const { toast } = useToast();
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
     const [selectedPost, setSelectedPost] = useState<Post | null>(null);
+    const [editingPostId, setEditingPostId] = useState<string | null>(null);
+    const [editedPostContent, setEditedPostContent] = useState('');
     
     const superAdminDocRef = useMemoFirebase(() => {
       if (!user) return null;
@@ -442,6 +481,31 @@ function FeedContent() {
                     title: 'Error',
                     description: 'Could not update like status. Please try again.',
                 });
+            }
+        }
+    };
+
+    const handleEditPost = (post: Post) => {
+        setEditingPostId(post.id);
+        setEditedPostContent(post.content);
+    };
+
+    const handleCancelEdit = () => {
+        setEditingPostId(null);
+        setEditedPostContent('');
+    };
+
+    const handleUpdatePost = async () => {
+        if (!firestore || !editingPostId) return;
+        
+        const postDocRef = doc(firestore, 'posts', editingPostId);
+        try {
+            await updateDocumentNonBlocking(postDocRef, { content: editedPostContent });
+            toast({ title: 'Post updated' });
+            handleCancelEdit();
+        } catch (error) {
+             if ((error as any).name !== 'FirebaseError') {
+                toast({ variant: 'destructive', title: 'Failed to update post.' });
             }
         }
     };
@@ -509,7 +573,8 @@ function FeedContent() {
             <div className="space-y-6">
                 {posts.map(post => {
                     const hasLiked = user ? post.likes?.includes(user.uid) : false;
-                    const canDelete = user && (user.uid === post.authorId || isSuperAdmin);
+                    const canInteract = user && (user.uid === post.authorId || isSuperAdmin);
+                    const isEditingThisPost = editingPostId === post.id;
                     return (
                         <Card key={post.id}>
                             <CardHeader>
@@ -530,7 +595,7 @@ function FeedContent() {
                                             </CardDescription>
                                         </div>
                                     </div>
-                                     {canDelete && (
+                                     {canInteract && (
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
                                                 <Button variant="ghost" className="h-8 w-8 p-0">
@@ -538,6 +603,12 @@ function FeedContent() {
                                                 </Button>
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent align="end">
+                                                {user?.uid === post.authorId && (
+                                                    <DropdownMenuItem onClick={() => handleEditPost(post)}>
+                                                        <Pen className="mr-2 h-4 w-4" />
+                                                        <span>Edit</span>
+                                                    </DropdownMenuItem>
+                                                )}
                                                 <DropdownMenuItem onClick={() => openDeleteDialog(post)} className="text-destructive focus:text-destructive">
                                                     <Trash2 className="mr-2 h-4 w-4" />
                                                     <span>Delete</span>
@@ -548,8 +619,24 @@ function FeedContent() {
                                 </div>
                             </CardHeader>
                             <CardContent>
-                                <p className="text-sm whitespace-pre-wrap mb-4">{post.content}</p>
-                                {post.imageUrl && (
+                                {isEditingThisPost ? (
+                                    <div className="space-y-2">
+                                        <Textarea
+                                            value={editedPostContent}
+                                            onChange={(e) => setEditedPostContent(e.target.value)}
+                                            className="text-sm whitespace-pre-wrap mb-4"
+                                            rows={4}
+                                        />
+                                        <div className="flex justify-end gap-2">
+                                            <Button variant="ghost" size="sm" onClick={handleCancelEdit}>Cancel</Button>
+                                            <Button size="sm" onClick={handleUpdatePost}>Save Changes</Button>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <p className="text-sm whitespace-pre-wrap mb-4">{post.content}</p>
+                                )}
+
+                                {post.imageUrl && !isEditingThisPost && (
                                     <div className="relative rounded-lg overflow-hidden border aspect-[4/5]">
                                         <Image
                                             src={post.imageUrl}
@@ -635,5 +722,6 @@ export default function FeedPage() {
     
 
     
+
 
 
