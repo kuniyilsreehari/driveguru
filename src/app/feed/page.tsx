@@ -5,7 +5,8 @@
 import { Suspense, useMemo, useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { collection, query, orderBy, Timestamp, doc, updateDoc, arrayUnion, arrayRemove, serverTimestamp, limit, getDocs, startAfter, QueryDocumentSnapshot, DocumentData } from 'firebase/firestore';
+import { collection, query, orderBy, Timestamp, doc, updateDoc, arrayUnion, arrayRemove, serverTimestamp, limit, getDocs, startAfter, QueryDocumentSnapshot, DocumentData, addDoc } from 'firebase/firestore';
+import { getStorage, ref as storageRef, uploadString, getDownloadURL } from "firebase/storage";
 import { useFirestore, useCollection, useMemoFirebase, useUser, useDoc, deleteDocumentNonBlocking, addDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -15,7 +16,7 @@ import { Form, FormControl, FormField, FormItem } from '@/components/ui/form';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Loader2, ChevronLeft, Rss, Search, Heart, Share2, MoreHorizontal, Trash2, Send, LogIn, MessageSquareReply, MessageSquare, Pen } from 'lucide-react';
+import { Loader2, ChevronLeft, Rss, Search, Heart, Share2, MoreHorizontal, Trash2, Send, LogIn, MessageSquareReply, MessageSquare, Pen, Upload, Image as ImageIcon, X } from 'lucide-react';
 import { formatDistanceToNowStrict } from 'date-fns';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
@@ -39,6 +40,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { LikesDialog } from '@/components/likes-dialog';
+import { ImageLightbox } from '@/components/image-lightbox';
 
 
 type Post = {
@@ -476,6 +478,9 @@ function FeedContent() {
     const [selectedPost, setSelectedPost] = useState<Post | null>(null);
     const [editingPostId, setEditingPostId] = useState<string | null>(null);
     const [editedPostContent, setEditedPostContent] = useState('');
+    const [isUploading, setIsUploading] = useState(false);
+    const [imagePreview, setImagePreview] = useState<string | null>(null);
+    const [imageFile, setImageFile] = useState<File | null>(null);
 
     const [posts, setPosts] = useState<Post[]>([]);
     const [isLoadingPosts, setIsLoadingPosts] = useState(true);
@@ -642,6 +647,23 @@ function FeedContent() {
         setSelectedPost(null);
     }
 
+    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (file) {
+            setImageFile(file);
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setImagePreview(reader.result as string);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const clearImagePreview = () => {
+        setImagePreview(null);
+        setImageFile(null);
+    }
+
 
     const isLoading = isUserLoading || isLoadingPosts || isRoleLoading;
     
@@ -759,14 +781,16 @@ function FeedContent() {
                                 )}
 
                                 {post.imageUrl && !isEditingThisPost && (
-                                    <div className="relative rounded-lg overflow-hidden border aspect-video">
-                                        <Image
-                                            src={post.imageUrl}
-                                            alt={`Post image from ${post.authorName}`}
-                                            fill
-                                            className="object-cover"
-                                        />
-                                    </div>
+                                    <ImageLightbox imageUrl={post.imageUrl} altText={`Post image from ${post.authorName}`}>
+                                        <div className="relative rounded-lg overflow-hidden border aspect-video cursor-pointer">
+                                            <Image
+                                                src={post.imageUrl}
+                                                alt={`Post image from ${post.authorName}`}
+                                                fill
+                                                className="object-cover"
+                                            />
+                                        </div>
+                                    </ImageLightbox>
                                 )}
                             </CardContent>
                             <CardFooter className="flex-col items-start">

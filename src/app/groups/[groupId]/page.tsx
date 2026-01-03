@@ -6,13 +6,14 @@ import { Suspense, useMemo, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useParams } from 'next/navigation';
-import { collection, query, orderBy, Timestamp, doc, updateDoc, arrayUnion, arrayRemove, serverTimestamp, getDocs, limit, startAfter, QueryDocumentSnapshot, DocumentData } from 'firebase/firestore';
+import { collection, query, orderBy, Timestamp, doc, updateDoc, arrayUnion, arrayRemove, serverTimestamp, getDocs, limit, startAfter, QueryDocumentSnapshot, DocumentData, addDoc } from 'firebase/firestore';
+import { getStorage, ref as storageRef, uploadString, getDownloadURL } from "firebase/storage";
 import { useFirestore, useDoc, useCollection, useMemoFirebase, useUser, deleteDocumentNonBlocking, addDocumentNonBlocking, updateDocumentNonBlocking, setDocumentNonBlocking } from '@/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, ChevronLeft, Users, Rss, UserPlus, UserMinus, Hash, Edit, Send, MoreHorizontal, Trash2, Pen, Heart, Share2, LogIn, MessageSquareReply, MessageSquare } from 'lucide-react';
+import { Loader2, ChevronLeft, Users, Rss, UserPlus, UserMinus, Hash, Edit, Send, MoreHorizontal, Trash2, Pen, Heart, Share2, LogIn, MessageSquareReply, MessageSquare, Upload, Image as ImageIcon, X } from 'lucide-react';
 import { formatDistanceToNowStrict } from 'date-fns';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
@@ -50,6 +51,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { PostForm } from '@/components/post-form';
 import { LikesDialog } from '@/components/likes-dialog';
+import { ImageLightbox } from '@/components/image-lightbox';
 
 type GroupPost = {
     id: string;
@@ -648,6 +650,9 @@ function GroupFeed({ group }: { group: Group }) {
     const [selectedPost, setSelectedPost] = useState<GroupPost | null>(null);
     const [editingPostId, setEditingPostId] = useState<string | null>(null);
     const [editedPostContent, setEditedPostContent] = useState('');
+    const [isUploading, setIsUploading] = useState(false);
+    const [imagePreview, setImagePreview] = useState<string | null>(null);
+    const [imageFile, setImageFile] = useState<File | null>(null);
 
     const isMember = user ? group.members.includes(user.uid) : false;
 
@@ -683,11 +688,22 @@ function GroupFeed({ group }: { group: Group }) {
         if (!firestore || !user || !currentUserProfile) return;
 
         setIsSubmitting(true);
-        const postsCollectionRef = collection(firestore, 'groups', group.id, 'posts');
-        
+        let imageUrl = '';
         try {
-            const newPostDocRef = doc(postsCollectionRef); // Create a reference with a new ID first
-            const newPost = {
+            if (imageFile) {
+                setIsUploading(true);
+                const storage = getStorage();
+                const imagePath = `group-post-images/${group.id}/${user.uid}/${Date.now()}_${imageFile.name}`;
+                const imageRef = storageRef(storage, imagePath);
+                const uploadResult = await uploadString(imageRef, imagePreview!, 'data_url');
+                imageUrl = await getDownloadURL(uploadResult.ref);
+                setIsUploading(false);
+            }
+
+            const postsCollectionRef = collection(firestore, 'groups', group.id, 'posts');
+            const newPostDocRef = doc(postsCollectionRef);
+            
+            await setDoc(newPostDocRef, {
                 id: newPostDocRef.id,
                 content: values.content,
                 authorId: user.uid,
@@ -696,17 +712,18 @@ function GroupFeed({ group }: { group: Group }) {
                 createdAt: serverTimestamp(),
                 likes: [],
                 groupId: group.id,
-            };
-
-            await setDocumentNonBlocking(newPostDocRef, newPost);
+                imageUrl: imageUrl,
+            });
 
             toast({
                 title: 'Post Published!',
                 description: 'Your update is now live in the group feed.',
             });
             postForm.reset();
+            clearImagePreview();
         } catch (error) {
-            if ((error as any).name !== 'FirebaseError') {
+            console.error("Error creating post:", error);
+             if ((error as any).name !== 'FirebaseError') {
                 toast({
                     variant: 'destructive',
                     title: 'Failed to Post',
@@ -715,6 +732,7 @@ function GroupFeed({ group }: { group: Group }) {
             }
         } finally {
             setIsSubmitting(false);
+            setIsUploading(false);
         }
     }
     
@@ -768,6 +786,41 @@ function GroupFeed({ group }: { group: Group }) {
             }
         }
     };
+    
+    const handleLikePost = async (post: GroupPost) => {
+        if (!user || !firestore) {
+            toast({ variant: 'destructive', title: 'You must be logged in.' });
+            return;
+        }
+
+        const postRef = doc(firestore, 'groups', group.id, 'posts', post.id);
+        const hasLiked = post.likes?.includes(user.uid);
+        const updateAction = hasLiked ? arrayRemove(user.uid) : arrayUnion(user.uid);
+        
+        try {
+            await updateDoc(postRef, { likes: updateAction });
+        } catch (error) {
+            console.error("Error liking post:", error);
+            toast({ variant: 'destructive', title: 'Error', description: 'Could not update like status.' });
+        }
+    };
+    
+    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (file) {
+            setImageFile(file);
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setImagePreview(reader.result as string);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const clearImagePreview = () => {
+        setImagePreview(null);
+        setImageFile(null);
+    }
 
 
     if (isLoading || isUserLoading || isCurrentUserProfileLoading) {
@@ -792,17 +845,63 @@ function GroupFeed({ group }: { group: Group }) {
         <>
             <div className="space-y-6">
                 <h2 className="text-2xl font-bold flex items-center gap-2"><Rss className="h-6 w-6"/> Group Feed</h2>
-                <PostForm 
-                    form={postForm}
-                    onSubmit={onPostSubmit}
-                    isSubmitting={isSubmitting}
-                />
+                <Form {...postForm}>
+                    <form onSubmit={postForm.handleSubmit(onPostSubmit)} className="space-y-4">
+                         <FormField
+                            control={postForm.control}
+                            name="content"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormControl>
+                                        <Textarea
+                                            placeholder="What's on your mind? Share an update..."
+                                            className="min-h-[100px]"
+                                            {...field}
+                                        />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                         {imagePreview && (
+                            <div className="relative">
+                                <Image src={imagePreview} alt="Image preview" width={100} height={100} className="rounded-md border"/>
+                                <Button
+                                    variant="destructive"
+                                    size="icon"
+                                    className="absolute top-1 right-1 h-6 w-6"
+                                    onClick={clearImagePreview}
+                                >
+                                    <X className="h-4 w-4" />
+                                </Button>
+                            </div>
+                        )}
+                        <div className="flex justify-between items-center">
+                            <Button asChild variant="outline" size="sm">
+                                <label htmlFor="image-upload" className="cursor-pointer">
+                                    <ImageIcon className="mr-2 h-4 w-4" />
+                                    Add Image
+                                </label>
+                            </Button>
+                            <input id="image-upload" type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
+                            <div className="flex items-center gap-4">
+                                <p className="text-xs text-muted-foreground">{postForm.watch('content').length} / 500</p>
+                                <Button type="submit" disabled={isSubmitting || !postForm.formState.isValid}>
+                                {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
+                                {isSubmitting ? 'Posting...' : 'Post'}
+                                </Button>
+                            </div>
+                        </div>
+                    </form>
+                </Form>
 
                 {posts && posts.length > 0 ? (
                     posts.map(post => {
                         const canEdit = user && user.uid === post.authorId;
                         const canDelete = canEdit || isSuperAdmin;
                         const isEditingThisPost = editingPostId === post.id;
+                        const hasLiked = user ? post.likes?.includes(user.uid) : false;
+                        const canViewLikes = post.likes && post.likes.length > 0;
                         return (
                             <Card key={post.id}>
                                 <CardHeader>
@@ -867,16 +966,35 @@ function GroupFeed({ group }: { group: Group }) {
                                     )}
 
                                     {post.imageUrl && !isEditingThisPost && (
-                                        <div className="relative rounded-lg overflow-hidden border aspect-video">
-                                            <Image
-                                                src={post.imageUrl}
-                                                alt={`Post image from ${post.authorName}`}
-                                                fill
-                                                className="object-cover"
-                                            />
-                                        </div>
+                                        <ImageLightbox imageUrl={post.imageUrl} altText={`Post image from ${post.authorName}`}>
+                                            <div className="relative rounded-lg overflow-hidden border aspect-video cursor-pointer">
+                                                <Image
+                                                    src={post.imageUrl}
+                                                    alt={`Post image from ${post.authorName}`}
+                                                    fill
+                                                    className="object-cover"
+                                                />
+                                            </div>
+                                        </ImageLightbox>
                                     )}
                                 </CardContent>
+                                <CardFooter className="flex items-center gap-2">
+                                    <Button variant="ghost" size="sm" onClick={() => handleLikePost(post)}>
+                                        <Heart className={cn("mr-2 h-4 w-4", hasLiked && "fill-red-500 text-red-500")} />
+                                        Like
+                                    </Button>
+                                     {canViewLikes ? (
+                                        <LikesDialog userIds={post.likes!}>
+                                            <button className="text-xs text-muted-foreground hover:underline">
+                                                {post.likes?.length} {post.likes?.length === 1 ? 'like' : 'likes'}
+                                            </button>
+                                        </LikesDialog>
+                                    ) : (
+                                        <span className="text-xs text-muted-foreground">
+                                            0 likes
+                                        </span>
+                                    )}
+                                </CardFooter>
                             </Card>
                         )
                     })
