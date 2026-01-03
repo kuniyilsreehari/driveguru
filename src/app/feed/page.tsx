@@ -38,6 +38,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { LikesDialog } from '@/components/likes-dialog';
 
 
 type Post = {
@@ -683,6 +684,8 @@ function FeedContent() {
                     const canEdit = user && user.uid === post.authorId;
                     const canDelete = canEdit || isSuperAdmin;
                     const isEditingThisPost = editingPostId === post.id;
+                    const canViewLikes = canEdit && post.likes && post.likes.length > 0;
+
                     return (
                         <Card key={post.id}>
                             <CardHeader>
@@ -763,9 +766,19 @@ function FeedContent() {
                                         <Heart className={cn("mr-2 h-4 w-4", hasLiked && "fill-red-500 text-red-500")} />
                                         Like
                                     </Button>
-                                    <span className="text-xs text-muted-foreground">
-                                        {post.likes?.length || 0} {post.likes?.length === 1 ? 'like' : 'likes'}
-                                    </span>
+                                    
+                                    {canViewLikes ? (
+                                        <LikesDialog userIds={post.likes!}>
+                                            <button className="text-xs text-muted-foreground hover:underline">
+                                                {post.likes?.length || 0} {post.likes?.length === 1 ? 'like' : 'likes'}
+                                            </button>
+                                        </LikesDialog>
+                                    ) : (
+                                        <span className="text-xs text-muted-foreground">
+                                            {post.likes?.length || 0} {post.likes?.length === 1 ? 'like' : 'likes'}
+                                        </span>
+                                    )}
+
                                     <ShareDialog expertId={post.authorId} expertName={post.authorName}>
                                         <Button variant="ghost" size="sm">
                                             <Share2 className="mr-2 h-4 w-4" />
