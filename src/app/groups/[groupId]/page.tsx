@@ -650,9 +650,6 @@ function GroupFeed({ group }: { group: Group }) {
     const [selectedPost, setSelectedPost] = useState<GroupPost | null>(null);
     const [editingPostId, setEditingPostId] = useState<string | null>(null);
     const [editedPostContent, setEditedPostContent] = useState('');
-    const [isUploading, setIsUploading] = useState(false);
-    const [imagePreview, setImagePreview] = useState<string | null>(null);
-    const [imageFile, setImageFile] = useState<File | null>(null);
 
     const isMember = user ? group.members.includes(user.uid) : false;
 
@@ -688,18 +685,7 @@ function GroupFeed({ group }: { group: Group }) {
         if (!firestore || !user || !currentUserProfile) return;
 
         setIsSubmitting(true);
-        let imageUrl = '';
         try {
-            if (imageFile) {
-                setIsUploading(true);
-                const storage = getStorage();
-                const imagePath = `group-post-images/${group.id}/${user.uid}/${Date.now()}_${imageFile.name}`;
-                const imageRef = storageRef(storage, imagePath);
-                const uploadResult = await uploadString(imageRef, imagePreview!, 'data_url');
-                imageUrl = await getDownloadURL(uploadResult.ref);
-                setIsUploading(false);
-            }
-
             const postsCollectionRef = collection(firestore, 'groups', group.id, 'posts');
             const newPostDocRef = doc(postsCollectionRef);
             
@@ -712,7 +698,7 @@ function GroupFeed({ group }: { group: Group }) {
                 createdAt: serverTimestamp(),
                 likes: [],
                 groupId: group.id,
-                imageUrl: imageUrl,
+                imageUrl: '',
             });
 
             toast({
@@ -720,7 +706,6 @@ function GroupFeed({ group }: { group: Group }) {
                 description: 'Your update is now live in the group feed.',
             });
             postForm.reset();
-            clearImagePreview();
         } catch (error) {
             console.error("Error creating post:", error);
              if ((error as any).name !== 'FirebaseError') {
@@ -732,7 +717,6 @@ function GroupFeed({ group }: { group: Group }) {
             }
         } finally {
             setIsSubmitting(false);
-            setIsUploading(false);
         }
     }
     
@@ -804,23 +788,6 @@ function GroupFeed({ group }: { group: Group }) {
             toast({ variant: 'destructive', title: 'Error', description: 'Could not update like status.' });
         }
     };
-    
-    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files?.[0];
-        if (file) {
-            setImageFile(file);
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setImagePreview(reader.result as string);
-            };
-            reader.readAsDataURL(file);
-        }
-    };
-
-    const clearImagePreview = () => {
-        setImagePreview(null);
-        setImageFile(null);
-    }
 
 
     if (isLoading || isUserLoading || isCurrentUserProfileLoading) {
@@ -845,55 +812,11 @@ function GroupFeed({ group }: { group: Group }) {
         <>
             <div className="space-y-6">
                 <h2 className="text-2xl font-bold flex items-center gap-2"><Rss className="h-6 w-6"/> Group Feed</h2>
-                <Form {...postForm}>
-                    <form onSubmit={postForm.handleSubmit(onPostSubmit)} className="space-y-4">
-                         <FormField
-                            control={postForm.control}
-                            name="content"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormControl>
-                                        <Textarea
-                                            placeholder="What's on your mind? Share an update..."
-                                            className="min-h-[100px]"
-                                            {...field}
-                                        />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                         {imagePreview && (
-                            <div className="relative">
-                                <Image src={imagePreview} alt="Image preview" width={100} height={100} className="rounded-md border"/>
-                                <Button
-                                    variant="destructive"
-                                    size="icon"
-                                    className="absolute top-1 right-1 h-6 w-6"
-                                    onClick={clearImagePreview}
-                                >
-                                    <X className="h-4 w-4" />
-                                </Button>
-                            </div>
-                        )}
-                        <div className="flex justify-between items-center">
-                            <Button asChild variant="outline" size="sm">
-                                <label htmlFor="image-upload" className="cursor-pointer">
-                                    <ImageIcon className="mr-2 h-4 w-4" />
-                                    Add Image
-                                </label>
-                            </Button>
-                            <input id="image-upload" type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
-                            <div className="flex items-center gap-4">
-                                <p className="text-xs text-muted-foreground">{postForm.watch('content').length} / 500</p>
-                                <Button type="submit" disabled={isSubmitting || !postForm.formState.isValid}>
-                                {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
-                                {isSubmitting ? 'Posting...' : 'Post'}
-                                </Button>
-                            </div>
-                        </div>
-                    </form>
-                </Form>
+                <PostForm 
+                    form={postForm}
+                    onSubmit={onPostSubmit}
+                    isSubmitting={isSubmitting}
+                />
 
                 {posts && posts.length > 0 ? (
                     posts.map(post => {
