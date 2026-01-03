@@ -217,6 +217,18 @@ service cloud.firestore {
         
         // Users can delete their own posts, or a super admin can.
         allow delete: if (isSignedIn() && resource.data.authorId == request.auth.uid) || isSuperAdmin();
+
+        /* ---------------------------------------------
+        * Comments Subcollection
+        * --------------------------------------------- */
+        match /comments/{commentId} {
+            // Anyone can read comments
+            allow get, list: if true;
+            // Any signed-in user can create a comment
+            allow create: if isSignedIn() && requestData().authorId == request.auth.uid;
+            // Only the author or a super admin can delete/update
+            allow update, delete: if (isSignedIn() && resource.data.authorId == request.auth.uid) || isSuperAdmin();
+        }
     }
     
     /* =====================================================

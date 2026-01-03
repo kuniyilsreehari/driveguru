@@ -4,16 +4,22 @@
 import { Suspense, useMemo, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { collection, query, orderBy, Timestamp, doc, updateDoc, arrayUnion, arrayRemove, deleteDoc } from 'firebase/firestore';
-import { useFirestore, useCollection, useMemoFirebase, useUser, useDoc, deleteDocumentNonBlocking } from '@/firebase';
+import { collection, query, orderBy, Timestamp, doc, updateDoc, arrayUnion, arrayRemove, serverTimestamp } from 'firebase/firestore';
+import { useFirestore, useCollection, useMemoFirebase, useUser, useDoc, deleteDocumentNonBlocking, addDocumentNonBlocking } from '@/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Loader2, ChevronLeft, Rss, Search, Heart, Share2, MoreHorizontal, Trash2 } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Form, FormControl, FormField, FormItem } from '@/components/ui/form';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { Loader2, ChevronLeft, Rss, Search, Heart, Share2, MoreHorizontal, Trash2, Send } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { ShareDialog } from '@/components/share-dialog';
+import { Separator } from '@/components/ui/separator';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -43,12 +49,154 @@ type Post = {
     likes?: string[];
 };
 
+type Comment = {
+    id: string;
+    authorId: string;
+    authorName: string;
+    authorPhotoUrl?: string;
+    content: string;
+    createdAt: Timestamp;
+}
+
+const commentFormSchema = z.object({
+  content: z.string().min(1, 'Comment cannot be empty.'),
+});
+
 function getInitials(name: string) {
     const names = name.split(' ');
     if (names.length > 1) {
         return `${names[0].charAt(0)}${names[names.length - 1].charAt(0)}`.toUpperCase();
     }
     return name.substring(0, 2).toUpperCase();
+}
+
+
+function CommentsSection({ postId }: { postId: string }) {
+    const firestore = useFirestore();
+    const { user, isUserLoading } = useUser();
+    const { toast } = useToast();
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    
+    const superAdminDocRef = useMemoFirebase(() => {
+      if (!user) return null;
+      return doc(firestore, 'roles_super_admin', user.uid);
+    }, [firestore, user]);
+    const { data: superAdminData } = useDoc(superAdminDocRef);
+    const isSuperAdmin = !!superAdminData;
+
+    const commentsQuery = useMemoFirebase(() => {
+        if (!firestore) return null;
+        return query(collection(firestore, 'posts', postId, 'comments'), orderBy('createdAt', 'asc'));
+    }, [firestore, postId]);
+
+    const { data: comments, isLoading: isLoadingComments } = useCollection<Comment>(commentsQuery);
+    
+    const form = useForm<z.infer<typeof commentFormSchema>>({
+        resolver: zodResolver(commentFormSchema),
+        defaultValues: { content: '' },
+    });
+
+    async function onSubmit(values: z.infer<typeof commentFormSchema>) {
+        if (!user || !firestore) {
+            toast({ variant: 'destructive', title: 'You must be logged in to comment.' });
+            return;
+        }
+        setIsSubmitting(true);
+        const commentRef = collection(firestore, 'posts', postId, 'comments');
+        try {
+            await addDocumentNonBlocking(commentRef, {
+                authorId: user.uid,
+                authorName: user.displayName || 'Anonymous',
+                authorPhotoUrl: user.photoURL || '',
+                content: values.content,
+                createdAt: serverTimestamp(),
+            });
+            form.reset();
+        } catch (error) {
+            if ((error as any).name !== 'FirebaseError') {
+                toast({ variant: 'destructive', title: 'Failed to post comment.' });
+            }
+        } finally {
+            setIsSubmitting(false);
+        }
+    }
+    
+    const handleDeleteComment = (commentId: string) => {
+        const commentDocRef = doc(firestore, 'posts', postId, 'comments', commentId);
+        deleteDocumentNonBlocking(commentDocRef).then(() => {
+            toast({ title: "Comment deleted." });
+        }).catch(error => {
+            if ((error as any).name !== 'FirebaseError') {
+                toast({ variant: 'destructive', title: 'Failed to delete comment.' });
+            }
+        });
+    }
+
+    return (
+        <div className="pt-4 space-y-4">
+            <Separator />
+            {isLoadingComments ? (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span>Loading comments...</span>
+                </div>
+            ) : (
+                <div className="space-y-4">
+                    {comments && comments.map(comment => {
+                         const canDelete = user && (user.uid === comment.authorId || isSuperAdmin);
+                        return (
+                            <div key={comment.id} className="flex items-start gap-3">
+                                <Link href={`/expert/${comment.authorId}`}>
+                                    <Avatar className="h-8 w-8">
+                                        <AvatarImage src={comment.authorPhotoUrl} />
+                                        <AvatarFallback>{getInitials(comment.authorName)}</AvatarFallback>
+                                    </Avatar>
+                                </Link>
+                                <div className="flex-1">
+                                    <div className="bg-secondary rounded-lg px-3 py-2">
+                                        <div className="flex items-center justify-between">
+                                            <Link href={`/expert/${comment.authorId}`} className="hover:underline">
+                                                <p className="text-xs font-semibold">{comment.authorName}</p>
+                                            </Link>
+                                             {canDelete && (
+                                                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleDeleteComment(comment.id)}>
+                                                    <Trash2 className="h-3 w-3 text-muted-foreground" />
+                                                </Button>
+                                            )}
+                                        </div>
+                                        <p className="text-sm">{comment.content}</p>
+                                    </div>
+                                    <p className="text-xs text-muted-foreground mt-1">
+                                         {comment.createdAt ? formatDistanceToNow(new Date(comment.createdAt.seconds * 1000), { addSuffix: true }) : 'just now'}
+                                    </p>
+                                </div>
+                            </div>
+                        )
+                    })}
+                </div>
+            )}
+            {user && (
+                 <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="flex items-center gap-2">
+                         <FormField
+                            control={form.control}
+                            name="content"
+                            render={({ field }) => (
+                                <FormItem className="flex-1">
+                                    <FormControl>
+                                        <Input placeholder="Write a comment..." {...field} />
+                                    </FormControl>
+                                </FormItem>
+                            )}
+                        />
+                        <Button type="submit" size="icon" disabled={isSubmitting}>
+                            {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                        </Button>
+                    </form>
+                 </Form>
+            )}
+        </div>
+    );
 }
 
 function FeedContent() {
@@ -210,8 +358,8 @@ function FeedContent() {
                                 )}
                                 <p className="text-sm whitespace-pre-wrap">{post.content}</p>
                             </CardContent>
-                            <CardFooter>
-                                <div className="flex items-center gap-2">
+                            <CardFooter className="flex-col items-start">
+                                <div className="flex items-center gap-2 w-full">
                                     <Button variant="ghost" size="sm" onClick={() => handleLike(post)}>
                                         <Heart className={cn("mr-2 h-4 w-4", hasLiked && "fill-red-500 text-red-500")} />
                                         Like
@@ -226,6 +374,7 @@ function FeedContent() {
                                         </Button>
                                     </ShareDialog>
                                 </div>
+                                <CommentsSection postId={post.id} />
                             </CardFooter>
                         </Card>
                     )

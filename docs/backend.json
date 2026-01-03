@@ -41,11 +41,11 @@
           "type": "string",
           "description": "The user's role within the application.",
           "enum": [
-            "super_admin",
-            "manager",
-            "freelancer",
-            "company",
-            "authorized_pro"
+            "Super Admin",
+            "Manager",
+            "Freelancer",
+            "Company",
+            "Authorized Pro"
           ]
         },
         "department": {
@@ -340,6 +340,41 @@
         }
       },
       "required": ["id", "authorId", "authorName", "content", "createdAt"]
+    },
+    "Comment": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "title": "Comment",
+        "type": "object",
+        "description": "Represents a comment on a post.",
+        "properties": {
+            "id": {
+                "type": "string",
+                "description": "Unique identifier for the comment."
+            },
+            "authorId": {
+                "type": "string",
+                "description": "The ID of the user who created the comment."
+            },
+            "authorName": {
+                "type": "string",
+                "description": "The name of the author at the time of commenting."
+            },
+            "authorPhotoUrl": {
+                "type": "string",
+                "format": "uri",
+                "description": "The URL of the author's profile picture at the time of commenting."
+            },
+            "content": {
+                "type": "string",
+                "description": "The text content of the comment."
+            },
+            "createdAt": {
+                "type": "string",
+                "format": "date-time",
+                "description": "Timestamp of when the comment was created."
+            }
+        },
+        "required": ["id", "authorId", "authorName", "content", "createdAt"]
     },
     "Vacancy": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -663,6 +698,26 @@
                 {
                     "name": "postId",
                     "description": "The unique identifier of the post."
+                }
+            ]
+        }
+      },
+      {
+        "path": "/posts/{postId}/comments/{commentId}",
+        "definition": {
+            "entityName": "Comment",
+            "schema": {
+                "$ref": "#/backend/entities/Comment"
+            },
+            "description": "Stores comments for a specific post.",
+            "params": [
+                {
+                    "name": "postId",
+                    "description": "The ID of the parent post."
+                },
+                {
+                    "name": "commentId",
+                    "description": "The unique identifier of the comment."
                 }
             ]
         }
