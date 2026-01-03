@@ -56,6 +56,7 @@ type Comment = {
     authorId: string;
     content: string;
     createdAt: Timestamp;
+    likes?: string[];
     replies?: Comment[];
 }
 
@@ -169,6 +170,27 @@ function CommentThread({ comment, postId, allComments }: { comment: Comment, pos
             setIsSubmitting(false);
         }
     }
+    
+    const handleLikeComment = async () => {
+        if (!user || !firestore) {
+            toast({ variant: 'destructive', title: 'You must be logged in to like a comment.' });
+            return;
+        }
+
+        const commentRef = doc(firestore, 'posts', postId, 'comments', comment.id);
+        const hasLiked = comment.likes?.includes(user.uid);
+        const updateAction = hasLiked ? arrayRemove(user.uid) : arrayUnion(user.uid);
+        
+        try {
+            await updateDoc(commentRef, { likes: updateAction });
+        } catch (error) {
+            console.error("Error liking comment:", error);
+            if ((error as any).name !== 'FirebaseError') {
+                 toast({ variant: 'destructive', title: 'Error', description: 'Could not update like status.' });
+            }
+        }
+    };
+
 
     const handleDeleteComment = (commentId: string) => {
         if (!firestore) return;
@@ -183,12 +205,11 @@ function CommentThread({ comment, postId, allComments }: { comment: Comment, pos
     }
     
     const canDelete = user && (user.uid === comment.authorId || isSuperAdmin);
+    const hasLiked = user ? comment.likes?.includes(user.uid) : false;
 
     return (
         <div className="flex items-start gap-3">
-             <div className="w-8 shrink-0">
-                {comment.parentId && <div className="h-full w-px bg-border ml-4" />}
-            </div>
+             {comment.parentId && <div className="w-4 shrink-0 border-l-2 border-border/50 h-full" />}
             <div className="flex-1 space-y-2">
                 <div className="bg-secondary rounded-lg p-3">
                     <div className="flex items-center justify-between">
@@ -212,13 +233,24 @@ function CommentThread({ comment, postId, allComments }: { comment: Comment, pos
                 </div>
                  <div className="pl-11 flex items-center gap-4">
                     <p className="text-xs text-muted-foreground">
-                        {comment.createdAt ? formatDistanceToNow(new Date(comment.createdAt.seconds * 1000)) : 'just now'} ago
+                        {comment.createdAt ? `${formatDistanceToNow(new Date(comment.createdAt.seconds * 1000))} ago` : 'just now'}
                     </p>
                      {user && (
                         <Button variant="ghost" size="xs" onClick={() => setShowReplyForm(!showReplyForm)}>
                             <MessageSquareReply className="mr-1 h-3 w-3"/>
                             Reply
                         </Button>
+                    )}
+                    {user && (
+                         <div className="flex items-center">
+                            <Button variant="ghost" size="xs" onClick={handleLikeComment}>
+                                <Heart className={cn("mr-1 h-3 w-3", hasLiked && "fill-red-500 text-red-500")} />
+                                Like
+                            </Button>
+                             {comment.likes && comment.likes.length > 0 && (
+                                <span className="text-xs text-muted-foreground">{comment.likes.length}</span>
+                            )}
+                        </div>
                     )}
                 </div>
 
@@ -246,7 +278,7 @@ function CommentThread({ comment, postId, allComments }: { comment: Comment, pos
                 )}
                 
                  {replies.length > 0 && (
-                    <div className="pt-2 space-y-4 border-l-2 border-border/50 ml-4">
+                    <div className="pt-2 space-y-4">
                         {replies.map(reply => (
                             <CommentThread key={reply.id} comment={reply} postId={postId} allComments={allComments} />
                         ))}
@@ -404,11 +436,13 @@ function FeedContent() {
             });
         } catch (error) {
             console.error('Error updating like:', error);
-            toast({
-                variant: 'destructive',
-                title: 'Error',
-                description: 'Could not update like status. Please try again.',
-            });
+            if ((error as any).name !== 'FirebaseError') {
+                 toast({
+                    variant: 'destructive',
+                    title: 'Error',
+                    description: 'Could not update like status. Please try again.',
+                });
+            }
         }
     };
 
@@ -601,4 +635,5 @@ export default function FeedPage() {
     
 
     
+
 

@@ -359,18 +359,14 @@
                 "type": "string",
                 "description": "The ID of the user who created the comment."
             },
-            "authorName": {
-                "type": "string",
-                "description": "The name of the author at the time of commenting."
-            },
-            "authorPhotoUrl": {
-                "type": "string",
-                "format": "uri",
-                "description": "The URL of the author's profile picture at the time of commenting."
-            },
             "content": {
                 "type": "string",
                 "description": "The text content of the comment."
+            },
+            "likes": {
+                "type": "array",
+                "description": "An array of user IDs who have liked the comment.",
+                "items": { "type": "string" }
             },
             "createdAt": {
                 "type": "string",
@@ -378,7 +374,7 @@
                 "description": "Timestamp of when the comment was created."
             }
         },
-        "required": ["id", "authorId", "authorName", "content", "createdAt"]
+        "required": ["id", "authorId", "content", "createdAt"]
     },
     "Vacancy": {
       "$schema": "http://json-schema.org/draft-07/schema#",
