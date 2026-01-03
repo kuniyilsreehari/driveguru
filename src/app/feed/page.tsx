@@ -3,6 +3,7 @@
 
 import { Suspense, useMemo, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { collection, query, orderBy, Timestamp, doc, updateDoc, arrayUnion, arrayRemove, deleteDoc } from 'firebase/firestore';
 import { useFirestore, useCollection, useMemoFirebase, useUser, useDoc, deleteDocumentNonBlocking } from '@/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
@@ -37,6 +38,7 @@ type Post = {
     authorName: string;
     authorPhotoUrl?: string;
     content: string;
+    imageUrl?: string;
     createdAt: Timestamp;
     likes?: string[];
 };
@@ -196,6 +198,16 @@ function FeedContent() {
                                 </div>
                             </CardHeader>
                             <CardContent>
+                                {post.imageUrl && (
+                                    <div className="mb-4 aspect-video relative rounded-lg overflow-hidden border">
+                                        <Image
+                                            src={post.imageUrl}
+                                            alt={`Post image from ${post.authorName}`}
+                                            fill
+                                            className="object-cover"
+                                        />
+                                    </div>
+                                )}
                                 <p className="text-sm whitespace-pre-wrap">{post.content}</p>
                             </CardContent>
                             <CardFooter>
@@ -268,3 +280,5 @@ export default function FeedPage() {
         </div>
     )
 }
+
+    
