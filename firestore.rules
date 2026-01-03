@@ -47,7 +47,7 @@ service cloud.firestore {
     function isUpdatingOwnUserDoc(userId) {
       let protectedFields = ['id', 'createdAt', 'tier', 'verified', 'referralPoints', 'cashPaymentStatus', 'referredByCode'];
       let incomingRole = requestData().role;
-      let allowedRoles = ["Freelancer", "Company", "Authorized Pro"];
+      let allowedRoles = ["freelancer", "company", "authorized_pro"];
 
       // Check if the role is being changed to a valid, non-admin role.
       let isRoleUpdateAllowed = incomingRole in allowedRoles;
@@ -256,13 +256,13 @@ service cloud.firestore {
             return isSignedIn() && resource.data.creatorId == request.auth.uid;
         }
 
-        // Use a get() call to check membership for collection-level reads (list)
+        // Use a get() call to check membership for sub-collection reads
         function isGroupMember() {
             return isSignedIn() && get(/databases/$(database)/documents/groups/$(groupId)).data.members.hasAny([request.auth.uid]);
         }
         
-        allow get: if isSignedIn();
-        allow list: if isSignedIn(); // Allows listing all groups
+        // Allow anyone to view a single group's details and list all groups
+        allow get, list: if true;
         
         allow create: if isSignedIn() && requestData().creatorId == request.auth.uid && request.auth.uid in requestData().members;
         
@@ -273,8 +273,8 @@ service cloud.firestore {
         allow delete: if isSuperAdmin() || isGroupCreator();
 
         match /posts/{postId} {
-            allow get: if isGroupMember();
-            allow list: if isGroupMember(); 
+            // Only group members can read or list posts within the group
+            allow read, list: if isGroupMember(); 
             allow create: if isGroupMember() && requestData().authorId == request.auth.uid;
             allow update, delete: if (isGroupMember() && resource.data.authorId == request.auth.uid) || isSuperAdmin();
         }
@@ -300,5 +300,3 @@ service cloud.firestore {
      * ===================================================== */
   }
 }
-
-    
