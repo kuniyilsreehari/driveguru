@@ -273,7 +273,7 @@ function CommentThread({ comment, postId, allComments, onDelete, postAuthorId }:
                                         <span>Like</span>
                                     </button>
                                     {comment.likes && comment.likes.length > 0 && (
-                                        <span className="ml-1">{comment.likes.length}</span>
+                                        <span className="ml-1.5">{comment.likes.length}</span>
                                     )}
                                 </div>
                             </>
@@ -684,7 +684,7 @@ function FeedContent() {
                     const canEdit = user && user.uid === post.authorId;
                     const canDelete = canEdit || isSuperAdmin;
                     const isEditingThisPost = editingPostId === post.id;
-                    const canViewLikes = canEdit && post.likes && post.likes.length > 0;
+                    const canViewLikes = post.likes && post.likes.length > 0;
 
                     return (
                         <Card key={post.id}>
