@@ -123,6 +123,11 @@ service cloud.firestore {
       return expertDoc.data.tier == 'Premier' || expertDoc.data.tier == 'Super Premier';
     }
 
+    function isPostAuthor(postId) {
+        let post = get(/databases/$(database)/documents/posts/$(postId));
+        return isSignedIn() && request.auth.uid == post.data.authorId;
+    }
+
 
     /* =====================================================
      * Admin Roles
@@ -211,9 +216,13 @@ service cloud.firestore {
         // Users can create their own posts
         allow create: if isSignedIn() && requestData().authorId == request.auth.uid;
         
-        // Users can update their own posts (including likes), or a super admin can.
-        allow update: if (isSignedIn() && resource.data.authorId == request.auth.uid) || isSuperAdmin()
-                    || (isSignedIn() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes']));
+        // Let's refine the update rule
+        allow update: if isSuperAdmin() || // Super admins can do anything
+                       // Any signed in user can update ONLY the likes array
+                       (isSignedIn() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes'])) ||
+                       // The author can update the content and imageUrl, but not likes or other fields
+                       (isSignedIn() && resource.data.authorId == request.auth.uid && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['authorId', 'createdAt', 'likes']));
+
         
         // Users can delete their own posts, or a super admin can.
         allow delete: if (isSignedIn() && resource.data.authorId == request.auth.uid) || isSuperAdmin();
@@ -227,13 +236,15 @@ service cloud.firestore {
             // Any signed-in user can create a comment
             allow create: if isSignedIn() && requestData().authorId == request.auth.uid;
             
-            // Allow update only for likes by any signed-in user
-            allow update: if (isSignedIn() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes'])) ||
-                             (isSignedIn() && resource.data.authorId == request.auth.uid && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['likes', 'authorId', 'createdAt'])) ||
-                             isSuperAdmin();
+            // Refined update rule for comments
+            allow update: if isSuperAdmin() || // Super admins can do anything
+                           // Any signed-in user can update ONLY the likes array
+                           (isSignedIn() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes'])) ||
+                           // The author can update ONLY the content
+                           (isSignedIn() && resource.data.authorId == request.auth.uid && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['content']));
 
-            // Only the author or a super admin can delete
-            allow delete: if (isSignedIn() && resource.data.authorId == request.auth.uid) || isSuperAdmin();
+            // The author of the comment, the author of the post, or a super admin can delete.
+            allow delete: if (isSignedIn() && (resource.data.authorId == request.auth.uid || isPostAuthor(postId))) || isSuperAdmin();
         }
     }
     

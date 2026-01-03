@@ -16,7 +16,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Loader2, ChevronLeft, Rss, Search, Heart, Share2, MoreHorizontal, Trash2, Send, LogIn, MessageSquareReply, MessageSquare, Pen } from 'lucide-react';
-import { formatDistanceToNow, formatDistanceToNowStrict } from 'date-fns';
+import { formatDistanceToNowStrict } from 'date-fns';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
@@ -126,7 +126,7 @@ function CommenterInfo({ authorId }: { authorId: string }) {
     );
 }
 
-function CommentThread({ comment, postId, allComments, onDelete }: { comment: Comment, postId: string, allComments: Comment[], onDelete: (commentId: string) => void }) {
+function CommentThread({ comment, postId, allComments, onDelete, postAuthorId }: { comment: Comment, postId: string, allComments: Comment[], onDelete: (commentId: string) => void, postAuthorId: string }) {
     const { user } = useUser();
     const firestore = useFirestore();
     const { toast } = useToast();
@@ -209,7 +209,8 @@ function CommentThread({ comment, postId, allComments, onDelete }: { comment: Co
         }
     }
     
-    const canInteract = user && (user.uid === comment.authorId || isSuperAdmin);
+    const canManageComment = user && (user.uid === comment.authorId || user.uid === postAuthorId || isSuperAdmin);
+    const canEditComment = user && user.uid === comment.authorId;
     const hasLiked = user ? comment.likes?.includes(user.uid) : false;
 
     return (
@@ -218,7 +219,7 @@ function CommentThread({ comment, postId, allComments, onDelete }: { comment: Co
             <div className="flex-1 space-y-2">
                 <div className="flex items-center justify-between">
                     <CommenterInfo authorId={comment.authorId} />
-                    {canInteract && (
+                    {canManageComment && (
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button variant="ghost" size="icon" className="h-6 w-6">
@@ -226,7 +227,7 @@ function CommentThread({ comment, postId, allComments, onDelete }: { comment: Co
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent>
-                                {user?.uid === comment.authorId && 
+                                {canEditComment && 
                                     <DropdownMenuItem onClick={() => setIsEditing(true)}>
                                         <Pen className="mr-2 h-4 w-4" /> Edit
                                     </DropdownMenuItem>
@@ -256,12 +257,13 @@ function CommentThread({ comment, postId, allComments, onDelete }: { comment: Co
                     )}
                 
                     <div className="flex items-center gap-4 text-xs text-muted-foreground mt-1">
-                        <p>
+                        <p title={comment.createdAt?.toDate().toLocaleString()}>
                             {comment.createdAt ? `${formatDistanceToNowStrict(new Date(comment.createdAt.seconds * 1000))} ago` : 'just now'}
                         </p>
                         {user && (
                             <>
-                                <button onClick={() => setShowReplyForm(!showReplyForm)} className="hover:underline">
+                                <button onClick={() => setShowReplyForm(!showReplyForm)} className="hover:underline flex items-center gap-1">
+                                    <MessageSquareReply className="h-3 w-3" />
                                     Reply
                                 </button>
                                 <div className="flex items-center">
@@ -304,7 +306,7 @@ function CommentThread({ comment, postId, allComments, onDelete }: { comment: Co
                  {replies.length > 0 && (
                     <div className="pt-2 space-y-4">
                         {replies.map(reply => (
-                            <CommentThread key={reply.id} comment={reply} postId={postId} allComments={allComments} onDelete={onDelete}/>
+                            <CommentThread key={reply.id} comment={reply} postId={postId} allComments={allComments} onDelete={onDelete} postAuthorId={postAuthorId} />
                         ))}
                     </div>
                 )}
@@ -313,7 +315,7 @@ function CommentThread({ comment, postId, allComments, onDelete }: { comment: Co
     )
 }
 
-function CommentsSection({ postId }: { postId: string }) {
+function CommentsSection({ postId, postAuthorId }: { postId: string, postAuthorId: string }) {
     const firestore = useFirestore();
     const { user, isUserLoading } = useUser();
     const { toast } = useToast();
@@ -428,7 +430,7 @@ function CommentsSection({ postId }: { postId: string }) {
             ) : (
                 <div className="space-y-4">
                     {topLevelComments.map(comment => (
-                        <CommentThread key={comment.id} comment={comment} postId={postId} allComments={comments || []} onDelete={openDeleteDialog}/>
+                        <CommentThread key={comment.id} comment={comment} postId={postId} allComments={comments || []} onDelete={openDeleteDialog} postAuthorId={postAuthorId}/>
                     ))}
                 </div>
             )}
@@ -599,7 +601,8 @@ function FeedContent() {
             <div className="space-y-6">
                 {posts.map(post => {
                     const hasLiked = user ? post.likes?.includes(user.uid) : false;
-                    const canInteract = user && (user.uid === post.authorId || isSuperAdmin);
+                    const canEdit = user && user.uid === post.authorId;
+                    const canDelete = canEdit || isSuperAdmin;
                     const isEditingThisPost = editingPostId === post.id;
                     return (
                         <Card key={post.id}>
@@ -617,11 +620,11 @@ function FeedContent() {
                                                 <CardTitle className="text-base">{post.authorName}</CardTitle>
                                             </Link>
                                             <CardDescription className="text-xs">
-                                                {post.createdAt ? `${formatDistanceToNow(new Date(post.createdAt.seconds * 1000))} ago` : '...'}
+                                                {post.createdAt ? `${formatDistanceToNowStrict(post.createdAt.toDate(), "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")} ago` : '...'}
                                             </CardDescription>
                                         </div>
                                     </div>
-                                     {canInteract && (
+                                     {(canEdit || canDelete) && (
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
                                                 <Button variant="ghost" className="h-8 w-8 p-0">
@@ -629,16 +632,18 @@ function FeedContent() {
                                                 </Button>
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent align="end">
-                                                {user?.uid === post.authorId && (
+                                                {canEdit && (
                                                     <DropdownMenuItem onClick={() => handleEditPost(post)}>
                                                         <Pen className="mr-2 h-4 w-4" />
                                                         <span>Edit</span>
                                                     </DropdownMenuItem>
                                                 )}
-                                                <DropdownMenuItem onClick={() => openDeleteDialog(post)} className="text-destructive focus:text-destructive">
-                                                    <Trash2 className="mr-2 h-4 w-4" />
-                                                    <span>Delete</span>
-                                                </DropdownMenuItem>
+                                                {canDelete && (
+                                                    <DropdownMenuItem onClick={() => openDeleteDialog(post)} className="text-destructive focus:text-destructive">
+                                                        <Trash2 className="mr-2 h-4 w-4" />
+                                                        <span>Delete</span>
+                                                    </DropdownMenuItem>
+                                                )}
                                             </DropdownMenuContent>
                                         </DropdownMenu>
                                     )}
@@ -689,7 +694,7 @@ function FeedContent() {
                                         </Button>
                                     </ShareDialog>
                                 </div>
-                                <CommentsSection postId={post.id} />
+                                <CommentsSection postId={post.id} postAuthorId={post.authorId} />
                             </CardFooter>
                         </Card>
                     )
