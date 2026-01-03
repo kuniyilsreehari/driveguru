@@ -213,6 +213,7 @@ function CommentThread({ comment, postId, allComments, onDelete, postAuthorId }:
     const canManageComment = user && (user.uid === comment.authorId || user.uid === postAuthorId || isSuperAdmin);
     const canEditComment = user && user.uid === comment.authorId;
     const hasLiked = user ? comment.likes?.includes(user.uid) : false;
+    const canViewLikes = comment.likes && comment.likes.length > 0;
 
     return (
         <div className="flex items-start gap-3">
@@ -267,13 +268,21 @@ function CommentThread({ comment, postId, allComments, onDelete, postAuthorId }:
                                     <MessageSquareReply className="h-3 w-3" />
                                     Reply
                                 </button>
-                                <div className="flex items-center">
+                                <div className="flex items-center gap-2">
                                     <button onClick={handleLikeComment} className="hover:underline flex items-center gap-1">
                                         <Heart className={cn("h-3 w-3", hasLiked && "fill-red-500 text-red-500")} />
                                         <span>Like</span>
                                     </button>
-                                    {comment.likes && comment.likes.length > 0 && (
-                                        <span className="ml-1.5">{comment.likes.length}</span>
+                                     {canViewLikes ? (
+                                        <LikesDialog userIds={comment.likes!}>
+                                            <button className="text-xs text-muted-foreground hover:underline">
+                                                {comment.likes?.length || 0}
+                                            </button>
+                                        </LikesDialog>
+                                    ) : (
+                                        <span className="text-xs text-muted-foreground">
+                                            {comment.likes?.length || 0}
+                                        </span>
                                     )}
                                 </div>
                             </>
@@ -770,12 +779,12 @@ function FeedContent() {
                                     {canViewLikes ? (
                                         <LikesDialog userIds={post.likes!}>
                                             <button className="text-xs text-muted-foreground hover:underline">
-                                                {post.likes?.length || 0} {post.likes?.length === 1 ? 'like' : 'likes'}
+                                                {post.likes?.length} {post.likes?.length === 1 ? 'like' : 'likes'}
                                             </button>
                                         </LikesDialog>
                                     ) : (
                                         <span className="text-xs text-muted-foreground">
-                                            {post.likes?.length || 0} {post.likes?.length === 1 ? 'like' : 'likes'}
+                                            0 likes
                                         </span>
                                     )}
 
