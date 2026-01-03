@@ -175,10 +175,6 @@ export function PostForm({ userProfile }: PostFormProps) {
 
         <div className="flex justify-between items-center gap-4">
              <div>
-                <Button type="button" variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
-                    <ImageIcon className="mr-2 h-4 w-4" />
-                    Add Image
-                </Button>
                  <input
                     type="file"
                     ref={fileInputRef}
