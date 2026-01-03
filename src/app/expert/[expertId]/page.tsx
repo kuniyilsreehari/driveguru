@@ -7,7 +7,7 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { doc, arrayUnion, arrayRemove, query, collection, where } from 'firebase/firestore';
 import { useFirestore, useDoc, useMemoFirebase, useUser, updateDocumentNonBlocking, useCollection } from '@/firebase';
-import { Loader2, Star, ChevronLeft, MapPin, IndianRupee, Briefcase, Calendar, Info, Book, GraduationCap, School, User as UserIcon, UserCheck, XCircle, Crown, Sparkles, LogIn, Lock, Building, FileDown, Home, MessageSquare, PenSquare, Factory, Linkedin, Twitter, Github, Globe, UserPlus, UserMinus, Users, List, Phone, Youtube } from 'lucide-react';
+import { Loader2, Star, ChevronLeft, MapPin, IndianRupee, Briefcase, Calendar, Info, Book, GraduationCap, School, User as UserIcon, UserCheck, XCircle, Crown, Sparkles, LogIn, Lock, Building, FileDown, Home, MessageSquare, PenSquare, Factory, Linkedin, Twitter, Github, Globe, UserPlus, UserMinus, Users, List, Phone, Youtube, Share2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardFooter } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -22,6 +22,7 @@ import { WhatsAppBookingDialog } from '@/components/whatsapp-booking-dialog';
 import { Icons } from '@/components/icons';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription as UiDialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { FollowerStats } from '@/components/follower-stats';
+import { ShareDialog } from '@/components/share-dialog';
 
 
 type ExpertUserProfile = {
@@ -228,12 +229,20 @@ function ExpertProfileContent() {
                     <Button variant="outline" asChild>
                         <Link href="/"><ChevronLeft className="mr-2 h-4 w-4" /> Back to Home</Link>
                     </Button>
-                    {user && user.uid !== expert.id && (
-                        <Button variant={isFollowing ? 'secondary' : 'default'} onClick={handleToggleFollow} disabled={isFollowLoading}>
-                            {isFollowLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : isFollowing ? <UserMinus className="mr-2 h-4 w-4" /> : <UserPlus className="mr-2 h-4 w-4" />}
-                            {isFollowing ? 'Unfollow' : 'Follow'}
-                        </Button>
-                    )}
+                    <div className="flex items-center gap-2">
+                        {user && user.uid !== expert.id && (
+                            <Button variant={isFollowing ? 'secondary' : 'default'} onClick={handleToggleFollow} disabled={isFollowLoading}>
+                                {isFollowLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : isFollowing ? <UserMinus className="mr-2 h-4 w-4" /> : <UserPlus className="mr-2 h-4 w-4" />}
+                                {isFollowing ? 'Unfollow' : 'Follow'}
+                            </Button>
+                        )}
+                        <ShareDialog expert={expert}>
+                            <Button variant="outline">
+                                <Share2 className="mr-2 h-4 w-4" />
+                                Share
+                            </Button>
+                        </ShareDialog>
+                    </div>
                 </div>
                 
                 {!user && (

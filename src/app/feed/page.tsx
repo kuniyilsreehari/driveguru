@@ -7,11 +7,12 @@ import { collection, query, orderBy, Timestamp, doc, updateDoc, arrayUnion, arra
 import { useFirestore, useCollection, useMemoFirebase, useUser } from '@/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Loader2, ChevronLeft, Rss, Search, Heart } from 'lucide-react';
+import { Loader2, ChevronLeft, Rss, Search, Heart, Share2 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import { ShareDialog } from '@/components/share-dialog';
 
 
 type Post = {
@@ -143,6 +144,12 @@ function FeedContent() {
                                 <span className="text-xs text-muted-foreground">
                                     {post.likes?.length || 0} {post.likes?.length === 1 ? 'like' : 'likes'}
                                 </span>
+                                <ShareDialog expertId={post.authorId} expertName={post.authorName}>
+                                    <Button variant="ghost" size="sm">
+                                        <Share2 className="mr-2 h-4 w-4" />
+                                        Share
+                                    </Button>
+                                </ShareDialog>
                             </div>
                         </CardFooter>
                     </Card>
@@ -181,5 +188,3 @@ export default function FeedPage() {
         </div>
     )
 }
-
-    
