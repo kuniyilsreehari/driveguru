@@ -52,6 +52,7 @@ import * as z from 'zod';
 import { PostForm } from '@/components/post-form';
 import { LikesDialog } from '@/components/likes-dialog';
 import { ImageLightbox } from '@/components/image-lightbox';
+import { ShareDialog } from '@/components/share-dialog';
 
 type GroupPost = {
     id: string;
@@ -902,10 +903,19 @@ function GroupFeed({ group }: { group: Group }) {
                                     )}
                                 </CardContent>
                                 <CardFooter className="flex items-center gap-2">
-                                    <Button variant="ghost" size="sm">
-                                        <Share2 className="mr-2 h-4 w-4" />
-                                        Share
-                                    </Button>
+                                    <ShareDialog
+                                        shareDetails={{
+                                            type: 'group-post',
+                                            title: `Post in ${group.name}`,
+                                            text: post.content,
+                                            url: `${window.location.href}#${post.id}`
+                                        }}
+                                    >
+                                        <Button variant="ghost" size="sm">
+                                            <Share2 className="mr-2 h-4 w-4" />
+                                            Share
+                                        </Button>
+                                    </ShareDialog>
                                 </CardFooter>
                             </Card>
                         )
