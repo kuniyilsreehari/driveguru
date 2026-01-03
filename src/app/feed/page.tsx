@@ -58,11 +58,18 @@ type Comment = {
     createdAt: Timestamp;
 }
 
+type UserProfile = {
+    id: string;
+    firstName?: string;
+    lastName?: string;
+    photoUrl?: string;
+}
+
 const commentFormSchema = z.object({
   content: z.string().min(1, 'Comment cannot be empty.'),
 });
 
-function getInitials(name: string) {
+function getInitials(name?: string | null) {
     if (!name) return 'AN';
     const names = name.trim().split(' ');
     if (names.length > 1 && names[names.length - 1]) {
@@ -73,6 +80,56 @@ function getInitials(name: string) {
         return names[0].substring(0, 2).toUpperCase();
     }
     return name.substring(0, 2).toUpperCase();
+}
+
+function CommenterInfo({ authorId }: { authorId: string }) {
+    const firestore = useFirestore();
+    const commenterDocRef = useMemoFirebase(() => {
+        if (!firestore) return null;
+        return doc(firestore, 'users', authorId);
+    }, [firestore, authorId]);
+    
+    const { data: commenter, isLoading } = useDoc<UserProfile>(commenterDocRef);
+
+    if (isLoading) {
+        return (
+            <div className="flex items-center gap-3">
+                <Avatar className="h-8 w-8">
+                    <AvatarFallback><Loader2 className="h-4 w-4 animate-spin" /></AvatarFallback>
+                </Avatar>
+                <div className="flex-1">
+                    <div className="bg-secondary rounded-lg px-3 py-2">
+                        <p className="text-xs font-semibold">Loading...</p>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+    
+    const displayName = commenter ? `${commenter.firstName} ${commenter.lastName}` : 'Anonymous User';
+    const displayInitials = commenter ? getInitials(`${commenter.firstName} ${commenter.lastName}`) : 'AU';
+
+    return (
+        <div className="flex items-start gap-3">
+            <Link href={`/expert/${authorId}`}>
+                <Avatar className="h-8 w-8">
+                    <AvatarImage src={commenter?.photoUrl} />
+                    <AvatarFallback>{displayInitials}</AvatarFallback>
+                </Avatar>
+            </Link>
+            <div className="flex-1">
+                <div className="bg-secondary rounded-lg px-3 py-2">
+                    <div className="flex items-center justify-between">
+                        <Link href={`/expert/${authorId}`} className="hover:underline">
+                            <p className="text-xs font-semibold">{displayName}</p>
+                        </Link>
+                        {/* Placeholder for delete button */}
+                    </div>
+                    {/* Comment content will be rendered outside this component */}
+                </div>
+            </div>
+        </div>
+    )
 }
 
 
@@ -111,7 +168,7 @@ function CommentsSection({ postId }: { postId: string }) {
         try {
             await addDocumentNonBlocking(commentRef, {
                 authorId: user.uid,
-                authorName: user.displayName || 'Anonymous',
+                authorName: user.displayName || 'Anonymous', // Keep for fallback, though UI won't use it
                 authorPhotoUrl: user.photoURL || '',
                 content: values.content,
                 createdAt: serverTimestamp(),
@@ -151,19 +208,12 @@ function CommentsSection({ postId }: { postId: string }) {
                          const canDelete = user && (user.uid === comment.authorId || isSuperAdmin);
                         return (
                             <div key={comment.id} className="flex items-start gap-3">
-                                <Link href={`/expert/${comment.authorId}`}>
-                                    <Avatar className="h-8 w-8">
-                                        <AvatarImage src={comment.authorPhotoUrl} />
-                                        <AvatarFallback>{getInitials(comment.authorName)}</AvatarFallback>
-                                    </Avatar>
-                                </Link>
-                                <div className="flex-1">
+                                <CommenterInfo authorId={comment.authorId} />
+                                <div className="flex-1" style={{ marginTop: '-42px', marginLeft: '44px' }}>
                                     <div className="bg-secondary rounded-lg px-3 py-2">
                                         <div className="flex items-center justify-between">
-                                            <Link href={`/expert/${comment.authorId}`} className="hover:underline">
-                                                <p className="text-xs font-semibold">{comment.authorName}</p>
-                                            </Link>
-                                             {canDelete && (
+                                            {/* Name is now rendered inside CommenterInfo */}
+                                            {canDelete && (
                                                 <DropdownMenu>
                                                     <DropdownMenuTrigger asChild>
                                                         <Button variant="ghost" size="icon" className="h-6 w-6">
