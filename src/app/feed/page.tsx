@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { Suspense, useMemo, useState } from 'react';
@@ -211,7 +212,7 @@ function CommentThread({ comment, postId, allComments }: { comment: Comment, pos
                 </div>
                  <div className="pl-11 flex items-center gap-4">
                     <p className="text-xs text-muted-foreground">
-                        {comment.createdAt ? formatDistanceToNow(new Date(comment.createdAt.seconds * 1000), { addSuffix: true }) : 'just now'}
+                        {comment.createdAt ? `${formatDistanceToNow(new Date(comment.createdAt.seconds * 1000))} ago` : 'just now'}
                     </p>
                      {user && (
                         <Button variant="ghost" size="xs" onClick={() => setShowReplyForm(!showReplyForm)}>
@@ -419,10 +420,19 @@ function FeedContent() {
     const handleDeletePost = () => {
         if (!selectedPost || !firestore) return;
         const postDocRef = doc(firestore, 'posts', selectedPost.id);
-        deleteDocumentNonBlocking(postDocRef);
-        toast({
-            title: "Post Deleted",
-            description: "The post has been successfully removed.",
+        deleteDocumentNonBlocking(postDocRef).then(() => {
+            toast({
+                title: "Post Deleted",
+                description: "The post has been successfully removed.",
+            });
+        }).catch(error => {
+            if ((error as any).name !== 'FirebaseError') {
+                toast({
+                    variant: 'destructive',
+                    title: "Deletion Failed",
+                    description: "Could not delete the post. Please try again.",
+                });
+            }
         });
         setIsDeleteDialogOpen(false);
         setSelectedPost(null);
@@ -482,7 +492,7 @@ function FeedContent() {
                                                 <CardTitle className="text-base">{post.authorName}</CardTitle>
                                             </Link>
                                             <CardDescription className="text-xs">
-                                                {post.createdAt ? formatDistanceToNow(new Date(post.createdAt.seconds * 1000), { addSuffix: true }) : '...'}
+                                                {post.createdAt ? `${formatDistanceToNow(new Date(post.createdAt.seconds * 1000))} ago` : '...'}
                                             </CardDescription>
                                         </div>
                                     </div>
