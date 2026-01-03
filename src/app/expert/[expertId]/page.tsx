@@ -21,6 +21,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { WhatsAppBookingDialog } from '@/components/whatsapp-booking-dialog';
 import { Icons } from '@/components/icons';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription as UiDialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { FollowerStats } from '@/components/follower-stats';
 
 
 type ExpertUserProfile = {
@@ -63,36 +64,6 @@ type ExpertUserProfile = {
     youtubeUrl?: string;
     following?: string[];
 };
-
-function FollowerStats({ expert }: { expert: ExpertUserProfile }) {
-    const firestore = useFirestore();
-
-    const followersQuery = useMemoFirebase(() => {
-        if (!firestore) return null;
-        return query(collection(firestore, 'users'), where('following', 'array-contains', expert.id));
-    }, [firestore, expert.id]);
-
-    const { data: followers, isLoading: isLoadingFollowers } = useCollection(followersQuery);
-    
-    const followingCount = expert.following?.length || 0;
-
-    if (isLoadingFollowers) {
-        return <p className="text-sm text-muted-foreground">Loading stats...</p>;
-    }
-
-    return (
-        <div className="flex items-center gap-4 mt-2">
-            <div className="flex items-center gap-1">
-                <Users className="h-4 w-4 text-muted-foreground" />
-                <p className="text-sm"><span className="font-bold text-foreground">{followers?.length || 0}</span> Followers</p>
-            </div>
-            <div className="flex items-center gap-1">
-                <p className="text-sm"><span className="font-bold text-foreground">{followingCount}</span> Following</p>
-            </div>
-        </div>
-    );
-}
-
 
 function ExpertProfileContent() {
     const params = useParams();

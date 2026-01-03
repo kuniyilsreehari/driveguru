@@ -56,6 +56,7 @@ import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { PostForm } from '@/components/post-form';
 
 
 type ExpertUserProfile = {
@@ -1094,6 +1095,15 @@ function ExpertDashboardPage() {
             </CardFooter>
         </Card>
         
+        <Card>
+            <CardHeader>
+                <CardTitle>Post to the Public Feed</CardTitle>
+                <CardDescription>Share an update with the community. Your post will be visible to everyone on the platform.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <PostForm userProfile={userProfile} />
+            </CardContent>
+        </Card>
 
         {userProfile.referralCode && (
             <Card>
