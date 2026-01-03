@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { collection, query, orderBy, serverTimestamp, doc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
 import { useFirestore, useCollection, useMemoFirebase, useUser, addDocumentNonBlocking, useDoc } from '@/firebase';
 import { Button } from '@/components/ui/button';
-import { Loader2, ChevronLeft, Users, PlusCircle, ArrowRight, Search, Hash, UserPlus, UserMinus } from 'lucide-react';
+import { Loader2, ChevronLeft, Users, PlusCircle, ArrowRight, Search, Hash, UserPlus, UserMinus, LogIn } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import {
   Dialog,
@@ -156,7 +156,7 @@ function CreateGroupDialog({ onGroupCreated }: { onGroupCreated: () => void }) {
 
 function GroupsList() {
     const firestore = useFirestore();
-    const { user } = useUser();
+    const { user, isUserLoading } = useUser();
     const { toast } = useToast();
     const [searchQuery, setSearchQuery] = useState('');
     const [isSubmitting, setIsSubmitting] = useState<string | null>(null);
@@ -211,7 +211,7 @@ function GroupsList() {
         }
     };
 
-    if (isLoading) {
+    if (isLoading || isUserLoading) {
         return (
             <div className="flex h-64 w-full items-center justify-center">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -263,11 +263,19 @@ function GroupsList() {
                                     </div>
                                 </CardContent>
                                 <CardFooter className="flex flex-col sm:flex-row gap-2">
-                                    <Button asChild className="w-full" variant="outline">
-                                        <Link href={`/groups/${group.id}`}>
-                                            View Group <ArrowRight className="ml-2 h-4 w-4" />
-                                        </Link>
-                                    </Button>
+                                    {user ? (
+                                        <Button asChild className="w-full" variant="outline">
+                                            <Link href={`/groups/${group.id}`}>
+                                                View Group <ArrowRight className="ml-2 h-4 w-4" />
+                                            </Link>
+                                        </Button>
+                                    ) : (
+                                        <Button asChild className="w-full" variant="outline">
+                                            <Link href="/login">
+                                                <LogIn className="mr-2 h-4 w-4" /> Login to View
+                                            </Link>
+                                        </Button>
+                                    )}
                                     {user && !isCreator && (
                                         <Button 
                                             className="w-full" 
