@@ -1,12 +1,12 @@
 
 'use client';
 
-import { Suspense, useState } from 'react';
+import { Suspense, useState, useMemo } from 'react';
 import Link from 'next/link';
-import { collection, query, orderBy, serverTimestamp } from 'firebase/firestore';
-import { useFirestore, useCollection, useMemoFirebase, useUser, addDocumentNonBlocking } from '@/firebase';
+import { collection, query, orderBy, serverTimestamp, doc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
+import { useFirestore, useCollection, useMemoFirebase, useUser, addDocumentNonBlocking, useDoc } from '@/firebase';
 import { Button } from '@/components/ui/button';
-import { Loader2, ChevronLeft, Users, PlusCircle, ArrowRight, Search, Hash } from 'lucide-react';
+import { Loader2, ChevronLeft, Users, PlusCircle, ArrowRight, Search, Hash, UserPlus, UserMinus } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import {
   Dialog,
@@ -33,6 +33,11 @@ export type Group = {
     members: string[];
     createdAt: any;
 };
+
+type UserProfile = {
+    id: string;
+    groups?: string[];
+}
 
 const createGroupSchema = z.object({
   name: z.string().min(3, 'Group name must be at least 3 characters.').max(50, 'Group name cannot exceed 50 characters.'),
@@ -69,7 +74,16 @@ function CreateGroupDialog({ onGroupCreated }: { onGroupCreated: () => void }) {
         };
 
         try {
-            await addDocumentNonBlocking(collection(firestore, 'groups'), newGroupData);
+            const groupRef = await addDocumentNonBlocking(collection(firestore, 'groups'), newGroupData);
+
+            if (groupRef) {
+                // Also update the user's document to include this new group
+                const userDocRef = doc(firestore, 'users', user.uid);
+                await updateDoc(userDocRef, {
+                    groups: arrayUnion(groupRef.id)
+                });
+            }
+
             toast({
                 title: 'Group Created!',
                 description: `Your group "${values.name}" is now live.`,
@@ -142,7 +156,16 @@ function CreateGroupDialog({ onGroupCreated }: { onGroupCreated: () => void }) {
 
 function GroupsList() {
     const firestore = useFirestore();
+    const { user } = useUser();
+    const { toast } = useToast();
     const [searchQuery, setSearchQuery] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState<string | null>(null);
+
+    const userDocRef = useMemoFirebase(() => {
+        if (!user) return null;
+        return doc(firestore, 'users', user.uid);
+    }, [user, firestore]);
+    const { data: userProfile } = useDoc<UserProfile>(userDocRef);
 
     const groupsQuery = useMemoFirebase(() => {
         if (!firestore) return null;
@@ -155,6 +178,38 @@ function GroupsList() {
         group.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         group.description.toLowerCase().includes(searchQuery.toLowerCase())
     );
+
+    const handleToggleMembership = async (group: Group) => {
+        if (!user || !firestore) {
+            toast({ variant: 'destructive', title: 'You must be logged in.' });
+            return;
+        }
+
+        setIsSubmitting(group.id);
+        const groupDocRef = doc(firestore, 'groups', group.id);
+        const userDocRef = doc(firestore, 'users', user.uid);
+        const isMember = userProfile?.groups?.includes(group.id);
+        
+        try {
+            const groupUpdateAction = isMember ? arrayRemove(user.uid) : arrayUnion(user.uid);
+            const userUpdateAction = isMember ? arrayRemove(group.id) : arrayUnion(group.id);
+
+            await Promise.all([
+                updateDoc(groupDocRef, { members: groupUpdateAction }),
+                updateDoc(userDocRef, { groups: userUpdateAction })
+            ]);
+            
+            toast({
+                title: isMember ? 'Left Group' : 'Joined Group',
+                description: `You are now ${isMember ? 'no longer' : ''} a member of ${group.name}.`,
+            });
+        } catch (error) {
+            console.error("Error toggling group membership:", error);
+            toast({ variant: 'destructive', title: 'Error', description: 'Could not update your membership.' });
+        } finally {
+            setIsSubmitting(null);
+        }
+    };
 
     if (isLoading) {
         return (
@@ -188,30 +243,46 @@ function GroupsList() {
 
             {filteredGroups && filteredGroups.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {filteredGroups.map(group => (
-                        <Card key={group.id} className="flex flex-col hover:shadow-lg transition-shadow">
-                            <CardHeader>
-                                <CardTitle className="flex items-center gap-2">
-                                    <Hash className="h-5 w-5 text-primary"/>
-                                    {group.name}
-                                </CardTitle>
-                                <CardDescription className="line-clamp-2 h-[40px]">{group.description}</CardDescription>
-                            </CardHeader>
-                            <CardContent className="flex-grow">
-                                <div className="text-sm text-muted-foreground flex items-center gap-2">
-                                    <Users className="h-4 w-4" />
-                                    <span>{group.members.length} {group.members.length === 1 ? 'member' : 'members'}</span>
-                                </div>
-                            </CardContent>
-                            <CardFooter>
-                                <Button asChild className="w-full">
-                                    <Link href={`/groups/${group.id}`}>
-                                        View Group <ArrowRight className="ml-2 h-4 w-4" />
-                                    </Link>
-                                </Button>
-                            </CardFooter>
-                        </Card>
-                    ))}
+                    {filteredGroups.map(group => {
+                        const isMember = userProfile?.groups?.includes(group.id);
+                        const isCreator = user?.uid === group.creatorId;
+
+                        return (
+                            <Card key={group.id} className="flex flex-col hover:shadow-lg transition-shadow">
+                                <CardHeader>
+                                    <CardTitle className="flex items-center gap-2">
+                                        <Hash className="h-5 w-5 text-primary"/>
+                                        {group.name}
+                                    </CardTitle>
+                                    <CardDescription className="line-clamp-2 h-[40px]">{group.description}</CardDescription>
+                                </CardHeader>
+                                <CardContent className="flex-grow">
+                                    <div className="text-sm text-muted-foreground flex items-center gap-2">
+                                        <Users className="h-4 w-4" />
+                                        <span>{group.members.length} {group.members.length === 1 ? 'member' : 'members'}</span>
+                                    </div>
+                                </CardContent>
+                                <CardFooter className="flex flex-col sm:flex-row gap-2">
+                                    <Button asChild className="w-full" variant="outline">
+                                        <Link href={`/groups/${group.id}`}>
+                                            View Group <ArrowRight className="ml-2 h-4 w-4" />
+                                        </Link>
+                                    </Button>
+                                    {user && !isCreator && (
+                                        <Button 
+                                            className="w-full" 
+                                            variant={isMember ? 'secondary' : 'default'}
+                                            onClick={() => handleToggleMembership(group)}
+                                            disabled={isSubmitting === group.id}
+                                        >
+                                           {isSubmitting === group.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : isMember ? <UserMinus className="mr-2 h-4 w-4"/> : <UserPlus className="mr-2 h-4 w-4"/> }
+                                           {isMember ? 'Leave' : 'Join'}
+                                        </Button>
+                                    )}
+                                </CardFooter>
+                            </Card>
+                        )
+                    })}
                 </div>
             ) : (
                 <div className="text-center py-16">

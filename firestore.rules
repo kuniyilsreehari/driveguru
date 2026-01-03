@@ -47,7 +47,7 @@ service cloud.firestore {
     function isUpdatingOwnUserDoc(userId) {
       let protectedFields = ['id', 'createdAt', 'tier', 'verified', 'referralPoints', 'cashPaymentStatus', 'referredByCode'];
       let incomingRole = requestData().role;
-      let allowedRoles = ["freelancer", "company", "authorized_pro"];
+      let allowedRoles = ["Freelancer", "Company", "Authorized Pro"];
 
       // Check if the role is being changed to a valid, non-admin role.
       let isRoleUpdateAllowed = incomingRole in allowedRoles;
@@ -305,5 +305,3 @@ service cloud.firestore {
      * ===================================================== */
   }
 }
-
-    
