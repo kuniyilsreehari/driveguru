@@ -124,7 +124,8 @@ service cloud.firestore {
     }
 
     function isPostAuthor(postId) {
-        return isSignedIn() && get(/databases/$(database)/documents/posts/$(postId)).data.authorId == request.auth.uid;
+        let post = get(/databases/$(database)/documents/posts/$(postId));
+        return isSignedIn() && post.data.authorId == request.auth.uid;
     }
 
 
@@ -209,8 +210,9 @@ service cloud.firestore {
      * Posts
      * ===================================================== */
     match /posts/{postId} {
-        // Allow reads by anyone.
-        allow read: if true;
+        // Allow reads by anyone. This is crucial for the isPostAuthor function to work.
+        allow get: if true;
+        allow list: if true;
 
         // Users can create their own posts
         allow create: if isSignedIn() && requestData().authorId == request.auth.uid;
@@ -243,7 +245,7 @@ service cloud.firestore {
                            (isSignedIn() && resource.data.authorId == request.auth.uid && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['content']));
 
             // The author of the comment, the author of the post, or a super admin can delete.
-            allow delete: if (isSignedIn() && (resource.data.authorId == request.auth.uid || isPostAuthor(postId))) || isSuperAdmin();
+            allow delete: if isSignedIn() && (resource.data.authorId == request.auth.uid || isPostAuthor(postId) || isSuperAdmin());
         }
     }
     
