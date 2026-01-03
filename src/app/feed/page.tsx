@@ -16,7 +16,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Loader2, ChevronLeft, Rss, Search, Heart, Share2, MoreHorizontal, Trash2, Send, LogIn, MessageSquareReply, MessageSquare, Pen } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow, formatDistanceToNowStrict } from 'date-fns';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
@@ -81,7 +81,7 @@ function getInitials(name?: string | null) {
     if (names[0] && names[0].length > 1) {
         return names[0].substring(0, 2).toUpperCase();
     }
-    return 'U';
+    return names[0] ? names[0].charAt(0).toUpperCase() : 'U';
 }
 
 function CommenterInfo({ authorId }: { authorId: string }) {
@@ -106,7 +106,7 @@ function CommenterInfo({ authorId }: { authorId: string }) {
         );
     }
     
-    const displayName = `${commenter.firstName} ${commenter.lastName}`;
+    const displayName = `${commenter.firstName || 'Anonymous'} ${commenter.lastName || ''}`.trim();
     const displayInitials = getInitials(displayName);
 
     return (
@@ -142,7 +142,7 @@ function CommentThread({ comment, postId, allComments }: { comment: Comment, pos
     const { data: superAdminData } = useDoc(superAdminDocRef);
     const isSuperAdmin = !!superAdminData;
 
-    const replies = allComments.filter(c => c.parentId === comment.id);
+    const replies = useMemo(() => allComments.filter(c => c.parentId === comment.id), [allComments, comment.id]);
 
     const form = useForm<z.infer<typeof commentFormSchema>>({
         resolver: zodResolver(commentFormSchema),
@@ -227,33 +227,33 @@ function CommentThread({ comment, postId, allComments }: { comment: Comment, pos
 
     return (
         <div className="flex items-start gap-3">
-             {comment.parentId && <div className="w-4 shrink-0 border-l-2 border-border/50 h-full" />}
+             {comment.parentId && <div className="w-4 shrink-0 border-l-2 border-border/50 h-full ml-4" />}
             <div className="flex-1 space-y-2">
-                <div className="bg-secondary rounded-lg p-3">
-                    <div className="flex items-center justify-between">
-                         <CommenterInfo authorId={comment.authorId} />
-                         {canInteract && (
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="h-6 w-6">
-                                        <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent>
-                                    {user?.uid === comment.authorId && 
-                                        <DropdownMenuItem onClick={() => setIsEditing(true)}>
-                                            <Pen className="mr-2 h-4 w-4" /> Edit
-                                        </DropdownMenuItem>
-                                    }
-                                    <DropdownMenuItem onClick={() => handleDeleteComment(comment.id)} className="text-destructive focus:text-destructive">
-                                        <Trash2 className="mr-2 h-4 w-4" /> Delete
+                <div className="flex items-center justify-between">
+                    <CommenterInfo authorId={comment.authorId} />
+                    {canInteract && (
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-6 w-6">
+                                    <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent>
+                                {user?.uid === comment.authorId && 
+                                    <DropdownMenuItem onClick={() => setIsEditing(true)}>
+                                        <Pen className="mr-2 h-4 w-4" /> Edit
                                     </DropdownMenuItem>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
-                        )}
-                    </div>
+                                }
+                                <DropdownMenuItem onClick={() => handleDeleteComment(comment.id)} className="text-destructive focus:text-destructive">
+                                    <Trash2 className="mr-2 h-4 w-4" /> Delete
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    )}
+                </div>
+                <div className="pl-11">
                     {isEditing ? (
-                        <div className="pl-11 mt-2 space-y-2">
+                        <div className="space-y-2">
                             <Textarea 
                                 value={editedContent}
                                 onChange={(e) => setEditedContent(e.target.value)}
@@ -265,54 +265,54 @@ function CommentThread({ comment, postId, allComments }: { comment: Comment, pos
                             </div>
                         </div>
                     ) : (
-                         <p className="text-sm pl-11">{comment.content}</p>
+                         <p className="text-sm">{comment.content}</p>
                     )}
-                </div>
-                 <div className="pl-11 flex items-center gap-4">
-                    <p className="text-xs text-muted-foreground">
-                        {comment.createdAt ? `${formatDistanceToNow(new Date(comment.createdAt.seconds * 1000))} ago` : 'just now'}
-                    </p>
-                     {user && (
-                        <Button variant="ghost" size="xs" onClick={() => setShowReplyForm(!showReplyForm)}>
-                            <MessageSquareReply className="mr-1 h-3 w-3"/>
-                            Reply
-                        </Button>
-                    )}
-                    {user && (
-                         <div className="flex items-center">
-                            <Button variant="ghost" size="xs" onClick={handleLikeComment}>
-                                <Heart className={cn("mr-1 h-3 w-3", hasLiked && "fill-red-500 text-red-500")} />
-                                Like
-                            </Button>
-                             {comment.likes && comment.likes.length > 0 && (
-                                <span className="text-xs text-muted-foreground">{comment.likes.length}</span>
-                            )}
+                
+                    <div className="flex items-center gap-4 text-xs text-muted-foreground mt-1">
+                        <p>
+                            {comment.createdAt ? `${formatDistanceToNowStrict(new Date(comment.createdAt.seconds * 1000))} ago` : 'just now'}
+                        </p>
+                        {user && (
+                            <>
+                                <button onClick={() => setShowReplyForm(!showReplyForm)} className="hover:underline">
+                                    Reply
+                                </button>
+                                <div className="flex items-center">
+                                    <button onClick={handleLikeComment} className="hover:underline flex items-center gap-1">
+                                        <Heart className={cn("h-3 w-3", hasLiked && "fill-red-500 text-red-500")} />
+                                        <span>Like</span>
+                                    </button>
+                                    {comment.likes && comment.likes.length > 0 && (
+                                        <span className="ml-1">{comment.likes.length}</span>
+                                    )}
+                                </div>
+                            </>
+                        )}
+                    </div>
+
+                    {showReplyForm && user && (
+                        <div className="mt-2">
+                            <Form {...form}>
+                                <form onSubmit={form.handleSubmit(onSubmit)} className="flex items-center gap-2">
+                                    <FormField
+                                        control={form.control}
+                                        name="content"
+                                        render={({ field }) => (
+                                            <FormItem className="flex-1">
+                                                <FormControl>
+                                                    <Input placeholder={`Reply to this comment...`} {...field} />
+                                                </FormControl>
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <Button type="submit" size="icon" disabled={isSubmitting}>
+                                        {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                                    </Button>
+                                </form>
+                            </Form>
                         </div>
                     )}
                 </div>
-
-                {showReplyForm && user && (
-                    <div className="pl-11">
-                         <Form {...form}>
-                            <form onSubmit={form.handleSubmit(onSubmit)} className="flex items-center gap-2">
-                                <FormField
-                                    control={form.control}
-                                    name="content"
-                                    render={({ field }) => (
-                                        <FormItem className="flex-1">
-                                            <FormControl>
-                                                <Input placeholder={`Reply to this comment...`} {...field} />
-                                            </FormControl>
-                                        </FormItem>
-                                    )}
-                                />
-                                <Button type="submit" size="icon" disabled={isSubmitting}>
-                                    {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                                </Button>
-                            </form>
-                        </Form>
-                    </div>
-                )}
                 
                  {replies.length > 0 && (
                     <div className="pt-2 space-y-4">
@@ -637,7 +637,7 @@ function FeedContent() {
                                 )}
 
                                 {post.imageUrl && !isEditingThisPost && (
-                                    <div className="relative rounded-lg overflow-hidden border aspect-[4/5]">
+                                    <div className="relative rounded-lg overflow-hidden border aspect-video">
                                         <Image
                                             src={post.imageUrl}
                                             alt={`Post image from ${post.authorName}`}
@@ -718,10 +718,3 @@ export default function FeedPage() {
         </div>
     )
 }
-
-    
-
-    
-
-
-
