@@ -51,12 +51,12 @@ export function PostForm({ userProfile, groupId }: PostFormProps) {
     
     // Determine the correct collection path
     const collectionPath = groupId ? `groups/${groupId}/posts` : 'posts';
+    const postsCollectionRef = collection(firestore, collectionPath);
+    const newPostDocRef = doc(postsCollectionRef); // Generate a new doc ref with an ID
 
     try {
-      const newPostRef = doc(collection(firestore, collectionPath));
-      
       const newPost = {
-        id: newPostRef.id,
+        id: newPostDocRef.id, // Use the ID from the generated ref
         content: values.content,
         authorId: userProfile.id,
         authorName: `${userProfile.firstName} ${userProfile.lastName}`,
@@ -66,7 +66,7 @@ export function PostForm({ userProfile, groupId }: PostFormProps) {
         ...(groupId && { groupId }), // Add groupId if it exists
       };
       
-      await setDocumentNonBlocking(newPostRef, newPost);
+      await setDocumentNonBlocking(newPostDocRef, newPost);
       
       toast({
         title: 'Post Published!',
@@ -118,3 +118,4 @@ export function PostForm({ userProfile, groupId }: PostFormProps) {
     </Form>
   );
 }
+
