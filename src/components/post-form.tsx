@@ -159,8 +159,8 @@ export function PostForm({ userProfile }: PostFormProps) {
         />
         
         {imagePreview && (
-            <div className="relative w-full max-h-60 aspect-square rounded-lg overflow-hidden border">
-                <Image src={imagePreview} alt="Image preview" fill className="object-cover" />
+            <div className="relative w-full rounded-lg overflow-hidden border">
+                <Image src={imagePreview} alt="Image preview" width={0} height={0} sizes="100vw" style={{ width: '100%', height: 'auto' }} />
                 <Button 
                     type="button" 
                     variant="destructive" 
