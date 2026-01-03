@@ -94,6 +94,7 @@ type ExpertUserProfile = {
     referredByCode?: string | null;
     tier?: 'Standard' | 'Premier' | 'Super Premier';
     following?: string[];
+    groups?: string[];
 };
 
 type PlanPrices = {
@@ -1182,15 +1183,15 @@ function ExpertDashboardPage() {
 
         <Card>
             <CardHeader>
-                <CardTitle>Explore Vacancies</CardTitle>
-                <CardDescription>Find your next career opportunity.</CardDescription>
+                <CardTitle>Explore Professional Groups</CardTitle>
+                <CardDescription>Connect with peers in groups dedicated to your skills and interests.</CardDescription>
             </CardHeader>
             <CardContent>
                 <div className="flex items-center justify-center p-6 bg-secondary rounded-lg">
                     <Button asChild>
-                        <Link href="/vacancies">
-                            <Briefcase className="mr-2 h-4 w-4" />
-                            View All Job Openings
+                        <Link href="/groups">
+                            <Users className="mr-2 h-4 w-4" />
+                            Explore All Groups
                         </Link>
                     </Button>
                 </div>

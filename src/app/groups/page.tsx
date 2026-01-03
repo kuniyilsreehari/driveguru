@@ -263,19 +263,11 @@ function GroupsList() {
                                     </div>
                                 </CardContent>
                                 <CardFooter className="flex flex-col sm:flex-row gap-2">
-                                    {user ? (
-                                        <Button asChild className="w-full" variant="outline">
-                                            <Link href={`/groups/${group.id}`}>
-                                                View Group <ArrowRight className="ml-2 h-4 w-4" />
-                                            </Link>
-                                        </Button>
-                                    ) : (
-                                        <Button asChild className="w-full" variant="outline">
-                                            <Link href="/login">
-                                                <LogIn className="mr-2 h-4 w-4" /> Login to View
-                                            </Link>
-                                        </Button>
-                                    )}
+                                    <Button asChild className="w-full" variant="outline">
+                                        <Link href={`/groups/${group.id}`}>
+                                            View Group <ArrowRight className="ml-2 h-4 w-4" />
+                                        </Link>
+                                    </Button>
                                     {user && !isCreator && (
                                         <Button 
                                             className="w-full" 
