@@ -6,7 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { collection, serverTimestamp, doc } from 'firebase/firestore';
-import { useFirestore, addDocumentNonBlocking } from '@/firebase';
+import { useFirestore, setDocumentNonBlocking } from '@/firebase';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -47,19 +47,21 @@ export function PostForm({ userProfile }: PostFormProps) {
     setIsSubmitting(true);
 
     try {
+      // Correctly create a document reference first
       const newPostRef = doc(collection(firestore, 'posts'));
       
       const newPost = {
+        id: newPostRef.id, // Add the ID to the document data
         content: values.content,
         authorId: userProfile.id,
         authorName: `${userProfile.firstName} ${userProfile.lastName}`,
         authorPhotoUrl: userProfile.photoUrl || '',
-        imageUrl: undefined, // No image support
         createdAt: serverTimestamp(),
         likes: [],
       };
       
-      await addDocumentNonBlocking(newPostRef, newPost);
+      // Use the new reference to set the document
+      await setDocumentNonBlocking(newPostRef, newPost);
       
       toast({
         title: 'Post Published!',
