@@ -222,7 +222,7 @@ service cloud.firestore {
                        // Any signed in user can update ONLY the likes array
                        (isSignedIn() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes'])) ||
                        // The author can update the content and imageUrl, but not likes or other fields
-                       (isPostAuthor(postId) && request.resource.data.diff(resource.data).affectedKeys().hasAny(['content', 'imageUrl']));
+                       (isPostAuthor(postId) && request.resource.data.diff(resource.data).hasAny(['content', 'imageUrl']));
 
         
         // Users can delete their own posts, or a super admin can.
@@ -282,7 +282,9 @@ service cloud.firestore {
             // Only group members can read or list posts within the group
             allow read, list: if isGroupMember(); 
             allow create: if isGroupMember() && request.resource.data.authorId == request.auth.uid;
-            allow update: if (isGroupMember() && resource.data.authorId == request.auth.uid && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['content'])) || isSuperAdmin();
+            allow update: if isSuperAdmin() ||
+                           (isGroupMember() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes'])) ||
+                           (isGroupMember() && resource.data.authorId == request.auth.uid && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['content']));
             allow delete: if (isGroupMember() && resource.data.authorId == request.auth.uid) || isSuperAdmin();
         }
     }
