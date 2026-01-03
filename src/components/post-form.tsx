@@ -22,7 +22,7 @@ const formSchema = z.object({
 });
 
 interface PostFormProps {
-  form: any;
+  form: ReturnType<typeof useForm<z.infer<typeof formSchema>>>;
   onSubmit: (values: z.infer<typeof formSchema>) => Promise<void>;
   isSubmitting: boolean;
 }
@@ -60,3 +60,5 @@ export function PostForm({ form, onSubmit, isSubmitting }: PostFormProps) {
     </Form>
   );
 }
+
+    

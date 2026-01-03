@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useEffect, useState, useMemo, Suspense } from 'react';
@@ -57,6 +56,9 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { PostForm } from '@/components/post-form';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
 
 
 type ExpertUserProfile = {
@@ -597,6 +599,10 @@ const ProfilePromptDialog = ({ prompt, isOpen, onOpenChange, userProfile, appCon
     );
 };
 
+const postFormSchema = z.object({
+  content: z.string().min(2, 'Post must be at least 2 characters.').max(500, 'Post cannot exceed 500 characters.'),
+});
+
 
 function ExpertDashboardPage() {
   const { user, isUserLoading } = useUser();
@@ -610,6 +616,13 @@ function ExpertDashboardPage() {
   const [incompletePrompts, setIncompletePrompts] = useState<ProfilePrompt[]>([]);
   const [promptIndex, setPromptIndex] = useState(0);
   const [isPromptDialogOpen, setIsPromptDialogOpen] = useState(false);
+  const [isSubmittingPost, setIsSubmittingPost] = useState(false);
+
+  const postForm = useForm<z.infer<typeof postFormSchema>>({
+    resolver: zodResolver(postFormSchema),
+    defaultValues: { content: '' },
+    mode: 'onChange',
+  });
 
   const userDocRef = useMemoFirebase(() => {
     if (!user) return null;
@@ -837,6 +850,40 @@ function ExpertDashboardPage() {
       });
     }
   };
+
+  async function onPostSubmit(values: z.infer<typeof postFormSchema>) {
+    if (!firestore || !user || !userProfile) return;
+
+    setIsSubmittingPost(true);
+    const postsCollectionRef = collection(firestore, 'posts');
+
+    try {
+      await addDocumentNonBlocking(postsCollectionRef, {
+        content: values.content,
+        authorId: user.uid,
+        authorName: `${userProfile.firstName} ${userProfile.lastName}`,
+        authorPhotoUrl: userProfile.photoUrl || '',
+        createdAt: serverTimestamp(),
+        likes: [],
+      });
+      toast({
+        title: 'Post Published!',
+        description: 'Your update is now live on the public feed.',
+      });
+      postForm.reset();
+    } catch (error) {
+      if ((error as any).name !== 'FirebaseError') {
+        toast({
+          variant: 'destructive',
+          title: 'Failed to Post',
+          description: 'An unexpected error occurred. Please try again.',
+        });
+      }
+    } finally {
+      setIsSubmittingPost(false);
+    }
+  }
+
 
   const profileCompletion = calculateProfileCompletion(userProfile);
   const paymentQueryParam = searchParams.get('payment');
@@ -1102,7 +1149,11 @@ function ExpertDashboardPage() {
                 <CardDescription>Share an update with the community. Your post will be visible to everyone on the platform.</CardDescription>
             </CardHeader>
             <CardContent>
-                <PostForm userProfile={userProfile} />
+                <PostForm 
+                  form={postForm}
+                  onSubmit={onPostSubmit}
+                  isSubmitting={isSubmittingPost}
+                />
             </CardContent>
         </Card>
 
@@ -1229,3 +1280,5 @@ export default function DashboardPageWrapper() {
     </Suspense>
   )
 }
+
+    
