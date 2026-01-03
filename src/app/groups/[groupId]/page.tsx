@@ -6,7 +6,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useParams } from 'next/navigation';
 import { collection, query, orderBy, Timestamp, doc, updateDoc, arrayUnion, arrayRemove, serverTimestamp, getDocs, limit, startAfter, QueryDocumentSnapshot, DocumentData } from 'firebase/firestore';
-import { useFirestore, useDoc, useCollection, useMemoFirebase, useUser, deleteDocumentNonBlocking, addDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase';
+import { useFirestore, useDoc, useCollection, useMemoFirebase, useUser, deleteDocumentNonBlocking, addDocumentNonBlocking, updateDocumentNonBlocking, setDocumentNonBlocking } from '@/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -31,6 +31,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
+import { PostForm } from '@/components/post-form';
 
 type GroupPost = {
     id: string;
@@ -244,9 +245,9 @@ function GroupFeed({ group }: { group: Group }) {
         if (!user) return null;
         return doc(firestore, 'users', user.uid);
     }, [user, firestore]);
-    const { data: currentUserProfile } = useDoc<UserProfile>(currentUserDocRef);
+    const { data: currentUserProfile, isLoading: isCurrentUserProfileLoading } = useDoc<UserProfile>(currentUserDocRef);
 
-    const form = useForm<z.infer<typeof postFormSchema>>({
+    const postForm = useForm<z.infer<typeof postFormSchema>>({
         resolver: zodResolver(postFormSchema),
         defaultValues: {
             content: '',
@@ -254,7 +255,7 @@ function GroupFeed({ group }: { group: Group }) {
         mode: 'onChange',
     });
 
-    async function onSubmit(values: z.infer<typeof postFormSchema>) {
+    async function onPostSubmit(values: z.infer<typeof postFormSchema>) {
         if (!firestore || !user || !currentUserProfile) return;
 
         setIsSubmitting(true);
@@ -273,13 +274,13 @@ function GroupFeed({ group }: { group: Group }) {
                 groupId: group.id,
             };
 
-            await updateDocumentNonBlocking(newPostDocRef, newPost);
+            await setDocumentNonBlocking(newPostDocRef, newPost);
 
             toast({
                 title: 'Post Published!',
                 description: 'Your update is now live in the group feed.',
             });
-            form.reset();
+            postForm.reset();
         } catch (error) {
             if ((error as any).name !== 'FirebaseError') {
                 toast({
@@ -294,7 +295,7 @@ function GroupFeed({ group }: { group: Group }) {
     }
 
 
-    if (isLoading || isUserLoading) {
+    if (isLoading || isUserLoading || isCurrentUserProfileLoading) {
         return (
             <div className="flex h-64 w-full items-center justify-center">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -303,7 +304,7 @@ function GroupFeed({ group }: { group: Group }) {
         );
     }
     
-    if (!isMember) {
+    if (!isMember && !user) {
         return (
             <Card className="text-center p-8">
                 <CardTitle>This is a private group.</CardTitle>
@@ -315,35 +316,11 @@ function GroupFeed({ group }: { group: Group }) {
     return (
         <div className="space-y-6">
             <h2 className="text-2xl font-bold flex items-center gap-2"><Rss className="h-6 w-6"/> Group Feed</h2>
-            <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                    <FormField
-                    control={form.control}
-                    name="content"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel className="sr-only">Post Content</FormLabel>
-                        <FormControl>
-                            <Textarea
-                            placeholder="What's on your mind? Share an update..."
-                            className="min-h-[100px]"
-                            {...field}
-                            />
-                        </FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                    />
-                    
-                    <div className="flex justify-end items-center gap-4">
-                        <p className="text-xs text-muted-foreground">{form.watch('content').length} / 500</p>
-                        <Button type="submit" disabled={isSubmitting || !form.formState.isValid}>
-                        {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
-                        {isSubmitting ? 'Posting...' : 'Post'}
-                        </Button>
-                    </div>
-                </form>
-            </Form>
+            <PostForm 
+                form={postForm}
+                onSubmit={onPostSubmit}
+                isSubmitting={isSubmitting}
+            />
 
             {posts && posts.length > 0 ? (
                 posts.map(post => (
