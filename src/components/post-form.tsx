@@ -173,23 +173,12 @@ export function PostForm({ userProfile }: PostFormProps) {
             </div>
         )}
 
-        <div className="flex justify-between items-center gap-4">
-             <div>
-                 <input
-                    type="file"
-                    ref={fileInputRef}
-                    className="hidden"
-                    accept="image/png, image/jpeg, image/gif"
-                    onChange={handleImageChange}
-                />
-            </div>
-            <div className="flex items-center gap-4">
-                <p className="text-xs text-muted-foreground">{form.watch('content').length} / 500</p>
-                <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
-                  {isSubmitting ? 'Posting...' : 'Post'}
-                </Button>
-            </div>
+        <div className="flex justify-end items-center gap-4">
+            <p className="text-xs text-muted-foreground">{form.watch('content').length} / 500</p>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
+              {isSubmitting ? 'Posting...' : 'Post'}
+            </Button>
         </div>
       </form>
     </Form>
