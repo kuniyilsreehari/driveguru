@@ -1,10 +1,18 @@
 import type {Metadata} from 'next';
+import { PT_Sans } from 'next/font/google';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import { FirebaseClientProvider } from '@/firebase/client-provider';
 import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
 import { ThemeProvider } from '@/components/theme-provider';
+
+const ptSans = PT_Sans({
+  subsets: ['latin'],
+  weight: ['400', '700'],
+  style: ['normal', 'italic'],
+  variable: '--font-pt-sans',
+});
 
 export const metadata: Metadata = {
   title: 'DriveGuru',
@@ -21,13 +29,10 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=PT+Sans:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet" />
         <link rel="icon" href="/icons/apple-touch-icon.svg" type="image/svg+xml" sizes="any" />
         <link rel="apple-touch-icon" href="/icons/apple-touch-icon.svg" />
       </head>
-      <body className="font-body antialiased flex flex-col min-h-screen">
+      <body className={`${ptSans.variable} font-body antialiased flex flex-col min-h-screen`}>
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"
