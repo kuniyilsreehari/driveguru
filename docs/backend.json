@@ -410,7 +410,6 @@
             "authorPhotoUrl": { "type": "string", "format": "uri" },
             "content": { "type": "string" },
             "imageUrl": { "type": "string", "format": "uri" },
-            "likes": { "type": "array", "items": { "type": "string" } },
             "createdAt": { "type": "string", "format": "date-time" }
         },
         "required": ["id", "groupId", "authorId", "content", "createdAt"]

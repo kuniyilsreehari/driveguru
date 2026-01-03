@@ -687,10 +687,8 @@ function GroupFeed({ group }: { group: Group }) {
         setIsSubmitting(true);
         try {
             const postsCollectionRef = collection(firestore, 'groups', group.id, 'posts');
-            const newPostDocRef = doc(postsCollectionRef);
             
-            await setDoc(newPostDocRef, {
-                id: newPostDocRef.id,
+            await addDocumentNonBlocking(postsCollectionRef, {
                 content: values.content,
                 authorId: user.uid,
                 authorName: `${currentUserProfile.firstName || ''} ${currentUserProfile.lastName || ''}`.trim(),
@@ -770,25 +768,6 @@ function GroupFeed({ group }: { group: Group }) {
             }
         }
     };
-    
-    const handleLikePost = async (post: GroupPost) => {
-        if (!user || !firestore) {
-            toast({ variant: 'destructive', title: 'You must be logged in.' });
-            return;
-        }
-
-        const postRef = doc(firestore, 'groups', group.id, 'posts', post.id);
-        const hasLiked = post.likes?.includes(user.uid);
-        const updateAction = hasLiked ? arrayRemove(user.uid) : arrayUnion(user.uid);
-        
-        try {
-            await updateDoc(postRef, { likes: updateAction });
-        } catch (error) {
-            console.error("Error liking post:", error);
-            toast({ variant: 'destructive', title: 'Error', description: 'Could not update like status.' });
-        }
-    };
-
 
     if (isLoading || isUserLoading || isCurrentUserProfileLoading) {
         return (
@@ -823,8 +802,6 @@ function GroupFeed({ group }: { group: Group }) {
                         const canEdit = user && user.uid === post.authorId;
                         const canDelete = canEdit || isSuperAdmin;
                         const isEditingThisPost = editingPostId === post.id;
-                        const hasLiked = user ? post.likes?.includes(user.uid) : false;
-                        const canViewLikes = post.likes && post.likes.length > 0;
                         return (
                             <Card key={post.id}>
                                 <CardHeader>
@@ -902,21 +879,10 @@ function GroupFeed({ group }: { group: Group }) {
                                     )}
                                 </CardContent>
                                 <CardFooter className="flex items-center gap-2">
-                                    <Button variant="ghost" size="sm" onClick={() => handleLikePost(post)}>
-                                        <Heart className={cn("mr-2 h-4 w-4", hasLiked && "fill-red-500 text-red-500")} />
-                                        Like
+                                    <Button variant="ghost" size="sm">
+                                        <Share2 className="mr-2 h-4 w-4" />
+                                        Share
                                     </Button>
-                                     {canViewLikes ? (
-                                        <LikesDialog userIds={post.likes!}>
-                                            <button className="text-xs text-muted-foreground hover:underline">
-                                                {post.likes?.length} {post.likes?.length === 1 ? 'like' : 'likes'}
-                                            </button>
-                                        </LikesDialog>
-                                    ) : (
-                                        <span className="text-xs text-muted-foreground">
-                                            0 likes
-                                        </span>
-                                    )}
                                 </CardFooter>
                             </Card>
                         )
