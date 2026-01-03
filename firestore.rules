@@ -256,14 +256,9 @@ service cloud.firestore {
             return isSignedIn() && resource.data.creatorId == request.auth.uid;
         }
 
-        // isGroupMember is now correctly defined for read/write on a single document
-        function isGroupMember() {
-            return isSignedIn() && request.auth.uid in resource.data.members;
-        }
-        
         // Use a get() call to check membership for collection-level reads (list)
-        function canListPosts() {
-            return isSignedIn() && request.auth.uid in get(/databases/$(database)/documents/groups/$(groupId)).data.members;
+        function isGroupMember() {
+            return isSignedIn() && get(/databases/$(database)/documents/groups/$(groupId)).data.members.hasAny([request.auth.uid]);
         }
         
         allow get: if isSignedIn();
@@ -278,10 +273,10 @@ service cloud.firestore {
         allow delete: if isSuperAdmin() || isGroupCreator();
 
         match /posts/{postId} {
-            allow get: if canListPosts(); // Use the get-based check for single reads
-            allow list: if canListPosts(); // Use the get-based check for collection lists
-            allow create: if canListPosts() && requestData().authorId == request.auth.uid;
-            allow update, delete: if (canListPosts() && resource.data.authorId == request.auth.uid) || isSuperAdmin();
+            allow get: if isGroupMember();
+            allow list: if isGroupMember(); 
+            allow create: if isGroupMember() && requestData().authorId == request.auth.uid;
+            allow update, delete: if (isGroupMember() && resource.data.authorId == request.auth.uid) || isSuperAdmin();
         }
     }
     
@@ -305,3 +300,5 @@ service cloud.firestore {
      * ===================================================== */
   }
 }
+
+    
