@@ -140,7 +140,7 @@ export function ExpertCard({ expert }: ExpertCardProps) {
                     <Button asChild size="sm" variant="outline" className="flex-1">
                         <Link href={`/expert/${expert.id}`}>View Profile</Link>
                     </Button>
-                     <ShareDialog expertId={expert.id} expertName={getDisplayName(expert)}>
+                     <ShareDialog shareDetails={{ type: 'expert-profile', expertId: expert.id, expertName: getDisplayName(expert) }}>
                         <Button size="sm" variant="outline" className="flex-1">
                             <Share2 className="mr-2 h-4 w-4" /> Share
                         </Button>
