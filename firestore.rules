@@ -256,8 +256,10 @@ service cloud.firestore {
             return isSignedIn() && resource.data.creatorId == request.auth.uid;
         }
 
+        // isGroupMember function checks if the user's ID is in the group's members list.
+        // This function uses get() which is an expensive operation.
         function isGroupMember() {
-            return isSignedIn() && request.auth.uid in resource.data.members;
+          return request.auth.uid in get(/databases/$(database)/documents/groups/$(groupId)).data.members;
         }
         
         allow get: if isSignedIn();
@@ -271,6 +273,7 @@ service cloud.firestore {
         allow delete: if isSuperAdmin() || isGroupCreator();
 
         match /posts/{postId} {
+            // Correct way to allow list/read on a subcollection
             allow read, list: if isGroupMember();
             allow create: if isGroupMember() && requestData().authorId == request.auth.uid;
             allow update, delete: if (isGroupMember() && resource.data.authorId == request.auth.uid) || isSuperAdmin();
@@ -297,5 +300,3 @@ service cloud.firestore {
      * ===================================================== */
   }
 }
-
-    
