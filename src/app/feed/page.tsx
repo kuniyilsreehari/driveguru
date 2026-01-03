@@ -459,6 +459,7 @@ function FeedContent() {
     const firestore = useFirestore();
     const { user, isUserLoading } = useUser();
     const { toast } = useToast();
+    const [searchQuery, setSearchQuery] = useState('');
     const [isPostDeleteDialogOpen, setIsPostDeleteDialogOpen] = useState(false);
     const [selectedPost, setSelectedPost] = useState<Post | null>(null);
     const [editingPostId, setEditingPostId] = useState<string | null>(null);
@@ -482,6 +483,18 @@ function FeedContent() {
     }, [firestore]);
 
     const { data: posts, isLoading: isLoadingPosts } = useCollection<Post>(postsQuery);
+    
+    const filteredPosts = useMemo(() => {
+        if (!posts) return [];
+        if (!searchQuery) return posts;
+
+        const lowercasedQuery = searchQuery.toLowerCase();
+        return posts.filter(post => 
+            post.content.toLowerCase().includes(lowercasedQuery) ||
+            post.authorName.toLowerCase().includes(lowercasedQuery)
+        );
+    }, [posts, searchQuery]);
+
 
     const handleLike = async (post: Post) => {
         if (!user || !firestore) {
@@ -599,7 +612,7 @@ function FeedContent() {
     return (
         <>
             <div className="space-y-6">
-                {posts.map(post => {
+                {filteredPosts.map(post => {
                     const hasLiked = user ? post.likes?.includes(user.uid) : false;
                     const canEdit = user && user.uid === post.authorId;
                     const canDelete = canEdit || isSuperAdmin;
@@ -620,7 +633,7 @@ function FeedContent() {
                                                 <CardTitle className="text-base">{post.authorName}</CardTitle>
                                             </Link>
                                             <CardDescription className="text-xs">
-                                                {post.createdAt ? `${formatDistanceToNowStrict(post.createdAt.toDate(), "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")} ago` : '...'}
+                                                {post.createdAt ? `${formatDistanceToNowStrict(post.createdAt.toDate())} ago` : '...'}
                                             </CardDescription>
                                         </div>
                                     </div>
@@ -721,6 +734,8 @@ function FeedContent() {
 }
 
 export default function FeedPage() {
+    const [searchQuery, setSearchQuery] = useState('');
+
     return (
         <div className="min-h-screen bg-background p-4 sm:p-8">
             <div className="mx-auto max-w-2xl">
@@ -732,10 +747,19 @@ export default function FeedPage() {
                     <p className="text-muted-foreground">Updates from all experts and companies on the platform.</p>
                 </header>
                 <main>
-                    <div className="mb-6">
+                    <div className="mb-6 flex flex-col sm:flex-row gap-4 justify-between items-center">
                         <Button variant="outline" asChild>
                             <Link href="/"><ChevronLeft className="mr-2 h-4 w-4" /> Back to Home</Link>
                         </Button>
+                        <div className="relative w-full sm:w-64">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <Input
+                                placeholder="Search feed..."
+                                className="pl-10"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                            />
+                        </div>
                     </div>
                     <Suspense fallback={
                         <div className="flex h-64 w-full items-center justify-center">
