@@ -189,6 +189,24 @@ service cloud.firestore {
     }
     
     /* =====================================================
+     * Posts
+     * ===================================================== */
+    match /posts/{postId} {
+        // Anyone can read posts
+        allow get, list: if true;
+
+        // Users can create their own posts
+        allow create: if isSignedIn() && requestData().authorId == request.auth.uid;
+        
+        // Users can update their own posts (including likes).
+        allow update: if (isSignedIn() && resource.data.authorId == request.auth.uid)
+                    || (isSignedIn() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes']));
+        
+        // Users can delete their own posts, or a super admin can.
+        allow delete: if (isSignedIn() && resource.data.authorId == request.auth.uid) || isSuperAdmin();
+    }
+    
+    /* =====================================================
      * Vacancies
      * ===================================================== */
     match /vacancies/{vacancyId} {

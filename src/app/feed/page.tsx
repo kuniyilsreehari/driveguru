@@ -1,18 +1,34 @@
 
 'use client';
 
-import { Suspense, useMemo } from 'react';
+import { Suspense, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { collection, query, orderBy, Timestamp, doc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
-import { useFirestore, useCollection, useMemoFirebase, useUser } from '@/firebase';
+import { collection, query, orderBy, Timestamp, doc, updateDoc, arrayUnion, arrayRemove, deleteDoc } from 'firebase/firestore';
+import { useFirestore, useCollection, useMemoFirebase, useUser, useDoc, deleteDocumentNonBlocking } from '@/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Loader2, ChevronLeft, Rss, Search, Heart, Share2 } from 'lucide-react';
+import { Loader2, ChevronLeft, Rss, Search, Heart, Share2, MoreHorizontal, Trash2 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { ShareDialog } from '@/components/share-dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 
 type Post = {
@@ -37,6 +53,17 @@ function FeedContent() {
     const firestore = useFirestore();
     const { user, isUserLoading } = useUser();
     const { toast } = useToast();
+    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+    const [selectedPost, setSelectedPost] = useState<Post | null>(null);
+    
+    const superAdminDocRef = useMemoFirebase(() => {
+      if (!user) return null;
+      return doc(firestore, 'roles_super_admin', user.uid);
+    }, [firestore, user]);
+
+    const { data: superAdminData, isLoading: isRoleLoading } = useDoc(superAdminDocRef);
+    const isSuperAdmin = !!superAdminData;
+
 
     const postsQuery = useMemoFirebase(() => {
         if (!firestore) return null;
@@ -76,8 +103,25 @@ function FeedContent() {
         }
     };
 
+    const openDeleteDialog = (post: Post) => {
+        setSelectedPost(post);
+        setIsDeleteDialogOpen(true);
+    }
+    
+    const handleDeletePost = () => {
+        if (!selectedPost || !firestore) return;
+        const postDocRef = doc(firestore, 'posts', selectedPost.id);
+        deleteDocumentNonBlocking(postDocRef);
+        toast({
+            title: "Post Deleted",
+            description: "The post has been successfully removed.",
+        });
+        setIsDeleteDialogOpen(false);
+        setSelectedPost(null);
+    }
 
-    const isLoading = isUserLoading || isLoadingPosts;
+
+    const isLoading = isUserLoading || isLoadingPosts || isRoleLoading;
     
     if (isLoading) {
         return (
@@ -109,53 +153,89 @@ function FeedContent() {
     }
 
     return (
-        <div className="space-y-6">
-            {posts.map(post => {
-                const hasLiked = user ? post.likes?.includes(user.uid) : false;
-                return (
-                    <Card key={post.id}>
-                        <CardHeader>
-                            <div className="flex items-center gap-3">
-                                <Link href={`/expert/${post.authorId}`}>
-                                    <Avatar>
-                                        <AvatarImage src={post.authorPhotoUrl} />
-                                        <AvatarFallback>{getInitials(post.authorName)}</AvatarFallback>
-                                    </Avatar>
-                                </Link>
-                                <div>
-                                    <Link href={`/expert/${post.authorId}`} className="hover:underline">
-                                        <CardTitle className="text-base">{post.authorName}</CardTitle>
-                                    </Link>
-                                    <CardDescription className="text-xs">
-                                        {post.createdAt ? formatDistanceToNow(new Date(post.createdAt.seconds * 1000), { addSuffix: true }) : '...'}
-                                    </CardDescription>
+        <>
+            <div className="space-y-6">
+                {posts.map(post => {
+                    const hasLiked = user ? post.likes?.includes(user.uid) : false;
+                    const canDelete = user && (user.uid === post.authorId || isSuperAdmin);
+                    return (
+                        <Card key={post.id}>
+                            <CardHeader>
+                                <div className="flex items-start justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <Link href={`/expert/${post.authorId}`}>
+                                            <Avatar>
+                                                <AvatarImage src={post.authorPhotoUrl} />
+                                                <AvatarFallback>{getInitials(post.authorName)}</AvatarFallback>
+                                            </Avatar>
+                                        </Link>
+                                        <div>
+                                            <Link href={`/expert/${post.authorId}`} className="hover:underline">
+                                                <CardTitle className="text-base">{post.authorName}</CardTitle>
+                                            </Link>
+                                            <CardDescription className="text-xs">
+                                                {post.createdAt ? formatDistanceToNow(new Date(post.createdAt.seconds * 1000), { addSuffix: true }) : '...'}
+                                            </CardDescription>
+                                        </div>
+                                    </div>
+                                     {canDelete && (
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button variant="ghost" className="h-8 w-8 p-0">
+                                                    <MoreHorizontal className="h-4 w-4" />
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end">
+                                                <DropdownMenuItem onClick={() => openDeleteDialog(post)} className="text-destructive focus:text-destructive">
+                                                    <Trash2 className="mr-2 h-4 w-4" />
+                                                    <span>Delete</span>
+                                                </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
+                                    )}
                                 </div>
-                            </div>
-                        </CardHeader>
-                        <CardContent>
-                            <p className="text-sm whitespace-pre-wrap">{post.content}</p>
-                        </CardContent>
-                        <CardFooter>
-                            <div className="flex items-center gap-2">
-                                <Button variant="ghost" size="sm" onClick={() => handleLike(post)}>
-                                    <Heart className={cn("mr-2 h-4 w-4", hasLiked && "fill-red-500 text-red-500")} />
-                                    Like
-                                </Button>
-                                <span className="text-xs text-muted-foreground">
-                                    {post.likes?.length || 0} {post.likes?.length === 1 ? 'like' : 'likes'}
-                                </span>
-                                <ShareDialog expertId={post.authorId} expertName={post.authorName}>
-                                    <Button variant="ghost" size="sm">
-                                        <Share2 className="mr-2 h-4 w-4" />
-                                        Share
+                            </CardHeader>
+                            <CardContent>
+                                <p className="text-sm whitespace-pre-wrap">{post.content}</p>
+                            </CardContent>
+                            <CardFooter>
+                                <div className="flex items-center gap-2">
+                                    <Button variant="ghost" size="sm" onClick={() => handleLike(post)}>
+                                        <Heart className={cn("mr-2 h-4 w-4", hasLiked && "fill-red-500 text-red-500")} />
+                                        Like
                                     </Button>
-                                </ShareDialog>
-                            </div>
-                        </CardFooter>
-                    </Card>
-                )
-            })}
-        </div>
+                                    <span className="text-xs text-muted-foreground">
+                                        {post.likes?.length || 0} {post.likes?.length === 1 ? 'like' : 'likes'}
+                                    </span>
+                                    <ShareDialog expertId={post.authorId} expertName={post.authorName}>
+                                        <Button variant="ghost" size="sm">
+                                            <Share2 className="mr-2 h-4 w-4" />
+                                            Share
+                                        </Button>
+                                    </ShareDialog>
+                                </div>
+                            </CardFooter>
+                        </Card>
+                    )
+                })}
+            </div>
+             <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This action cannot be undone. This will permanently delete this post.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDeletePost} className="bg-destructive hover:bg-destructive/90">
+                      Delete
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+        </>
     );
 }
 
