@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState } from 'react';
@@ -22,7 +23,7 @@ import { Loader2, Send } from 'lucide-react';
 import type { ExpertUser } from '@/components/expert-card';
 
 const formSchema = z.object({
-  content: z.string().min(1, 'Post cannot be empty.').max(500, 'Post cannot exceed 500 characters.'),
+  content: z.string().min(2, 'Post must be at least 2 characters.').max(500, 'Post cannot exceed 500 characters.'),
 });
 
 interface PostFormProps {
