@@ -137,7 +137,7 @@ function ExpertProfileContent() {
             setIsFollowing(!isFollowing);
             toast({
                 title: isFollowing ? 'Unfollowed' : 'Followed',
-                description: `You are no longer following ${getDisplayName(expert)}.`,
+                description: `You are now ${isFollowing ? 'no longer following' : 'following'} ${getDisplayName(expert)}.`,
             });
         } catch (error) {
             console.error("Failed to toggle follow", error);

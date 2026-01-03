@@ -109,6 +109,12 @@ export function Header() {
                   Home
                 </Link>
               </Button>
+               <Button asChild variant="ghost">
+                <Link href="/feed">
+                  <Rss className="mr-2 h-4 w-4" />
+                  Feed
+                </Link>
+              </Button>
               <Button asChild variant="ghost">
                 <Link href="/vacancies">
                     <Briefcase className="mr-2 h-4 w-4" />
@@ -163,6 +169,11 @@ export function Header() {
                         </Link>
                     </Button>
                     <Button asChild variant="ghost" className="justify-start" onClick={() => setIsMobileMenuOpen(false)}>
+                        <Link href="/feed">
+                            <Rss className="mr-2 h-4 w-4" /> Feed
+                        </Link>
+                    </Button>
+                    <Button asChild variant="ghost" className="justify-start" onClick={() => setIsMobileMenuOpen(false)}>
                         <Link href="/vacancies">
                             <Briefcase className="mr-2 h-4 w-4" /> Vacancies
                         </Link>
@@ -198,6 +209,12 @@ export function Header() {
                 <Home className="mr-2 h-4 w-4" />
                 Home
               </Link>
+            </Button>
+            <Button asChild variant="ghost">
+                <Link href="/feed">
+                    <Rss className="mr-2 h-4 w-4" />
+                    Feed
+                </Link>
             </Button>
              <Button asChild variant="ghost">
                 <Link href="/vacancies">

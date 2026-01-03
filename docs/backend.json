@@ -296,48 +296,40 @@
         "timestamp"
       ]
     },
-    "Review": {
+    "Post": {
       "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Review",
+      "title": "Post",
       "type": "object",
-      "description": "Represents a review for an expert.",
+      "description": "Represents a post in the public feed made by an expert.",
       "properties": {
         "id": {
           "type": "string",
-          "description": "Unique identifier for the review."
+          "description": "Unique identifier for the post."
         },
-        "expertId": {
+        "authorId": {
           "type": "string",
-          "description": "The ID of the expert being reviewed."
+          "description": "The ID of the user who created the post."
         },
-        "expertName": {
+        "authorName": {
           "type": "string",
-          "description": "The name of the expert being reviewed."
+          "description": "The name of the author at the time of posting."
         },
-        "reviewerName": {
+        "authorPhotoUrl": {
           "type": "string",
-          "description": "The name of the person who wrote the review."
+          "format": "uri",
+          "description": "The URL of the author's profile picture at the time of posting."
         },
-        "rating": {
-          "type": "number",
-          "description": "A numerical rating from 1 to 5."
-        },
-        "comment": {
+        "content": {
           "type": "string",
-          "description": "The text content of the review."
+          "description": "The text content of the post."
         },
         "createdAt": {
           "type": "string",
           "format": "date-time",
-          "description": "Timestamp of when the review was submitted."
-        },
-        "status": {
-          "type": "string",
-          "description": "The moderation status of the review.",
-          "enum": ["pending", "approved", "rejected"]
+          "description": "Timestamp of when the post was created."
         }
       },
-      "required": ["id", "expertId", "reviewerName", "rating", "comment", "createdAt", "status"]
+      "required": ["id", "authorId", "authorName", "content", "createdAt"]
     },
     "Vacancy": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -650,19 +642,19 @@
         }
       },
       {
-        "path": "/reviews/{reviewId}",
+        "path": "/posts/{postId}",
         "definition": {
-          "entityName": "Review",
-          "schema": {
-            "$ref": "#/backend/entities/Review"
-          },
-          "description": "Stores all reviews for experts. A top-level collection makes it easy for admins to query and moderate.",
-          "params": [
-            {
-              "name": "reviewId",
-              "description": "The unique identifier of the review."
-            }
-          ]
+            "entityName": "Post",
+            "schema": {
+                "$ref": "#/backend/entities/Post"
+            },
+            "description": "Stores public posts made by experts.",
+            "params": [
+                {
+                    "name": "postId",
+                    "description": "The unique identifier of the post."
+                }
+            ]
         }
       },
       {
@@ -730,9 +722,8 @@
         }
       }
     ],
-    "reasoning": "The Firestore structure is designed to support DriveGuru's core features while adhering to the principles of Authorization Independence, Structural Segregation, and Access Modeling. User data, company information, and location data are stored in separate collections to maintain clarity and enforce consistent security rules. Crucially, authorization data is denormalized to avoid `get()` calls in security rules and ensure atomic operations.\\n\\n1.  **Authorization Independence:** A separate `/roles_super_admin/{userId}` collection determines super admin privileges based on document existence rather than user document content. This simplifies security rules and avoids hierarchical dependencies.\\n\\n2.  **Structural Segregation:**  User data, company data, location data, and reviews are stored in separate collections, each with distinct security requirements. This segregation simplifies security rule management and prevents unintended access.\\n\\n3.  **Access Modeling:**\\n    *   User-owned location data is structured under `/users/{userId}/location_data/{locationDataId}`. This allows for path-based security rules, ensuring that only the user can access their own location data.\\n    *   Companies are stored in a top-level `/companies` collection.\\n    *   The super admin role is managed through the `/roles_super_admin/{userId}` collection, where the existence of a document for a user ID grants super admin privileges.\\n    *   Reviews are in a top-level collection to allow admins to easily list and moderate all submitted reviews, while rules can still be written to allow users to create reviews or read approved ones."
+    "reasoning": "The Firestore structure is designed to support DriveGuru's core features while adhering to the principles of Authorization Independence, Structural Segregation, and Access Modeling. User data, company information, and location data are stored in separate collections to maintain clarity and enforce consistent security rules. Crucially, authorization data is denormalized to avoid `get()` calls in security rules and ensure atomic operations.\\n\\1.  **Authorization Independence:** A separate `/roles_super_admin/{userId}` collection determines super admin privileges based on document existence rather than user document content. This simplifies security rules and avoids hierarchical dependencies.\\n\\2.  **Structural Segregation:**  User data, company data, location data, and reviews are stored in separate collections, each with distinct security requirements. This segregation simplifies security rule management and prevents unintended access.\\n\\3.  **Access Modeling:**\\n    *   User-owned location data is structured under `/users/{userId}/location_data/{locationDataId}`. This allows for path-based security rules, ensuring that only the user can access their own location data.\\n    *   Companies are stored in a top-level `/companies` collection.\\n    *   The super admin role is managed through the `/roles_super_admin/{userId}` collection, where the existence of a document for a user ID grants super admin privileges.\\n    *   Reviews are in a top-level collection to allow admins to easily list and moderate all submitted reviews, while rules can still be written to allow users to create reviews or read approved ones."
   }
 }
     
 
-    
