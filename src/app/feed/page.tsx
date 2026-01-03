@@ -199,14 +199,11 @@ function FeedContent() {
                             </CardHeader>
                             <CardContent>
                                 {post.imageUrl && (
-                                    <div className="mb-4 relative rounded-lg overflow-hidden border">
+                                    <div className="mb-4 relative rounded-lg overflow-hidden border aspect-[4/5]">
                                         <Image
                                             src={post.imageUrl}
                                             alt={`Post image from ${post.authorName}`}
-                                            width={0}
-                                            height={0}
-                                            sizes="100vw"
-                                            style={{ width: '100%', height: 'auto' }}
+                                            fill
                                             className="object-cover"
                                         />
                                     </div>
