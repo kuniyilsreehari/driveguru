@@ -96,7 +96,7 @@ service cloud.firestore {
     function isPremiumCompanyUser() {
       let userDoc = get(/databases/$(database)/documents/users/$(request.auth.uid));
       return isSignedIn() &&
-             userDoc.data.role == 'company' &&
+             userDoc.data.role == 'Company' &&
              (userDoc.data.tier == 'Premier' || userDoc.data.tier == 'Super Premier');
     }
 
@@ -251,5 +251,3 @@ service cloud.firestore {
      * ===================================================== */
   }
 }
-
-    
