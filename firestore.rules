@@ -258,11 +258,13 @@ service cloud.firestore {
 
         // Use a get() call to check membership for sub-collection reads
         function isGroupMember() {
-            return isSignedIn() && get(/databases/$(database)/documents/groups/$(groupId)).data.members.hasAny([request.auth.uid]);
+            let groupDoc = get(/databases/$(database)/documents/groups/$(groupId));
+            return isSignedIn() && request.auth.uid in groupDoc.data.members;
         }
         
         // Allow anyone to view a single group's details and list all groups
-        allow get, list: if true;
+        allow get: if true;
+        allow list: if true; // Changed from isSignedIn() to true
         
         allow create: if isSignedIn() && requestData().creatorId == request.auth.uid && request.auth.uid in requestData().members;
         
