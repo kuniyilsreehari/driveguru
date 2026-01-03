@@ -68,6 +68,10 @@ function getInitials(name: string) {
     if (names.length > 1 && names[names.length - 1]) {
         return `${names[0].charAt(0)}${names[names.length - 1].charAt(0)}`.toUpperCase();
     }
+    // Handle cases where there's only a first name or name is a single word
+    if (names[0] && names[0].length > 1) {
+        return names[0].substring(0, 2).toUpperCase();
+    }
     return name.substring(0, 2).toUpperCase();
 }
 
@@ -160,9 +164,18 @@ function CommentsSection({ postId }: { postId: string }) {
                                                 <p className="text-xs font-semibold">{comment.authorName}</p>
                                             </Link>
                                              {canDelete && (
-                                                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleDeleteComment(comment.id)}>
-                                                    <Trash2 className="h-3 w-3 text-muted-foreground" />
-                                                </Button>
+                                                <DropdownMenu>
+                                                    <DropdownMenuTrigger asChild>
+                                                        <Button variant="ghost" size="icon" className="h-6 w-6">
+                                                            <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
+                                                        </Button>
+                                                    </DropdownMenuTrigger>
+                                                    <DropdownMenuContent>
+                                                        <DropdownMenuItem onClick={() => handleDeleteComment(comment.id)} className="text-destructive focus:text-destructive">
+                                                            <Trash2 className="mr-2 h-4 w-4" /> Delete
+                                                        </DropdownMenuItem>
+                                                    </DropdownMenuContent>
+                                                </DropdownMenu>
                                             )}
                                         </div>
                                         <p className="text-sm">{comment.content}</p>
@@ -443,5 +456,3 @@ export default function FeedPage() {
         </div>
     )
 }
-
-    
