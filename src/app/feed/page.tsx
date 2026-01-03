@@ -126,7 +126,7 @@ function CommenterInfo({ authorId }: { authorId: string }) {
     );
 }
 
-function CommentThread({ comment, postId, allComments }: { comment: Comment, postId: string, allComments: Comment[] }) {
+function CommentThread({ comment, postId, allComments, onDelete }: { comment: Comment, postId: string, allComments: Comment[], onDelete: (commentId: string) => void }) {
     const { user } = useUser();
     const firestore = useFirestore();
     const { toast } = useToast();
@@ -194,19 +194,6 @@ function CommentThread({ comment, postId, allComments }: { comment: Comment, pos
         }
     };
 
-
-    const handleDeleteComment = (commentId: string) => {
-        if (!firestore) return;
-        const commentDocRef = doc(firestore, 'posts', postId, 'comments', commentId);
-        deleteDocumentNonBlocking(commentDocRef).then(() => {
-            toast({ title: "Comment deleted." });
-        }).catch(error => {
-            if ((error as any).name !== 'FirebaseError') {
-                toast({ variant: 'destructive', title: 'Failed to delete comment.' });
-            }
-        });
-    }
-
     const handleUpdateComment = async () => {
         if (!firestore) return;
         const commentDocRef = doc(firestore, 'posts', postId, 'comments', comment.id);
@@ -244,7 +231,7 @@ function CommentThread({ comment, postId, allComments }: { comment: Comment, pos
                                         <Pen className="mr-2 h-4 w-4" /> Edit
                                     </DropdownMenuItem>
                                 }
-                                <DropdownMenuItem onClick={() => handleDeleteComment(comment.id)} className="text-destructive focus:text-destructive">
+                                <DropdownMenuItem onClick={() => onDelete(comment.id)} className="text-destructive focus:text-destructive">
                                     <Trash2 className="mr-2 h-4 w-4" /> Delete
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
@@ -317,7 +304,7 @@ function CommentThread({ comment, postId, allComments }: { comment: Comment, pos
                  {replies.length > 0 && (
                     <div className="pt-2 space-y-4">
                         {replies.map(reply => (
-                            <CommentThread key={reply.id} comment={reply} postId={postId} allComments={allComments} />
+                            <CommentThread key={reply.id} comment={reply} postId={postId} allComments={allComments} onDelete={onDelete}/>
                         ))}
                     </div>
                 )}
@@ -331,6 +318,8 @@ function CommentsSection({ postId }: { postId: string }) {
     const { user, isUserLoading } = useUser();
     const { toast } = useToast();
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isCommentDeleteDialogOpen, setIsCommentDeleteDialogOpen] = useState(false);
+    const [selectedCommentId, setSelectedCommentId] = useState<string | null>(null);
     
     const commentsQuery = useMemoFirebase(() => {
         if (!firestore) return null;
@@ -368,12 +357,32 @@ function CommentsSection({ postId }: { postId: string }) {
         }
     }
     
+    const openDeleteDialog = (commentId: string) => {
+        setSelectedCommentId(commentId);
+        setIsCommentDeleteDialogOpen(true);
+    };
+
+    const handleDeleteComment = () => {
+        if (!firestore || !selectedCommentId) return;
+        const commentDocRef = doc(firestore, 'posts', postId, 'comments', selectedCommentId);
+        deleteDocumentNonBlocking(commentDocRef).then(() => {
+            toast({ title: "Comment deleted." });
+        }).catch(error => {
+            if ((error as any).name !== 'FirebaseError') {
+                toast({ variant: 'destructive', title: 'Failed to delete comment.' });
+            }
+        });
+        setIsCommentDeleteDialogOpen(false);
+        setSelectedCommentId(null);
+    };
+    
     const topLevelComments = useMemo(() => {
         return comments?.filter(c => !c.parentId) || [];
     }, [comments]);
 
 
     return (
+      <>
         <div className="pt-4 space-y-4">
             <Separator />
             {isUserLoading ? (
@@ -419,11 +428,28 @@ function CommentsSection({ postId }: { postId: string }) {
             ) : (
                 <div className="space-y-4">
                     {topLevelComments.map(comment => (
-                        <CommentThread key={comment.id} comment={comment} postId={postId} allComments={comments || []} />
+                        <CommentThread key={comment.id} comment={comment} postId={postId} allComments={comments || []} onDelete={openDeleteDialog}/>
                     ))}
                 </div>
             )}
         </div>
+        <AlertDialog open={isCommentDeleteDialogOpen} onOpenChange={setIsCommentDeleteDialogOpen}>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        This will permanently delete this comment and all of its replies. This action cannot be undone.
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDeleteComment} className="bg-destructive hover:bg-destructive/90">
+                        Delete
+                    </AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
+      </>
     );
 }
 
@@ -431,7 +457,7 @@ function FeedContent() {
     const firestore = useFirestore();
     const { user, isUserLoading } = useUser();
     const { toast } = useToast();
-    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+    const [isPostDeleteDialogOpen, setIsPostDeleteDialogOpen] = useState(false);
     const [selectedPost, setSelectedPost] = useState<Post | null>(null);
     const [editingPostId, setEditingPostId] = useState<string | null>(null);
     const [editedPostContent, setEditedPostContent] = useState('');
@@ -512,7 +538,7 @@ function FeedContent() {
 
     const openDeleteDialog = (post: Post) => {
         setSelectedPost(post);
-        setIsDeleteDialogOpen(true);
+        setIsPostDeleteDialogOpen(true);
     }
     
     const handleDeletePost = () => {
@@ -532,7 +558,7 @@ function FeedContent() {
                 });
             }
         });
-        setIsDeleteDialogOpen(false);
+        setIsPostDeleteDialogOpen(false);
         setSelectedPost(null);
     }
 
@@ -669,12 +695,12 @@ function FeedContent() {
                     )
                 })}
             </div>
-             <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+             <AlertDialog open={isPostDeleteDialogOpen} onOpenChange={setIsPostDeleteDialogOpen}>
                 <AlertDialogContent>
                   <AlertDialogHeader>
                     <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                     <AlertDialogDescription>
-                      This action cannot be undone. This will permanently delete this post.
+                      This action cannot be undone. This will permanently delete this post and all its comments.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
