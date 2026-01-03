@@ -199,7 +199,7 @@ function FeedContent() {
                             </CardHeader>
                             <CardContent>
                                 {post.imageUrl && (
-                                    <div className="mb-4 aspect-video relative rounded-lg overflow-hidden border">
+                                    <div className="mb-4 aspect-square relative rounded-lg overflow-hidden border">
                                         <Image
                                             src={post.imageUrl}
                                             alt={`Post image from ${post.authorName}`}
@@ -280,5 +280,3 @@ export default function FeedPage() {
         </div>
     )
 }
-
-    

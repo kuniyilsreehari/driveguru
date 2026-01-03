@@ -159,7 +159,7 @@ export function PostForm({ userProfile }: PostFormProps) {
         />
         
         {imagePreview && (
-            <div className="relative w-full aspect-video rounded-lg overflow-hidden border">
+            <div className="relative w-full max-h-60 aspect-square rounded-lg overflow-hidden border">
                 <Image src={imagePreview} alt="Image preview" fill className="object-cover" />
                 <Button 
                     type="button" 
@@ -199,5 +199,3 @@ export function PostForm({ userProfile }: PostFormProps) {
     </Form>
   );
 }
-
-    
