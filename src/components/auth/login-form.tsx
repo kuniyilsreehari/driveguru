@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useState, useEffect, useRef } from "react";
@@ -160,7 +159,6 @@ export function LoginForm() {
       await signInWithEmailAndPassword(auth, values.email, values.password);
       // The useEffect above will handle the redirect after the user state is updated.
     } catch (error: any) {
-      console.error("Login failed:", error);
       let errorMessage = "An unexpected error occurred. Please try again.";
       if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
         errorMessage = "Invalid email or password. Please check your credentials and try again.";
@@ -436,5 +434,3 @@ export function LoginForm() {
     </>
   );
 }
-
-    
