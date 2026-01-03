@@ -55,13 +55,13 @@ service cloud.firestore {
       // If the role is not being changed, we don't need to validate it.
       let isRoleUnchanged = !('role' in request.resource.data) || request.resource.data.role == resource.data.role;
       
-      // Allow following field to be updated
-      let canUpdateFollowing = request.resource.data.diff(resource.data).affectedKeys().hasOnly(['following']);
+      // Allow following and groups field to be updated
+      let canUpdateSocial = request.resource.data.diff(resource.data).affectedKeys().hasOnly(['following', 'groups']);
 
       return isOwner(userId) && 
              isExistingDoc() &&
              (isRoleUpdateAllowed || isRoleUnchanged) && // Allow update if role change is valid OR role is not changed
-             (!request.resource.data.diff(resource.data).affectedKeys().hasAny(protectedFields) || canUpdateFollowing);
+             (!request.resource.data.diff(resource.data).affectedKeys().hasAny(protectedFields) || canUpdateSocial);
     }
 
     // A manager can only update verification and cash payment status.
@@ -210,9 +210,8 @@ service cloud.firestore {
      * Posts
      * ===================================================== */
     match /posts/{postId} {
-        // Allow reads by anyone. This is crucial for the isPostAuthor function to work.
-        allow get: if true;
         allow list: if true;
+        allow get: if true;
 
         // Users can create their own posts
         allow create: if isSignedIn() && requestData().authorId == request.auth.uid;
@@ -222,11 +221,11 @@ service cloud.firestore {
                        // Any signed in user can update ONLY the likes array
                        (isSignedIn() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes'])) ||
                        // The author can update the content and imageUrl, but not likes or other fields
-                       (isSignedIn() && resource.data.authorId == request.auth.uid && request.resource.data.diff(resource.data).affectedKeys().hasAny(['content', 'imageUrl']));
+                       (isPostAuthor(postId) && request.resource.data.diff(resource.data).affectedKeys().hasAny(['content', 'imageUrl']));
 
         
         // Users can delete their own posts, or a super admin can.
-        allow delete: if (isSignedIn() && resource.data.authorId == request.auth.uid) || isSuperAdmin();
+        allow delete: if isPostAuthor(postId) || isSuperAdmin();
 
         /* ---------------------------------------------
         * Comments Subcollection
@@ -250,6 +249,35 @@ service cloud.firestore {
     }
     
     /* =====================================================
+     * Groups
+     * ===================================================== */
+    match /groups/{groupId} {
+        function isGroupCreator() {
+            return isSignedIn() && resource.data.creatorId == request.auth.uid;
+        }
+
+        function isGroupMember() {
+            return isSignedIn() && request.auth.uid in resource.data.members;
+        }
+        
+        allow get: if isSignedIn();
+        allow list: if isSignedIn();
+        allow create: if isSignedIn() && requestData().creatorId == request.auth.uid && request.auth.uid in requestData().members;
+        
+        // Only creator can edit name/description. Members can join/leave.
+        allow update: if isSuperAdmin() || isGroupCreator() || 
+                       (isSignedIn() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['members']));
+                       
+        allow delete: if isSuperAdmin() || isGroupCreator();
+
+        match /posts/{postId} {
+            allow read, list: if isGroupMember();
+            allow create: if isGroupMember() && requestData().authorId == request.auth.uid;
+            allow update, delete: if (isGroupMember() && resource.data.authorId == request.auth.uid) || isSuperAdmin();
+        }
+    }
+    
+    /* =====================================================
      * Vacancies
      * ===================================================== */
     match /vacancies/{vacancyId} {
@@ -269,3 +297,5 @@ service cloud.firestore {
      * ===================================================== */
   }
 }
+
+    
