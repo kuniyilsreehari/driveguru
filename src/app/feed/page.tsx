@@ -186,7 +186,7 @@ function CommentThread({ comment, postId, allComments }: { comment: Comment, pos
 
     return (
         <div className="flex items-start gap-3">
-             <div className="w-8 shrink-0"> {/* Spacer for alignment */}
+             <div className="w-8 shrink-0">
                 {comment.parentId && <div className="h-full w-px bg-border ml-4" />}
             </div>
             <div className="flex-1 space-y-2">
@@ -212,7 +212,7 @@ function CommentThread({ comment, postId, allComments }: { comment: Comment, pos
                 </div>
                  <div className="pl-11 flex items-center gap-4">
                     <p className="text-xs text-muted-foreground">
-                        {comment.createdAt ? `${formatDistanceToNow(new Date(comment.createdAt.seconds * 1000))} ago` : 'just now'}
+                        {comment.createdAt ? formatDistanceToNow(new Date(comment.createdAt.seconds * 1000)) : 'just now'} ago
                     </p>
                      {user && (
                         <Button variant="ghost" size="xs" onClick={() => setShowReplyForm(!showReplyForm)}>
@@ -601,3 +601,4 @@ export default function FeedPage() {
     
 
     
+
