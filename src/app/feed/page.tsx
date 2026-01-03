@@ -2,10 +2,10 @@
 
 'use client';
 
-import { Suspense, useMemo, useState } from 'react';
+import { Suspense, useMemo, useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { collection, query, orderBy, Timestamp, doc, updateDoc, arrayUnion, arrayRemove, serverTimestamp } from 'firebase/firestore';
+import { collection, query, orderBy, Timestamp, doc, updateDoc, arrayUnion, arrayRemove, serverTimestamp, limit, getDocs, startAfter, QueryDocumentSnapshot, DocumentData } from 'firebase/firestore';
 import { useFirestore, useCollection, useMemoFirebase, useUser, useDoc, deleteDocumentNonBlocking, addDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -455,6 +455,8 @@ function CommentsSection({ postId, postAuthorId }: { postId: string, postAuthorI
     );
 }
 
+const POSTS_PER_PAGE = 5;
+
 function FeedContent() {
     const firestore = useFirestore();
     const { user, isUserLoading } = useUser();
@@ -464,6 +466,12 @@ function FeedContent() {
     const [selectedPost, setSelectedPost] = useState<Post | null>(null);
     const [editingPostId, setEditingPostId] = useState<string | null>(null);
     const [editedPostContent, setEditedPostContent] = useState('');
+
+    const [posts, setPosts] = useState<Post[]>([]);
+    const [isLoadingPosts, setIsLoadingPosts] = useState(true);
+    const [isLoadingMore, setIsLoadingMore] = useState(false);
+    const [lastVisible, setLastVisible] = useState<QueryDocumentSnapshot<DocumentData> | null>(null);
+    const [hasMore, setHasMore] = useState(true);
     
     const superAdminDocRef = useMemoFirebase(() => {
       if (!user) return null;
@@ -473,17 +481,52 @@ function FeedContent() {
     const { data: superAdminData, isLoading: isRoleLoading } = useDoc(superAdminDocRef);
     const isSuperAdmin = !!superAdminData;
 
+    useEffect(() => {
+        if (!firestore) return;
 
-    const postsQuery = useMemoFirebase(() => {
-        if (!firestore) return null;
-        return query(
-            collection(firestore, 'posts'),
-            orderBy('createdAt', 'desc')
-        );
+        const fetchInitialPosts = async () => {
+            setIsLoadingPosts(true);
+            const firstBatch = query(
+                collection(firestore, 'posts'),
+                orderBy('createdAt', 'desc'),
+                limit(POSTS_PER_PAGE)
+            );
+            const documentSnapshots = await getDocs(firstBatch);
+            
+            const newPosts = documentSnapshots.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post));
+            const lastDoc = documentSnapshots.docs[documentSnapshots.docs.length - 1];
+
+            setPosts(newPosts);
+            setLastVisible(lastDoc);
+            setHasMore(documentSnapshots.docs.length === POSTS_PER_PAGE);
+            setIsLoadingPosts(false);
+        };
+
+        fetchInitialPosts();
     }, [firestore]);
-
-    const { data: posts, isLoading: isLoadingPosts } = useCollection<Post>(postsQuery);
     
+    const loadMorePosts = async () => {
+        if (!firestore || !lastVisible || !hasMore) return;
+
+        setIsLoadingMore(true);
+        const nextBatch = query(
+            collection(firestore, 'posts'),
+            orderBy('createdAt', 'desc'),
+            startAfter(lastVisible),
+            limit(POSTS_PER_PAGE)
+        );
+        const documentSnapshots = await getDocs(nextBatch);
+        
+        const newPosts = documentSnapshots.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post));
+        const lastDoc = documentSnapshots.docs[documentSnapshots.docs.length - 1];
+
+        setPosts(prevPosts => [...prevPosts, ...newPosts]);
+        setLastVisible(lastDoc);
+        setHasMore(documentSnapshots.docs.length === POSTS_PER_PAGE);
+        setIsLoadingMore(false);
+    };
+
+
     const filteredPosts = useMemo(() => {
         if (!posts) return [];
         if (!searchQuery) return posts;
@@ -514,6 +557,16 @@ function FeedContent() {
             await updateDoc(postRef, {
                 likes: updateAction,
             });
+            // Optimistically update UI
+            setPosts(prevPosts => prevPosts.map(p => {
+                if (p.id === post.id) {
+                    const newLikes = hasLiked
+                        ? (p.likes || []).filter(uid => uid !== user.uid)
+                        : [...(p.likes || []), user.uid];
+                    return { ...p, likes: newLikes };
+                }
+                return p;
+            }));
         } catch (error) {
             console.error('Error updating like:', error);
             if ((error as any).name !== 'FirebaseError') {
@@ -542,6 +595,7 @@ function FeedContent() {
         const postDocRef = doc(firestore, 'posts', editingPostId);
         try {
             await updateDocumentNonBlocking(postDocRef, { content: editedPostContent });
+            setPosts(prevPosts => prevPosts.map(p => p.id === editingPostId ? {...p, content: editedPostContent} : p));
             toast({ title: 'Post updated' });
             handleCancelEdit();
         } catch (error) {
@@ -560,6 +614,7 @@ function FeedContent() {
         if (!selectedPost || !firestore) return;
         const postDocRef = doc(firestore, 'posts', selectedPost.id);
         deleteDocumentNonBlocking(postDocRef).then(() => {
+            setPosts(prevPosts => prevPosts.filter(p => p.id !== selectedPost.id));
             toast({
                 title: "Post Deleted",
                 description: "The post has been successfully removed.",
@@ -589,7 +644,7 @@ function FeedContent() {
         );
     }
     
-    if (!posts || posts.length === 0) {
+    if (posts.length === 0) {
         return (
             <div className="text-center py-16">
                 <Card>
@@ -723,6 +778,21 @@ function FeedContent() {
                         </Card>
                     )
                 })}
+
+                {hasMore && !searchQuery && (
+                    <div className="flex justify-center mt-6">
+                        <Button onClick={loadMorePosts} disabled={isLoadingMore} variant="outline">
+                            {isLoadingMore ? (
+                                <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    Loading...
+                                </>
+                            ) : (
+                                "Load More"
+                            )}
+                        </Button>
+                    </div>
+                )}
             </div>
              <AlertDialog open={isPostDeleteDialogOpen} onOpenChange={setIsPostDeleteDialogOpen}>
                 <AlertDialogContent>
