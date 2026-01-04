@@ -161,7 +161,8 @@ service cloud.firestore {
      * Chats
      * ===================================================== */
     match /chats/{chatId} {
-      allow read, update, create: if isChatParticipant(chatId);
+      allow get, update, create: if isChatParticipant(chatId);
+      allow list: if isSignedIn() && request.query.where.participantIds.hasAny([request.auth.uid]);
       
       match /messages/{messageId} {
         allow read, create: if isChatParticipant(chatId);
@@ -197,7 +198,6 @@ service cloud.firestore {
     /* =====================================================
      * Users
      * ===================================================== */
-
     match /users/{userId} {
       // Anyone can view any public profile.
       allow get, list: if true;
@@ -251,7 +251,7 @@ service cloud.firestore {
             // Anyone can read comments
             allow read: if true;
             // Any signed-in user can create a comment
-            allow create: if isSignedIn() && request.resource.data.authorId == request.auth.uid;
+            allow create: if isSignedIn() && requestData().authorId == request.auth.uid;
             
             // Refined update rule for comments
             allow update: if isSuperAdmin() || // Super admins can do anything
@@ -324,6 +324,3 @@ service cloud.firestore {
      * ===================================================== */
   }
 }
-
-
-    
