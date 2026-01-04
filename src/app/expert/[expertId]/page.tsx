@@ -236,7 +236,7 @@ function ExpertProfileContent() {
                                 {isFollowing ? 'Unfollow' : 'Follow'}
                             </Button>
                         )}
-                        <ShareDialog expert={expert}>
+                        <ShareDialog shareDetails={{ type: 'expert-profile', expertId: expert.id, expertName: displayName }}>
                             <Button variant="outline">
                                 <Share2 className="mr-2 h-4 w-4" />
                                 Share
