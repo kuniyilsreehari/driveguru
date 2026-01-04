@@ -103,4 +103,3 @@ export function InstallPwaDialog({ ...props }: DialogProps) {
     </Dialog>
   );
 }
-
