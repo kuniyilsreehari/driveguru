@@ -1,5 +1,4 @@
 
-
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -128,6 +127,11 @@ service cloud.firestore {
         let post = get(/databases/$(database)/documents/posts/$(postId));
         return isSignedIn() && post.data.authorId == request.auth.uid;
     }
+    
+    function isChatParticipant(chatId) {
+      // For use in subcollection rules where resource is not available.
+      return isSignedIn() && request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participantIds;
+    }
 
 
     /* =====================================================
@@ -151,6 +155,20 @@ service cloud.firestore {
     match /app_config/{configId} {
       allow read: if true;
       allow write: if isSuperAdmin();
+    }
+    
+    /* =====================================================
+     * Chats
+     * ===================================================== */
+    match /chats/{chatId} {
+      allow get: if isSignedIn() && request.auth.uid in resource.data.participantIds;
+      allow list: if isSignedIn() && request.query.where.participantIds.hasAny([request.auth.uid]);
+      allow create, update: if isChatParticipant(chatId);
+      
+      match /messages/{messageId} {
+        allow read, create: if isChatParticipant(chatId);
+        allow update, delete: if isChatParticipant(chatId) && request.resource.data.senderId == request.auth.uid;
+      }
     }
     
     /* =====================================================
