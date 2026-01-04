@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useEffect, useState, useMemo, Suspense } from 'react';
+import { useEffect, useState, useMemo, Suspense, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { signOut } from 'firebase/auth';
 import { doc, collection, query, where, getDoc, runTransaction, increment, getDocs, orderBy, Timestamp, limit, arrayUnion, arrayRemove, serverTimestamp, addDoc, onSnapshot, QueryDocumentSnapshot } from 'firebase/firestore';
@@ -578,7 +578,7 @@ function MessagingSection({ currentUser }: { currentUser: ExpertUserProfile }) {
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [newMessage, setNewMessage] = useState('');
     const [isSending, setIsSending] = useState(false);
-    const messageEndRef = React.useRef<HTMLDivElement>(null);
+    const messageEndRef = useRef<HTMLDivElement>(null);
 
     const chatsQuery = useMemoFirebase(() => {
         if (!firestore) return null;
@@ -1410,6 +1410,3 @@ export default function DashboardPageWrapper() {
     </Suspense>
   )
 }
-
-    
-    
