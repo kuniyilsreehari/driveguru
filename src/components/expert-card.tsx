@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import Link from 'next/link';
@@ -13,6 +14,9 @@ import { FollowerStats } from './follower-stats';
 import { useToast } from '@/hooks/use-toast';
 import { WhatsAppBookingDialog } from './whatsapp-booking-dialog';
 import { ShareDialog } from './share-dialog';
+import { useRouter } from 'next/navigation';
+import { doc, getDocs, collection, query, where, addDoc, serverTimestamp, getDoc } from 'firebase/firestore';
+import { useFirestore } from '@/firebase';
 
 export type ExpertUser = {
     id: string;
@@ -49,6 +53,8 @@ interface ExpertCardProps {
 export function ExpertCard({ expert }: ExpertCardProps) {
     const { user } = useUser();
     const { toast } = useToast();
+    const router = useRouter();
+    const firestore = useFirestore();
 
     const getInitials = (expert: ExpertUser) => {
         if (expert.companyName) {
@@ -71,6 +77,51 @@ export function ExpertCard({ expert }: ExpertCardProps) {
     
     // Determine if contact actions should be shown
     const canShowContactActions = expert.verified && expert.showPhoneNumberOnProfile && expert.phoneNumber;
+    
+    const handleStartChat = async () => {
+        if (!user || !firestore) {
+            toast({
+                variant: 'destructive',
+                title: 'Not Logged In',
+                description: 'You must be logged in to start a chat.',
+            });
+            router.push('/login');
+            return;
+        }
+
+        if (user.uid === expert.id) {
+            toast({
+                variant: 'destructive',
+                title: 'Cannot Chat With Yourself',
+                description: 'You cannot start a chat with your own profile.',
+            });
+            return;
+        }
+
+        const participantIds = [user.uid, expert.id].sort();
+        const chatId = participantIds.join('_');
+        const chatDocRef = doc(firestore, 'chats', chatId);
+
+        try {
+            const chatDoc = await getDoc(chatDocRef);
+            if (!chatDoc.exists()) {
+                // Create a new chat if it doesn't exist
+                await addDoc(collection(firestore, 'chats'), {
+                    id: chatId,
+                    participantIds: participantIds,
+                    lastUpdatedAt: serverTimestamp(),
+                });
+            }
+            router.push(`/dashboard?chat=${expert.id}`);
+        } catch (error) {
+            console.error("Error starting chat:", error);
+            toast({
+                variant: 'destructive',
+                title: 'Error',
+                description: 'Could not start the chat. Please try again.',
+            });
+        }
+    };
 
     return (
         <Card key={expert.id} className="relative overflow-hidden transition-all hover:shadow-lg hover:border-primary/50">
@@ -140,11 +191,9 @@ export function ExpertCard({ expert }: ExpertCardProps) {
                     <Button asChild size="sm" variant="outline" className="flex-1">
                         <Link href={`/expert/${expert.id}`}>View Profile</Link>
                     </Button>
-                     <ShareDialog shareDetails={{ type: 'expert-profile', expertId: expert.id, expertName: getDisplayName(expert) }}>
-                        <Button size="sm" variant="outline" className="flex-1">
-                            <Share2 className="mr-2 h-4 w-4" /> Share
-                        </Button>
-                    </ShareDialog>
+                    <Button size="sm" variant="outline" className="flex-1" onClick={handleStartChat}>
+                        <MessageSquare className="mr-2 h-4 w-4" /> Message
+                    </Button>
                     <div className="flex flex-1 gap-2">
                     {canShowContactActions ? (
                         <WhatsAppBookingDialog expert={expert}>
@@ -163,3 +212,5 @@ export function ExpertCard({ expert }: ExpertCardProps) {
         </Card>
     )
 }
+
+    
