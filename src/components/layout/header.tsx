@@ -40,6 +40,23 @@ export function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [installPrompt, setInstallPrompt] = useAtom(installPromptAtom);
   const [showInstallDialog, setShowInstallDialog] = useState(false);
+  const [isOnline, setIsOnline] = useState(true);
+
+  useEffect(() => {
+    // Client-side only check for online status
+    setIsOnline(navigator.onLine);
+
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
 
   useEffect(() => {
@@ -150,6 +167,12 @@ export function Header() {
   return (
     <>
     <AnnouncementBanner />
+     {!isOnline && (
+        <div className="bg-destructive text-destructive-foreground p-2 text-center text-sm flex items-center justify-center gap-2">
+            <Icons.wifiOff className="h-4 w-4" />
+            You are currently offline. Some features may be unavailable.
+        </div>
+    )}
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-14 max-w-screen-2xl items-center">
         
