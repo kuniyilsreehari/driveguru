@@ -2,7 +2,7 @@
 
 'use client';
 
-import { useEffect, useState, useMemo, Suspense, useRef } from 'react';
+import React, { useEffect, useState, useMemo, Suspense, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { signOut } from 'firebase/auth';
 import { doc, collection, query, where, getDoc, runTransaction, increment, getDocs, orderBy, Timestamp, limit, arrayUnion, arrayRemove, serverTimestamp, addDoc, onSnapshot, QueryDocumentSnapshot } from 'firebase/firestore';
@@ -65,6 +65,17 @@ import Image from 'next/image';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 
+type ChatMessage = {
+    senderId: string;
+    content: string;
+    createdAt: Timestamp;
+};
+
+type Chat = {
+    messages: ChatMessage[];
+    lastUpdatedAt: Timestamp;
+};
+
 type ExpertUserProfile = {
     id: string;
     firstName: string;
@@ -101,6 +112,7 @@ type ExpertUserProfile = {
     tier?: 'Standard' | 'Premier' | 'Super Premier';
     following?: string[];
     groups?: string[];
+    chats?: Record<string, Chat>;
 };
 
 type PlanPrices = {
@@ -120,20 +132,6 @@ type AppConfig = {
     pricingModels?: string[];
 };
 
-type Chat = {
-    id: string;
-    participantIds: string[];
-    lastMessage?: string;
-    lastMessageSenderId?: string;
-    lastUpdatedAt: Timestamp;
-};
-
-type ChatMessage = {
-    id: string;
-    senderId: string;
-    content: string;
-    createdAt: Timestamp;
-}
 
 function getInitials(firstName?: string, lastName?: string) {
     return `${firstName?.charAt(0) || ''}${lastName?.charAt(0) || ''}`.toUpperCase() || 'U';
@@ -570,106 +568,124 @@ const postFormSchema = z.object({
   content: z.string().min(2, 'Post must be at least 2 characters.').max(500, 'Post cannot exceed 500 characters.'),
 });
 
-function MessagingSection({ currentUser }: { currentUser: ExpertUserProfile }) {
+function MessagingSection({ currentUserProfile }: { currentUserProfile: ExpertUserProfile }) {
     const firestore = useFirestore();
     const router = useRouter();
     const searchParams = useSearchParams();
-    const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
-    const [chatPartner, setChatPartner] = useState<ExpertUserProfile | null>(null);
-    const [messages, setMessages] = useState<ChatMessage[]>([]);
+    const [selectedChatPartnerId, setSelectedChatPartnerId] = useState<string | null>(null);
     const [newMessage, setNewMessage] = useState('');
     const [isSending, setIsSending] = useState(false);
     const messageEndRef = useRef<HTMLDivElement>(null);
 
-    const chatsQuery = useMemoFirebase(() => {
-        if (!firestore || !currentUser?.id) return null;
-        return query(
-            collection(firestore, 'chats'),
-            where('participantIds', 'array-contains', currentUser.id),
-            orderBy('lastUpdatedAt', 'desc')
-        );
-    }, [firestore, currentUser.id]);
+    const [chatPartners, setChatPartners] = useState<ExpertUserProfile[]>([]);
+    const [isLoadingPartners, setIsLoadingPartners] = useState(true);
 
-    const { data: chats, isLoading: isLoadingChats } = useCollection<Chat>(chatsQuery);
+    const chatPartnerIdFromUrl = searchParams.get('chat_with');
 
-    const chatPartnersQuery = useMemoFirebase(() => {
-        if (!firestore || !chats || chats.length === 0) return null;
-        const partnerIds = chats.map(c => c.participantIds.find(id => id !== currentUser.id)).filter((id): id is string => !!id);
-        if (partnerIds.length === 0) return null;
-        return query(collection(firestore, 'users'), where('id', 'in', partnerIds));
-    }, [firestore, chats, currentUser.id]);
-
-    const { data: chatPartners, isLoading: isLoadingPartners } = useCollection<ExpertUserProfile>(chatPartnersQuery);
-    
+    // Effect to handle initial chat partner from URL
     useEffect(() => {
-        const chatParam = searchParams.get('chat');
-        if (chatParam && chats && chatPartners) {
-            const partner = chatPartners.find(p => p.id === chatParam);
-            if (partner) {
-                const chat = chats.find(c => c.participantIds.includes(chatParam));
-                if (chat) {
-                    setSelectedChatId(chat.id);
-                    setChatPartner(partner);
+        if (chatPartnerIdFromUrl && !selectedChatPartnerId) {
+            setSelectedChatPartnerId(chatPartnerIdFromUrl);
+        }
+    }, [chatPartnerIdFromUrl, selectedChatPartnerId]);
+
+
+    // Effect to fetch profiles of chat partners
+    useEffect(() => {
+        if (!firestore || !currentUserProfile.chats) {
+            setIsLoadingPartners(false);
+            return;
+        }
+
+        const partnerIds = Object.keys(currentUserProfile.chats);
+        if (partnerIds.length === 0) {
+            setIsLoadingPartners(false);
+            return;
+        }
+
+        const fetchPartners = async () => {
+            setIsLoadingPartners(true);
+            const partners: ExpertUserProfile[] = [];
+            for (const id of partnerIds) {
+                const userDocRef = doc(firestore, 'users', id);
+                const userDocSnap = await getDoc(userDocRef);
+                if (userDocSnap.exists()) {
+                    partners.push({ id: userDocSnap.id, ...userDocSnap.data() } as ExpertUserProfile);
                 }
             }
-        }
-    }, [searchParams, chats, chatPartners]);
+            setChatPartners(partners);
+            setIsLoadingPartners(false);
+        };
 
+        fetchPartners();
+    }, [firestore, currentUserProfile.chats]);
 
-    useEffect(() => {
-        if (selectedChatId && firestore) {
-            const messagesQuery = query(
-                collection(firestore, 'chats', selectedChatId, 'messages'),
-                orderBy('createdAt', 'asc')
-            );
-            const unsubscribe = onSnapshot(messagesQuery, (querySnapshot) => {
-                const newMessages = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ChatMessage));
-                setMessages(newMessages);
-            });
-            return () => unsubscribe();
+    const sortedConversations = useMemo(() => {
+        if (!currentUserProfile.chats) return [];
+        return Object.entries(currentUserProfile.chats)
+            .map(([partnerId, chat]) => ({ partnerId, ...chat }))
+            .sort((a, b) => b.lastUpdatedAt.toMillis() - a.lastUpdatedAt.toMillis());
+    }, [currentUserProfile.chats]);
+
+    const messages = useMemo(() => {
+        if (!selectedChatPartnerId || !currentUserProfile.chats?.[selectedChatPartnerId]) {
+            return [];
         }
-    }, [selectedChatId, firestore]);
+        return currentUserProfile.chats[selectedChatPartnerId].messages.sort((a, b) => a.createdAt.toMillis() - b.createdAt.toMillis());
+    }, [selectedChatPartnerId, currentUserProfile.chats]);
     
+    const selectedChatPartner = useMemo(() => {
+        return chatPartners.find(p => p.id === selectedChatPartnerId) || null;
+    }, [chatPartners, selectedChatPartnerId]);
+
     useEffect(() => {
         messageEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages]);
 
     const handleSendMessage = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!newMessage.trim() || !selectedChatId || !firestore) return;
+        if (!newMessage.trim() || !selectedChatPartnerId || !firestore) return;
         setIsSending(true);
 
-        const chatRef = doc(firestore, 'chats', selectedChatId);
-        const messagesColRef = collection(chatRef, 'messages');
+        const currentUserDocRef = doc(firestore, "users", currentUserProfile.id);
+        const otherUserDocRef = doc(firestore, "users", selectedChatPartnerId);
+
+        const message: ChatMessage = {
+            senderId: currentUserProfile.id,
+            content: newMessage,
+            createdAt: Timestamp.now()
+        };
 
         try {
-            await addDoc(messagesColRef, {
-                senderId: currentUser.id,
-                content: newMessage,
-                createdAt: serverTimestamp()
+            await runTransaction(firestore, async (transaction) => {
+                // Update current user's chat
+                transaction.update(currentUserDocRef, {
+                    [`chats.${selectedChatPartnerId}.messages`]: arrayUnion(message),
+                    [`chats.${selectedChatPartnerId}.lastUpdatedAt`]: serverTimestamp()
+                });
+
+                // Update other user's chat
+                transaction.update(otherUserDocRef, {
+                    [`chats.${currentUserProfile.id}.messages`]: arrayUnion(message),
+                    [`chats.${currentUserProfile.id}.lastUpdatedAt`]: serverTimestamp()
+                });
             });
-            await updateDocumentNonBlocking(chatRef, {
-                lastMessage: newMessage,
-                lastMessageSenderId: currentUser.id,
-                lastUpdatedAt: serverTimestamp()
-            });
+            
             setNewMessage('');
+
         } catch (error) {
             console.error("Failed to send message", error);
+            if ((error as any).name !== 'FirebaseError') {
+                 toast({ variant: 'destructive', title: 'Error', description: 'Could not send message.' });
+            }
         } finally {
             setIsSending(false);
         }
     };
     
-     const handleSelectChat = (chat: Chat) => {
-        const partnerId = chat.participantIds.find(id => id !== currentUser.id);
-        const partner = chatPartners?.find(p => p.id === partnerId);
-        if (partner) {
-            setSelectedChatId(chat.id);
-            setChatPartner(partner);
-        }
+    const handleSelectChat = (partnerId: string) => {
+        setSelectedChatPartnerId(partnerId);
     };
-
 
     return (
         <Card className="h-[70vh]">
@@ -681,27 +697,29 @@ function MessagingSection({ currentUser }: { currentUser: ExpertUserProfile }) {
                             <Input placeholder="Search messages..." className="pl-10" />
                         </div>
                     </div>
-                    {isLoadingChats || isLoadingPartners ? (
+                    {isLoadingPartners ? (
                         <div className="p-4 flex items-center justify-center flex-grow"><Loader className="h-5 w-5 animate-spin" /></div>
-                    ) : chats && chats.length > 0 && chatPartners ? (
+                    ) : sortedConversations.length > 0 && chatPartners.length > 0 ? (
                          <div className="flex-grow overflow-y-auto">
-                            {chats.map(chat => {
-                                const partner = chatPartners.find(p => chat.participantIds.includes(p.id) && p.id !== currentUser.id);
+                            {sortedConversations.map(convo => {
+                                const partner = chatPartners.find(p => p.id === convo.partnerId);
                                 if (!partner) return null;
+                                
+                                const lastMessage = convo.messages[convo.messages.length - 1];
 
                                 return (
-                                    <div key={chat.id} onClick={() => handleSelectChat(chat)}
-                                        className={cn("p-4 flex items-center gap-3 cursor-pointer hover:bg-accent", selectedChatId === chat.id && "bg-accent")}>
+                                    <div key={convo.partnerId} onClick={() => handleSelectChat(convo.partnerId)}
+                                        className={cn("p-4 flex items-center gap-3 cursor-pointer hover:bg-accent", selectedChatPartnerId === convo.partnerId && "bg-accent")}>
                                         <Avatar className="h-10 w-10">
                                             <AvatarImage src={partner.photoUrl} />
                                             <AvatarFallback>{getInitials(partner.firstName, partner.lastName)}</AvatarFallback>
                                         </Avatar>
                                         <div className="flex-grow overflow-hidden">
                                             <p className="font-semibold truncate">{partner.firstName} {partner.lastName}</p>
-                                            <p className="text-sm text-muted-foreground truncate">{chat.lastMessage}</p>
+                                            <p className="text-sm text-muted-foreground truncate">{lastMessage?.content}</p>
                                         </div>
                                          <p className="text-xs text-muted-foreground self-start shrink-0">
-                                            {chat.lastUpdatedAt ? formatDistanceToNowStrict(chat.lastUpdatedAt.toDate()) : ''}
+                                            {convo.lastUpdatedAt ? formatDistanceToNowStrict(convo.lastUpdatedAt.toDate()) : ''}
                                         </p>
                                     </div>
                                 )
@@ -720,28 +738,28 @@ function MessagingSection({ currentUser }: { currentUser: ExpertUserProfile }) {
                 </div>
 
                 <div className="col-span-2 hidden md:flex flex-col h-full">
-                    {selectedChatId && chatPartner ? (
+                    {selectedChatPartner ? (
                         <>
                             <div className="p-4 border-b flex items-center gap-3">
                                 <Avatar className="h-10 w-10">
-                                    <AvatarImage src={chatPartner.photoUrl} />
-                                    <AvatarFallback>{getInitials(chatPartner.firstName, chatPartner.lastName)}</AvatarFallback>
+                                    <AvatarImage src={selectedChatPartner.photoUrl} />
+                                    <AvatarFallback>{getInitials(selectedChatPartner.firstName, selectedChatPartner.lastName)}</AvatarFallback>
                                 </Avatar>
                                 <div>
-                                    <p className="font-semibold">{chatPartner.firstName} {chatPartner.lastName}</p>
-                                    <p className="text-xs text-muted-foreground">{chatPartner.profession || chatPartner.role}</p>
+                                    <p className="font-semibold">{selectedChatPartner.firstName} {selectedChatPartner.lastName}</p>
+                                    <p className="text-xs text-muted-foreground">{selectedChatPartner.profession || selectedChatPartner.role}</p>
                                 </div>
                             </div>
                             <div className="flex-grow p-4 overflow-y-auto bg-slate-50 dark:bg-slate-900/50 space-y-4">
-                                {messages.map(msg => (
-                                    <div key={msg.id} className={cn("flex items-end gap-2", msg.senderId === currentUser.id ? "justify-end" : "justify-start")}>
-                                         {msg.senderId !== currentUser.id && (
+                                {messages.map((msg, index) => (
+                                    <div key={index} className={cn("flex items-end gap-2", msg.senderId === currentUserProfile.id ? "justify-end" : "justify-start")}>
+                                         {msg.senderId !== currentUserProfile.id && (
                                             <Avatar className="h-6 w-6">
-                                                <AvatarImage src={chatPartner.photoUrl} />
-                                                <AvatarFallback>{getInitials(chatPartner.firstName, chatPartner.lastName)}</AvatarFallback>
+                                                <AvatarImage src={selectedChatPartner.photoUrl} />
+                                                <AvatarFallback>{getInitials(selectedChatPartner.firstName, selectedChatPartner.lastName)}</AvatarFallback>
                                             </Avatar>
                                          )}
-                                        <div className={cn("max-w-xs lg:max-w-md p-3 rounded-lg", msg.senderId === currentUser.id ? "bg-primary text-primary-foreground rounded-br-none" : "bg-secondary rounded-bl-none")}>
+                                        <div className={cn("max-w-xs lg:max-w-md p-3 rounded-lg", msg.senderId === currentUserProfile.id ? "bg-primary text-primary-foreground rounded-br-none" : "bg-secondary rounded-bl-none")}>
                                             <p className="text-sm">{msg.content}</p>
                                         </div>
                                     </div>
@@ -769,6 +787,7 @@ function MessagingSection({ currentUser }: { currentUser: ExpertUserProfile }) {
         </Card>
     );
 }
+
 
 function ExpertDashboardPage() {
   const { user, isUserLoading } = useUser();
@@ -1375,7 +1394,7 @@ function ExpertDashboardPage() {
                 </Card>
             </TabsContent>
             <TabsContent value="messages" className="mt-6">
-                <MessagingSection currentUser={userProfile} />
+                <MessagingSection currentUserProfile={userProfile} />
             </TabsContent>
             <TabsContent value="plan" className="mt-6">
                 <PlanManagement userProfile={userProfile} appConfig={appConfig} />
@@ -1411,5 +1430,3 @@ export default function DashboardPageWrapper() {
     </Suspense>
   )
 }
-
-    

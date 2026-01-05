@@ -9,14 +9,13 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Star, IndianRupee, Briefcase, Calendar, Phone, MessageSquare, UserCheck, Crown, Sparkles, MapPin, Lock, List, Share2 } from 'lucide-react';
-import { useUser } from '@/firebase';
+import { useUser, useFirestore, updateDocumentNonBlocking } from '@/firebase';
 import { FollowerStats } from './follower-stats';
 import { useToast } from '@/hooks/use-toast';
 import { WhatsAppBookingDialog } from './whatsapp-booking-dialog';
 import { ShareDialog } from './share-dialog';
 import { useRouter } from 'next/navigation';
-import { doc, getDocs, collection, query, where, addDoc, serverTimestamp, getDoc } from 'firebase/firestore';
-import { useFirestore } from '@/firebase';
+import { doc, getDoc, serverTimestamp, runTransaction } from 'firebase/firestore';
 
 export type ExpertUser = {
     id: string;
@@ -97,31 +96,32 @@ export function ExpertCard({ expert }: ExpertCardProps) {
             });
             return;
         }
-
-        const participantIds = [user.uid, expert.id].sort();
-        const chatId = participantIds.join('_');
-        const chatDocRef = doc(firestore, 'chats', chatId);
-
+        
         try {
-            const chatDoc = await getDoc(chatDocRef);
-            if (!chatDoc.exists()) {
-                // Create a new chat if it doesn't exist
-                await addDoc(collection(firestore, 'chats'), {
-                    id: chatId,
-                    participantIds: participantIds,
-                    lastUpdatedAt: serverTimestamp(),
+            // Use a transaction to ensure both documents are updated atomically
+            await runTransaction(firestore, async (transaction) => {
+                const currentUserDocRef = doc(firestore, "users", user.uid);
+                const otherUserDocRef = doc(firestore, "users", expert.id);
+                
+                // Initialize chat fields if they don't exist
+                transaction.set(currentUserDocRef, { chats: {} }, { merge: true });
+                transaction.set(otherUserDocRef, { chats: {} }, { merge: true });
+            });
+            
+            router.push(`/dashboard?tab=messages&chat_with=${expert.id}`);
+
+        } catch (error) {
+            if ((error as any).name !== 'FirebaseError') {
+                console.error("Error starting chat:", error);
+                toast({
+                    variant: 'destructive',
+                    title: 'Error',
+                    description: 'Could not start the chat. Please try again.',
                 });
             }
-            router.push(`/dashboard?chat=${expert.id}`);
-        } catch (error) {
-            console.error("Error starting chat:", error);
-            toast({
-                variant: 'destructive',
-                title: 'Error',
-                description: 'Could not start the chat. Please try again.',
-            });
         }
     };
+
 
     return (
         <Card key={expert.id} className="relative overflow-hidden transition-all hover:shadow-lg hover:border-primary/50">
@@ -212,5 +212,3 @@ export function ExpertCard({ expert }: ExpertCardProps) {
         </Card>
     )
 }
-
-    

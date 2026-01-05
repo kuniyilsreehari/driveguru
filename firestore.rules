@@ -55,8 +55,8 @@ service cloud.firestore {
       // If the role is not being changed, we don't need to validate it.
       let isRoleUnchanged = !('role' in request.resource.data) || request.resource.data.role == resource.data.role;
       
-      // Allow following and groups field to be updated
-      let canUpdateSocial = request.resource.data.diff(resource.data).affectedKeys().hasOnly(['following', 'groups']);
+      // Allow following, groups and chats to be updated
+      let canUpdateSocial = request.resource.data.diff(resource.data).affectedKeys().hasOnly(['following', 'groups', 'chats']);
 
       return isOwner(userId) && 
              isExistingDoc() &&
@@ -128,12 +128,6 @@ service cloud.firestore {
         return isSignedIn() && post.data.authorId == request.auth.uid;
     }
     
-    function isChatParticipant(chatId) {
-      // For use in subcollection rules where resource is not available for the parent doc.
-      return isSignedIn() && get(/databases/$(database)/documents/chats/$(chatId)).data.participantIds.hasAny([request.auth.uid]);
-    }
-
-
     /* =====================================================
      * Admin Roles
      * ===================================================== */
@@ -155,29 +149,6 @@ service cloud.firestore {
     match /app_config/{configId} {
       allow read: if true;
       allow write: if isSuperAdmin();
-    }
-    
-    /* =====================================================
-     * Chats
-     * ===================================================== */
-    match /chats/{chatId} {
-      // Efficiently check if user is a participant for reads and updates on the chat document itself.
-      allow get, update: if isSignedIn() && request.auth.uid in resource.data.participantIds;
-      
-      // Allow users to list only the chats they are part of.
-      allow list: if isSignedIn() && request.query.where.participantIds.hasAny([request.auth.uid]);
-      
-      // Allow a user to create a chat only if they are including themselves as a participant.
-      allow create: if isSignedIn() && request.auth.uid in request.resource.data.participantIds;
-
-      // Rules for the messages subcollection.
-      match /messages/{messageId} {
-        // Use a get() call here because the parent 'chat' document's `resource` is not available.
-        allow read, create: if isChatParticipant(chatId);
-        
-        // A user can only update or delete their own messages.
-        allow update, delete: if isSignedIn() && resource.data.senderId == request.auth.uid;
-      }
     }
     
     /* =====================================================

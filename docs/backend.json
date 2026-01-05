@@ -218,6 +218,13 @@
             "description": "An array of group IDs that this user is a member of.",
             "items": { "type": "string" }
         },
+        "chats": {
+          "type": "object",
+          "description": "A map of conversations, where the key is the other user's ID.",
+          "additionalProperties": {
+            "$ref": "#/backend/entities/Chat"
+          }
+        },
         "createdAt": {
             "type": "string",
             "format": "date-time",
@@ -232,6 +239,30 @@
         "role",
         "createdAt"
       ]
+    },
+    "Chat": {
+        "title": "Chat",
+        "type": "object",
+        "description": "Represents a single chat conversation with another user.",
+        "properties": {
+            "messages": { 
+              "type": "array", 
+              "items": { "$ref": "#/backend/entities/ChatMessage" } 
+            },
+            "lastUpdatedAt": { "type": "string", "format": "date-time" }
+        },
+        "required": ["messages", "lastUpdatedAt"]
+    },
+    "ChatMessage": {
+        "title": "ChatMessage",
+        "type": "object",
+        "description": "Represents a single message within a chat conversation.",
+        "properties": {
+            "senderId": { "type": "string" },
+            "content": { "type": "string" },
+            "createdAt": { "type": "string", "format": "date-time" }
+        },
+        "required": ["senderId", "content", "createdAt"]
     },
     "Company": {
       "$schema": "http://json-schema.org/draft-07/schema#",
