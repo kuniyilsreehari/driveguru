@@ -208,10 +208,10 @@ service cloud.firestore {
     /* =====================================================
      * Users
      * ===================================================== */
-
     match /users/{userId} {
       // Anyone can view any public profile.
-      allow get, list: if true;
+      allow get: if true;
+      allow list: if true;
 
       // VERY PERMISSIVE: Any signed-in user can create their own user document.
       allow create: if isOwner(userId);
