@@ -130,7 +130,8 @@ service cloud.firestore {
     }
     
     function isChatParticipant(chatId) {
-      return isSignedIn() && request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participantIds;
+      // For use in subcollection rules where resource is not available for the parent doc.
+      return isSignedIn() && get(/databases/$(database)/documents/chats/$(chatId)).data.participantIds.hasAny([request.auth.uid]);
     }
 
 
@@ -161,12 +162,22 @@ service cloud.firestore {
      * Chats
      * ===================================================== */
     match /chats/{chatId} {
-      allow get, update, create: if isChatParticipant(chatId);
+      // Efficiently check if user is a participant for reads and updates on the chat document itself.
+      allow get, update: if isSignedIn() && request.auth.uid in resource.data.participantIds;
+      
+      // Allow users to list only the chats they are part of.
       allow list: if isSignedIn() && request.query.where.participantIds.hasAny([request.auth.uid]);
       
+      // Allow a user to create a chat only if they are including themselves as a participant.
+      allow create: if isSignedIn() && request.auth.uid in request.resource.data.participantIds;
+
+      // Rules for the messages subcollection.
       match /messages/{messageId} {
+        // Use a get() call here because the parent 'chat' document's `resource` is not available.
         allow read, create: if isChatParticipant(chatId);
-        allow update, delete: if isChatParticipant(chatId) && request.resource.data.senderId == request.auth.uid;
+        
+        // A user can only update or delete their own messages.
+        allow update, delete: if isSignedIn() && resource.data.senderId == request.auth.uid;
       }
     }
     
@@ -200,7 +211,8 @@ service cloud.firestore {
      * ===================================================== */
     match /users/{userId} {
       // Anyone can view any public profile.
-      allow get, list: if true;
+      allow get: if true;
+      allow list: if true;
 
       // VERY PERMISSIVE: Any signed-in user can create their own user document.
       allow create: if isOwner(userId);
@@ -324,3 +336,5 @@ service cloud.firestore {
      * ===================================================== */
   }
 }
+
+    

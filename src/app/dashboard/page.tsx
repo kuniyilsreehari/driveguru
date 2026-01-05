@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useEffect, useState, useMemo, Suspense, useRef } from 'react';
@@ -581,7 +582,7 @@ function MessagingSection({ currentUser }: { currentUser: ExpertUserProfile }) {
     const messageEndRef = useRef<HTMLDivElement>(null);
 
     const chatsQuery = useMemoFirebase(() => {
-        if (!firestore) return null;
+        if (!firestore || !currentUser?.id) return null;
         return query(
             collection(firestore, 'chats'),
             where('participantIds', 'array-contains', currentUser.id),
@@ -593,7 +594,7 @@ function MessagingSection({ currentUser }: { currentUser: ExpertUserProfile }) {
 
     const chatPartnersQuery = useMemoFirebase(() => {
         if (!firestore || !chats || chats.length === 0) return null;
-        const partnerIds = chats.map(c => c.participantIds.find(id => id !== currentUser.id)).filter(Boolean);
+        const partnerIds = chats.map(c => c.participantIds.find(id => id !== currentUser.id)).filter((id): id is string => !!id);
         if (partnerIds.length === 0) return null;
         return query(collection(firestore, 'users'), where('id', 'in', partnerIds));
     }, [firestore, chats, currentUser.id]);
@@ -1410,3 +1411,5 @@ export default function DashboardPageWrapper() {
     </Suspense>
   )
 }
+
+    
