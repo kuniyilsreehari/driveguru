@@ -55,13 +55,13 @@ service cloud.firestore {
       // If the role is not being changed, we don't need to validate it.
       let isRoleUnchanged = !('role' in request.resource.data) || request.resource.data.role == resource.data.role;
       
-      // Allow following, groups and chats to be updated
-      let canUpdateSocial = request.resource.data.diff(resource.data).affectedKeys().hasOnly(['following', 'groups', 'chats']);
+      // Allow following, groups and chats fields to be updated
+      let canUpdateSocialFields = request.resource.data.diff(resource.data).affectedKeys().hasOnly(['following', 'groups', 'chats']);
 
       return isOwner(userId) && 
              isExistingDoc() &&
              (isRoleUpdateAllowed || isRoleUnchanged) && // Allow update if role change is valid OR role is not changed
-             (!request.resource.data.diff(resource.data).affectedKeys().hasAny(protectedFields) || canUpdateSocial);
+             (canUpdateSocialFields || !request.resource.data.diff(resource.data).affectedKeys().hasAny(protectedFields));
     }
 
     // A manager can only update verification and cash payment status.
@@ -127,7 +127,8 @@ service cloud.firestore {
         let post = get(/databases/$(database)/documents/posts/$(postId));
         return isSignedIn() && post.data.authorId == request.auth.uid;
     }
-    
+
+
     /* =====================================================
      * Admin Roles
      * ===================================================== */
