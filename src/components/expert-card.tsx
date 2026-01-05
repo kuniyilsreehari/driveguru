@@ -77,52 +77,6 @@ export function ExpertCard({ expert }: ExpertCardProps) {
     // Determine if contact actions should be shown
     const canShowContactActions = expert.verified && expert.showPhoneNumberOnProfile && expert.phoneNumber;
     
-    const handleStartChat = async () => {
-        if (!user || !firestore) {
-            toast({
-                variant: 'destructive',
-                title: 'Not Logged In',
-                description: 'You must be logged in to start a chat.',
-            });
-            router.push('/login');
-            return;
-        }
-
-        if (user.uid === expert.id) {
-            toast({
-                variant: 'destructive',
-                title: 'Cannot Chat With Yourself',
-                description: 'You cannot start a chat with your own profile.',
-            });
-            return;
-        }
-        
-        try {
-            // Use a transaction to ensure both documents are updated atomically
-            await runTransaction(firestore, async (transaction) => {
-                const currentUserDocRef = doc(firestore, "users", user.uid);
-                const otherUserDocRef = doc(firestore, "users", expert.id);
-                
-                // Initialize chat fields if they don't exist
-                transaction.set(currentUserDocRef, { chats: {} }, { merge: true });
-                transaction.set(otherUserDocRef, { chats: {} }, { merge: true });
-            });
-            
-            router.push(`/dashboard?tab=messages&chat_with=${expert.id}`);
-
-        } catch (error) {
-            if ((error as any).name !== 'FirebaseError') {
-                console.error("Error starting chat:", error);
-                toast({
-                    variant: 'destructive',
-                    title: 'Error',
-                    description: 'Could not start the chat. Please try again.',
-                });
-            }
-        }
-    };
-
-
     return (
         <Card key={expert.id} className="relative overflow-hidden transition-all hover:shadow-lg hover:border-primary/50">
             <CardContent className="p-4">
@@ -190,9 +144,6 @@ export function ExpertCard({ expert }: ExpertCardProps) {
                 <div className="flex flex-wrap items-center gap-2">
                     <Button asChild size="sm" variant="outline" className="flex-1">
                         <Link href={`/expert/${expert.id}`}>View Profile</Link>
-                    </Button>
-                    <Button size="sm" variant="outline" className="flex-1" onClick={handleStartChat}>
-                        <MessageSquare className="mr-2 h-4 w-4" /> Message
                     </Button>
                     <div className="flex flex-1 gap-2">
                     {canShowContactActions ? (

@@ -2,13 +2,13 @@
 
 'use client';
 
-import React, { useEffect, useState, useMemo, Suspense, useRef } from 'react';
+import React, { useEffect, useState, useMemo, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { signOut } from 'firebase/auth';
 import { doc, collection, query, where, getDoc, runTransaction, increment, getDocs, orderBy, Timestamp, limit, arrayUnion, arrayRemove, serverTimestamp, addDoc, onSnapshot, QueryDocumentSnapshot } from 'firebase/firestore';
 import { useUser, useAuth, useFirestore, useDoc, useCollection, useMemoFirebase, updateDocumentNonBlocking, addDocumentNonBlocking } from '@/firebase';
 import { Button } from '@/components/ui/button';
-import { LogOut, Briefcase, Loader, Edit, UserCheck, XCircle, MapPin, IndianRupee, Calendar, Book, GraduationCap, School, Info, User as UserIcon, Check, Power, Building, PlusCircle, Crown, Sparkles, Lock, Home, ArrowUpCircle, ShieldCheck, ExternalLink, Gift, Copy, Shield, AlertTriangle, ChevronDown, Link as LinkIcon, MessageCircle, BookOpen, CheckCircle, PenSquare, Factory, Users, Type, UserPlus, UserMinus, Terminal, ArrowLeft, ArrowRight, Send, Search, Rss } from 'lucide-react';
+import { LogOut, Briefcase, Loader, Edit, UserCheck, XCircle, MapPin, IndianRupee, Calendar, Book, GraduationCap, School, Info, User as UserIcon, Check, Power, Building, PlusCircle, Crown, Sparkles, Lock, Home, ArrowUpCircle, ShieldCheck, ExternalLink, Gift, Copy, Shield, AlertTriangle, ChevronDown, Link as LinkIcon, MessageSquare, BookOpen, CheckCircle, PenSquare, Factory, Users, Type, UserPlus, UserMinus, Terminal, ArrowLeft, ArrowRight, Send, Search, Rss } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import {
   Dialog,
@@ -36,7 +36,6 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertDialogTrigger } from '@radix-ui/react-alert-dialog';
 import { EditProfileForm } from '@/components/auth/edit-profile-form';
 import { PostVacancyForm } from '@/components/auth/post-vacancy-form';
 import { Badge } from '@/components/ui/badge';
@@ -61,20 +60,8 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { formatDistanceToNowStrict } from 'date-fns';
-import Image from 'next/image';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
-
-type ChatMessage = {
-    senderId: string;
-    content: string;
-    createdAt: Timestamp;
-};
-
-type Chat = {
-    messages: ChatMessage[];
-    lastUpdatedAt: Timestamp;
-};
 
 type ExpertUserProfile = {
     id: string;
@@ -112,7 +99,6 @@ type ExpertUserProfile = {
     tier?: 'Standard' | 'Premier' | 'Super Premier';
     following?: string[];
     groups?: string[];
-    chats?: Record<string, Chat>;
 };
 
 type PlanPrices = {
@@ -568,226 +554,6 @@ const postFormSchema = z.object({
   content: z.string().min(2, 'Post must be at least 2 characters.').max(500, 'Post cannot exceed 500 characters.'),
 });
 
-function MessagingSection({ currentUserProfile }: { currentUserProfile: ExpertUserProfile }) {
-    const firestore = useFirestore();
-    const router = useRouter();
-    const searchParams = useSearchParams();
-    const [selectedChatPartnerId, setSelectedChatPartnerId] = useState<string | null>(null);
-    const [newMessage, setNewMessage] = useState('');
-    const [isSending, setIsSending] = useState(false);
-    const messageEndRef = useRef<HTMLDivElement>(null);
-
-    const [chatPartners, setChatPartners] = useState<ExpertUserProfile[]>([]);
-    const [isLoadingPartners, setIsLoadingPartners] = useState(true);
-
-    const chatPartnerIdFromUrl = searchParams.get('chat_with');
-
-    // Effect to handle initial chat partner from URL
-    useEffect(() => {
-        if (chatPartnerIdFromUrl && !selectedChatPartnerId) {
-            setSelectedChatPartnerId(chatPartnerIdFromUrl);
-        }
-    }, [chatPartnerIdFromUrl, selectedChatPartnerId]);
-
-
-    // Effect to fetch profiles of chat partners
-    useEffect(() => {
-        if (!firestore || !currentUserProfile.chats) {
-            setIsLoadingPartners(false);
-            return;
-        }
-
-        const partnerIds = Object.keys(currentUserProfile.chats);
-        if (partnerIds.length === 0) {
-            setIsLoadingPartners(false);
-            return;
-        }
-
-        const fetchPartners = async () => {
-            setIsLoadingPartners(true);
-            const partners: ExpertUserProfile[] = [];
-            for (const id of partnerIds) {
-                const userDocRef = doc(firestore, 'users', id);
-                const userDocSnap = await getDoc(userDocRef);
-                if (userDocSnap.exists()) {
-                    partners.push({ id: userDocSnap.id, ...userDocSnap.data() } as ExpertUserProfile);
-                }
-            }
-            setChatPartners(partners);
-            setIsLoadingPartners(false);
-        };
-
-        fetchPartners();
-    }, [firestore, currentUserProfile.chats]);
-
-    const sortedConversations = useMemo(() => {
-        if (!currentUserProfile.chats) return [];
-        return Object.entries(currentUserProfile.chats)
-            .map(([partnerId, chat]) => ({ partnerId, ...chat }))
-            .sort((a, b) => b.lastUpdatedAt.toMillis() - a.lastUpdatedAt.toMillis());
-    }, [currentUserProfile.chats]);
-
-    const messages = useMemo(() => {
-        if (!selectedChatPartnerId || !currentUserProfile.chats?.[selectedChatPartnerId]) {
-            return [];
-        }
-        return currentUserProfile.chats[selectedChatPartnerId].messages.sort((a, b) => a.createdAt.toMillis() - b.createdAt.toMillis());
-    }, [selectedChatPartnerId, currentUserProfile.chats]);
-    
-    const selectedChatPartner = useMemo(() => {
-        return chatPartners.find(p => p.id === selectedChatPartnerId) || null;
-    }, [chatPartners, selectedChatPartnerId]);
-
-    useEffect(() => {
-        messageEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, [messages]);
-
-    const handleSendMessage = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!newMessage.trim() || !selectedChatPartnerId || !firestore) return;
-        setIsSending(true);
-
-        const currentUserDocRef = doc(firestore, "users", currentUserProfile.id);
-        const otherUserDocRef = doc(firestore, "users", selectedChatPartnerId);
-
-        const message: ChatMessage = {
-            senderId: currentUserProfile.id,
-            content: newMessage,
-            createdAt: Timestamp.now()
-        };
-
-        try {
-            await runTransaction(firestore, async (transaction) => {
-                // Update current user's chat
-                transaction.update(currentUserDocRef, {
-                    [`chats.${selectedChatPartnerId}.messages`]: arrayUnion(message),
-                    [`chats.${selectedChatPartnerId}.lastUpdatedAt`]: serverTimestamp()
-                });
-
-                // Update other user's chat
-                transaction.update(otherUserDocRef, {
-                    [`chats.${currentUserProfile.id}.messages`]: arrayUnion(message),
-                    [`chats.${currentUserProfile.id}.lastUpdatedAt`]: serverTimestamp()
-                });
-            });
-            
-            setNewMessage('');
-
-        } catch (error) {
-            console.error("Failed to send message", error);
-            if ((error as any).name !== 'FirebaseError') {
-                 toast({ variant: 'destructive', title: 'Error', description: 'Could not send message.' });
-            }
-        } finally {
-            setIsSending(false);
-        }
-    };
-    
-    const handleSelectChat = (partnerId: string) => {
-        setSelectedChatPartnerId(partnerId);
-    };
-
-    return (
-        <Card className="h-[70vh]">
-            <CardContent className="p-0 grid grid-cols-1 md:grid-cols-3 h-full">
-                <div className="col-span-1 border-r flex flex-col">
-                    <div className="p-4 border-b">
-                        <div className="relative">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                            <Input placeholder="Search messages..." className="pl-10" />
-                        </div>
-                    </div>
-                    {isLoadingPartners ? (
-                        <div className="p-4 flex items-center justify-center flex-grow"><Loader className="h-5 w-5 animate-spin" /></div>
-                    ) : sortedConversations.length > 0 && chatPartners.length > 0 ? (
-                         <div className="flex-grow overflow-y-auto">
-                            {sortedConversations.map(convo => {
-                                const partner = chatPartners.find(p => p.id === convo.partnerId);
-                                if (!partner) return null;
-                                
-                                const lastMessage = convo.messages[convo.messages.length - 1];
-
-                                return (
-                                    <div key={convo.partnerId} onClick={() => handleSelectChat(convo.partnerId)}
-                                        className={cn("p-4 flex items-center gap-3 cursor-pointer hover:bg-accent", selectedChatPartnerId === convo.partnerId && "bg-accent")}>
-                                        <Avatar className="h-10 w-10">
-                                            <AvatarImage src={partner.photoUrl} />
-                                            <AvatarFallback>{getInitials(partner.firstName, partner.lastName)}</AvatarFallback>
-                                        </Avatar>
-                                        <div className="flex-grow overflow-hidden">
-                                            <p className="font-semibold truncate">{partner.firstName} {partner.lastName}</p>
-                                            <p className="text-sm text-muted-foreground truncate">{lastMessage?.content}</p>
-                                        </div>
-                                         <p className="text-xs text-muted-foreground self-start shrink-0">
-                                            {convo.lastUpdatedAt ? formatDistanceToNowStrict(convo.lastUpdatedAt.toDate()) : ''}
-                                        </p>
-                                    </div>
-                                )
-                            })}
-                        </div>
-                    ) : (
-                         <div className="p-4 flex flex-col items-center justify-center text-center flex-grow">
-                             <Image src="/no_messages.svg" width={150} height={120} alt="No messages illustration" className="mb-4" />
-                            <h4 className="font-semibold text-lg">No messages yet</h4>
-                            <p className="text-muted-foreground text-sm">Reach out and start a conversation.</p>
-                             <Button size="sm" className="mt-4" onClick={() => router.push('/')}>
-                                Send a message
-                            </Button>
-                        </div>
-                    )}
-                </div>
-
-                <div className="col-span-2 hidden md:flex flex-col h-full">
-                    {selectedChatPartner ? (
-                        <>
-                            <div className="p-4 border-b flex items-center gap-3">
-                                <Avatar className="h-10 w-10">
-                                    <AvatarImage src={selectedChatPartner.photoUrl} />
-                                    <AvatarFallback>{getInitials(selectedChatPartner.firstName, selectedChatPartner.lastName)}</AvatarFallback>
-                                </Avatar>
-                                <div>
-                                    <p className="font-semibold">{selectedChatPartner.firstName} {selectedChatPartner.lastName}</p>
-                                    <p className="text-xs text-muted-foreground">{selectedChatPartner.profession || selectedChatPartner.role}</p>
-                                </div>
-                            </div>
-                            <div className="flex-grow p-4 overflow-y-auto bg-slate-50 dark:bg-slate-900/50 space-y-4">
-                                {messages.map((msg, index) => (
-                                    <div key={index} className={cn("flex items-end gap-2", msg.senderId === currentUserProfile.id ? "justify-end" : "justify-start")}>
-                                         {msg.senderId !== currentUserProfile.id && (
-                                            <Avatar className="h-6 w-6">
-                                                <AvatarImage src={selectedChatPartner.photoUrl} />
-                                                <AvatarFallback>{getInitials(selectedChatPartner.firstName, selectedChatPartner.lastName)}</AvatarFallback>
-                                            </Avatar>
-                                         )}
-                                        <div className={cn("max-w-xs lg:max-w-md p-3 rounded-lg", msg.senderId === currentUserProfile.id ? "bg-primary text-primary-foreground rounded-br-none" : "bg-secondary rounded-bl-none")}>
-                                            <p className="text-sm">{msg.content}</p>
-                                        </div>
-                                    </div>
-                                ))}
-                                <div ref={messageEndRef} />
-                            </div>
-                            <div className="p-4 border-t">
-                                <form onSubmit={handleSendMessage} className="flex items-center gap-2">
-                                    <Input placeholder="Type a message..." value={newMessage} onChange={(e) => setNewMessage(e.target.value)} />
-                                    <Button type="submit" size="icon" disabled={isSending}>
-                                        {isSending ? <Loader className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                                    </Button>
-                                </form>
-                            </div>
-                        </>
-                    ) : (
-                         <div className="p-4 flex flex-col items-center justify-center text-center h-full">
-                             <Image src="/no_messages.svg" width={150} height={120} alt="No messages illustration" className="mb-4" />
-                            <h4 className="font-semibold text-lg">Select a conversation</h4>
-                            <p className="text-muted-foreground text-sm">Or start a new one by messaging an expert.</p>
-                        </div>
-                    )}
-                </div>
-            </CardContent>
-        </Card>
-    );
-}
-
 
 function ExpertDashboardPage() {
   const { user, isUserLoading } = useUser();
@@ -1138,10 +904,9 @@ function ExpertDashboardPage() {
         </div>
         
         <Tabs defaultValue="dashboard" value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
                 <TabsTrigger value="feed">Feed</TabsTrigger>
-                <TabsTrigger value="messages">Messages</TabsTrigger>
                 <TabsTrigger value="plan">My Plan</TabsTrigger>
             </TabsList>
             <TabsContent value="dashboard" className="mt-6 space-y-6">
@@ -1355,7 +1120,7 @@ function ExpertDashboardPage() {
                                         Copy Link
                                     </Button>
                                     <Button size="sm" variant="outline" onClick={shareOnWhatsApp} className="bg-green-500/10 border-green-500/50 text-green-500 hover:bg-green-500/20 hover:text-green-500">
-                                        <MessageCircle className="mr-2 h-4 w-4" />
+                                        <MessageSquare className="mr-2 h-4 w-4" />
                                         WhatsApp
                                     </Button>
                                 </div>
@@ -1392,9 +1157,6 @@ function ExpertDashboardPage() {
                         />
                     </CardContent>
                 </Card>
-            </TabsContent>
-            <TabsContent value="messages" className="mt-6">
-                <MessagingSection currentUserProfile={userProfile} />
             </TabsContent>
             <TabsContent value="plan" className="mt-6">
                 <PlanManagement userProfile={userProfile} appConfig={appConfig} />
