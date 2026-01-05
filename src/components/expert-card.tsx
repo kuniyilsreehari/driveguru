@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import Link from 'next/link';
@@ -89,37 +88,44 @@ export function ExpertCard({ expert }: ExpertCardProps) {
                     </Link>
 
                     <div className="flex-1">
-                        <Link href={`/expert/${expert.id}`} className="block cursor-pointer">
-                            <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                                <h3 className="text-xl font-bold">{getDisplayName(expert)}</h3>
-                                {expert.isAvailable && (
-                                    <Badge className="bg-green-500 text-white">Available</Badge>
+                         <div className="flex justify-between items-start">
+                            <Link href={`/expert/${expert.id}`} className="block cursor-pointer flex-1">
+                                <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                                    <h3 className="text-xl font-bold">{getDisplayName(expert)}</h3>
+                                    {expert.isAvailable && (
+                                        <Badge className="bg-green-500 text-white">Available</Badge>
+                                    )}
+                                </div>
+                                {expert.companyName && (
+                                    <p className="text-sm text-muted-foreground">{`${expert.firstName} ${expert.lastName}`}</p>
                                 )}
-                            </div>
-                             {expert.companyName && (
-                                <p className="text-sm text-muted-foreground">{`${expert.firstName} ${expert.lastName}`}</p>
-                            )}
-                             {expert.profession && (
-                                <p className="text-sm font-semibold text-primary">{expert.profession}</p>
-                             )}
-                            {expert.businessDescription && <p className="text-sm text-muted-foreground mt-1">{expert.businessDescription}</p>}
-                            <div className="mt-1">
-                                <FollowerStats expert={expert} />
-                            </div>
-                            <div className="flex flex-wrap items-center gap-2 mt-2">
-                                {expert.verified ? (
-                                    <Badge variant="outline" className="border-green-500 text-green-500">
-                                        <UserCheck className="mr-1 h-3 w-3" />
-                                        Verified
-                                    </Badge>
-                                ) : (
-                                     <Badge variant="destructive">Not Verified</Badge>
+                                {expert.profession && (
+                                    <p className="text-sm font-semibold text-primary">{expert.profession}</p>
                                 )}
-                                {expert.tier === 'Premier' && <Badge variant="outline" className="border-purple-500 text-purple-500"><Crown className="mr-1 h-3 w-3" /> Premier</Badge>}
-                                {expert.tier === 'Super Premier' && <Badge variant="outline" className="border-blue-500 text-blue-500"><Sparkles className="mr-1 h-3 w-3" /> Super Premier</Badge>}
-                                {expert.category && <Badge variant="secondary"><List className="mr-1 h-3 w-3" />{expert.category}</Badge>}
-                            </div>
-                        </Link>
+                                {expert.businessDescription && <p className="text-sm text-muted-foreground mt-1">{expert.businessDescription}</p>}
+                                <div className="mt-1">
+                                    <FollowerStats expert={expert} />
+                                </div>
+                                <div className="flex flex-wrap items-center gap-2 mt-2">
+                                    {expert.verified ? (
+                                        <Badge variant="outline" className="border-green-500 text-green-500">
+                                            <UserCheck className="mr-1 h-3 w-3" />
+                                            Verified
+                                        </Badge>
+                                    ) : (
+                                        <Badge variant="destructive">Not Verified</Badge>
+                                    )}
+                                    {expert.tier === 'Premier' && <Badge variant="outline" className="border-purple-500 text-purple-500"><Crown className="mr-1 h-3 w-3" /> Premier</Badge>}
+                                    {expert.tier === 'Super Premier' && <Badge variant="outline" className="border-blue-500 text-blue-500"><Sparkles className="mr-1 h-3 w-3" /> Super Premier</Badge>}
+                                    {expert.category && <Badge variant="secondary"><List className="mr-1 h-3 w-3" />{expert.category}</Badge>}
+                                </div>
+                            </Link>
+                            <ShareDialog shareDetails={{ type: 'expert-profile', expertId: expert.id, expertName: getDisplayName(expert) }}>
+                                <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0">
+                                    <Share2 className="h-4 w-4" />
+                                </Button>
+                            </ShareDialog>
+                        </div>
 
                         <Separator className="my-3" />
                         
