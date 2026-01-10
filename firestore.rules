@@ -215,7 +215,7 @@ service cloud.firestore {
       allow create: if isOwner(userId);
 
       // A user can update their own document, or a super admin can update any document.
-      allow update: if isUpdatingOwnUserDoc(userId) || isSuperAdminUpdatingUserDoc();
+      allow update: if isSuperAdminUpdatingUserDoc() || isUpdatingOwnUserDoc(userId);
 
       // Users can delete their own account, and admins can delete any account.
       allow delete: if isOwner(userId) || isSuperAdmin();
