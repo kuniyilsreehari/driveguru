@@ -47,7 +47,7 @@ service cloud.firestore {
     function isUpdatingOwnUserDoc(userId) {
       let protectedFields = ['id', 'createdAt', 'tier', 'verified', 'referralPoints', 'cashPaymentStatus', 'referredByCode'];
       let incomingRole = requestData().role;
-      let allowedRoles = ["freelancer", "company", "authorized_pro"];
+      let allowedRoles = ["Freelancer", "Company", "Authorized Pro"];
 
       // Check if the role is being changed to a valid, non-admin role.
       let isRoleUpdateAllowed = incomingRole in allowedRoles;
@@ -55,13 +55,13 @@ service cloud.firestore {
       // If the role is not being changed, we don't need to validate it.
       let isRoleUnchanged = !('role' in request.resource.data) || request.resource.data.role == resource.data.role;
       
-      // Allow following, groups and chats fields to be updated
-      let canUpdateSocialFields = request.resource.data.diff(resource.data).affectedKeys().hasOnly(['following', 'groups', 'chats']);
+      // Allow following and groups fields to be updated
+      let canUpdateSocial = request.resource.data.diff(resource.data).affectedKeys().hasOnly(['following', 'groups']);
 
       return isOwner(userId) && 
              isExistingDoc() &&
              (isRoleUpdateAllowed || isRoleUnchanged) && // Allow update if role change is valid OR role is not changed
-             (canUpdateSocialFields || !request.resource.data.diff(resource.data).affectedKeys().hasAny(protectedFields));
+             (!request.resource.data.diff(resource.data).affectedKeys().hasAny(protectedFields) || canUpdateSocial);
     }
 
     // A manager can only update verification and cash payment status.
@@ -126,6 +126,15 @@ service cloud.firestore {
     function isPostAuthor(postId) {
         let post = get(/databases/$(database)/documents/posts/$(postId));
         return isSignedIn() && post.data.authorId == request.auth.uid;
+    }
+    
+    function isApplicationOwner(userId) {
+        return request.auth.uid == userId;
+    }
+    
+    function isVacancyOwnerForApplication() {
+        let vacancy = get(/databases/$(database)/documents/vacancies/$(requestData().vacancyId));
+        return isVacancyOwner(vacancy.data);
     }
 
 
@@ -300,6 +309,26 @@ service cloud.firestore {
         // Only the company that owns the vacancy (and is premium) or a super admin can delete it.
         allow delete: if (isPremiumCompanyUser() && isVacancyOwner(resource.data)) || isSuperAdmin();
     }
+    
+    /* =====================================================
+     * Applications
+     * ===================================================== */
+    match /applications/{applicationId} {
+        // A user can create their own application.
+        allow create: if isSignedIn() && isApplicationOwner(requestData().userId);
+
+        // A user can read their own application. A super admin or the vacancy owner can also read it.
+        allow get: if isSignedIn() && (isApplicationOwner(resource.data.userId) || isSuperAdmin() || isVacancyOwnerForApplication());
+        
+        // A user can list their own applications. Admins/owners can list all for a vacancy.
+        allow list: if isSuperAdmin() || (isSignedIn() && (request.query.where.userId == request.auth.uid));
+
+        // No one can update applications after creation.
+        allow update: if false;
+
+        // Only super admins can delete applications.
+        allow delete: if isSuperAdmin();
+    }
 
 
     /* =====================================================
@@ -307,3 +336,5 @@ service cloud.firestore {
      * ===================================================== */
   }
 }
+
+    
