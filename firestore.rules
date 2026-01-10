@@ -58,21 +58,26 @@ service cloud.firestore {
         if (!isExistingDoc()) {
             return false;
         }
-
-        // 3. User cannot modify protected fields
+        
+        // 3. If only 'following' or 'groups' are being changed, allow it.
+        if (changedKeys.hasOnly(['following']) || changedKeys.hasOnly(['groups'])) {
+            return true;
+        }
+        
+        // 4. For any other changes, ensure no protected fields are being modified.
         if (changedKeys.hasAny(protectedFields)) {
             return false;
         }
-
-        // 4. If 'role' is being changed, it cannot be to an admin role
+        
+        // 5. If role is being changed, ensure it's not to an admin role
         if ('role' in incomingData && incomingData.role != resource.data.role) {
             let allowedRoles = ["Freelancer", "Company", "Authorized Pro"];
-            if (!(incomingData.role in allowedRoles)) {
+             if (!(incomingData.role in allowedRoles)) {
                 return false;
             }
         }
-
-        // 5. If all checks pass, allow the update.
+        
+        // 6. If all checks pass, allow the update.
         return true;
     }
 
