@@ -320,8 +320,9 @@ service cloud.firestore {
 
       // Allow super admin to list all, or a user to list their own.
       // This rule requires a specific query from the client.
-      allow list: if isSuperAdmin() || 
-                     (request.query.limit <= 10 && request.query.where.userId == request.auth.uid);
+       allow list: if isSuperAdmin() || 
+                    (request.query.limit <= 10 && request.query.where.userId == request.auth.uid) ||
+                    (isSignedIn() && request.query.where.vacancyId == get(/databases/$(database)/documents/vacancies/$(request.query.where.vacancyId)).id && isVacancyOwner(get(/databases/$(database)/documents/vacancies/$(request.query.where.vacancyId)).data));
 
       allow update: if false; // No updates allowed after creation
       allow delete: if isSuperAdmin();
