@@ -45,29 +45,34 @@ service cloud.firestore {
     
     // A user can update their own profile, but cannot change protected fields.
     function isUpdatingOwnUserDoc(userId) {
-        let protectedFields = ['id', 'createdAt', 'tier', 'verified', 'referralPoints', 'cashPaymentStatus', 'referredByCode'];
+        let protectedFields = ['id', 'createdAt', 'tier', 'verified', 'referralPoints', 'cashPaymentStatus', 'referredByCode', 'email'];
         let incomingData = request.resource.data;
+        let changedKeys = incomingData.diff(resource.data).affectedKeys();
 
-        // The user must be the owner of the document.
+        // 1. User must be the owner
         if (!isOwner(userId)) {
             return false;
         }
 
-        // The user cannot modify any of the protected fields.
-        // We check if any key in the incoming data is in our protected list.
-        // `diff()` is the safest way to check for changes.
-        let changedKeys = incomingData.diff(resource.data).affectedKeys();
+        // 2. The document must exist
+        if (!isExistingDoc()) {
+            return false;
+        }
+
+        // 3. User cannot modify protected fields
         if (changedKeys.hasAny(protectedFields)) {
             return false;
         }
-        
-        // Users are not allowed to elevate their own role.
-        let allowedRoles = ["Freelancer", "Company", "Authorized Pro"];
-        if ('role' in incomingData && !(incomingData.role in allowedRoles)) {
-          return false;
+
+        // 4. If 'role' is being changed, it cannot be to an admin role
+        if ('role' in incomingData && incomingData.role != resource.data.role) {
+            let allowedRoles = ["Freelancer", "Company", "Authorized Pro"];
+            if (!(incomingData.role in allowedRoles)) {
+                return false;
+            }
         }
 
-        // If all checks pass, allow the update.
+        // 5. If all checks pass, allow the update.
         return true;
     }
 
@@ -327,10 +332,12 @@ service cloud.firestore {
       // Allow a user to read their own application, a super admin, or the vacancy owner
       allow get: if isApplicationOwner(resource.data.userId) || isSuperAdmin() || isVacancyOwnerForApplication();
 
-      // Simplified list rule
+      // Only allow listing by super admins or based on specific queries
       allow list: if isSuperAdmin() || 
-                    (request.query.where.userId == request.auth.uid) ||
-                    (request.query.where.vacancyId != null && isVacancyOwner(get(/databases/$(database)/documents/vacancies/$(request.query.where.vacancyId)).data));
+                    (request.query.where.size() > 0 && 
+                      ((request.query.where.userId == request.auth.uid) || 
+                       (request.query.where.vacancyId != null && isVacancyOwner(get(/databases/$(database)/documents/vacancies/$(request.query.where.vacancyId)).data)))
+                    );
 
 
       allow update: if false; // No updates allowed after creation
@@ -343,3 +350,4 @@ service cloud.firestore {
      * ===================================================== */
   }
 }
+    
