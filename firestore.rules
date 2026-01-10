@@ -45,24 +45,22 @@ service cloud.firestore {
     
     // A user can update their own profile, but cannot change protected fields.
     function isUpdatingOwnUserDoc(userId) {
-      let protectedFields = ['id', 'createdAt', 'tier', 'verified', 'referralPoints', 'cashPaymentStatus', 'referredByCode'];
-      let incomingRole = requestData().role;
-      let allowedRoles = ["Freelancer", "Company", "Authorized Pro"];
+        let protectedFields = ['id', 'createdAt', 'tier', 'verified', 'referralPoints', 'cashPaymentStatus', 'referredByCode'];
+        let incomingRole = requestData().role;
+        let allowedRoles = ["Freelancer", "Company", "Authorized Pro"];
 
-      // Check if the role is being changed to a valid, non-admin role.
-      let isRoleUpdateAllowed = incomingRole in allowedRoles;
-      
-      // If the role is not being changed, we don't need to validate it.
-      let isRoleUnchanged = !('role' in request.resource.data) || request.resource.data.role == resource.data.role;
-      
-      // Allow following and groups fields to be updated
-      let canUpdateSocial = request.resource.data.diff(resource.data).affectedKeys().hasOnly(['following', 'groups']);
+        // Check if the role is being changed to a valid, non-admin role.
+        let isRoleUpdateAllowed = incomingRole in allowedRoles;
+        
+        // If the role is not being changed, we don't need to validate it.
+        let isRoleUnchanged = !('role' in request.resource.data) || request.resource.data.role == resource.data.role;
 
-      return isOwner(userId) && 
-             isExistingDoc() &&
-             (isRoleUpdateAllowed || isRoleUnchanged) && // Allow update if role change is valid OR role is not changed
-             (!request.resource.data.diff(resource.data).affectedKeys().hasAny(protectedFields) || canUpdateSocial);
+        return isOwner(userId) && 
+               isExistingDoc() &&
+               (isRoleUpdateAllowed || isRoleUnchanged) && // Allow update if role change is valid OR role is not changed
+               !request.resource.data.diff(resource.data).affectedKeys().hasAny(protectedFields);
     }
+
 
     // A manager can only update verification and cash payment status.
     function isManagerUpdatingUserDoc() {
@@ -314,20 +312,19 @@ service cloud.firestore {
      * Applications
      * ===================================================== */
     match /applications/{applicationId} {
-        // A user can create their own application.
-        allow create: if isSignedIn() && isApplicationOwner(requestData().userId);
+      // Allow a user to create their own application document
+      allow create: if isApplicationOwner(requestData().userId);
 
-        // A user can read their own application. A super admin or the vacancy owner can also read it.
-        allow get: if isSignedIn() && (isApplicationOwner(resource.data.userId) || isSuperAdmin() || isVacancyOwnerForApplication());
-        
-        // A user can list their own applications. Admins/owners can list all for a vacancy.
-        allow list: if isSuperAdmin() || (isSignedIn() && (request.query.where.userId == request.auth.uid));
+      // Allow a user to read their own application, a super admin, or the vacancy owner
+      allow get: if isApplicationOwner(resource.data.userId) || isSuperAdmin() || isVacancyOwnerForApplication();
 
-        // No one can update applications after creation.
-        allow update: if false;
+      // Allow super admin to list all, or a user to list their own.
+      // This rule requires a specific query from the client.
+      allow list: if isSuperAdmin() || 
+                     (request.query.limit <= 10 && request.query.where.userId == request.auth.uid);
 
-        // Only super admins can delete applications.
-        allow delete: if isSuperAdmin();
+      allow update: if false; // No updates allowed after creation
+      allow delete: if isSuperAdmin();
     }
 
 
@@ -336,5 +333,3 @@ service cloud.firestore {
      * ===================================================== */
   }
 }
-
-    
