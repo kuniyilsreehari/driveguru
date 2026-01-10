@@ -46,21 +46,30 @@ service cloud.firestore {
     // A user can update their own profile, but cannot change protected fields.
     function isUpdatingOwnUserDoc(userId) {
         let protectedFields = ['id', 'createdAt', 'tier', 'verified', 'referralPoints', 'cashPaymentStatus', 'referredByCode'];
-        let incomingRole = request.resource.data.role;
-        let allowedRoles = ["Freelancer", "Company", "Authorized Pro"];
+        let incomingData = request.resource.data;
 
-        // Check if the role is being changed to a valid, non-admin role.
-        let isRoleUpdateAllowed = incomingRole in allowedRoles;
+        // The user must be the owner of the document.
+        if (!isOwner(userId)) {
+            return false;
+        }
+
+        // The user cannot modify any of the protected fields.
+        // We check if any key in the incoming data is in our protected list.
+        // `diff()` is the safest way to check for changes.
+        let changedKeys = incomingData.diff(resource.data).affectedKeys();
+        if (changedKeys.hasAny(protectedFields)) {
+            return false;
+        }
         
-        // If the role is not being changed, we don't need to validate it.
-        let isRoleUnchanged = !('role' in request.resource.data) || request.resource.data.role == resource.data.role;
+        // Users are not allowed to elevate their own role.
+        let allowedRoles = ["Freelancer", "Company", "Authorized Pro"];
+        if ('role' in incomingData && !(incomingData.role in allowedRoles)) {
+          return false;
+        }
 
-        return isOwner(userId) && 
-               isExistingDoc() &&
-               (isRoleUpdateAllowed || isRoleUnchanged) && // Allow update if role change is valid OR role is not changed
-               !request.resource.data.diff(resource.data).affectedKeys().hasAny(protectedFields);
+        // If all checks pass, allow the update.
+        return true;
     }
-
 
     // A manager can only update verification and cash payment status.
     function isManagerUpdatingUserDoc() {
