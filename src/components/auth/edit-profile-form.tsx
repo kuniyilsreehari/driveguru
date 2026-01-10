@@ -541,6 +541,8 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
     return 'U';
   }
 
+  const isRoleSet = !!userProfile.role;
+
   return (
     <>
     <div className="space-y-6">
@@ -579,7 +581,11 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Your Role</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                 <Select
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                  disabled={isRoleSet}
+                >
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Select your expert role" />
@@ -596,6 +602,11 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
                     ))}
                   </SelectContent>
                 </Select>
+                 {isRoleSet && (
+                  <FormDescription>
+                    Your role cannot be changed once it has been set.
+                  </FormDescription>
+                )}
                 <FormMessage />
               </FormItem>
             )}
