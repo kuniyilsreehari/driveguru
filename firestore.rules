@@ -46,7 +46,7 @@ service cloud.firestore {
     // A user can update their own profile, but cannot change protected fields.
     function isUpdatingOwnUserDoc(userId) {
         let protectedFields = ['id', 'createdAt', 'tier', 'verified', 'referralPoints', 'cashPaymentStatus', 'referredByCode'];
-        let incomingRole = requestData().role;
+        let incomingRole = request.resource.data.role;
         let allowedRoles = ["Freelancer", "Company", "Authorized Pro"];
 
         // Check if the role is being changed to a valid, non-admin role.
@@ -318,14 +318,14 @@ service cloud.firestore {
       // Allow a user to read their own application, a super admin, or the vacancy owner
       allow get: if isApplicationOwner(resource.data.userId) || isSuperAdmin() || isVacancyOwnerForApplication();
 
-      // Allow super admin to list all, or a user to list their own.
-      // This rule requires a specific query from the client.
-       allow list: if isSuperAdmin() || 
-                    (request.query.limit <= 10 && request.query.where.userId == request.auth.uid) ||
-                    (isSignedIn() && request.query.where.vacancyId == get(/databases/$(database)/documents/vacancies/$(request.query.where.vacancyId)).id && isVacancyOwner(get(/databases/$(database)/documents/vacancies/$(request.query.where.vacancyId)).data));
+      // Simplified list rule
+      allow list: if isSuperAdmin() || 
+                    (request.query.where.userId == request.auth.uid) ||
+                    (request.query.where.vacancyId != null && isVacancyOwner(get(/databases/$(database)/documents/vacancies/$(request.query.where.vacancyId)).data));
+
 
       allow update: if false; // No updates allowed after creation
-      allow delete: if isSuperAdmin();
+      allow delete: if isSuperAdmin() || isApplicationOwner(resource.data.userId);
     }
 
 
