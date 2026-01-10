@@ -6,7 +6,7 @@ import { Suspense, useState, useRef, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { doc, arrayUnion, arrayRemove, query, collection, where } from 'firebase/firestore';
-import { useFirestore, useDoc, useMemoFirebase, useUser, updateDocumentNonBlocking, useCollection } from '@/firebase';
+import { useFirestore, useDoc, useMemoFirebase, useUser, updateDocumentNonBlocking } from '@/firebase';
 import { Loader2, Star, ChevronLeft, MapPin, IndianRupee, Briefcase, Calendar, Info, Book, GraduationCap, School, User as UserIcon, UserCheck, XCircle, Crown, Sparkles, LogIn, Lock, Building, FileDown, Home, MessageSquare, PenSquare, Factory, Linkedin, Twitter, Github, Globe, UserPlus, UserMinus, Users, List, Phone, Youtube, Share2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardFooter } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -88,6 +88,14 @@ function ExpertProfileContent() {
         if (!firestore || !user) return null;
         return doc(firestore, 'users', user.uid);
     }, [firestore, user]);
+    
+    const superAdminDocRef = useMemoFirebase(() => {
+        if (!user) return null;
+        return doc(firestore, 'roles_super_admin', user.uid);
+    }, [firestore, user]);
+
+    const { data: superAdminData, isLoading: isRoleLoading } = useDoc(superAdminDocRef);
+    const isSuperAdmin = !!superAdminData;
 
 
     const { data: expert, isLoading: isLoadingExpert } = useDoc<ExpertUserProfile>(expertDocRef);
@@ -100,6 +108,15 @@ function ExpertProfileContent() {
     }, [currentUserProfile, expert]);
 
     const handleToggleFollow = async () => {
+        if (isSuperAdmin) {
+            toast({
+                variant: 'destructive',
+                title: 'Action Not Allowed',
+                description: "You are a Super Admin and cannot follow other users.",
+            });
+            return;
+        }
+
         if (!currentUserDocRef || !expert) return;
 
         setIsFollowLoading(true);
@@ -113,7 +130,9 @@ function ExpertProfileContent() {
             });
         } catch (error) {
             console.error("Failed to toggle follow", error);
-            toast({ variant: 'destructive', title: 'Error', description: 'Could not update your follow status.' });
+            if ((error as any).name !== 'FirebaseError') {
+                 toast({ variant: 'destructive', title: 'Error', description: 'Could not update your follow status.' });
+            }
         } finally {
             setIsFollowLoading(false);
         }
@@ -187,7 +206,7 @@ function ExpertProfileContent() {
         }
     };
 
-    if (isLoadingExpert || isUserLoading) {
+    if (isLoadingExpert || isUserLoading || isRoleLoading) {
         return (
             <div className="flex h-screen w-full items-center justify-center bg-background">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
