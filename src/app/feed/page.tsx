@@ -333,23 +333,15 @@ function CommentThread({ comment, postId, allComments, onDelete, postAuthorId, p
                                     <MessageSquareReply className="h-3 w-3" />
                                     Reply
                                 </button>
-                                <div className="flex items-center gap-2">
-                                    <button onClick={handleLikeComment} className="hover:underline flex items-center gap-1">
-                                        <Heart className={cn("h-3 w-3", hasLiked && "fill-red-500 text-red-500")} />
-                                        <span>Like</span>
-                                    </button>
-                                     {canViewLikes ? (
+                                <Button variant="ghost" size="sm" onClick={handleLikeComment} className="text-xs h-auto p-0 -ml-2 text-muted-foreground hover:text-foreground">
+                                    <Heart className={cn("mr-1 h-3 w-3", hasLiked && "fill-red-500 text-red-500")} />
+                                    Like
+                                    {canViewLikes && (
                                         <LikesDialog userIds={comment.likes!}>
-                                            <button className="text-xs text-muted-foreground hover:underline">
-                                                {comment.likes?.length || 0}
-                                            </button>
+                                            <span className="text-xs text-muted-foreground hover:underline ml-1">({comment.likes?.length})</span>
                                         </LikesDialog>
-                                    ) : (
-                                        <span className="text-xs text-muted-foreground">
-                                            {comment.likes?.length || 0}
-                                        </span>
                                     )}
-                                </div>
+                                </Button>
                             </>
                         )}
                     </div>
@@ -828,22 +820,15 @@ function PostCard({ post }: { post: Post }) {
             </CardContent>
             <CardFooter className="flex-col items-start">
                 <div className="flex items-center gap-2 w-full">
-                    <Button variant="ghost" size="sm" onClick={() => handleLike(post)}>
-                        <Heart className={cn("mr-2 h-4 w-4", hasLiked && "fill-red-500 text-red-500")} />
-                        Like
+                    <Button variant="ghost" size="sm" onClick={() => handleLike(post)} className={cn("text-muted-foreground", hasLiked && "text-red-500")}>
+                        <Heart className={cn("mr-2 h-4 w-4", hasLiked && "fill-red-500")} />
+                        Like 
+                        {canViewLikes && (
+                            <LikesDialog userIds={post.likes!}>
+                                <span className="text-xs text-muted-foreground hover:underline ml-1">({post.likes?.length})</span>
+                            </LikesDialog>
+                        )}
                     </Button>
-                    
-                    {canViewLikes ? (
-                        <LikesDialog userIds={post.likes!}>
-                            <button className="text-xs text-muted-foreground hover:underline">
-                                {post.likes?.length} {post.likes?.length === 1 ? 'like' : 'likes'}
-                            </button>
-                        </LikesDialog>
-                    ) : (
-                        <span className="text-xs text-muted-foreground">
-                            0 likes
-                        </span>
-                    )}
 
                     <ShareDialog shareDetails={{ type: 'expert-profile', expertId: post.authorId, expertName: post.authorName }}>
                         <Button variant="ghost" size="sm">
@@ -1076,9 +1061,6 @@ function FeedPageHeader() {
 }
 
 function FeedPage() {
-    const searchParams = useSearchParams();
-    const authorId = searchParams.get('authorId');
-
     return (
         <div className="min-h-screen bg-background p-4 sm:p-8">
             <div className="mx-auto max-w-2xl">
@@ -1086,14 +1068,6 @@ function FeedPage() {
                     <FeedPageHeader />
                 </header>
                 <main>
-                    <div className="mb-6">
-                        <Button variant="outline" asChild>
-                            <Link href={authorId ? `/expert/${authorId}` : "/"}>
-                                <ChevronLeft className="mr-2 h-4 w-4" /> 
-                                {authorId ? "Back to Profile" : "Back to Home"}
-                            </Link>
-                        </Button>
-                    </div>
                     <FeedContent />
                 </main>
             </div>

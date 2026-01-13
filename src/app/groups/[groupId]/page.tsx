@@ -404,23 +404,15 @@ function CommentThread({ comment, postId, allComments, onDelete, postAuthorId }:
                                     <MessageSquareReply className="h-3 w-3" />
                                     Reply
                                 </button>
-                                <div className="flex items-center gap-2">
-                                    <button onClick={handleLikeComment} className="hover:underline flex items-center gap-1">
-                                        <Heart className={cn("h-3 w-3", hasLiked && "fill-red-500 text-red-500")} />
-                                        <span>Like</span>
-                                    </button>
-                                     {canViewLikes ? (
+                                <Button variant="ghost" size="sm" onClick={handleLikeComment} className="text-xs h-auto p-0 -ml-2 text-muted-foreground hover:text-foreground">
+                                    <Heart className={cn("mr-1 h-3 w-3", hasLiked && "fill-red-500 text-red-500")} />
+                                    Like
+                                    {canViewLikes && (
                                         <LikesDialog userIds={comment.likes!}>
-                                            <button className="text-xs text-muted-foreground hover:underline">
-                                                {comment.likes?.length || 0}
-                                            </button>
+                                            <span className="text-xs text-muted-foreground hover:underline ml-1">({comment.likes?.length})</span>
                                         </LikesDialog>
-                                    ) : (
-                                        <span className="text-xs text-muted-foreground">
-                                            {comment.likes?.length || 0}
-                                        </span>
                                     )}
-                                </div>
+                                </Button>
                             </>
                         )}
                     </div>
