@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { collection, query, orderBy, serverTimestamp, doc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
 import { useFirestore, useCollection, useMemoFirebase, useUser, addDocumentNonBlocking, useDoc } from '@/firebase';
 import { Button } from '@/components/ui/button';
-import { Loader2, ChevronLeft, Users, PlusCircle, ArrowRight, Search, Hash, UserPlus, UserMinus, LogIn } from 'lucide-react';
+import { Loader2, ChevronLeft, Users, PlusCircle, ArrowRight, Search, Hash, UserPlus, UserMinus, LogIn, Lock, Globe } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import {
   Dialog,
@@ -24,13 +24,16 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useToast } from '@/hooks/use-toast';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 export type Group = {
     id: string;
     name: string;
     description: string;
     creatorId: string;
+    privacy: 'public' | 'private';
     members: string[];
+    pendingMembers?: string[];
     createdAt: any;
 };
 
@@ -42,6 +45,7 @@ type UserProfile = {
 const createGroupSchema = z.object({
   name: z.string().min(3, 'Group name must be at least 3 characters.').max(50, 'Group name cannot exceed 50 characters.'),
   description: z.string().min(10, 'Description must be at least 10 characters.').max(250, 'Description cannot exceed 250 characters.'),
+  privacy: z.enum(['public', 'private'], { required_error: 'You must select a privacy setting.' }),
 });
 
 
@@ -56,6 +60,7 @@ function CreateGroupDialog({ onGroupCreated }: { onGroupCreated: () => void }) {
         defaultValues: {
             name: '',
             description: '',
+            privacy: 'public',
         },
     });
 
@@ -68,8 +73,10 @@ function CreateGroupDialog({ onGroupCreated }: { onGroupCreated: () => void }) {
         const newGroupData = {
             name: values.name,
             description: values.description,
+            privacy: values.privacy,
             creatorId: user.uid,
-            members: [user.uid], // Creator is the first member
+            members: [user.uid],
+            pendingMembers: [],
             createdAt: serverTimestamp(),
         };
 
@@ -77,7 +84,6 @@ function CreateGroupDialog({ onGroupCreated }: { onGroupCreated: () => void }) {
             const groupRef = await addDocumentNonBlocking(collection(firestore, 'groups'), newGroupData);
 
             if (groupRef) {
-                // Also update the user's document to include this new group
                 const userDocRef = doc(firestore, 'users', user.uid);
                 await updateDoc(userDocRef, {
                     groups: arrayUnion(groupRef.id)
@@ -139,6 +145,40 @@ function CreateGroupDialog({ onGroupCreated }: { onGroupCreated: () => void }) {
                                 </FormItem>
                             )}
                         />
+                         <FormField
+                            control={form.control}
+                            name="privacy"
+                            render={({ field }) => (
+                                <FormItem className="space-y-3">
+                                <FormLabel>Privacy Settings</FormLabel>
+                                <FormControl>
+                                    <RadioGroup
+                                    onValueChange={field.onChange}
+                                    defaultValue={field.value}
+                                    className="flex flex-col space-y-1"
+                                    >
+                                    <FormItem className="flex items-center space-x-3 space-y-0">
+                                        <FormControl>
+                                        <RadioGroupItem value="public" />
+                                        </FormControl>
+                                        <FormLabel className="font-normal flex items-center gap-2">
+                                            <Globe className="h-4 w-4" /> Public (Anyone can join)
+                                        </FormLabel>
+                                    </FormItem>
+                                    <FormItem className="flex items-center space-x-3 space-y-0">
+                                        <FormControl>
+                                        <RadioGroupItem value="private" />
+                                        </FormControl>
+                                        <FormLabel className="font-normal flex items-center gap-2">
+                                            <Lock className="h-4 w-4" /> Private (Owner must approve requests)
+                                        </FormLabel>
+                                    </FormItem>
+                                    </RadioGroup>
+                                </FormControl>
+                                <FormMessage />
+                                </FormItem>
+                            )}
+                        />
                         <DialogFooter>
                             <Button type="submit" disabled={form.formState.isSubmitting}>
                                 {form.formState.isSubmitting ? (
@@ -189,20 +229,35 @@ function GroupsList() {
         const groupDocRef = doc(firestore, 'groups', group.id);
         const userDocRef = doc(firestore, 'users', user.uid);
         const isMember = userProfile?.groups?.includes(group.id);
+        const hasRequested = group.pendingMembers?.includes(user.uid);
         
         try {
-            const groupUpdateAction = isMember ? arrayRemove(user.uid) : arrayUnion(user.uid);
-            const userUpdateAction = isMember ? arrayRemove(group.id) : arrayUnion(group.id);
-
-            await Promise.all([
-                updateDoc(groupDocRef, { members: groupUpdateAction }),
-                updateDoc(userDocRef, { groups: userUpdateAction })
-            ]);
-            
-            toast({
-                title: isMember ? 'Left Group' : 'Joined Group',
-                description: `You are now ${isMember ? 'no longer' : ''} a member of ${group.name}.`,
-            });
+            if (group.privacy === 'public') {
+                const groupUpdateAction = isMember ? arrayRemove(user.uid) : arrayUnion(user.uid);
+                const userUpdateAction = isMember ? arrayRemove(group.id) : arrayUnion(group.id);
+                await Promise.all([
+                    updateDoc(groupDocRef, { members: groupUpdateAction }),
+                    updateDoc(userDocRef, { groups: userUpdateAction })
+                ]);
+                 toast({
+                    title: isMember ? 'Left Group' : 'Joined Group',
+                    description: `You are now ${isMember ? 'no longer a member of' : 'a member of'} ${group.name}.`,
+                });
+            } else { // Private group
+                if (isMember) { // Leaving
+                    await Promise.all([
+                        updateDoc(groupDocRef, { members: arrayRemove(user.uid) }),
+                        updateDoc(userDocRef, { groups: arrayRemove(group.id) })
+                    ]);
+                    toast({ title: 'Left Group' });
+                } else if (hasRequested) { // Cancel request
+                    await updateDoc(groupDocRef, { pendingMembers: arrayRemove(user.uid) });
+                    toast({ title: 'Join Request Cancelled' });
+                } else { // Request to join
+                    await updateDoc(groupDocRef, { pendingMembers: arrayUnion(user.uid) });
+                    toast({ title: 'Join Request Sent', description: 'The group owner has been notified.' });
+                }
+            }
         } catch (error) {
             console.error("Error toggling group membership:", error);
             toast({ variant: 'destructive', title: 'Error', description: 'Could not update your membership.' });
@@ -246,14 +301,26 @@ function GroupsList() {
                     {filteredGroups.map(group => {
                         const isMember = userProfile?.groups?.includes(group.id);
                         const isCreator = user?.uid === group.creatorId;
+                        const hasRequested = group.pendingMembers?.includes(user?.uid || '');
+
+                        const getButtonContent = () => {
+                            if (isSubmitting === group.id) return <><Loader2 className="mr-2 h-4 w-4 animate-spin"/> Processing</>;
+                            if (isMember) return <><UserMinus className="mr-2 h-4 w-4"/> Leave</>;
+                            if (group.privacy === 'private' && hasRequested) return 'Pending';
+                            if (group.privacy === 'private') return <><UserPlus className="mr-2 h-4 w-4"/> Request to Join</>;
+                            return <><UserPlus className="mr-2 h-4 w-4"/> Join</>;
+                        };
 
                         return (
                             <Card key={group.id} className="flex flex-col hover:shadow-lg transition-shadow">
                                 <CardHeader>
-                                    <CardTitle className="flex items-center gap-2">
-                                        <Hash className="h-5 w-5 text-primary"/>
-                                        {group.name}
-                                    </CardTitle>
+                                    <div className="flex items-center gap-2">
+                                        {group.privacy === 'private' ? <Lock className="h-5 w-5 text-muted-foreground"/> : <Globe className="h-5 w-5 text-muted-foreground"/>}
+                                        <CardTitle className="flex items-center gap-2">
+                                            <Hash className="h-5 w-5 text-primary"/>
+                                            {group.name}
+                                        </CardTitle>
+                                    </div>
                                     <CardDescription className="line-clamp-2 h-[40px]">{group.description}</CardDescription>
                                 </CardHeader>
                                 <CardContent className="flex-grow">
@@ -273,10 +340,9 @@ function GroupsList() {
                                             className="w-full" 
                                             variant={isMember ? 'secondary' : 'default'}
                                             onClick={() => handleToggleMembership(group)}
-                                            disabled={isSubmitting === group.id}
+                                            disabled={isSubmitting === group.id || (group.privacy === 'private' && hasRequested)}
                                         >
-                                           {isSubmitting === group.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : isMember ? <UserMinus className="mr-2 h-4 w-4"/> : <UserPlus className="mr-2 h-4 w-4"/> }
-                                           {isMember ? 'Leave' : 'Join'}
+                                           {getButtonContent()}
                                         </Button>
                                     )}
                                 </CardFooter>
