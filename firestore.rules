@@ -46,28 +46,27 @@ service cloud.firestore {
     // A user can update their own profile, but cannot change protected fields.
     function isUpdatingOwnUserDoc(userId) {
         let protectedFields = ['id', 'createdAt', 'tier', 'verified', 'referralPoints', 'cashPaymentStatus', 'referredByCode', 'email'];
-        let incomingData = request.resource.data;
-        let changedKeys = incomingData.diff(resource.data).affectedKeys();
+        let changedKeys = request.resource.data.diff(resource.data).affectedKeys();
 
         // 1. User must be the owner
         if (!isOwner(userId)) {
             return false;
         }
-
+        
         // 2. The document must exist
         if (!isExistingDoc()) {
             return false;
         }
-        
-        // 3. For any other changes, ensure no protected fields are being modified.
+
+        // 3. Prevent users from modifying protected fields.
         if (changedKeys.hasAny(protectedFields)) {
             return false;
         }
         
         // 4. If role is being changed, ensure it's not to an admin role
-        if ('role' in incomingData && incomingData.role != resource.data.role) {
+        if ('role' in request.resource.data && request.resource.data.role != resource.data.role) {
             let allowedRoles = ["Freelancer", "Company", "Authorized Pro"];
-             if (!(incomingData.role in allowedRoles)) {
+             if (!(request.resource.data.role in allowedRoles)) {
                 return false;
             }
         }
@@ -85,7 +84,15 @@ service cloud.firestore {
     
     // A super admin can update any field except id and createdAt
     function isSuperAdminUpdatingUserDoc() {
-        return isSuperAdmin() && isExistingDoc() && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['id', 'createdAt']);
+        if (!isSuperAdmin() || !isExistingDoc()) {
+            return false;
+        }
+        // Super admins can change any field except the immutable 'id' and 'createdAt'.
+        let changedKeys = request.resource.data.diff(resource.data).affectedKeys();
+        if (changedKeys.hasAny(['id', 'createdAt'])) {
+            return false;
+        }
+        return true;
     }
 
     function isCreatingOwnLocationData(userId) {
@@ -208,7 +215,13 @@ service cloud.firestore {
 
       // VERY PERMISSIVE: Any signed-in user can create their own user document.
       allow create: if isOwner(userId);
-       
+
+      // A user can update their own document, or a super admin can update any document.
+      allow update: if isSuperAdminUpdatingUserDoc() || isUpdatingOwnUserDoc(userId);
+
+      // Users can delete their own account, and admins can delete any account.
+      allow delete: if isOwner(userId) || isSuperAdmin();
+
       /* ---------------------------------------------
        * Private Location Data (STRICT PRIVACY)
        * --------------------------------------------- */
@@ -219,13 +232,6 @@ service cloud.firestore {
         allow update: if isOwner(userId) && locationUserImmutable();
         allow delete: if isOwner(userId);
       }
-
-      // A user can update their own document, or a super admin can update any document.
-      // This MUST come AFTER subcollection matches.
-      allow update: if isSuperAdminUpdatingUserDoc() || isUpdatingOwnUserDoc(userId);
-
-      // Users can delete their own account, and admins can delete any account.
-      allow delete: if isOwner(userId) || isSuperAdmin();
     }
     
     /* =====================================================
@@ -286,35 +292,24 @@ service cloud.firestore {
             let groupDoc = get(/databases/$(database)/documents/groups/$(groupId));
             return request.auth.uid in groupDoc.data.members;
         }
-        
-        function isRequestingToJoin() {
-            // Check that the ONLY change is adding the current user's ID to the pendingMembers array.
-            return request.resource.data.diff(resource.data).affectedKeys().hasOnly(['pendingMembers']) &&
-                   request.resource.data.pendingMembers.size() == resource.data.pendingMembers.size() + 1 &&
-                   request.auth.uid in request.resource.data.pendingMembers;
-        }
-        
-        function isChangingOwnMembership() {
-          let changes = request.resource.data.diff(resource.data);
-          // Allow changing ONLY the members array
-          if (!changes.affectedKeys().hasOnly(['members'])) {
-            return false;
-          }
-          // Allow only adding or removing SELF from the members array
-          let added = changes.addedKeys().filter(key => key.size() == 2 && key[0] == 'members' && key[1] == request.auth.uid).size() == 1;
-          let removed = changes.removedKeys().filter(key => key.size() == 2 && key[0] == 'members' && key[1] == request.auth.uid).size() == 1;
-          return (added && !removed) || (!added && removed);
+
+        function isChangingOwnMembership(changeType) {
+            let changes = request.resource.data.diff(resource.data);
+            return changes.affectedKeys().hasOnly(['members']) &&
+                   (changeType == 'add' ? changes.addedKeys().hasOnly(['members.' + request.auth.uid]) : false) ||
+                   (changeType == 'remove' ? changes.removedKeys().hasOnly(['members.' + request.auth.uid]) : false);
         }
 
+        function isRequestingToJoin() {
+            // This checks that the ONLY change is adding the current user's ID to the pendingMembers array.
+            return request.resource.data.diff(resource.data).affectedKeys().hasOnly(['pendingMembers']) &&
+                   request.resource.data.pendingMembers == resource.data.pendingMembers.concat([request.auth.uid]);
+        }
+        
         function isCreatorManagingRequests() {
             return isGroupCreator() && 
                    (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['members', 'pendingMembers']) || 
                     request.resource.data.diff(resource.data).affectedKeys().hasOnly(['pendingMembers']));
-        }
-
-        function isCreatorManagingMembers() {
-          return isGroupCreator() && 
-                 request.resource.data.diff(resource.data).affectedKeys().hasOnly(['members']);
         }
         
         // Allow anyone to view a single group's details and list all groups
@@ -325,8 +320,7 @@ service cloud.firestore {
         
         allow update: if isSuperAdmin() || 
                        (isGroupCreator() && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['members', 'pendingMembers'])) || // Creator can edit details
-                       isCreatorManagingMembers() || // Creator can add/remove members
-                       (isSignedIn() && resource.data.privacy == 'public' && isChangingOwnMembership()) || // Public group join/leave
+                       (isSignedIn() && resource.data.privacy == 'public' && (isChangingOwnMembership('add') || isChangingOwnMembership('remove'))) || // Public group join/leave
                        (isSignedIn() && resource.data.privacy == 'private' && isRequestingToJoin()) || // Private group request to join
                        isCreatorManagingRequests(); // Creator manages private group requests
                        
@@ -385,12 +379,6 @@ service cloud.firestore {
   }
 }
     
-    
-
-
-    
-
-
     
 
 
