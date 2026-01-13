@@ -22,6 +22,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
+import { ShareDialog } from '@/components/share-dialog';
 
 
 export type Vacancy = {
@@ -153,9 +154,11 @@ function VacanciesList() {
                                         <Badge variant="outline" className="border-blue-500 text-blue-500"><Sparkles className="mr-1 h-3 w-3" />Super Premier</Badge>
                                     )}
                                 </div>
-                                <Button variant="ghost" size="icon" className="h-8 w-8">
-                                    <Share2 className="h-4 w-4" />
-                                </Button>
+                                 <ShareDialog shareDetails={{ type: 'vacancy', vacancyId: vacancy.id, vacancyTitle: vacancy.title, companyName: vacancy.companyName }}>
+                                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                                        <Share2 className="h-4 w-4" />
+                                    </Button>
+                                </ShareDialog>
                             </div>
                             
                             <h3 className="text-2xl font-bold">{vacancy.title}</h3>
