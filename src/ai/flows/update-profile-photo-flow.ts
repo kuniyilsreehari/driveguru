@@ -3,9 +3,13 @@
 /**
  * @fileOverview A flow for updating a user's profile photo by uploading it to Firebase Storage.
  *
- * - updateUserPhoto - A function that takes a user ID and a photo data URI, uploads it, and returns a public URL.
- * - UpdateUserPhotoInput - The input type for the updateUserPhoto function.
- * - UpdateUserPhotoOutput - The return type for the updateUserPhoto function.
+ * This file defines a Genkit flow that takes a user's ID and a photo (as a data URI),
+ * uploads the photo to a dedicated path in Firebase Storage, makes it publicly accessible,
+ * and returns the public URL.
+ *
+ * - updateUserPhoto - The main function to initiate the photo upload process.
+ * - UpdateUserPhotoInput - The Zod schema for the input to the function.
+ * - UpdateUserPhotoOutput - The Zod schema for the output from the function.
  */
 
 import { ai } from '@/ai/genkit';

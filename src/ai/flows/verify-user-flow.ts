@@ -1,11 +1,15 @@
 
 'use server';
 /**
- * @fileOverview An AI flow for handling user verification via Cashfree's Liveliness Check.
+ * @fileOverview An AI flow for handling user verification via Cashfree's Liveliness Check API.
  *
- * - verifyUserLiveliness - A function that initiates a liveliness check for a user using a photo.
- * - VerifyLivelinessInput - The input type for the verifyUserLiveliness function.
- * - VerifyLivelinessOutput - The return type for the verifyUserLiveliness function.
+ * This file defines a Genkit flow that takes a user's ID and a photo (as a data URI)
+ * and sends it to the Cashfree Verification API to perform a liveliness check. This helps
+ * confirm that the user is a real person.
+ *
+ * - verifyUserLiveliness - The main function to initiate the liveliness check.
+ * - VerifyLivelinessInput - The Zod schema for the input to the function.
+ * - VerifyLivelinessOutput - The Zod schema for the output from the function.
  */
 
 import { ai } from '@/ai/genkit';

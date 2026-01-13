@@ -3,8 +3,12 @@
 /**
  * @fileOverview A flow for exporting all application data from Firestore.
  *
- * - exportAllData - A function that fetches all data and returns it as a JSON object.
- * - ExportDataOutput - The return type for the exportAllData function.
+ * This file defines a Genkit flow for Super Admins to perform a full backup
+ * of key Firestore collections. It fetches all documents from specified collections
+ * and returns them in a structured JSON object, which can then be saved as a file.
+ *
+ * - exportAllData - The main function to trigger the data export.
+ * - ExportDataOutput - The Zod schema defining the structure of the exported JSON object.
  */
 
 import { ai } from '@/ai/genkit';

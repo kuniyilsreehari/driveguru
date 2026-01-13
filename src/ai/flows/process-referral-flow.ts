@@ -3,9 +3,14 @@
 /**
  * @fileOverview A flow for processing a referral code.
  *
- * - processReferral - A function that finds the referring user and increments their points.
- * - ProcessReferralInput - The input type for the processReferral function.
- * - ProcessReferralOutput - The return type for the processReferral function.
+ * This file defines a Genkit flow that runs after a new user has been created.
+ * It finds the user who owns the provided referral code and, within a Firestore
+ * transaction, increments their referral points and marks the referral as processed
+ * on the new user's profile to prevent duplicate rewards.
+ *
+ * - processReferral - The main function to trigger the referral processing.
+ * - ProcessReferralInput - The Zod schema for the input to the function.
+ * - ProcessReferralOutput - The Zod schema for the output of the function.
  */
 import { config } from 'dotenv';
 config();
@@ -87,7 +92,7 @@ const processReferralFlow = ai.defineFlow(
       // If the error came from our check, use its message, otherwise a generic one.
       const errorMessage = error.message.startsWith('Referral code') 
         ? error.message 
-        : `An unexpected server error occurred: ${error.message}`;
+        : `An unexpected error occurred: ${error.message}`;
       return { success: false, message: errorMessage };
     }
   }

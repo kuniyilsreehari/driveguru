@@ -3,9 +3,14 @@
 /**
  * @fileOverview A flow for handling payment gateway integration with transactional safety.
  *
- * - createPaymentOrder - A function that creates a payment order.
- * - CreatePaymentOrderInput - The input type for the createPaymentOrder function.
- * - CreatePaymentOrderOutput - The return type for the createPaymentOrderOutput function.
+ * This file defines a Genkit flow that manages the creation of payment orders.
+ * It checks global payment settings, determines the payment method (API vs. link),
+ * calculates the correct amount, creates a pending payment record in Firestore within
+ * a transaction, and then generates a payment link via the Cashfree payment gateway API.
+ *
+ * - createPaymentOrder - The main function to create a payment order.
+ * - CreatePaymentOrderInput - The Zod schema for the input required for payment creation.
+ * - CreatePaymentOrderOutput - The Zod schema for the payment link output.
  */
 
 import { ai } from '@/ai/genkit';

@@ -3,9 +3,13 @@
 /**
  * @fileOverview A flow for a super admin to create a new user.
  *
- * - createUser - Creates a new user in Firebase Auth and Firestore.
- * - CreateUserInput - Input for the createUser function.
- * - CreateUserOutput - Output for the createUser function.
+ * This file defines a Genkit flow that allows a Super Admin to create a new user
+ * in both Firebase Authentication for login and in the Firestore database for their profile.
+ * It also handles assigning special roles like 'manager' or 'super_admin'.
+ *
+ * - createUser - The main function to initiate user creation.
+ * - CreateUserInput - The Zod schema for the input required to create a user.
+ * - CreateUserOutput - The Zod schema for the result of the creation process.
  */
 
 import { ai } from '@/ai/genkit';

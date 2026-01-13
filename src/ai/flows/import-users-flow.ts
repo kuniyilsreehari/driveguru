@@ -3,9 +3,13 @@
 /**
  * @fileOverview A flow for importing expert users from a CSV file.
  *
- * - importUsers - A function that parses CSV data and creates or updates user documents in Firestore.
- * - ImportUsersInput - The input type for the importUsers function.
- * - ImportUsersOutput - The return type for the importUsers function.
+ * This file defines a Genkit flow that allows a Super Admin to bulk-import
+ * users from a CSV file. It parses the CSV data, then either creates new user
+ * accounts in Firebase Auth and Firestore or updates existing user profiles.
+ *
+ * - importUsers - The main function that handles the CSV parsing and user import process.
+ * - ImportUsersInput - The Zod schema for the CSV file content input.
+ * - ImportUsersOutput - The Zod schema for the summary of the import operation.
  */
 
 import { ai } from '@/ai/genkit';

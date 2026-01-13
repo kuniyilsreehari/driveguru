@@ -3,9 +3,12 @@
 /**
  * @fileOverview A conversational AI chat assistant for the DriveGuru app.
  *
+ * This file defines a Genkit flow that acts as a general-purpose chat assistant.
+ * It maintains conversation history and provides helpful, context-aware responses.
+ *
  * - chat - The main function to interact with the chat assistant.
- * - ChatInput - The input type for the chat function.
- * - ChatOutput - The return type for the chat function.
+ * - ChatInput - The Zod schema for the input to the chat function.
+ * - ChatOutput - The Zod schema for the output from the chat function.
  */
 
 import { ai } from '@/ai/genkit';
