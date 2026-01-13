@@ -5,7 +5,7 @@
 import { Suspense, useMemo, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { collection, query, orderBy, Timestamp, doc, updateDoc, arrayUnion, arrayRemove, serverTimestamp, getDocs, limit, startAfter, QueryDocumentSnapshot, DocumentData, addDoc, where } from 'firebase/firestore';
 import { getStorage, ref as storageRef, uploadString, getDownloadURL } from "firebase/storage";
 import { useFirestore, useDoc, useCollection, useMemoFirebase, useUser, deleteDocumentNonBlocking, addDocumentNonBlocking, updateDocumentNonBlocking, setDocumentNonBlocking } from '@/firebase';
@@ -552,12 +552,14 @@ function CommentsSection({ postId, postAuthorId }: { postId: string, postAuthorI
     );
 }
 
-function GroupHeader({ group }: { group: Group }) {
+function GroupHeader({ group, isSuperAdmin }: { group: Group, isSuperAdmin: boolean }) {
     const { user } = useUser();
     const firestore = useFirestore();
     const { toast } = useToast();
+    const router = useRouter();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isEditOpen, setIsEditOpen] = useState(false);
+    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
     const isMember = user ? group.members.includes(user.uid) : false;
     const isCreator = user ? group.creatorId === user.uid : false;
@@ -620,6 +622,25 @@ function GroupHeader({ group }: { group: Group }) {
             setIsSubmitting(false);
         }
     };
+    
+    const handleDeleteGroup = async () => {
+        if (!firestore) return;
+        const groupDocRef = doc(firestore, 'groups', group.id);
+        try {
+            await deleteDocumentNonBlocking(groupDocRef);
+            toast({
+                title: 'Group Deleted',
+                description: `The group "${group.name}" has been successfully deleted.`,
+            });
+            router.push('/groups');
+        } catch (error) {
+            if ((error as any).name !== 'FirebaseError') {
+                 toast({ variant: 'destructive', title: 'Deletion Failed', description: 'Could not delete the group.' });
+            }
+        }
+        setIsDeleteDialogOpen(false);
+    };
+
 
     const onEditSubmit = async (values: z.infer<typeof editGroupSchema>) => {
         if (!firestore) return;
@@ -643,6 +664,7 @@ function GroupHeader({ group }: { group: Group }) {
     };
     
     return (
+    <>
         <Card className="mb-8">
             <CardHeader>
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -654,7 +676,7 @@ function GroupHeader({ group }: { group: Group }) {
                         <p className="text-muted-foreground">{group.description}</p>
                     </div>
                     <div className="flex items-center gap-2">
-                        {isCreator && (
+                        {(isCreator || isSuperAdmin) && (
                              <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
                                 <DialogTrigger asChild>
                                     <Button variant="outline">
@@ -704,8 +726,13 @@ function GroupHeader({ group }: { group: Group }) {
                                 </DialogContent>
                             </Dialog>
                         )}
+                        {(isCreator || isSuperAdmin) && (
+                            <Button variant="destructive" onClick={() => setIsDeleteDialogOpen(true)}>
+                                <Trash2 className="mr-2 h-4 w-4" /> Delete
+                            </Button>
+                        )}
                         {user && !isCreator && (
-                             <Button onClick={handleToggleMembership} disabled={isSubmitting || hasRequested}>
+                             <Button onClick={handleToggleMembership} disabled={isSubmitting || (group.privacy === 'private' && hasRequested)}>
                                {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : isMember ? <UserMinus className="mr-2 h-4 w-4"/> : <UserPlus className="mr-2 h-4 w-4"/> }
                                {isMember ? 'Leave Group' : (group.privacy === 'private' ? (hasRequested ? 'Request Sent' : 'Request to Join') : 'Join Group')}
                             </Button>
@@ -720,6 +747,23 @@ function GroupHeader({ group }: { group: Group }) {
                 </div>
             </CardFooter>
         </Card>
+        <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        This will permanently delete the group "{group.name}". This action cannot be undone.
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDeleteGroup} className="bg-destructive hover:bg-destructive/90">
+                        Delete Group
+                    </AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
+        </>
     );
 }
 
@@ -1131,6 +1175,7 @@ function GroupPageContent() {
     const params = useParams();
     const groupId = params.groupId as string;
     const firestore = useFirestore();
+    const { user } = useUser();
 
     const groupDocRef = useMemoFirebase(() => {
         if (!firestore || !groupId) return null;
@@ -1138,8 +1183,16 @@ function GroupPageContent() {
     }, [firestore, groupId]);
 
     const { data: group, isLoading, error } = useDoc<Group>(groupDocRef);
+    
+    const superAdminDocRef = useMemoFirebase(() => {
+        if (!user) return null;
+        return doc(firestore, 'roles_super_admin', user.uid);
+    }, [firestore, user]);
+    const { data: superAdminData, isLoading: isRoleLoading } = useDoc(superAdminDocRef);
+    const isSuperAdmin = !!superAdminData;
 
-    if (isLoading) {
+
+    if (isLoading || isRoleLoading) {
         return (
             <div className="flex h-screen w-full items-center justify-center">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -1160,7 +1213,7 @@ function GroupPageContent() {
 
     return (
         <div className="space-y-8">
-            <GroupHeader group={group} />
+            <GroupHeader group={group} isSuperAdmin={isSuperAdmin}/>
             <GroupFeed group={group} />
         </div>
     )
