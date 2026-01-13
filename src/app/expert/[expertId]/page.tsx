@@ -14,8 +14,6 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
 import { FloatingActions } from '@/components/floating-actions';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { WhatsAppBookingDialog } from '@/components/whatsapp-booking-dialog';
@@ -169,6 +167,9 @@ function ExpertProfileContent() {
         setIsGeneratingPdf(true);
 
         try {
+            const { default: jsPDF } = await import('jspdf');
+            const { default: html2canvas } = await import('html2canvas');
+
             const canvas = await html2canvas(element, {
                 scale: 2, // Increase resolution
                 useCORS: true, // For external images
@@ -494,4 +495,3 @@ export default function ExpertProfilePage() {
         </Suspense>
     );
 }
-
