@@ -469,6 +469,37 @@ function CommentsSection({ postId, postAuthorId }: { postId: string, postAuthorI
 
 const POSTS_PER_PAGE = 5;
 
+const PostContentRenderer = ({ content }: { content: string }) => {
+    const youtubeRegex = /(https?:\/\/(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11}))/;
+    const match = content.match(youtubeRegex);
+
+    if (match) {
+        const videoId = match[2];
+        const parts = content.split(match[0]);
+        
+        return (
+            <div className="text-sm whitespace-pre-wrap mb-4">
+                <span>{parts[0]}</span>
+                <div className="aspect-video rounded-lg overflow-hidden border my-4">
+                    <iframe
+                        width="100%"
+                        height="100%"
+                        src={`https://www.youtube.com/embed/${videoId}`}
+                        title="YouTube video player"
+                        frameBorder="0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                    ></iframe>
+                </div>
+                <a href={match[0]} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline break-all">{match[0]}</a>
+                <span>{parts[1]}</span>
+            </div>
+        );
+    }
+
+    return <p className="text-sm whitespace-pre-wrap mb-4">{content}</p>;
+};
+
 function FeedContent() {
     const firestore = useFirestore();
     const { user, isUserLoading } = useUser();
@@ -777,7 +808,7 @@ function FeedContent() {
                                         </div>
                                     </div>
                                 ) : (
-                                    <p className="text-sm whitespace-pre-wrap mb-4">{post.content}</p>
+                                    <PostContentRenderer content={post.content} />
                                 )}
 
                                 {post.imageUrl && !isEditingThisPost && (

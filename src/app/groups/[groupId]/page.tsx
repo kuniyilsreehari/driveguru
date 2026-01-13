@@ -110,6 +110,37 @@ function getInitials(name?: string | null) {
     return names[0] ? names[0].charAt(0).toUpperCase() : 'U';
 }
 
+const PostContentRenderer = ({ content }: { content: string }) => {
+    const youtubeRegex = /(https?:\/\/(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11}))/;
+    const match = content.match(youtubeRegex);
+
+    if (match) {
+        const videoId = match[2];
+        const parts = content.split(match[0]);
+        
+        return (
+            <div className="text-sm whitespace-pre-wrap mb-4">
+                <span>{parts[0]}</span>
+                <div className="aspect-video rounded-lg overflow-hidden border my-4">
+                    <iframe
+                        width="100%"
+                        height="100%"
+                        src={`https://www.youtube.com/embed/${videoId}`}
+                        title="YouTube video player"
+                        frameBorder="0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                    ></iframe>
+                </div>
+                <a href={match[0]} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline break-all">{match[0]}</a>
+                <span>{parts[1]}</span>
+            </div>
+        );
+    }
+
+    return <p className="text-sm whitespace-pre-wrap mb-4">{content}</p>;
+};
+
 function CommenterInfo({ authorId }: { authorId: string }) {
     const firestore = useFirestore();
     const commenterDocRef = useMemoFirebase(() => {
@@ -886,7 +917,7 @@ function GroupFeed({ group }: { group: Group }) {
                                             </div>
                                         </div>
                                     ) : (
-                                        <p className="text-sm whitespace-pre-wrap mb-4">{post.content}</p>
+                                        <PostContentRenderer content={post.content} />
                                     )}
 
                                     {post.imageUrl && !isEditingThisPost && (
