@@ -94,7 +94,6 @@ const editGroupSchema = z.object({
 const postFormSchema = z.object({
   title: z.string().min(3, 'Title must be at least 3 characters.').max(100, 'Title cannot exceed 100 characters.'),
   content: z.string().min(2, 'Post must be at least 2 characters.').max(1000, 'Post cannot exceed 1000 characters.'),
-  link: z.string().url().optional().or(z.literal('')),
 });
 
 const commentFormSchema = z.object({
@@ -118,15 +117,15 @@ const PostContentRenderer = ({ content }: { content: string }) => {
     const youtubeRegex = /(https?:\/\/(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11}))/;
     const instagramRegex = /(https?:\/\/(?:www\.)?instagram\.com\/p\/([a-zA-Z0-9_-]+)\/?)/;
     
-    const combinedContent = content;
+    let currentContent = content;
 
-    const youtubeMatch = combinedContent.match(youtubeRegex);
+    const youtubeMatch = currentContent.match(youtubeRegex);
     if (youtubeMatch) {
         const videoId = youtubeMatch[2];
-        const textContent = combinedContent.replace(youtubeRegex, '').trim();
+        const parts = currentContent.split(youtubeMatch[0]);
         return (
             <div className="space-y-4">
-                {textContent && <p className="text-sm whitespace-pre-wrap">{textContent}</p>}
+                {parts[0] && <p className="text-sm whitespace-pre-wrap">{parts[0]}</p>}
                 <div className="aspect-video rounded-lg overflow-hidden border">
                     <iframe
                         width="100%"
@@ -138,17 +137,18 @@ const PostContentRenderer = ({ content }: { content: string }) => {
                         allowFullScreen
                     ></iframe>
                 </div>
+                 {parts[1] && <p className="text-sm whitespace-pre-wrap">{parts[1]}</p>}
             </div>
         );
     }
 
-    const instagramMatch = combinedContent.match(instagramRegex);
+    const instagramMatch = currentContent.match(instagramRegex);
     if (instagramMatch) {
         const postUrl = instagramMatch[0];
-        const textContent = combinedContent.replace(instagramRegex, '').trim();
+        const parts = currentContent.split(instagramMatch[0]);
         return (
              <div className="space-y-4">
-                {textContent && <p className="text-sm whitespace-pre-wrap">{textContent}</p>}
+                {parts[0] && <p className="text-sm whitespace-pre-wrap">{parts[0]}</p>}
                  <div className="my-4 flex justify-center">
                     <iframe 
                         className="instagram-media instagram-media-rendered" 
@@ -162,6 +162,7 @@ const PostContentRenderer = ({ content }: { content: string }) => {
                         style={{ background: 'white', border: '1px solid rgb(219, 219, 219)', borderRadius: '3px', display: 'block', margin: '0px auto', maxWidth: '540px', minWidth: '326px', padding: '0px', width: 'calc(100% - 2px)' }}>
                     </iframe>
                 </div>
+                 {parts[1] && <p className="text-sm whitespace-pre-wrap">{parts[1]}</p>}
             </div>
         )
     }
@@ -750,7 +751,6 @@ function GroupFeed({ group }: { group: Group }) {
         defaultValues: {
             title: '',
             content: '',
-            link: '',
         },
         mode: 'onChange',
     });
@@ -765,7 +765,6 @@ function GroupFeed({ group }: { group: Group }) {
             await addDocumentNonBlocking(postsCollectionRef, {
                 title: values.title,
                 content: values.content,
-                link: values.link || '',
                 authorId: user.uid,
                 authorName: `${currentUserProfile.firstName || ''} ${currentUserProfile.lastName || ''}`.trim(),
                 authorPhotoUrl: currentUserProfile.photoUrl || '',
