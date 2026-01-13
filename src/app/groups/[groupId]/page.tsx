@@ -552,7 +552,7 @@ function CommentsSection({ postId, postAuthorId }: { postId: string, postAuthorI
     );
 }
 
-function GroupHeader({ group, onMembershipChange }: { group: Group, onMembershipChange: () => void }) {
+function GroupHeader({ group }: { group: Group }) {
     const { user } = useUser();
     const firestore = useFirestore();
     const { toast } = useToast();
@@ -613,7 +613,6 @@ function GroupHeader({ group, onMembershipChange }: { group: Group, onMembership
             }
 
             toast({ title: toastTitle, description: toastDescription });
-            onMembershipChange(); // Force re-fetch of group data
         } catch (error) {
             console.error("Error toggling group membership:", error);
             toast({ variant: 'destructive', title: 'Error', description: 'Could not update your membership.' });
@@ -724,7 +723,7 @@ function GroupHeader({ group, onMembershipChange }: { group: Group, onMembership
     );
 }
 
-function GroupFeed({ group, onMembershipChange }: { group: Group, onMembershipChange: () => void }) {
+function GroupFeed({ group }: { group: Group }) {
     const firestore = useFirestore();
     const { user, isUserLoading } = useUser();
     const { toast } = useToast();
@@ -901,7 +900,6 @@ function GroupFeed({ group, onMembershipChange }: { group: Group, onMembershipCh
                 });
                 toast({ title: 'Request Denied' });
             }
-            onMembershipChange();
         } catch (error) {
             console.error('Error managing request:', error);
             toast({ variant: 'destructive', title: 'Action Failed' });
@@ -1139,7 +1137,7 @@ function GroupPageContent() {
         return doc(firestore, 'groups', groupId);
     }, [firestore, groupId]);
 
-    const { data: group, isLoading, error, mutate } = useDoc<Group>(groupDocRef);
+    const { data: group, isLoading, error } = useDoc<Group>(groupDocRef);
 
     if (isLoading) {
         return (
@@ -1162,8 +1160,8 @@ function GroupPageContent() {
 
     return (
         <div className="space-y-8">
-            <GroupHeader group={group} onMembershipChange={mutate} />
-            <GroupFeed group={group} onMembershipChange={mutate} />
+            <GroupHeader group={group} />
+            <GroupFeed group={group} />
         </div>
     )
 }
