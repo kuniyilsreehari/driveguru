@@ -16,7 +16,7 @@ import { Form, FormControl, FormField, FormItem } from '@/components/ui/form';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Loader2, ChevronLeft, Rss, Search, Heart, Share2, MoreHorizontal, Trash2, Send, LogIn, MessageSquareReply, MessageSquare, Pen, Upload, Image as ImageIcon, X } from 'lucide-react';
+import { Loader2, ChevronLeft, Rss, Search, Heart, Share2, MoreHorizontal, Trash2, Send, LogIn, MessageSquareReply, MessageSquare, Pen, Upload, Image as ImageIcon, X, Linkedin, Twitter, Github, Globe, Youtube } from 'lucide-react';
 import { formatDistanceToNowStrict } from 'date-fns';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
@@ -42,6 +42,7 @@ import {
 import { LikesDialog } from '@/components/likes-dialog';
 import { ImageLightbox } from '@/components/image-lightbox';
 import { useSearchParams } from 'next/navigation';
+import { Icons } from '@/components/icons';
 
 
 type Post = {
@@ -70,6 +71,13 @@ type UserProfile = {
     firstName?: string;
     lastName?: string;
     photoUrl?: string;
+    linkedinUrl?: string;
+    twitterUrl?: string;
+    githubUrl?: string;
+    portfolioUrl?: string;
+    facebookUrl?: string;
+    instagramUrl?: string;
+    youtubeUrl?: string;
 }
 
 const commentFormSchema = z.object({
@@ -501,40 +509,263 @@ const PostContentRenderer = ({ content }: { content: string }) => {
     return <p className="text-sm whitespace-pre-wrap mb-4">{content}</p>;
 };
 
+function PostCard({ post }: { post: Post }) {
+    const firestore = useFirestore();
+    const { user } = useUser();
+    const { toast } = useToast();
+    const [isPostDeleteDialogOpen, setIsPostDeleteDialogOpen] = useState(false);
+    const [editingPostId, setEditingPostId] = useState<string | null>(null);
+    const [editedPostContent, setEditedPostContent] = useState('');
+    const [posts, setPosts] = useState<Post[]>([]);
+
+    const superAdminDocRef = useMemoFirebase(() => {
+      if (!user) return null;
+      return doc(firestore, 'roles_super_admin', user.uid);
+    }, [firestore, user]);
+    const { data: superAdminData } = useDoc(superAdminDocRef);
+    const isSuperAdmin = !!superAdminData;
+
+    const authorDocRef = useMemoFirebase(() => {
+        if (!firestore) return null;
+        return doc(firestore, 'users', post.authorId);
+    }, [firestore, post.authorId]);
+    const { data: author, isLoading: isAuthorLoading } = useDoc<UserProfile>(authorDocRef);
+
+    const handleLike = async (postToLike: Post) => {
+        if (!user || !firestore) {
+            toast({
+                variant: 'destructive',
+                title: 'Authentication Required',
+                description: 'You must be logged in to like a post.',
+            });
+            return;
+        }
+
+        const postRef = doc(firestore, 'posts', postToLike.id);
+        const hasLiked = postToLike.likes?.includes(user.uid);
+        const updateAction = hasLiked ? arrayRemove(user.uid) : arrayUnion(user.uid);
+
+        try {
+            await updateDoc(postRef, {
+                likes: updateAction,
+            });
+        } catch (error) {
+            console.error('Error updating like:', error);
+            if ((error as any).name !== 'FirebaseError') {
+                 toast({
+                    variant: 'destructive',
+                    title: 'Error',
+                    description: 'Could not update like status. Please try again.',
+                });
+            }
+        }
+    };
+
+    const handleEditPost = (postToEdit: Post) => {
+        setEditingPostId(postToEdit.id);
+        setEditedPostContent(postToEdit.content);
+    };
+
+    const handleCancelEdit = () => {
+        setEditingPostId(null);
+        setEditedPostContent('');
+    };
+
+    const handleUpdatePost = async () => {
+        if (!firestore || !editingPostId) return;
+        
+        const postDocRef = doc(firestore, 'posts', editingPostId);
+        try {
+            await updateDocumentNonBlocking(postDocRef, { content: editedPostContent });
+            toast({ title: 'Post updated' });
+            handleCancelEdit();
+        } catch (error) {
+             if ((error as any).name !== 'FirebaseError') {
+                toast({ variant: 'destructive', title: 'Failed to update post.' });
+            }
+        }
+    };
+    
+    const handleDeletePost = () => {
+        if (!firestore) return;
+        const postDocRef = doc(firestore, 'posts', post.id);
+        deleteDocumentNonBlocking(postDocRef).then(() => {
+            setPosts(prevPosts => prevPosts.filter(p => p.id !== post.id));
+            toast({
+                title: "Post Deleted",
+                description: "The post has been successfully removed.",
+            });
+        }).catch(error => {
+            if ((error as any).name !== 'FirebaseError') {
+                toast({
+                    variant: 'destructive',
+                    title: "Deletion Failed",
+                    description: "Could not delete the post. Please try again.",
+                });
+            }
+        });
+        setIsPostDeleteDialogOpen(false);
+    }
+    
+    const hasLiked = user ? post.likes?.includes(user.uid) : false;
+    const canEdit = user && user.uid === post.authorId;
+    const canDelete = canEdit || isSuperAdmin;
+    const isEditingThisPost = editingPostId === post.id;
+    const canViewLikes = post.likes && post.likes.length > 0;
+    
+    return (
+        <Card>
+            <CardHeader>
+                <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-3">
+                        <Link href={`/expert/${post.authorId}`}>
+                            <Avatar>
+                                <AvatarImage src={post.authorPhotoUrl} />
+                                <AvatarFallback>{getInitials(post.authorName)}</AvatarFallback>
+                            </Avatar>
+                        </Link>
+                        <div>
+                            <Link href={`/expert/${post.authorId}`} className="hover:underline">
+                                <CardTitle className="text-base">{post.authorName}</CardTitle>
+                            </Link>
+                            <CardDescription className="text-xs">
+                                {post.createdAt ? `${formatDistanceToNowStrict(post.createdAt.toDate())} ago` : '...'}
+                            </CardDescription>
+                            <div className="flex items-center gap-2 mt-2">
+                              {isAuthorLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <>
+                                  {author?.portfolioUrl && <a href={author.portfolioUrl} target="_blank" rel="noopener noreferrer"><Globe className="h-4 w-4 text-muted-foreground hover:text-primary"/></a>}
+                                  {author?.facebookUrl && <a href={author.facebookUrl} target="_blank" rel="noopener noreferrer"><Icons.logo className="h-4 w-4 text-muted-foreground hover:text-primary"/></a>}
+                                  {author?.instagramUrl && <a href={author.instagramUrl} target="_blank" rel="noopener noreferrer"><Icons.logo className="h-4 w-4 text-muted-foreground hover:text-primary"/></a>}
+                                  {author?.youtubeUrl && <a href={author.youtubeUrl} target="_blank" rel="noopener noreferrer"><Youtube className="h-4 w-4 text-muted-foreground hover:text-primary"/></a>}
+                                  {author?.linkedinUrl && <a href={author.linkedinUrl} target="_blank" rel="noopener noreferrer"><Linkedin className="h-4 w-4 text-muted-foreground hover:text-primary"/></a>}
+                                  {author?.twitterUrl && <a href={author.twitterUrl} target="_blank" rel="noopener noreferrer"><Twitter className="h-4 w-4 text-muted-foreground hover:text-primary"/></a>}
+                                  {author?.githubUrl && <a href={author.githubUrl} target="_blank" rel="noopener noreferrer"><Github className="h-4 w-4 text-muted-foreground hover:text-primary"/></a>}
+                              </>}
+                            </div>
+                        </div>
+                    </div>
+                     {(canEdit || canDelete) && (
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" className="h-8 w-8 p-0">
+                                    <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                {canEdit && (
+                                    <DropdownMenuItem onClick={() => handleEditPost(post)}>
+                                        <Pen className="mr-2 h-4 w-4" />
+                                        <span>Edit</span>
+                                    </DropdownMenuItem>
+                                )}
+                                {canDelete && (
+                                    <DropdownMenuItem onClick={() => setIsPostDeleteDialogOpen(true)} className="text-destructive focus:text-destructive">
+                                        <Trash2 className="mr-2 h-4 w-4" />
+                                        <span>Delete</span>
+                                    </DropdownMenuItem>
+                                )}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    )}
+                </div>
+            </CardHeader>
+            <CardContent>
+                {isEditingThisPost ? (
+                    <div className="space-y-2">
+                        <Textarea
+                            value={editedPostContent}
+                            onChange={(e) => setEditedPostContent(e.target.value)}
+                            className="text-sm whitespace-pre-wrap mb-4"
+                            rows={4}
+                        />
+                        <div className="flex justify-end gap-2">
+                            <Button variant="ghost" size="sm" onClick={handleCancelEdit}>Cancel</Button>
+                            <Button size="sm" onClick={handleUpdatePost}>Save Changes</Button>
+                        </div>
+                    </div>
+                ) : (
+                    <PostContentRenderer content={post.content} />
+                )}
+
+                {post.imageUrl && !isEditingThisPost && (
+                    <ImageLightbox imageUrl={post.imageUrl} altText={`Post image from ${post.authorName}`}>
+                        <div className="relative rounded-lg overflow-hidden border aspect-video cursor-pointer">
+                            <Image
+                                src={post.imageUrl}
+                                alt={`Post image from ${post.authorName}`}
+                                fill
+                                className="object-cover"
+                            />
+                        </div>
+                    </ImageLightbox>
+                )}
+            </CardContent>
+            <CardFooter className="flex-col items-start">
+                <div className="flex items-center gap-2 w-full">
+                    <Button variant="ghost" size="sm" onClick={() => handleLike(post)}>
+                        <Heart className={cn("mr-2 h-4 w-4", hasLiked && "fill-red-500 text-red-500")} />
+                        Like
+                    </Button>
+                    
+                    {canViewLikes ? (
+                        <LikesDialog userIds={post.likes!}>
+                            <button className="text-xs text-muted-foreground hover:underline">
+                                {post.likes?.length} {post.likes?.length === 1 ? 'like' : 'likes'}
+                            </button>
+                        </LikesDialog>
+                    ) : (
+                        <span className="text-xs text-muted-foreground">
+                            0 likes
+                        </span>
+                    )}
+
+                    <ShareDialog shareDetails={{ type: 'expert-profile', expertId: post.authorId, expertName: post.authorName }}>
+                        <Button variant="ghost" size="sm">
+                            <Share2 className="mr-2 h-4 w-4" />
+                            Share
+                        </Button>
+                    </ShareDialog>
+                </div>
+                <CommentsSection postId={post.id} postAuthorId={post.authorId} />
+            </CardFooter>
+             <AlertDialog open={isPostDeleteDialogOpen} onOpenChange={setIsPostDeleteDialogOpen}>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This action cannot be undone. This will permanently delete this post and all its comments.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDeletePost} className="bg-destructive hover:bg-destructive/90">
+                      Delete
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+        </Card>
+    )
+}
+
 function FeedContent() {
     const firestore = useFirestore();
     const searchParams = useSearchParams();
-    const { user, isUserLoading } = useUser();
-    const { toast } = useToast();
+    const { isUserLoading, isRoleLoading } = useUser();
+    
     const [searchQuery, setSearchQuery] = useState('');
-    const [isPostDeleteDialogOpen, setIsPostDeleteDialogOpen] = useState(false);
-    const [selectedPost, setSelectedPost] = useState<Post | null>(null);
-    const [editingPostId, setEditingPostId] = useState<string | null>(null);
-    const [editedPostContent, setEditedPostContent] = useState('');
-    const [isUploading, setIsUploading] = useState(false);
-    const [imagePreview, setImagePreview] = useState<string | null>(null);
-    const [imageFile, setImageFile] = useState<File | null>(null);
-
     const [posts, setPosts] = useState<Post[]>([]);
     const [isLoadingPosts, setIsLoadingPosts] = useState(true);
     const [isLoadingMore, setIsLoadingMore] = useState(false);
     const [lastVisible, setLastVisible] = useState<QueryDocumentSnapshot<DocumentData> | null>(null);
     const [hasMore, setHasMore] = useState(true);
-    
-    const superAdminDocRef = useMemoFirebase(() => {
-      if (!user) return null;
-      return doc(firestore, 'roles_super_admin', user.uid);
-    }, [firestore, user]);
-
-    const { data: superAdminData, isLoading: isRoleLoading } = useDoc(superAdminDocRef);
-    const isSuperAdmin = !!superAdminData;
 
     const authorIdFilter = searchParams.get('authorId');
     const authorDocRef = useMemoFirebase(() => {
         if (!firestore || !authorIdFilter) return null;
         return doc(firestore, 'users', authorIdFilter);
     }, [firestore, authorIdFilter]);
-    const { data: authorProfile } = useDoc<UserProfile>(authorDocRef);
+    useDoc<UserProfile>(authorDocRef);
 
     useEffect(() => {
         if (!firestore) return;
@@ -551,15 +782,21 @@ function FeedContent() {
             }
 
             const firstBatch = query(collection(firestore, 'posts'), ...constraints);
-            const documentSnapshots = await getDocs(firstBatch);
             
-            const newPosts = documentSnapshots.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post));
-            const lastDoc = documentSnapshots.docs[documentSnapshots.docs.length - 1];
+            const unsubscribe = onSnapshot(firstBatch, (documentSnapshots) => {
+                const newPosts = documentSnapshots.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post));
+                const lastDoc = documentSnapshots.docs[documentSnapshots.docs.length - 1];
 
-            setPosts(newPosts);
-            setLastVisible(lastDoc);
-            setHasMore(documentSnapshots.docs.length === POSTS_PER_PAGE);
-            setIsLoadingPosts(false);
+                setPosts(newPosts);
+                setLastVisible(lastDoc);
+                setHasMore(documentSnapshots.docs.length === POSTS_PER_PAGE);
+                setIsLoadingPosts(false);
+            }, (error) => {
+                console.error("Error fetching initial posts:", error);
+                setIsLoadingPosts(false);
+            });
+            
+            return () => unsubscribe();
         };
 
         fetchInitialPosts();
@@ -602,119 +839,7 @@ function FeedContent() {
             post.authorName.toLowerCase().includes(lowercasedQuery)
         );
     }, [posts, searchQuery]);
-
-
-    const handleLike = async (post: Post) => {
-        if (!user || !firestore) {
-            toast({
-                variant: 'destructive',
-                title: 'Authentication Required',
-                description: 'You must be logged in to like a post.',
-            });
-            return;
-        }
-
-        const postRef = doc(firestore, 'posts', post.id);
-        const hasLiked = post.likes?.includes(user.uid);
-        const updateAction = hasLiked ? arrayRemove(user.uid) : arrayUnion(user.uid);
-
-        try {
-            await updateDoc(postRef, {
-                likes: updateAction,
-            });
-            // Optimistically update UI
-            setPosts(prevPosts => prevPosts.map(p => {
-                if (p.id === post.id) {
-                    const newLikes = hasLiked
-                        ? (p.likes || []).filter(uid => uid !== user.uid)
-                        : [...(p.likes || []), user.uid];
-                    return { ...p, likes: newLikes };
-                }
-                return p;
-            }));
-        } catch (error) {
-            console.error('Error updating like:', error);
-            if ((error as any).name !== 'FirebaseError') {
-                 toast({
-                    variant: 'destructive',
-                    title: 'Error',
-                    description: 'Could not update like status. Please try again.',
-                });
-            }
-        }
-    };
-
-    const handleEditPost = (post: Post) => {
-        setEditingPostId(post.id);
-        setEditedPostContent(post.content);
-    };
-
-    const handleCancelEdit = () => {
-        setEditingPostId(null);
-        setEditedPostContent('');
-    };
-
-    const handleUpdatePost = async () => {
-        if (!firestore || !editingPostId) return;
-        
-        const postDocRef = doc(firestore, 'posts', editingPostId);
-        try {
-            await updateDocumentNonBlocking(postDocRef, { content: editedPostContent });
-            setPosts(prevPosts => prevPosts.map(p => p.id === editingPostId ? {...p, content: editedPostContent} : p));
-            toast({ title: 'Post updated' });
-            handleCancelEdit();
-        } catch (error) {
-             if ((error as any).name !== 'FirebaseError') {
-                toast({ variant: 'destructive', title: 'Failed to update post.' });
-            }
-        }
-    };
-
-    const openDeleteDialog = (post: Post) => {
-        setSelectedPost(post);
-        setIsPostDeleteDialogOpen(true);
-    }
     
-    const handleDeletePost = () => {
-        if (!selectedPost || !firestore) return;
-        const postDocRef = doc(firestore, 'posts', selectedPost.id);
-        deleteDocumentNonBlocking(postDocRef).then(() => {
-            setPosts(prevPosts => prevPosts.filter(p => p.id !== selectedPost.id));
-            toast({
-                title: "Post Deleted",
-                description: "The post has been successfully removed.",
-            });
-        }).catch(error => {
-            if ((error as any).name !== 'FirebaseError') {
-                toast({
-                    variant: 'destructive',
-                    title: "Deletion Failed",
-                    description: "Could not delete the post. Please try again.",
-                });
-            }
-        });
-        setIsPostDeleteDialogOpen(false);
-        setSelectedPost(null);
-    }
-
-    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files?.[0];
-        if (file) {
-            setImageFile(file);
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setImagePreview(reader.result as string);
-            };
-            reader.readAsDataURL(file);
-        }
-    };
-
-    const clearImagePreview = () => {
-        setImagePreview(null);
-        setImageFile(null);
-    }
-
-
     const isLoading = isUserLoading || isLoadingPosts || isRoleLoading;
     
     if (isLoading) {
@@ -762,120 +887,7 @@ function FeedContent() {
                 </div>
             </div>
             <div className="space-y-6">
-                {filteredPosts.map(post => {
-                    const hasLiked = user ? post.likes?.includes(user.uid) : false;
-                    const canEdit = user && user.uid === post.authorId;
-                    const canDelete = canEdit || isSuperAdmin;
-                    const isEditingThisPost = editingPostId === post.id;
-                    const canViewLikes = post.likes && post.likes.length > 0;
-
-                    return (
-                        <Card key={post.id}>
-                            <CardHeader>
-                                <div className="flex items-start justify-between">
-                                    <div className="flex items-center gap-3">
-                                        <Link href={`/expert/${post.authorId}`}>
-                                            <Avatar>
-                                                <AvatarImage src={post.authorPhotoUrl} />
-                                                <AvatarFallback>{getInitials(post.authorName)}</AvatarFallback>
-                                            </Avatar>
-                                        </Link>
-                                        <div>
-                                            <Link href={`/expert/${post.authorId}`} className="hover:underline">
-                                                <CardTitle className="text-base">{post.authorName}</CardTitle>
-                                            </Link>
-                                            <CardDescription className="text-xs">
-                                                {post.createdAt ? `${formatDistanceToNowStrict(post.createdAt.toDate())} ago` : '...'}
-                                            </CardDescription>
-                                        </div>
-                                    </div>
-                                     {(canEdit || canDelete) && (
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
-                                                <Button variant="ghost" className="h-8 w-8 p-0">
-                                                    <MoreHorizontal className="h-4 w-4" />
-                                                </Button>
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent align="end">
-                                                {canEdit && (
-                                                    <DropdownMenuItem onClick={() => handleEditPost(post)}>
-                                                        <Pen className="mr-2 h-4 w-4" />
-                                                        <span>Edit</span>
-                                                    </DropdownMenuItem>
-                                                )}
-                                                {canDelete && (
-                                                    <DropdownMenuItem onClick={() => openDeleteDialog(post)} className="text-destructive focus:text-destructive">
-                                                        <Trash2 className="mr-2 h-4 w-4" />
-                                                        <span>Delete</span>
-                                                    </DropdownMenuItem>
-                                                )}
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
-                                    )}
-                                </div>
-                            </CardHeader>
-                            <CardContent>
-                                {isEditingThisPost ? (
-                                    <div className="space-y-2">
-                                        <Textarea
-                                            value={editedPostContent}
-                                            onChange={(e) => setEditedPostContent(e.target.value)}
-                                            className="text-sm whitespace-pre-wrap mb-4"
-                                            rows={4}
-                                        />
-                                        <div className="flex justify-end gap-2">
-                                            <Button variant="ghost" size="sm" onClick={handleCancelEdit}>Cancel</Button>
-                                            <Button size="sm" onClick={handleUpdatePost}>Save Changes</Button>
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <PostContentRenderer content={post.content} />
-                                )}
-
-                                {post.imageUrl && !isEditingThisPost && (
-                                    <ImageLightbox imageUrl={post.imageUrl} altText={`Post image from ${post.authorName}`}>
-                                        <div className="relative rounded-lg overflow-hidden border aspect-video cursor-pointer">
-                                            <Image
-                                                src={post.imageUrl}
-                                                alt={`Post image from ${post.authorName}`}
-                                                fill
-                                                className="object-cover"
-                                            />
-                                        </div>
-                                    </ImageLightbox>
-                                )}
-                            </CardContent>
-                            <CardFooter className="flex-col items-start">
-                                <div className="flex items-center gap-2 w-full">
-                                    <Button variant="ghost" size="sm" onClick={() => handleLike(post)}>
-                                        <Heart className={cn("mr-2 h-4 w-4", hasLiked && "fill-red-500 text-red-500")} />
-                                        Like
-                                    </Button>
-                                    
-                                    {canViewLikes ? (
-                                        <LikesDialog userIds={post.likes!}>
-                                            <button className="text-xs text-muted-foreground hover:underline">
-                                                {post.likes?.length} {post.likes?.length === 1 ? 'like' : 'likes'}
-                                            </button>
-                                        </LikesDialog>
-                                    ) : (
-                                        <span className="text-xs text-muted-foreground">
-                                            0 likes
-                                        </span>
-                                    )}
-
-                                    <ShareDialog shareDetails={{ type: 'expert-profile', expertId: post.authorId, expertName: post.authorName }}>
-                                        <Button variant="ghost" size="sm">
-                                            <Share2 className="mr-2 h-4 w-4" />
-                                            Share
-                                        </Button>
-                                    </ShareDialog>
-                                </div>
-                                <CommentsSection postId={post.id} postAuthorId={post.authorId} />
-                            </CardFooter>
-                        </Card>
-                    )
-                })}
+                {filteredPosts.map(post => <PostCard key={post.id} post={post} />)}
 
                 {hasMore && !searchQuery && (
                     <div className="flex justify-center mt-6">
@@ -892,22 +904,6 @@ function FeedContent() {
                     </div>
                 )}
             </div>
-             <AlertDialog open={isPostDeleteDialogOpen} onOpenChange={setIsPostDeleteDialogOpen}>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      This action cannot be undone. This will permanently delete this post and all its comments.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleDeletePost} className="bg-destructive hover:bg-destructive/90">
-                      Delete
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
         </>
     );
 }
