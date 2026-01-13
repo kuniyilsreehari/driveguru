@@ -317,6 +317,11 @@ service cloud.firestore {
                    (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['members', 'pendingMembers']) || 
                     request.resource.data.diff(resource.data).affectedKeys().hasOnly(['pendingMembers']));
         }
+
+        function isCreatorManagingMembers() {
+          return isGroupCreator() && 
+                 request.resource.data.diff(resource.data).affectedKeys().hasOnly(['members']);
+        }
         
         // Allow anyone to view a single group's details and list all groups
         allow get: if true;
@@ -326,6 +331,7 @@ service cloud.firestore {
         
         allow update: if isSuperAdmin() || 
                        (isGroupCreator() && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['members', 'pendingMembers'])) || // Creator can edit details
+                       isCreatorManagingMembers() || // Creator can add/remove members
                        (isSignedIn() && resource.data.privacy == 'public' && isChangingOwnMembership()) || // Public group join/leave
                        (isSignedIn() && resource.data.privacy == 'private' && isRequestingToJoin()) || // Private group request to join
                        isCreatorManagingRequests(); // Creator manages private group requests

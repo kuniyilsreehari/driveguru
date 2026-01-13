@@ -54,6 +54,7 @@ import { LikesDialog } from '@/components/likes-dialog';
 import { ImageLightbox } from '@/components/image-lightbox';
 import { ShareDialog } from '@/components/share-dialog';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
+import { UserList } from '@/components/user-list';
 
 type GroupPost = {
     id: string;
@@ -85,7 +86,7 @@ type UserProfile = {
     lastName?: string;
     photoUrl?: string;
     profession?: string;
-}
+};
 
 const editGroupSchema = z.object({
   name: z.string().min(3, 'Group name must be at least 3 characters.').max(50, 'Group name cannot exceed 50 characters.'),
@@ -727,9 +728,27 @@ function GroupHeader({ group, isSuperAdmin }: { group: Group, isSuperAdmin: bool
                             </Dialog>
                         )}
                         {(isCreator || isSuperAdmin) && (
-                            <Button variant="destructive" onClick={() => setIsDeleteDialogOpen(true)}>
-                                <Trash2 className="mr-2 h-4 w-4" /> Delete
-                            </Button>
+                           <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+                                <AlertDialogTrigger asChild>
+                                    <Button variant="destructive">
+                                        <Trash2 className="mr-2 h-4 w-4" /> Delete
+                                    </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                            This will permanently delete the group "{group.name}". This action cannot be undone.
+                                        </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                        <AlertDialogAction onClick={handleDeleteGroup} className="bg-destructive hover:bg-destructive/90">
+                                            Delete Group
+                                        </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
                         )}
                         {user && !isCreator && (
                              <Button onClick={handleToggleMembership} disabled={isSubmitting || (group.privacy === 'private' && hasRequested)}>
@@ -747,22 +766,6 @@ function GroupHeader({ group, isSuperAdmin }: { group: Group, isSuperAdmin: bool
                 </div>
             </CardFooter>
         </Card>
-        <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-            <AlertDialogContent>
-                <AlertDialogHeader>
-                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                        This will permanently delete the group "{group.name}". This action cannot be undone.
-                    </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleDeleteGroup} className="bg-destructive hover:bg-destructive/90">
-                        Delete Group
-                    </AlertDialogAction>
-                </AlertDialogFooter>
-            </AlertDialogContent>
-        </AlertDialog>
         </>
     );
 }
@@ -778,6 +781,7 @@ function GroupFeed({ group }: { group: Group }) {
     const [editedPostContent, setEditedPostContent] = useState('');
     const [searchQuery, setSearchQuery] = useState('');
     const [isManagingRequest, setIsManagingRequest] = useState<string | null>(null);
+    const [memberSearchQuery, setMemberSearchQuery] = useState('');
 
     const isMember = user ? group.members.includes(user.uid) : false;
     const isCreator = user ? group.creatorId === user.uid : false;
@@ -796,6 +800,8 @@ function GroupFeed({ group }: { group: Group }) {
 
     const { data: pendingUsers, isLoading: isLoadingPending } = useCollection<UserProfile>(pendingMembersQuery);
 
+    const { data: allUsers } = useCollection<UserProfile>(useMemoFirebase(() => firestore ? collection(firestore, 'users') : null, [firestore]));
+
     const currentUserDocRef = useMemoFirebase(() => {
         if (!user) return null;
         return doc(firestore, 'users', user.uid);
@@ -808,6 +814,15 @@ function GroupFeed({ group }: { group: Group }) {
     }, [firestore, user]);
     const { data: superAdminData } = useDoc(superAdminDocRef);
     const isSuperAdmin = !!superAdminData;
+
+    const memberSearchResults = useMemo(() => {
+        if (!memberSearchQuery || !allUsers) return [];
+        const lowercasedQuery = memberSearchQuery.toLowerCase();
+        return allUsers.filter(u => 
+            !group.members.includes(u.id) &&
+            (`${u.firstName} ${u.lastName}`.toLowerCase().includes(lowercasedQuery) || u.profession?.toLowerCase().includes(lowercasedQuery))
+        ).slice(0, 5); // Limit results for performance
+    }, [memberSearchQuery, allUsers, group.members]);
     
     const filteredPosts = useMemo(() => {
         if (!posts) return [];
@@ -917,6 +932,27 @@ function GroupFeed({ group }: { group: Group }) {
              if ((error as any).name !== 'FirebaseError') {
                 toast({ variant: 'destructive', title: 'Failed to update post.' });
             }
+        }
+    };
+
+    const handleManageMember = async (memberId: string, action: 'add' | 'remove') => {
+        if (!firestore) return;
+        const groupDocRef = doc(firestore, 'groups', group.id);
+        const userDocRef = doc(firestore, 'users', memberId);
+
+        const groupUpdateAction = action === 'add' ? arrayUnion(memberId) : arrayRemove(memberId);
+        const userUpdateAction = action === 'add' ? arrayUnion(group.id) : arrayRemove(group.id);
+
+        try {
+            await Promise.all([
+                updateDoc(groupDocRef, { members: groupUpdateAction }),
+                updateDoc(userDocRef, { groups: userUpdateAction })
+            ]);
+            toast({ title: `Member ${action === 'add' ? 'Added' : 'Removed'}` });
+            setMemberSearchQuery('');
+        } catch (error) {
+            console.error('Error managing member:', error);
+            toast({ variant: 'destructive', title: 'Action Failed' });
         }
     };
 
@@ -1112,6 +1148,37 @@ function GroupFeed({ group }: { group: Group }) {
                     </div>
                 </TabsContent>
                 <TabsContent value="members" className="mt-6">
+                    {isCreator && (
+                        <Card className="mb-6">
+                            <CardHeader>
+                                <CardTitle>Manage Members</CardTitle>
+                                <CardDescription>Add new members to the group.</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="relative">
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                    <Input
+                                        placeholder="Search for experts to add..."
+                                        className="pl-10"
+                                        value={memberSearchQuery}
+                                        onChange={(e) => setMemberSearchQuery(e.target.value)}
+                                    />
+                                </div>
+                                {memberSearchQuery && (
+                                    <div className="mt-2 space-y-2 max-h-60 overflow-y-auto">
+                                        {memberSearchResults.map(u => (
+                                            <div key={u.id} className="flex items-center justify-between p-2 rounded-lg border">
+                                                <p className="font-medium">{u.firstName} {u.lastName}</p>
+                                                <Button size="sm" onClick={() => handleManageMember(u.id, 'add')}>
+                                                    <UserPlus className="mr-2 h-4 w-4" /> Add
+                                                </Button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </CardContent>
+                        </Card>
+                    )}
                     {isCreator && pendingUsers && pendingUsers.length > 0 && (
                         <Card className="mb-6">
                             <CardHeader>
@@ -1144,10 +1211,12 @@ function GroupFeed({ group }: { group: Group }) {
                             </CardContent>
                         </Card>
                     )}
-                    {/* Placeholder for current members list */}
+                    
                     <Card>
                         <CardHeader><CardTitle>All Members ({group.members.length})</CardTitle></CardHeader>
-                        <CardContent><p className="text-muted-foreground text-sm">Full member list coming soon.</p></CardContent>
+                        <CardContent>
+                           <UserList userIds={group.members} emptyStateMessage="This group has no members yet." />
+                        </CardContent>
                     </Card>
                 </TabsContent>
             </Tabs>
