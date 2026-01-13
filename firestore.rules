@@ -214,14 +214,9 @@ service cloud.firestore {
       // VERY PERMISSIVE: Any signed-in user can create their own user document.
       allow create: if isOwner(userId);
 
-      // A user can update their own document, or a super admin can update any document.
-      allow update: if isSuperAdminUpdatingUserDoc() || isUpdatingOwnUserDoc(userId);
-
-      // Users can delete their own account, and admins can delete any account.
-      allow delete: if isOwner(userId) || isSuperAdmin();
-
       /* ---------------------------------------------
        * Private Notifications (STRICT PRIVACY)
+       * CORRECTED PLACEMENT
        * --------------------------------------------- */
        match /notifications/{notificationId} {
          // A user can list and read their own notifications.
@@ -231,7 +226,7 @@ service cloud.firestore {
          // Only the owner can update (e.g., mark as read) or delete their notifications.
          allow update, delete: if isOwner(userId);
        }
-
+       
       /* ---------------------------------------------
        * Private Location Data (STRICT PRIVACY)
        * --------------------------------------------- */
@@ -242,6 +237,13 @@ service cloud.firestore {
         allow update: if isOwner(userId) && locationUserImmutable();
         allow delete: if isOwner(userId);
       }
+
+      // A user can update their own document, or a super admin can update any document.
+      // This MUST come AFTER subcollection matches.
+      allow update: if isSuperAdminUpdatingUserDoc() || isUpdatingOwnUserDoc(userId);
+
+      // Users can delete their own account, and admins can delete any account.
+      allow delete: if isOwner(userId) || isSuperAdmin();
     }
     
     /* =====================================================
@@ -302,7 +304,15 @@ service cloud.firestore {
             let groupDoc = get(/databases/$(database)/documents/groups/$(groupId));
             return request.auth.uid in groupDoc.data.members;
         }
-
+        
+        function isRequestingToJoin() {
+            // Check that the ONLY change is adding the current user's ID to the pendingMembers array.
+            let changes = request.resource.data.diff(resource.data);
+            return changes.affectedKeys().hasOnly(['pendingMembers']) &&
+                   changes.addedKeys().hasOnly(['pendingMembers']) &&
+                   changes.addedKeys().size() == 1;
+        }
+        
         function isChangingOwnMembership() {
           let changes = request.resource.data.diff(resource.data);
           // Allow changing ONLY the members array
@@ -315,12 +325,6 @@ service cloud.firestore {
           return (added && !removed) || (!added && removed);
         }
 
-        function isRequestingToJoin() {
-            // Check that the ONLY change is adding the current user's ID to the pendingMembers array.
-            return request.resource.data.diff(resource.data).affectedKeys().hasOnly(['pendingMembers']) &&
-                   request.resource.data.pendingMembers == resource.data.pendingMembers.concat([request.auth.uid]);
-        }
-        
         function isCreatorManagingRequests() {
             return isGroupCreator() && 
                    (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['members', 'pendingMembers']) || 
@@ -396,7 +400,5 @@ service cloud.firestore {
     
     
 
-
-    
 
     
