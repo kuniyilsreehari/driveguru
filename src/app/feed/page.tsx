@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import { Suspense, useMemo, useState, useEffect } from 'react';
@@ -1035,7 +1033,7 @@ function FeedPageHeader() {
     )
 }
 
-export default function FeedPage() {
+function FeedPage() {
     const searchParams = useSearchParams();
     const authorId = searchParams.get('authorId');
 
@@ -1054,15 +1052,23 @@ export default function FeedPage() {
                             </Link>
                         </Button>
                     </div>
-                    <Suspense fallback={
-                        <div className="flex h-64 w-full items-center justify-center">
-                            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                        </div>
-                    }>
-                        <FeedContent />
-                    </Suspense>
+                    <FeedContent />
                 </main>
             </div>
         </div>
     )
+}
+
+
+export default function FeedPageWrapper() {
+  return (
+    <Suspense fallback={
+      <div className="flex h-screen w-full items-center justify-center bg-background">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="ml-4 text-muted-foreground">Loading Feed...</p>
+      </div>
+    }>
+        <FeedPage />
+    </Suspense>
+  );
 }
