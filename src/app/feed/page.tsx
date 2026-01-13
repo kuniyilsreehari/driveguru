@@ -5,7 +5,7 @@
 import { Suspense, useMemo, useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { collection, query, orderBy, Timestamp, doc, updateDoc, arrayUnion, arrayRemove, serverTimestamp, limit, getDocs, startAfter, QueryDocumentSnapshot, DocumentData, addDoc } from 'firebase/firestore';
+import { collection, query, orderBy, Timestamp, doc, updateDoc, arrayUnion, arrayRemove, serverTimestamp, limit, getDocs, startAfter, QueryDocumentSnapshot, DocumentData, addDoc, where } from 'firebase/firestore';
 import { getStorage, ref as storageRef, uploadString, getDownloadURL } from "firebase/storage";
 import { useFirestore, useCollection, useMemoFirebase, useUser, useDoc, deleteDocumentNonBlocking, addDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
@@ -41,6 +41,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { LikesDialog } from '@/components/likes-dialog';
 import { ImageLightbox } from '@/components/image-lightbox';
+import { useSearchParams } from 'next/navigation';
 
 
 type Post = {
@@ -502,6 +503,7 @@ const PostContentRenderer = ({ content }: { content: string }) => {
 
 function FeedContent() {
     const firestore = useFirestore();
+    const searchParams = useSearchParams();
     const { user, isUserLoading } = useUser();
     const { toast } = useToast();
     const [searchQuery, setSearchQuery] = useState('');
@@ -527,16 +529,28 @@ function FeedContent() {
     const { data: superAdminData, isLoading: isRoleLoading } = useDoc(superAdminDocRef);
     const isSuperAdmin = !!superAdminData;
 
+    const authorIdFilter = searchParams.get('authorId');
+    const authorDocRef = useMemoFirebase(() => {
+        if (!firestore || !authorIdFilter) return null;
+        return doc(firestore, 'users', authorIdFilter);
+    }, [firestore, authorIdFilter]);
+    const { data: authorProfile } = useDoc<UserProfile>(authorDocRef);
+
     useEffect(() => {
         if (!firestore) return;
 
         const fetchInitialPosts = async () => {
             setIsLoadingPosts(true);
-            const firstBatch = query(
-                collection(firestore, 'posts'),
+            const constraints = [
                 orderBy('createdAt', 'desc'),
                 limit(POSTS_PER_PAGE)
-            );
+            ];
+
+            if (authorIdFilter) {
+                constraints.unshift(where('authorId', '==', authorIdFilter));
+            }
+
+            const firstBatch = query(collection(firestore, 'posts'), ...constraints);
             const documentSnapshots = await getDocs(firstBatch);
             
             const newPosts = documentSnapshots.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post));
@@ -549,18 +563,23 @@ function FeedContent() {
         };
 
         fetchInitialPosts();
-    }, [firestore]);
+    }, [firestore, authorIdFilter]);
     
     const loadMorePosts = async () => {
         if (!firestore || !lastVisible || !hasMore) return;
 
         setIsLoadingMore(true);
-        const nextBatch = query(
-            collection(firestore, 'posts'),
+        const constraints = [
             orderBy('createdAt', 'desc'),
             startAfter(lastVisible),
             limit(POSTS_PER_PAGE)
-        );
+        ];
+
+        if (authorIdFilter) {
+            constraints.unshift(where('authorId', '==', authorIdFilter));
+        }
+
+        const nextBatch = query(collection(firestore, 'posts'), ...constraints);
         const documentSnapshots = await getDocs(nextBatch);
         
         const newPosts = documentSnapshots.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post));
@@ -713,12 +732,14 @@ function FeedContent() {
                 <Card>
                     <CardHeader>
                         <CardTitle className="flex items-center justify-center gap-2">The Feed is Empty</CardTitle>
-                        <CardDescription>No posts have been made yet. Be the first!</CardDescription>
+                        <CardDescription>
+                            {authorIdFilter ? "This expert hasn't posted anything yet." : "No posts have been made yet. Be the first!"}
+                        </CardDescription>
                     </CardHeader>
                     <CardContent>
                         <Button asChild>
                             <Link href="/dashboard">
-                                <Search className="mr-2 h-4 w-4" /> Go to Dashboard
+                                <Rss className="mr-2 h-4 w-4" /> Go to Dashboard
                             </Link>
                         </Button>
                     </CardContent>
@@ -891,21 +912,64 @@ function FeedContent() {
     );
 }
 
+function FeedPageHeader() {
+    const searchParams = useSearchParams();
+    const authorId = searchParams.get('authorId');
+    const firestore = useFirestore();
+
+    const authorDocRef = useMemoFirebase(() => {
+        if (!firestore || !authorId) return null;
+        return doc(firestore, 'users', authorId);
+    }, [firestore, authorId]);
+    const { data: author, isLoading } = useDoc<UserProfile>(authorDocRef);
+
+    if (authorId) {
+        return (
+            <div className="flex items-center justify-center gap-3 mb-4">
+                <Rss className="h-10 w-10 text-primary" />
+                <div>
+                     <h1 className="text-4xl sm:text-5xl font-bold">
+                        {isLoading ? "Loading..." : author ? `${author.firstName}'s Posts` : "Expert's Posts"}
+                    </h1>
+                     <Button variant="link" asChild className="p-0 h-auto">
+                        <Link href={`/expert/${authorId}`}>
+                             <ChevronLeft className="mr-1 h-3 w-3"/>
+                             Back to Profile
+                        </Link>
+                     </Button>
+                </div>
+            </div>
+        )
+    }
+
+    return (
+        <>
+            <div className="flex items-center justify-center gap-3 mb-4">
+                <Rss className="h-10 w-10 text-primary" />
+                <h1 className="text-4xl sm:text-5xl font-bold">Public Feed</h1>
+            </div>
+            <p className="text-muted-foreground">Updates from all experts and companies on the platform.</p>
+        </>
+    )
+}
+
 export default function FeedPage() {
+    const searchParams = useSearchParams();
+    const authorId = searchParams.get('authorId');
+
     return (
         <div className="min-h-screen bg-background p-4 sm:p-8">
             <div className="mx-auto max-w-2xl">
                 <header className="pb-8 text-center">
-                     <div className="flex items-center justify-center gap-3 mb-4">
-                        <Rss className="h-10 w-10 text-primary" />
-                        <h1 className="text-4xl sm:text-5xl font-bold">Public Feed</h1>
-                    </div>
-                    <p className="text-muted-foreground">Updates from all experts and companies on the platform.</p>
+                    <FeedPageHeader />
                 </header>
                 <main>
                     <div className="mb-6">
                         <Button variant="outline" asChild>
-                            <Link href="/"><ChevronLeft className="mr-2 h-4 w-4" /> Back to Home</Link>
+                            <Link href={authorId ? `/expert/${authorId}` : "/"}>
+                                <ChevronLeft className="mr-2 h-4 w-4" /> 
+                                {authorId ? "Back to Profile" : "Back to Home"}
+                            </Link>
                         </Button>
                     </div>
                     <Suspense fallback={

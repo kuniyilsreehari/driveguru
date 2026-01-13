@@ -7,7 +7,7 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { doc, arrayUnion, arrayRemove, query, collection, where } from 'firebase/firestore';
 import { useFirestore, useDoc, useMemoFirebase, useUser, updateDocumentNonBlocking } from '@/firebase';
-import { Loader2, Star, ChevronLeft, MapPin, IndianRupee, Briefcase, Calendar, Info, Book, GraduationCap, School, User as UserIcon, UserCheck, XCircle, Crown, Sparkles, LogIn, Lock, Building, FileDown, Home, MessageSquare, PenSquare, Factory, Linkedin, Twitter, Github, Globe, UserPlus, UserMinus, Users, List, Phone, Youtube, Share2 } from 'lucide-react';
+import { Loader2, Star, ChevronLeft, MapPin, IndianRupee, Briefcase, Calendar, Info, Book, GraduationCap, School, User as UserIcon, UserCheck, XCircle, Crown, Sparkles, LogIn, Lock, Building, FileDown, Home, MessageSquare, PenSquare, Factory, Linkedin, Twitter, Github, Globe, UserPlus, UserMinus, Users, List, Phone, Youtube, Share2, Rss } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardFooter } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -255,6 +255,12 @@ function ExpertProfileContent() {
                                 {isFollowing ? 'Unfollow' : 'Follow'}
                             </Button>
                         )}
+                        <Button variant="outline" asChild>
+                           <Link href={`/feed?authorId=${expert.id}`}>
+                                <Rss className="mr-2 h-4 w-4" />
+                                View Posts
+                            </Link>
+                        </Button>
                         <ShareDialog shareDetails={{ type: 'expert-profile', expertId: expert.id, expertName: displayName }}>
                             <Button variant="outline">
                                 <Share2 className="mr-2 h-4 w-4" />
@@ -488,3 +494,4 @@ export default function ExpertProfilePage() {
         </Suspense>
     );
 }
+
