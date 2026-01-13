@@ -225,7 +225,8 @@ service cloud.firestore {
        * Private Notifications (STRICT PRIVACY)
        * --------------------------------------------- */
        match /notifications/{notificationId} {
-         allow read, write, delete: if isOwner(userId);
+         // A user can list, get, create, update, and delete their own notifications.
+         allow list, get, write, delete: if isOwner(userId);
        }
 
       /* ---------------------------------------------
