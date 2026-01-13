@@ -102,12 +102,39 @@ function getInitials(name?: string | null) {
 
 function CommenterInfo({ authorId }: { authorId: string }) {
     const firestore = useFirestore();
+    const { user } = useUser();
+    const { toast } = useToast();
+    
     const commenterDocRef = useMemoFirebase(() => {
         if (!firestore) return null;
         return doc(firestore, 'users', authorId);
     }, [firestore, authorId]);
-    
     const { data: commenter, isLoading } = useDoc<UserProfile>(commenterDocRef);
+
+    const currentUserDocRef = useMemoFirebase(() => {
+        if (!user) return null;
+        return doc(firestore, 'users', user.uid);
+    }, [user, firestore]);
+    const { data: currentUserProfile } = useDoc<UserProfile>(currentUserDocRef);
+
+    const handleToggleFollow = async () => {
+        if (!currentUserDocRef || !commenter) return;
+
+        try {
+            const isFollowing = currentUserProfile?.following?.includes(commenter.id);
+            const updateAction = isFollowing ? arrayRemove(commenter.id) : arrayUnion(commenter.id);
+            await updateDocumentNonBlocking(currentUserDocRef, { following: updateAction });
+            toast({
+                title: isFollowing ? 'Unfollowed' : 'Followed',
+                description: `You are now ${isFollowing ? 'no longer following' : 'following'} ${commenter.firstName} ${commenter.lastName}.`,
+            });
+        } catch (error) {
+            console.error("Failed to toggle follow", error);
+            if ((error as any).name !== 'FirebaseError') {
+                 toast({ variant: 'destructive', title: 'Error', description: 'Could not update your follow status.' });
+            }
+        }
+    }
 
     if (isLoading || !commenter) {
         return (
@@ -124,6 +151,8 @@ function CommenterInfo({ authorId }: { authorId: string }) {
     
     const displayName = `${commenter.firstName || 'Anonymous'} ${commenter.lastName || ''}`.trim();
     const displayInitials = getInitials(displayName);
+    const canFollow = user && user.uid !== commenter.id;
+    const isFollowing = user && currentUserProfile?.following?.includes(commenter.id);
 
     return (
         <div className="flex items-center gap-3">
@@ -134,9 +163,22 @@ function CommenterInfo({ authorId }: { authorId: string }) {
                 </Avatar>
             </Link>
             <div className="flex-1">
-                <Link href={`/expert/${authorId}`} className="hover:underline">
-                    <p className="text-sm font-semibold">{displayName}</p>
-                </Link>
+                <div className="flex items-center gap-2">
+                    <Link href={`/expert/${authorId}`} className="hover:underline">
+                        <p className="text-sm font-semibold">{displayName}</p>
+                    </Link>
+                    {commenter.verified && <UserCheck className="h-4 w-4 text-green-500" />}
+                    {commenter.tier === 'Premier' && <Crown className="h-4 w-4 text-purple-500" />}
+                    {commenter.tier === 'Super Premier' && <Sparkles className="h-4 w-4 text-blue-500" />}
+                     {canFollow && (
+                        <>
+                           <span className="text-muted-foreground/50 text-xs">•</span>
+                           <button onClick={handleToggleFollow} className="text-primary hover:underline font-semibold text-xs">
+                               {isFollowing ? 'Following' : 'Follow'}
+                           </button>
+                       </>
+                   )}
+                </div>
             </div>
         </div>
     );
