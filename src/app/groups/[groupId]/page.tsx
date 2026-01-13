@@ -152,7 +152,6 @@ const PostContentRenderer = ({ content }: { content: string }) => {
                         className="instagram-media instagram-media-rendered" 
                         id="instagram-embed-0" 
                         src={`${postUrl}embed/captioned`} 
-                        allowTransparency={true} 
                         allowFullScreen={true} 
                         frameBorder="0" 
                         height="550" 
