@@ -1,5 +1,4 @@
 
-
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -60,17 +59,12 @@ service cloud.firestore {
             return false;
         }
         
-        // 3. If only 'following' or 'groups' are being changed, allow it.
-        if (changedKeys.hasOnly(['following']) || changedKeys.hasOnly(['groups'])) {
-            return true;
-        }
-        
-        // 4. For any other changes, ensure no protected fields are being modified.
+        // 3. For any other changes, ensure no protected fields are being modified.
         if (changedKeys.hasAny(protectedFields)) {
             return false;
         }
         
-        // 5. If role is being changed, ensure it's not to an admin role
+        // 4. If role is being changed, ensure it's not to an admin role
         if ('role' in incomingData && incomingData.role != resource.data.role) {
             let allowedRoles = ["Freelancer", "Company", "Authorized Pro"];
              if (!(incomingData.role in allowedRoles)) {
@@ -78,7 +72,7 @@ service cloud.firestore {
             }
         }
         
-        // 6. If all checks pass, allow the update.
+        // 5. If all checks pass, allow the update.
         return true;
     }
 
@@ -391,6 +385,9 @@ service cloud.firestore {
   }
 }
     
+    
+
+
     
 
 
