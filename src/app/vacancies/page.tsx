@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { Suspense, useState }from 'react';
@@ -8,7 +9,7 @@ import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Loader2, Briefcase, ChevronLeft, MapPin, Building, Book, Calendar, Phone, Share2, UserCheck, Crown, Sparkles, AlertTriangle, Users, Copy, Mail, UserX } from 'lucide-react';
+import { Loader2, Briefcase, ChevronLeft, MapPin, Building, Book, Calendar, Phone, Share2, UserCheck, Crown, Sparkles, AlertTriangle, Users, Copy, Mail, UserX, FileText } from 'lucide-react';
 import { format } from 'date-fns';
 import {
   Dialog,
@@ -23,6 +24,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { ShareDialog } from '@/components/share-dialog';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion"
 
 
 export type Vacancy = {
@@ -162,6 +169,20 @@ function VacanciesList() {
                             </div>
                             
                             <h3 className="text-2xl font-bold">{vacancy.title}</h3>
+                            
+                            <Accordion type="single" collapsible className="w-full mt-2">
+                                <AccordionItem value="item-1">
+                                    <AccordionTrigger className="text-sm hover:no-underline">
+                                        <div className="flex items-center gap-2 text-muted-foreground">
+                                            <FileText className="h-4 w-4" />
+                                            <span>View Job Description</span>
+                                        </div>
+                                    </AccordionTrigger>
+                                    <AccordionContent>
+                                        <p className="text-sm text-muted-foreground whitespace-pre-wrap">{vacancy.description}</p>
+                                    </AccordionContent>
+                                </AccordionItem>
+                            </Accordion>
 
                             <div className="space-y-3 text-muted-foreground mt-4 text-sm flex-grow">
                                 <div className="flex items-center gap-3"><Building className="h-4 w-4" /> <span>{vacancy.companyName}</span></div>
