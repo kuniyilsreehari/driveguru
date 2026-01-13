@@ -241,17 +241,17 @@
         "id": { "type": "string" },
         "type": {
           "type": "string",
-          "enum": ["comment_reply", "post_like", "new_follower"]
+          "enum": ["comment_reply", "post_like", "new_follower", "group_approval"]
         },
         "message": { "type": "string" },
         "link": { "type": "string", "format": "uri" },
         "read": { "type": "boolean" },
-        "actorId": { "type": "string" },
-        "actorName": { "type": "string" },
-        "actorPhotoUrl": { "type": "string", "format": "uri" },
+        "actorId": { "type": "string", "description": "The ID of the user who performed the action." },
+        "actorName": { "type": "string", "description": "The name of the user who performed the action." },
+        "actorPhotoUrl": { "type": "string", "format": "uri", "description": "The photo URL of the actor." },
         "createdAt": { "type": "string", "format": "date-time" }
       },
-      "required": ["id", "type", "message", "link", "read", "createdAt"]
+      "required": ["id", "type", "message", "link", "read", "actorId", "createdAt"]
     },
     "Company": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -905,3 +905,5 @@
   }
 }
 
+
+    

@@ -225,8 +225,12 @@ service cloud.firestore {
        * Private Notifications (STRICT PRIVACY)
        * --------------------------------------------- */
        match /notifications/{notificationId} {
-         // A user can list, get, create, update, and delete their own notifications.
-         allow list, get, write, delete: if isOwner(userId);
+         // A user can list and read their own notifications.
+         allow get, list: if isOwner(userId);
+         // A signed-in user can create a notification for another user.
+         allow create: if isSignedIn(); 
+         // Only the owner can update (e.g., mark as read) or delete their notifications.
+         allow update, delete: if isOwner(userId);
        }
 
       /* ---------------------------------------------
@@ -301,14 +305,10 @@ service cloud.firestore {
         }
 
         function isChangingOwnMembership(changeType) {
-            let changes = request.resource.data.members.diff(resource.data.members);
-            if (changeType == 'add') {
-                return changes.added().size() == 1 && changes.added()[0] == request.auth.uid && changes.removed().size() == 0;
-            }
-            if (changeType == 'remove') {
-                return changes.removed().size() == 1 && changes.removed()[0] == request.auth.uid && changes.added().size() == 0;
-            }
-            return false;
+            let changes = request.resource.data.diff(resource.data);
+            return changes.affectedKeys().hasOnly(['members']) &&
+                   (changeType == 'add' ? changes.addedKeys().hasOnly(['members.' + request.auth.uid]) : false) ||
+                   (changeType == 'remove' ? changes.removedKeys().hasOnly(['members.' + request.auth.uid]) : false);
         }
 
         function isRequestingToJoin() {
@@ -316,16 +316,11 @@ service cloud.firestore {
             return request.resource.data.diff(resource.data).affectedKeys().hasOnly(['pendingMembers']) &&
                    request.resource.data.pendingMembers == resource.data.pendingMembers.concat([request.auth.uid]);
         }
-
+        
         function isCreatorManagingRequests() {
-            let memberChanges = request.resource.data.members.diff(resource.data.members);
-            let pendingChanges = request.resource.data.pendingMembers.diff(resource.data.pendingMembers);
-            // Creator is adding a member who was previously pending
-            let isApproving = memberChanges.added().size() == 1 && pendingChanges.removed().size() == 1 && memberChanges.added()[0] == pendingChanges.removed()[0];
-            // Creator is just removing a pending member
-            let isDenying = memberChanges.added().size() == 0 && memberChanges.removed().size() == 0 && pendingChanges.added().size() == 0 && pendingChanges.removed().size() > 0;
-            
-            return isGroupCreator() && (isApproving || isDenying);
+            return isGroupCreator() && 
+                   (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['members', 'pendingMembers']) || 
+                    request.resource.data.diff(resource.data).affectedKeys().hasOnly(['pendingMembers']));
         }
         
         // Allow anyone to view a single group's details and list all groups
@@ -397,3 +392,5 @@ service cloud.firestore {
     
     
 
+
+    
