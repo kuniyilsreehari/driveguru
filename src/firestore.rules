@@ -222,6 +222,13 @@ service cloud.firestore {
       allow delete: if isOwner(userId) || isSuperAdmin();
 
       /* ---------------------------------------------
+       * Private Notifications (STRICT PRIVACY)
+       * --------------------------------------------- */
+       match /notifications/{notificationId} {
+         allow read, write, delete: if isOwner(userId);
+       }
+
+      /* ---------------------------------------------
        * Private Location Data (STRICT PRIVACY)
        * --------------------------------------------- */
 
@@ -304,8 +311,9 @@ service cloud.firestore {
         }
 
         function isRequestingToJoin() {
-            let changes = request.resource.data.pendingMembers.diff(resource.data.pendingMembers);
-            return changes.added().size() == 1 && changes.added()[0] == request.auth.uid && changes.removed().size() == 0;
+            // This checks that the ONLY change is adding the current user's ID to the pendingMembers array.
+            return request.resource.data.diff(resource.data).affectedKeys().hasOnly(['pendingMembers']) &&
+                   request.resource.data.pendingMembers == resource.data.pendingMembers.concat([request.auth.uid]);
         }
 
         function isCreatorManagingRequests() {
@@ -387,3 +395,4 @@ service cloud.firestore {
 }
     
     
+

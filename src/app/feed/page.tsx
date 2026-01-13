@@ -140,7 +140,7 @@ function CommenterInfo({ authorId }: { authorId: string }) {
     );
 }
 
-function CommentThread({ comment, postId, allComments, onDelete, postAuthorId }: { comment: Comment, postId: string, allComments: Comment[], onDelete: (commentId: string) => void, postAuthorId: string }) {
+function CommentThread({ comment, postId, allComments, onDelete, postAuthorId, postAuthorName }: { comment: Comment, postId: string, allComments: Comment[], onDelete: (commentId: string) => void, postAuthorId: string, postAuthorName: string }) {
     const { user } = useUser();
     const firestore = useFirestore();
     const { toast } = useToast();
@@ -162,6 +162,13 @@ function CommentThread({ comment, postId, allComments, onDelete, postAuthorId }:
         resolver: zodResolver(commentFormSchema),
         defaultValues: { content: '' },
     });
+    
+    const commentAuthorDocRef = useMemoFirebase(() => {
+        if (!firestore) return null;
+        return doc(firestore, 'users', comment.authorId);
+    }, [firestore, comment.authorId]);
+    
+    const { data: commentAuthor } = useDoc<UserProfile>(commentAuthorDocRef);
 
     async function onSubmit(values: z.infer<typeof commentFormSchema>) {
         if (!user || !firestore) {
@@ -177,6 +184,22 @@ function CommentThread({ comment, postId, allComments, onDelete, postAuthorId }:
                 createdAt: serverTimestamp(),
                 parentId: comment.id,
             });
+
+            // Create notification for the author of the parent comment
+            if (comment.authorId !== user.uid) { // Don't notify yourself
+                const notificationRef = collection(firestore, 'users', comment.authorId, 'notifications');
+                await addDoc(notificationRef, {
+                    type: 'comment_reply',
+                    message: `<b>${user.displayName || 'Someone'}</b> replied to your comment on <b>${postAuthorName}</b>'s post.`,
+                    link: `/feed#${postId}`,
+                    read: false,
+                    actorId: user.uid,
+                    actorName: user.displayName,
+                    actorPhotoUrl: user.photoURL,
+                    createdAt: serverTimestamp(),
+                });
+            }
+
             form.reset();
             setShowReplyForm(false);
         } catch (error) {
@@ -329,7 +352,7 @@ function CommentThread({ comment, postId, allComments, onDelete, postAuthorId }:
                  {replies.length > 0 && (
                     <div className="pt-2 space-y-4">
                         {replies.map(reply => (
-                            <CommentThread key={reply.id} comment={reply} postId={postId} allComments={allComments || []} onDelete={onDelete} postAuthorId={postAuthorId} />
+                            <CommentThread key={reply.id} comment={reply} postId={postId} allComments={allComments || []} onDelete={onDelete} postAuthorId={postAuthorId} postAuthorName={postAuthorName}/>
                         ))}
                     </div>
                 )}
@@ -338,7 +361,7 @@ function CommentThread({ comment, postId, allComments, onDelete, postAuthorId }:
     )
 }
 
-function CommentsSection({ postId, postAuthorId }: { postId: string, postAuthorId: string }) {
+function CommentsSection({ postId, postAuthorId, postAuthorName }: { postId: string, postAuthorId: string, postAuthorName: string }) {
     const firestore = useFirestore();
     const { user, isUserLoading } = useUser();
     const { toast } = useToast();
@@ -453,7 +476,7 @@ function CommentsSection({ postId, postAuthorId }: { postId: string, postAuthorI
             ) : (
                 <div className="space-y-4">
                     {topLevelComments.map(comment => (
-                        <CommentThread key={comment.id} comment={comment} postId={postId} allComments={comments || []} onDelete={openDeleteDialog} postAuthorId={postAuthorId}/>
+                        <CommentThread key={comment.id} comment={comment} postId={postId} allComments={comments || []} onDelete={openDeleteDialog} postAuthorId={postAuthorId} postAuthorName={postAuthorName}/>
                     ))}
                 </div>
             )}
@@ -757,7 +780,7 @@ function PostCard({ post }: { post: Post }) {
                         </Button>
                     </ShareDialog>
                 </div>
-                <CommentsSection postId={post.id} postAuthorId={post.authorId} />
+                <CommentsSection postId={post.id} postAuthorId={post.authorId} postAuthorName={post.authorName} />
             </CardFooter>
              <AlertDialog open={isPostDeleteDialogOpen} onOpenChange={setIsPostDeleteDialogOpen}>
                 <AlertDialogContent>
