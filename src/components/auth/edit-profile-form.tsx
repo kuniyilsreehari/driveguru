@@ -147,9 +147,10 @@ type AppConfig = {
 interface EditProfileFormProps {
     userProfile: ExpertUserProfile;
     onSuccess: () => void;
+    isAdmin?: boolean;
 }
 
-export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps) {
+export function EditProfileForm({ userProfile, onSuccess, isAdmin = false }: EditProfileFormProps) {
   const { toast } = useToast();
   const firestore = useFirestore();
   const auth = useAuth();
@@ -541,7 +542,7 @@ export function EditProfileForm({ userProfile, onSuccess }: EditProfileFormProps
     return 'U';
   }
 
-  const isRoleSet = !!userProfile.role;
+  const isRoleSet = !isAdmin && !!userProfile.role;
 
   return (
     <>

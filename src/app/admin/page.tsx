@@ -1626,7 +1626,7 @@ export default function AdminDashboardPage() {
                                     <div className="relative">
                                         <Button asChild variant="outline" className="w-full" disabled={isImporting}>
                                             <label htmlFor="import-users-csv">
-                                                {isImporting ? <Loader className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
+                                                {isImporting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
                                                 {isImporting ? 'Importing...' : 'Select CSV to Import'}
                                             </label>
                                         </Button>
@@ -1734,7 +1734,8 @@ export default function AdminDashboardPage() {
                 onSuccess={() => {
                     setIsEditDialogOpen(false);
                     setSelectedUser(null);
-                }} 
+                }}
+                isAdmin={true}
             />
           )}
         </DialogContent>
