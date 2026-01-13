@@ -94,6 +94,7 @@ const editGroupSchema = z.object({
 const postFormSchema = z.object({
   title: z.string().min(3, 'Title must be at least 3 characters.').max(100, 'Title cannot exceed 100 characters.'),
   content: z.string().min(2, 'Post must be at least 2 characters.').max(1000, 'Post cannot exceed 1000 characters.'),
+  link: z.string().url().optional().or(z.literal('')),
 });
 
 const commentFormSchema = z.object({
@@ -751,6 +752,7 @@ function GroupFeed({ group }: { group: Group }) {
         defaultValues: {
             title: '',
             content: '',
+            link: '',
         },
         mode: 'onChange',
     });
@@ -765,6 +767,7 @@ function GroupFeed({ group }: { group: Group }) {
             await addDocumentNonBlocking(postsCollectionRef, {
                 title: values.title,
                 content: values.content,
+                link: values.link || '',
                 authorId: user.uid,
                 authorName: `${currentUserProfile.firstName || ''} ${currentUserProfile.lastName || ''}`.trim(),
                 authorPhotoUrl: currentUserProfile.photoUrl || '',

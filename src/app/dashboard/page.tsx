@@ -553,6 +553,7 @@ const ProfilePromptDialog = ({ prompt, isOpen, onOpenChange, userProfile, appCon
 const postFormSchema = z.object({
   title: z.string().min(3, 'Title must be at least 3 characters.').max(100, 'Title cannot exceed 100 characters.'),
   content: z.string().min(2, 'Post must be at least 2 characters.').max(1000, 'Post cannot exceed 1000 characters.'),
+  link: z.string().url().optional().or(z.literal('')),
 });
 
 
@@ -574,7 +575,7 @@ function ExpertDashboardPage() {
 
   const postForm = useForm<z.infer<typeof postFormSchema>>({
     resolver: zodResolver(postFormSchema),
-    defaultValues: { title: '', content: '' },
+    defaultValues: { title: '', content: '', link: '' },
     mode: 'onChange',
   });
 
@@ -815,6 +816,7 @@ function ExpertDashboardPage() {
       await addDocumentNonBlocking(postsCollectionRef, {
         title: values.title,
         content: values.content,
+        link: values.link || '',
         authorId: user.uid,
         authorName: `${userProfile.firstName} ${userProfile.lastName}`,
         authorPhotoUrl: userProfile.photoUrl || '',

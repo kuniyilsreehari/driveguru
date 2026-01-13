@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState } from 'react';
@@ -22,6 +21,7 @@ import { Input } from './ui/input';
 const formSchema = z.object({
   title: z.string().min(3, 'Title must be at least 3 characters.').max(100, 'Title cannot exceed 100 characters.'),
   content: z.string().min(2, 'Post must be at least 2 characters.').max(1000, 'Post cannot exceed 1000 characters.'),
+  link: z.string().url().optional().or(z.literal('')),
 });
 
 interface PostFormProps {
@@ -63,6 +63,22 @@ export function PostForm({ form, onSubmit, isSubmitting }: PostFormProps) {
                   {...field}
                 />
               </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="link"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Image or Video Link (Optional)</FormLabel>
+               <div className="relative">
+                <LinkIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <FormControl>
+                  <Input placeholder="e.g., https://youtube.com/watch?v=..." {...field} className="pl-10" />
+                </FormControl>
+              </div>
               <FormMessage />
             </FormItem>
           )}
