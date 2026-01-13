@@ -47,6 +47,7 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import type { Vacancy } from '@/app/vacancies/page';
+import type { Group } from '@/app/groups/page';
 import Link from 'next/link';
 import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { createPaymentOrder } from '@/ai/flows/payment-flow';
@@ -61,6 +62,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { formatDistanceToNowStrict } from 'date-fns';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { UserList } from '@/components/user-list';
 
 
 type ExpertUserProfile = {
@@ -607,6 +609,12 @@ function ExpertDashboardPage() {
   }, [firestore, userProfile?.referralCode]);
 
   const { data: referredUsers, isLoading: isLoadingReferrals } = useCollection(referralsUsedQuery);
+
+  const userGroupsQuery = useMemoFirebase(() => {
+    if (!firestore || !userProfile?.groups || userProfile.groups.length === 0) return null;
+    return query(collection(firestore, 'groups'), where('__name__', 'in', userProfile.groups));
+  }, [firestore, userProfile?.groups]);
+  const { data: userGroups, isLoading: isLoadingGroups } = useCollection<Group>(userGroupsQuery);
   
   useEffect(() => {
     const tab = searchParams.get('tab');
@@ -845,7 +853,7 @@ function ExpertDashboardPage() {
 
   const profileCompletion = calculateProfileCompletion(userProfile);
   const paymentQueryParam = searchParams.get('payment');
-  const isLoading = isUserLoading || isProfileLoading || isAppConfigLoading || isRoleLoading || isLoadingReferrals;
+  const isLoading = isUserLoading || isProfileLoading || isAppConfigLoading || isRoleLoading || isLoadingReferrals || isLoadingGroups;
   const referralsCount = referredUsers?.length || 0;
   const pointsPerReferral = appConfig?.referralRewardPoints || 0;
   const totalPoints = referralsCount * pointsPerReferral;
@@ -910,8 +918,9 @@ function ExpertDashboardPage() {
         </div>
         
         <Tabs defaultValue="dashboard" value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+                <TabsTrigger value="network">My Network</TabsTrigger>
                 <TabsTrigger value="feed">Feed</TabsTrigger>
                 <TabsTrigger value="plan">My Plan</TabsTrigger>
             </TabsList>
@@ -1148,6 +1157,47 @@ function ExpertDashboardPage() {
                 <PeopleToFollow currentUserProfile={userProfile} />
                 
                 {userProfile.role === 'Company' && <CompanyVacancies userProfile={userProfile} />}
+            </TabsContent>
+             <TabsContent value="network" className="mt-6">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>My Network</CardTitle>
+                        <CardDescription>Manage your groups and connections.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <Tabs defaultValue="groups" className="w-full">
+                            <TabsList className="grid w-full grid-cols-3">
+                                <TabsTrigger value="groups">My Groups</TabsTrigger>
+                                <TabsTrigger value="followers">Followers</TabsTrigger>
+                                <TabsTrigger value="following">Following</TabsTrigger>
+                            </TabsList>
+                            <TabsContent value="groups" className="mt-4">
+                               {isLoadingGroups ? <Loader2 className="mx-auto my-4 h-6 w-6 animate-spin" /> : userGroups && userGroups.length > 0 ? (
+                                    <div className="space-y-2">
+                                        {userGroups.map(group => (
+                                            <Link key={group.id} href={`/groups/${group.id}`} className="block p-3 border rounded-lg hover:bg-accent">
+                                                <p className="font-semibold">{group.name}</p>
+                                                <p className="text-xs text-muted-foreground">{group.members.length} {group.members.length === 1 ? 'member' : 'members'}</p>
+                                            </Link>
+                                        ))}
+                                    </div>
+                               ) : (
+                                    <p className="text-center text-sm text-muted-foreground p-4">You haven&apos;t joined any groups yet.</p>
+                               )}
+                            </TabsContent>
+                            <TabsContent value="followers" className="mt-4">
+                                <UserList userIdsQuery={query(collection(firestore!, 'users'), where('following', 'array-contains', user.uid))}
+                                emptyStateMessage="You don't have any followers yet."
+                                />
+                            </TabsContent>
+                            <TabsContent value="following" className="mt-4">
+                               <UserList userIds={userProfile.following || []}
+                                emptyStateMessage="You are not following anyone yet."
+                                />
+                            </TabsContent>
+                        </Tabs>
+                    </CardContent>
+                </Card>
             </TabsContent>
             <TabsContent value="feed" className="mt-6">
                  <Card>
