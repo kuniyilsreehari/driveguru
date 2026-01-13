@@ -503,7 +503,6 @@ const PostContentRenderer = ({ content }: { content: string }) => {
                         allowFullScreen
                     ></iframe>
                 </div>
-                <a href={youtubeMatch[0]} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline break-all">{youtubeMatch[0]}</a>
                 <span>{parts[1]}</span>
             </div>
         );
@@ -530,7 +529,6 @@ const PostContentRenderer = ({ content }: { content: string }) => {
                         style={{ background: 'white', border: '1px solid rgb(219, 219, 219)', borderRadius: '3px', display: 'block', margin: '0px', maxWidth: '540px', minWidth: '326px', padding: '0px', width: 'calc(100% - 2px)' }}>
                     </iframe>
                 </div>
-                 <a href={postUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline break-all">{postUrl}</a>
                 <span>{parts[1]}</span>
             </div>
         )
