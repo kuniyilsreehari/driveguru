@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import { Suspense, useMemo, useState } from 'react';
@@ -60,8 +58,6 @@ import { UserList } from '@/components/user-list';
 type GroupPost = {
     id: string;
     authorId: string;
-    authorName: string;
-    authorPhotoUrl?: string;
     title?: string;
     content: string;
     link?: string;
@@ -108,17 +104,11 @@ const commentFormSchema = z.object({
 });
 
 
-function getInitials(name?: string | null) {
-    if (!name) return 'AN';
-    const names = name.trim().split(' ').filter(Boolean);
-    if (names.length > 1 && names[names.length - 1]) {
-        return `${names[0].charAt(0)}${names[names.length - 1].charAt(0)}`.toUpperCase();
-    }
-    if (names[0] && names[0].length > 1) {
-        return names[0].substring(0, 2).toUpperCase();
-    }
-    return names[0] ? names[0].charAt(0).toUpperCase() : 'U';
+function getInitials(firstName?: string, lastName?: string) {
+    if (!firstName && !lastName) return 'U';
+    return `${firstName?.charAt(0) || ''}${lastName?.charAt(0) || ''}`.toUpperCase();
 }
+
 
 const PostContentRenderer = ({ content }: { content: string }) => {
     const youtubeRegex = /(https?:\/\/(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11}))/;
@@ -229,7 +219,7 @@ function CommenterInfo({ authorId }: { authorId: string }) {
     }
     
     const displayName = `${commenter.firstName || 'Anonymous'} ${commenter.lastName || ''}`.trim();
-    const displayInitials = getInitials(displayName);
+    const displayInitials = getInitials(commenter.firstName, commenter.lastName);
     const canFollow = user && user.uid !== commenter.id;
     const isFollowing = user && currentUserProfile?.following?.includes(commenter.id);
 
@@ -871,8 +861,7 @@ function GroupFeed({ group }: { group: Group }) {
 
         const lowercasedQuery = searchQuery.toLowerCase();
         return posts.filter(post => 
-            post.content.toLowerCase().includes(lowercasedQuery) ||
-            post.authorName.toLowerCase().includes(lowercasedQuery)
+            post.content.toLowerCase().includes(lowercasedQuery)
         );
     }, [posts, searchQuery]);
 
@@ -898,8 +887,6 @@ function GroupFeed({ group }: { group: Group }) {
                 content: values.content,
                 link: values.link || '',
                 authorId: user.uid,
-                authorName: `${currentUserProfile.firstName || ''} ${currentUserProfile.lastName || ''}`.trim(),
-                authorPhotoUrl: currentUserProfile.photoUrl || '',
                 createdAt: serverTimestamp(),
                 likes: [],
                 groupId: group.id,
@@ -1087,22 +1074,7 @@ function GroupFeed({ group }: { group: Group }) {
                                     <Card key={post.id}>
                                         <CardHeader>
                                             <div className="flex items-start justify-between">
-                                                <div className="flex items-center gap-3">
-                                                    <Link href={`/expert/${post.authorId}`}>
-                                                        <Avatar>
-                                                            <AvatarImage src={post.authorPhotoUrl} />
-                                                            <AvatarFallback>{getInitials(post.authorName)}</AvatarFallback>
-                                                        </Avatar>
-                                                    </Link>
-                                                    <div>
-                                                        <Link href={`/expert/${post.authorId}`} className="hover:underline">
-                                                            <p className="font-semibold">{post.authorName}</p>
-                                                        </Link>
-                                                        <CardDescription className="text-xs">
-                                                            {post.createdAt ? `${formatDistanceToNowStrict(post.createdAt.toDate())} ago` : '...'}
-                                                        </CardDescription>
-                                                    </div>
-                                                </div>
+                                                <CommenterInfo authorId={post.authorId} />
                                                 {(canEdit || canDelete) && (
                                                     <DropdownMenu>
                                                         <DropdownMenuTrigger asChild>
@@ -1150,11 +1122,11 @@ function GroupFeed({ group }: { group: Group }) {
                                             )}
 
                                             {post.imageUrl && !isEditingThisPost && (
-                                                <ImageLightbox imageUrl={post.imageUrl} altText={`Post image from ${post.authorName}`}>
+                                                <ImageLightbox imageUrl={post.imageUrl} altText={`Post image from ${currentUserProfile?.firstName}`}>
                                                     <div className="relative rounded-lg overflow-hidden border aspect-video cursor-pointer">
                                                         <Image
                                                             src={post.imageUrl}
-                                                            alt={`Post image from ${post.authorName}`}
+                                                            alt={`Post image from ${currentUserProfile?.firstName}`}
                                                             fill
                                                             className="object-cover"
                                                         />
@@ -1232,7 +1204,7 @@ function GroupFeed({ group }: { group: Group }) {
                                         <div className="flex items-center gap-3">
                                             <Avatar>
                                                 <AvatarImage src={requestingUser.photoUrl} />
-                                                <AvatarFallback>{getInitials(`${requestingUser.firstName} ${requestingUser.lastName}`)}</AvatarFallback>
+                                                <AvatarFallback>{getInitials(requestingUser.firstName, requestingUser.lastName)}</AvatarFallback>
                                             </Avatar>
                                             <div>
                                                 <p className="font-semibold">{requestingUser.firstName} {requestingUser.lastName}</p>

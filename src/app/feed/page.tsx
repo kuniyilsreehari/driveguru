@@ -47,8 +47,6 @@ import { Badge } from '@/components/ui/badge';
 type Post = {
     id: string;
     authorId: string;
-    authorName: string;
-    authorPhotoUrl?: string;
     title?: string;
     content: string;
     link?: string;
@@ -88,17 +86,11 @@ const commentFormSchema = z.object({
   content: z.string().min(1, 'Comment cannot be empty.'),
 });
 
-function getInitials(name?: string | null) {
-    if (!name) return 'AN';
-    const names = name.trim().split(' ').filter(Boolean);
-    if (names.length > 1 && names[names.length - 1]) {
-        return `${names[0].charAt(0)}${names[names.length - 1].charAt(0)}`.toUpperCase();
-    }
-    if (names[0] && names[0].length > 1) {
-        return names[0].substring(0, 2).toUpperCase();
-    }
-    return names[0] ? names[0].charAt(0).toUpperCase() : 'U';
+function getInitials(firstName?: string, lastName?: string) {
+    if (!firstName && !lastName) return 'U';
+    return `${firstName?.charAt(0) || ''}${lastName?.charAt(0) || ''}`.toUpperCase();
 }
+
 
 function CommenterInfo({ authorId }: { authorId: string }) {
     const firestore = useFirestore();
@@ -150,7 +142,7 @@ function CommenterInfo({ authorId }: { authorId: string }) {
     }
     
     const displayName = `${commenter.firstName || 'Anonymous'} ${commenter.lastName || ''}`.trim();
-    const displayInitials = getInitials(displayName);
+    const displayInitials = getInitials(commenter.firstName, commenter.lastName);
     const canFollow = user && user.uid !== commenter.id;
     const isFollowing = user && currentUserProfile?.following?.includes(commenter.id);
 
@@ -184,7 +176,7 @@ function CommenterInfo({ authorId }: { authorId: string }) {
     );
 }
 
-function CommentThread({ comment, postId, allComments, onDelete, postAuthorId, postAuthorName }: { comment: Comment, postId: string, allComments: Comment[], onDelete: (commentId: string) => void, postAuthorId: string, postAuthorName: string }) {
+function CommentThread({ comment, postId, allComments, onDelete, postAuthorId }: { comment: Comment, postId: string, allComments: Comment[], onDelete: (commentId: string) => void, postAuthorId: string }) {
     const { user } = useUser();
     const firestore = useFirestore();
     const { toast } = useToast();
@@ -207,13 +199,6 @@ function CommentThread({ comment, postId, allComments, onDelete, postAuthorId, p
         defaultValues: { content: '' },
     });
     
-    const commentAuthorDocRef = useMemoFirebase(() => {
-        if (!firestore) return null;
-        return doc(firestore, 'users', comment.authorId);
-    }, [firestore, comment.authorId]);
-    
-    const { data: commentAuthor } = useDoc<UserProfile>(commentAuthorDocRef);
-
     async function onSubmit(values: z.infer<typeof commentFormSchema>) {
         if (!user || !firestore) {
             toast({ variant: 'destructive', title: 'You must be logged in to comment.' });
@@ -373,7 +358,7 @@ function CommentThread({ comment, postId, allComments, onDelete, postAuthorId, p
                  {replies.length > 0 && (
                     <div className="pt-2 space-y-4">
                         {replies.map(reply => (
-                            <CommentThread key={reply.id} comment={reply} postId={postId} allComments={allComments || []} onDelete={onDelete} postAuthorId={postAuthorId} postAuthorName={postAuthorName}/>
+                            <CommentThread key={reply.id} comment={reply} postId={postId} allComments={allComments || []} onDelete={onDelete} postAuthorId={postAuthorId}/>
                         ))}
                     </div>
                 )}
@@ -382,7 +367,7 @@ function CommentThread({ comment, postId, allComments, onDelete, postAuthorId, p
     )
 }
 
-function CommentsSection({ postId, postAuthorId, postAuthorName }: { postId: string, postAuthorId: string, postAuthorName: string }) {
+function CommentsSection({ postId, postAuthorId }: { postId: string, postAuthorId: string }) {
     const firestore = useFirestore();
     const { user, isUserLoading } = useUser();
     const { toast } = useToast();
@@ -497,7 +482,7 @@ function CommentsSection({ postId, postAuthorId, postAuthorName }: { postId: str
             ) : (
                 <div className="space-y-4">
                     {topLevelComments.map(comment => (
-                        <CommentThread key={comment.id} comment={comment} postId={postId} allComments={comments || []} onDelete={openDeleteDialog} postAuthorId={postAuthorId} postAuthorName={postAuthorName}/>
+                        <CommentThread key={comment.id} comment={comment} postId={postId} allComments={comments || []} onDelete={openDeleteDialog} postAuthorId={postAuthorId}/>
                     ))}
                 </div>
             )}
@@ -693,7 +678,7 @@ function PostCard({ post }: { post: Post }) {
             await updateDocumentNonBlocking(currentUserDocRef, { following: updateAction });
             toast({
                 title: isFollowing ? 'Unfollowed' : 'Followed',
-                description: `You are now ${isFollowing ? 'no longer following' : 'following'} ${post.authorName}.`,
+                description: `You are now ${isFollowing ? 'no longer following' : 'following'} ${author.firstName} ${author.lastName}.`,
             });
         } catch (error) {
             console.error("Failed to toggle follow", error);
@@ -720,14 +705,14 @@ function PostCard({ post }: { post: Post }) {
                     <div className="flex items-center gap-3">
                         <Link href={`/expert/${post.authorId}`}>
                             <Avatar>
-                                <AvatarImage src={post.authorPhotoUrl} />
-                                <AvatarFallback>{getInitials(post.authorName)}</AvatarFallback>
+                                <AvatarImage src={author?.photoUrl} />
+                                <AvatarFallback>{getInitials(author?.firstName, author?.lastName)}</AvatarFallback>
                             </Avatar>
                         </Link>
                         <div>
                             <div className="flex items-center gap-2">
                                 <Link href={`/expert/${post.authorId}`} className="hover:underline">
-                                    <p className="font-semibold">{post.authorName}</p>
+                                    <p className="font-semibold">{author?.firstName} {author?.lastName}</p>
                                 </Link>
                                 {isAuthorLoading ? <Loader2 className="h-3 w-3 animate-spin"/> : <>
                                     {author?.verified && <UserCheck className="h-4 w-4 text-green-500"/>}
@@ -806,11 +791,11 @@ function PostCard({ post }: { post: Post }) {
                 )}
 
                 {post.imageUrl && !isEditingThisPost && (
-                    <ImageLightbox imageUrl={post.imageUrl} altText={`Post image from ${post.authorName}`}>
+                    <ImageLightbox imageUrl={post.imageUrl} altText={`Post image from ${author?.firstName}`}>
                         <div className="relative rounded-lg overflow-hidden border aspect-video cursor-pointer">
                             <Image
                                 src={post.imageUrl}
-                                alt={`Post image from ${post.authorName}`}
+                                alt={`Post image from ${author?.firstName}`}
                                 fill
                                 className="object-cover"
                             />
@@ -820,9 +805,9 @@ function PostCard({ post }: { post: Post }) {
             </CardContent>
             <CardFooter className="flex-col items-start">
                 <div className="flex items-center gap-2 w-full">
-                    <Button variant="ghost" size="sm" onClick={() => handleLike(post)} className={cn("text-muted-foreground", hasLiked && "text-red-500")}>
+                    <Button variant="ghost" size="sm" onClick={() => handleLike(post)} className={cn("text-muted-foreground hover:text-foreground", hasLiked && "text-red-500")}>
                         <Heart className={cn("mr-2 h-4 w-4", hasLiked && "fill-red-500")} />
-                        Like 
+                        Like
                         {canViewLikes && (
                             <LikesDialog userIds={post.likes!}>
                                 <span className="text-xs text-muted-foreground hover:underline ml-1">({post.likes?.length})</span>
@@ -830,14 +815,14 @@ function PostCard({ post }: { post: Post }) {
                         )}
                     </Button>
 
-                    <ShareDialog shareDetails={{ type: 'expert-profile', expertId: post.authorId, expertName: post.authorName }}>
+                    <ShareDialog shareDetails={{ type: 'expert-profile', expertId: post.authorId, expertName: `${author?.firstName} ${author?.lastName}` }}>
                         <Button variant="ghost" size="sm">
                             <Share2 className="mr-2 h-4 w-4" />
                             Share
                         </Button>
                     </ShareDialog>
                 </div>
-                <CommentsSection postId={post.id} postAuthorId={post.authorId} postAuthorName={post.authorName} />
+                <CommentsSection postId={post.id} postAuthorId={post.authorId} />
             </CardFooter>
              <AlertDialog open={isPostDeleteDialogOpen} onOpenChange={setIsPostDeleteDialogOpen}>
                 <AlertDialogContent>
@@ -872,11 +857,6 @@ function FeedContent() {
     const [hasMore, setHasMore] = useState(true);
 
     const authorIdFilter = searchParams.get('authorId');
-    const authorDocRef = useMemoFirebase(() => {
-        if (!firestore || !authorIdFilter) return null;
-        return doc(firestore, 'users', authorIdFilter);
-    }, [firestore, authorIdFilter]);
-    useDoc<UserProfile>(authorDocRef);
 
     useEffect(() => {
         if (!firestore) return;
@@ -942,12 +922,13 @@ function FeedContent() {
 
     const filteredPosts = useMemo(() => {
         if (!posts) return [];
+        // This filtering is now client-side on the fetched posts, so we can't filter by author name directly unless we fetch it for all posts.
+        // For simplicity, we will only filter by content here.
         if (!searchQuery) return posts;
 
         const lowercasedQuery = searchQuery.toLowerCase();
         return posts.filter(post => 
-            post.content.toLowerCase().includes(lowercasedQuery) ||
-            post.authorName.toLowerCase().includes(lowercasedQuery)
+            post.content.toLowerCase().includes(lowercasedQuery)
         );
     }, [posts, searchQuery]);
     
@@ -990,7 +971,7 @@ function FeedContent() {
                 <div className="relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
-                        placeholder="Search feed by content or author..."
+                        placeholder="Search feed by content..."
                         className="pl-10"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
@@ -1074,7 +1055,6 @@ function FeedPage() {
         </div>
     )
 }
-
 
 export default function FeedPageWrapper() {
   return (
