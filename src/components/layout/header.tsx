@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { User as UserIcon, LogOut, LayoutDashboard, MessageSquare, Home, Award, Briefcase, Moon, Sun, Menu, Download, Info, Rss, Users } from 'lucide-react';
+import { User as UserIcon, LogOut, LayoutDashboard, MessageSquare, Home, Award, Briefcase, Moon, Sun, Menu, Download, Info, Rss, Users, BookOpen } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useTheme } from 'next-themes';
@@ -151,9 +151,9 @@ export function Header() {
                 </Link>
               </Button>
                <Button asChild variant="ghost">
-                <Link href="/welcome">
-                  <Info className="mr-2 h-4 w-4" />
-                  Welcome
+                <Link href="/guides">
+                  <BookOpen className="mr-2 h-4 w-4" />
+                  Guides
                 </Link>
               </Button>
               <div className="h-8 w-20" />
@@ -218,8 +218,8 @@ export function Header() {
                         </Link>
                     </Button>
                      <Button asChild variant="ghost" className="justify-start" onClick={() => setIsMobileMenuOpen(false)}>
-                        <Link href="/welcome">
-                            <Info className="mr-2 h-4 w-4" /> Welcome
+                        <Link href="/guides">
+                            <BookOpen className="mr-2 h-4 w-4" /> Guides
                         </Link>
                     </Button>
                     {installPrompt && (
@@ -269,9 +269,9 @@ export function Header() {
                 </Link>
             </Button>
             <Button asChild variant="ghost">
-                <Link href="/welcome">
-                  <Info className="mr-2 h-4 w-4" />
-                  Welcome
+                <Link href="/guides">
+                  <BookOpen className="mr-2 h-4 w-4" />
+                  Guides
                 </Link>
               </Button>
              {installPrompt && (
