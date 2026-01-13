@@ -6,7 +6,7 @@ import { Suspense, useMemo, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useParams } from 'next/navigation';
-import { collection, query, orderBy, Timestamp, doc, updateDoc, arrayUnion, arrayRemove, serverTimestamp, getDocs, limit, startAfter, QueryDocumentSnapshot, DocumentData, addDoc } from 'firebase/firestore';
+import { collection, query, orderBy, Timestamp, doc, updateDoc, arrayUnion, arrayRemove, serverTimestamp, getDocs, limit, startAfter, QueryDocumentSnapshot, DocumentData, addDoc, where } from 'firebase/firestore';
 import { getStorage, ref as storageRef, uploadString, getDownloadURL } from "firebase/storage";
 import { useFirestore, useDoc, useCollection, useMemoFirebase, useUser, deleteDocumentNonBlocking, addDocumentNonBlocking, updateDocumentNonBlocking, setDocumentNonBlocking } from '@/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
@@ -561,6 +561,8 @@ function GroupHeader({ group, onMembershipChange }: { group: Group, onMembership
 
     const isMember = user ? group.members.includes(user.uid) : false;
     const isCreator = user ? group.creatorId === user.uid : false;
+    const hasRequested = user ? group.pendingMembers?.includes(user.uid) : false;
+
     
     const form = useForm<z.infer<typeof editGroupSchema>>({
         resolver: zodResolver(editGroupSchema),
@@ -581,16 +583,15 @@ function GroupHeader({ group, onMembershipChange }: { group: Group, onMembership
         const userDocRef = doc(firestore, 'users', user.uid);
         
         try {
-            let groupUpdate: any;
             let toastTitle: string = '';
             let toastDescription: string = '';
 
             if (group.privacy === 'public') {
-                const groupUpdateAction = isMember ? arrayRemove(user.uid) : arrayUnion(user.uid);
-                const userUpdateAction = isMember ? arrayRemove(group.id) : arrayUnion(group.id);
+                const groupMembersUpdate = isMember ? arrayRemove(user.uid) : arrayUnion(user.uid);
+                const userGroupsUpdate = isMember ? arrayRemove(group.id) : arrayUnion(group.id);
                 await Promise.all([
-                    updateDoc(groupDocRef, { members: groupUpdateAction }),
-                    updateDoc(userDocRef, { groups: userUpdateAction })
+                    updateDoc(groupDocRef, { members: groupMembersUpdate }),
+                    updateDoc(userDocRef, { groups: userGroupsUpdate })
                 ]);
                 toastTitle = isMember ? 'Left Group' : 'Joined Group';
                 toastDescription = `You are now ${isMember ? 'no longer a member of' : 'a member of'} ${group.name}.`
@@ -601,7 +602,7 @@ function GroupHeader({ group, onMembershipChange }: { group: Group, onMembership
                         updateDoc(userDocRef, { groups: arrayRemove(group.id) })
                     ]);
                     toastTitle = 'Left Group';
-                } else if (group.pendingMembers?.includes(user.uid)) { // Cancel request
+                } else if (hasRequested) { // Cancel request
                     await updateDoc(groupDocRef, { pendingMembers: arrayRemove(user.uid) });
                     toastTitle = 'Join Request Cancelled';
                 } else { // Request to join
@@ -612,7 +613,7 @@ function GroupHeader({ group, onMembershipChange }: { group: Group, onMembership
             }
 
             toast({ title: toastTitle, description: toastDescription });
-            onMembershipChange();
+            onMembershipChange(); // Force re-fetch of group data
         } catch (error) {
             console.error("Error toggling group membership:", error);
             toast({ variant: 'destructive', title: 'Error', description: 'Could not update your membership.' });
@@ -705,9 +706,9 @@ function GroupHeader({ group, onMembershipChange }: { group: Group, onMembership
                             </Dialog>
                         )}
                         {user && !isCreator && (
-                             <Button onClick={handleToggleMembership} disabled={isSubmitting || (group.privacy === 'private' && group.pendingMembers?.includes(user.uid))}>
+                             <Button onClick={handleToggleMembership} disabled={isSubmitting || hasRequested}>
                                {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : isMember ? <UserMinus className="mr-2 h-4 w-4"/> : <UserPlus className="mr-2 h-4 w-4"/> }
-                               {isMember ? 'Leave Group' : (group.privacy === 'private' ? (group.pendingMembers?.includes(user.uid) ? 'Request Sent' : 'Request to Join') : 'Join Group')}
+                               {isMember ? 'Leave Group' : (group.privacy === 'private' ? (hasRequested ? 'Request Sent' : 'Request to Join') : 'Join Group')}
                             </Button>
                         )}
                     </div>
@@ -723,7 +724,7 @@ function GroupHeader({ group, onMembershipChange }: { group: Group, onMembership
     );
 }
 
-function GroupFeed({ group }: { group: Group }) {
+function GroupFeed({ group, onMembershipChange }: { group: Group, onMembershipChange: () => void }) {
     const firestore = useFirestore();
     const { user, isUserLoading } = useUser();
     const { toast } = useToast();
@@ -900,6 +901,7 @@ function GroupFeed({ group }: { group: Group }) {
                 });
                 toast({ title: 'Request Denied' });
             }
+            onMembershipChange();
         } catch (error) {
             console.error('Error managing request:', error);
             toast({ variant: 'destructive', title: 'Action Failed' });
@@ -1161,7 +1163,7 @@ function GroupPageContent() {
     return (
         <div className="space-y-8">
             <GroupHeader group={group} onMembershipChange={mutate} />
-            <GroupFeed group={group} />
+            <GroupFeed group={group} onMembershipChange={mutate} />
         </div>
     )
 }
