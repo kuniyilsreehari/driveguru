@@ -283,7 +283,6 @@ service cloud.firestore {
             return isSignedIn() && resource.data.creatorId == request.auth.uid;
         }
 
-        // Use a get() call to check membership for sub-collection reads
         function isGroupMember() {
             if (!isSignedIn()) {
                 return false;
@@ -293,13 +292,11 @@ service cloud.firestore {
         }
         
         function isChangingOwnMembership() {
-          // Check if the only thing changing is the current user being added or removed.
-          let addedMembers = request.resource.data.members.removeAll(resource.data.members);
-          let removedMembers = resource.data.members.removeAll(request.resource.data.members);
-          
-          return (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['members'])) &&
-                 ((addedMembers.size() == 1 && addedMembers[0] == request.auth.uid) ||
-                  (removedMembers.size() == 1 && removedMembers[0] == request.auth.uid));
+          let added = request.resource.data.members.removeAll(resource.data.members);
+          let removed = resource.data.members.removeAll(request.resource.data.members);
+          return request.resource.data.diff(resource.data).affectedKeys().hasOnly(['members']) &&
+                 ((added.size() == 1 && added[0] == request.auth.uid) ||
+                  (removed.size() == 1 && removed[0] == request.auth.uid));
         }
 
         function isRequestingToJoin() {
@@ -322,15 +319,14 @@ service cloud.firestore {
         allow create: if isSignedIn() && requestData().creatorId == request.auth.uid && request.auth.uid in requestData().members;
         
         allow update: if isSuperAdmin() || 
-                       (isGroupCreator() && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['members', 'pendingMembers'])) || // Creator can edit details
-                       (isSignedIn() && resource.data.privacy == 'public' && isChangingOwnMembership()) || // Public group join/leave
-                       (isSignedIn() && resource.data.privacy == 'private' && isRequestingToJoin()) || // Private group request
-                       isCreatorManagingRequests(); // Creator manages private group requests
+                       (isGroupCreator() && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['members', 'pendingMembers'])) ||
+                       (isSignedIn() && resource.data.privacy == 'public' && isChangingOwnMembership()) ||
+                       (isSignedIn() && resource.data.privacy == 'private' && isRequestingToJoin()) || 
+                       isCreatorManagingRequests();
                        
         allow delete: if isSuperAdmin() || isGroupCreator();
 
         match /posts/{postId} {
-            // Only group members can read or list posts within the group
             allow read, list: if isGroupMember(); 
             allow create: if isGroupMember() && request.resource.data.authorId == request.auth.uid;
             allow update: if isSuperAdmin() ||

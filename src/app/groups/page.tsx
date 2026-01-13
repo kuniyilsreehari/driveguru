@@ -1,10 +1,11 @@
 
+
 'use client';
 
 import { Suspense, useState, useMemo } from 'react';
 import Link from 'next/link';
 import { collection, query, orderBy, serverTimestamp, doc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
-import { useFirestore, useCollection, useMemoFirebase, useUser, addDocumentNonBlocking, useDoc } from '@/firebase';
+import { useFirestore, useCollection, useMemoFirebase, useUser, addDocumentNonBlocking, useDoc, updateDocumentNonBlocking } from '@/firebase';
 import { Button } from '@/components/ui/button';
 import { Loader2, ChevronLeft, Users, PlusCircle, ArrowRight, Search, Hash, UserPlus, UserMinus, LogIn, Lock, Globe } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -229,38 +230,32 @@ function GroupsList() {
         const groupDocRef = doc(firestore, 'groups', group.id);
         const userDocRef = doc(firestore, 'users', user.uid);
         const isMember = userProfile?.groups?.includes(group.id);
-        const hasRequested = group.pendingMembers?.includes(user.uid);
+        const hasRequested = group.pendingMembers?.includes(user.uid || '');
         
         try {
             if (group.privacy === 'public') {
-                const groupUpdateAction = isMember ? arrayRemove(user.uid) : arrayUnion(user.uid);
-                const userUpdateAction = isMember ? arrayRemove(group.id) : arrayUnion(group.id);
-                await Promise.all([
-                    updateDoc(groupDocRef, { members: groupUpdateAction }),
-                    updateDoc(userDocRef, { groups: userUpdateAction })
-                ]);
+                const updateAction = isMember ? arrayRemove(user.uid) : arrayUnion(user.uid);
+                await updateDocumentNonBlocking(groupDocRef, { members: updateAction });
                  toast({
                     title: isMember ? 'Left Group' : 'Joined Group',
                     description: `You are now ${isMember ? 'no longer a member of' : 'a member of'} ${group.name}.`,
                 });
             } else { // Private group
                 if (isMember) { // Leaving
-                    await Promise.all([
-                        updateDoc(groupDocRef, { members: arrayRemove(user.uid) }),
-                        updateDoc(userDocRef, { groups: arrayRemove(group.id) })
-                    ]);
+                    await updateDocumentNonBlocking(groupDocRef, { members: arrayRemove(user.uid) });
                     toast({ title: 'Left Group' });
                 } else if (hasRequested) { // Cancel request
-                    await updateDoc(groupDocRef, { pendingMembers: arrayRemove(user.uid) });
+                    await updateDocumentNonBlocking(groupDocRef, { pendingMembers: arrayRemove(user.uid) });
                     toast({ title: 'Join Request Cancelled' });
                 } else { // Request to join
-                    await updateDoc(groupDocRef, { pendingMembers: arrayUnion(user.uid) });
+                    await updateDocumentNonBlocking(groupDocRef, { pendingMembers: arrayUnion(user.uid) });
                     toast({ title: 'Join Request Sent', description: 'The group owner has been notified.' });
                 }
             }
         } catch (error) {
-            console.error("Error toggling group membership:", error);
-            toast({ variant: 'destructive', title: 'Error', description: 'Could not update your membership.' });
+            if ((error as any).name !== 'FirebaseError') {
+                toast({ variant: 'destructive', title: 'Error', description: 'Could not update your membership.' });
+            }
         } finally {
             setIsSubmitting(null);
         }
