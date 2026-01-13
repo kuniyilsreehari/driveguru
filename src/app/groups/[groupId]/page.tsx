@@ -13,7 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, ChevronLeft, Users, Rss, UserPlus, UserMinus, Hash, Edit, Send, MoreHorizontal, Trash2, Pen, Heart, Share2, LogIn, MessageSquareReply, MessageSquare, Upload, Image as ImageIcon, X, Search } from 'lucide-react';
+import { Loader2, ChevronLeft, Users, Rss, UserPlus, UserMinus, Hash, Edit, Send, MoreHorizontal, Trash2, Pen, Heart, Share2, LogIn, MessageSquareReply, MessageSquare, Upload, Image as ImageIcon, X, Search, Check, Ban } from 'lucide-react';
 import { formatDistanceToNowStrict } from 'date-fns';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
@@ -53,6 +53,7 @@ import { PostForm } from '@/components/post-form';
 import { LikesDialog } from '@/components/likes-dialog';
 import { ImageLightbox } from '@/components/image-lightbox';
 import { ShareDialog } from '@/components/share-dialog';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 
 type GroupPost = {
     id: string;
@@ -580,18 +581,37 @@ function GroupHeader({ group, onMembershipChange }: { group: Group, onMembership
         const userDocRef = doc(firestore, 'users', user.uid);
         
         try {
-            const groupUpdateAction = isMember ? arrayRemove(user.uid) : arrayUnion(user.uid);
-            const userUpdateAction = isMember ? arrayRemove(group.id) : arrayUnion(group.id);
+            let groupUpdate: any;
+            let toastTitle: string = '';
+            let toastDescription: string = '';
 
-            await Promise.all([
-                updateDoc(groupDocRef, { members: groupUpdateAction }),
-                updateDoc(userDocRef, { groups: userUpdateAction })
-            ]);
-            
-            toast({
-                title: isMember ? 'Left Group' : 'Joined Group',
-                description: `You are now ${isMember ? 'no longer' : ''} a member of ${group.name}.`,
-            });
+            if (group.privacy === 'public') {
+                const groupUpdateAction = isMember ? arrayRemove(user.uid) : arrayUnion(user.uid);
+                const userUpdateAction = isMember ? arrayRemove(group.id) : arrayUnion(group.id);
+                await Promise.all([
+                    updateDoc(groupDocRef, { members: groupUpdateAction }),
+                    updateDoc(userDocRef, { groups: userUpdateAction })
+                ]);
+                toastTitle = isMember ? 'Left Group' : 'Joined Group';
+                toastDescription = `You are now ${isMember ? 'no longer a member of' : 'a member of'} ${group.name}.`
+            } else { // Private group
+                if (isMember) { // Leave
+                     await Promise.all([
+                        updateDoc(groupDocRef, { members: arrayRemove(user.uid) }),
+                        updateDoc(userDocRef, { groups: arrayRemove(group.id) })
+                    ]);
+                    toastTitle = 'Left Group';
+                } else if (group.pendingMembers?.includes(user.uid)) { // Cancel request
+                    await updateDoc(groupDocRef, { pendingMembers: arrayRemove(user.uid) });
+                    toastTitle = 'Join Request Cancelled';
+                } else { // Request to join
+                    await updateDoc(groupDocRef, { pendingMembers: arrayUnion(user.uid) });
+                    toastTitle = 'Join Request Sent';
+                    toastDescription = 'The group owner has been notified.';
+                }
+            }
+
+            toast({ title: toastTitle, description: toastDescription });
             onMembershipChange();
         } catch (error) {
             console.error("Error toggling group membership:", error);
@@ -685,9 +705,9 @@ function GroupHeader({ group, onMembershipChange }: { group: Group, onMembership
                             </Dialog>
                         )}
                         {user && !isCreator && (
-                            <Button onClick={handleToggleMembership} disabled={isSubmitting}>
+                             <Button onClick={handleToggleMembership} disabled={isSubmitting || (group.privacy === 'private' && group.pendingMembers?.includes(user.uid))}>
                                {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : isMember ? <UserMinus className="mr-2 h-4 w-4"/> : <UserPlus className="mr-2 h-4 w-4"/> }
-                               {isMember ? 'Leave Group' : 'Join Group'}
+                               {isMember ? 'Leave Group' : (group.privacy === 'private' ? (group.pendingMembers?.includes(user.uid) ? 'Request Sent' : 'Request to Join') : 'Join Group')}
                             </Button>
                         )}
                     </div>
@@ -713,8 +733,10 @@ function GroupFeed({ group }: { group: Group }) {
     const [editingPostId, setEditingPostId] = useState<string | null>(null);
     const [editedPostContent, setEditedPostContent] = useState('');
     const [searchQuery, setSearchQuery] = useState('');
+    const [isManagingRequest, setIsManagingRequest] = useState<string | null>(null);
 
     const isMember = user ? group.members.includes(user.uid) : false;
+    const isCreator = user ? group.creatorId === user.uid : false;
 
     const postsQuery = useMemoFirebase(() => {
         if (!firestore || !isMember) return null; // Don't fetch if not a member
@@ -722,6 +744,13 @@ function GroupFeed({ group }: { group: Group }) {
     }, [firestore, group.id, isMember]);
 
     const { data: posts, isLoading } = useCollection<GroupPost>(postsQuery);
+
+    const pendingMembersQuery = useMemoFirebase(() => {
+        if (!firestore || !isCreator || !group.pendingMembers || group.pendingMembers.length === 0) return null;
+        return query(collection(firestore, 'users'), where('__name__', 'in', group.pendingMembers));
+    }, [firestore, isCreator, group.pendingMembers]);
+
+    const { data: pendingUsers, isLoading: isLoadingPending } = useCollection<UserProfile>(pendingMembersQuery);
 
     const currentUserDocRef = useMemoFirebase(() => {
         if (!user) return null;
@@ -847,11 +876,43 @@ function GroupFeed({ group }: { group: Group }) {
         }
     };
 
+    const handleRequest = async (requesterId: string, action: 'approve' | 'deny') => {
+        if (!firestore) return;
+        setIsManagingRequest(requesterId);
+        const groupDocRef = doc(firestore, 'groups', group.id);
+        const userDocRef = doc(firestore, 'users', requesterId);
+
+        try {
+            if (action === 'approve') {
+                await Promise.all([
+                    updateDoc(groupDocRef, {
+                        members: arrayUnion(requesterId),
+                        pendingMembers: arrayRemove(requesterId),
+                    }),
+                    updateDoc(userDocRef, {
+                        groups: arrayUnion(group.id),
+                    })
+                ]);
+                toast({ title: 'Member Approved', description: 'They can now see group content.' });
+            } else { // Deny
+                await updateDoc(groupDocRef, {
+                    pendingMembers: arrayRemove(requesterId),
+                });
+                toast({ title: 'Request Denied' });
+            }
+        } catch (error) {
+            console.error('Error managing request:', error);
+            toast({ variant: 'destructive', title: 'Action Failed' });
+        } finally {
+            setIsManagingRequest(null);
+        }
+    }
+
     if (isLoading || isUserLoading || isCurrentUserProfileLoading) {
         return (
             <div className="flex h-64 w-full items-center justify-center">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                <p className="ml-4 text-muted-foreground">Loading group feed...</p>
+                <p className="ml-4 text-muted-foreground">Loading group content...</p>
             </div>
         );
     }
@@ -867,135 +928,185 @@ function GroupFeed({ group }: { group: Group }) {
 
     return (
         <>
-            <div className="space-y-6">
-                <h2 className="text-2xl font-bold flex items-center gap-2"><Rss className="h-6 w-6"/> Group Feed</h2>
-                
-                <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                        placeholder="Search posts..."
-                        className="pl-10"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                    />
-                </div>
-                
-                <PostForm 
-                    form={postForm}
-                    onSubmit={onPostSubmit}
-                    isSubmitting={isSubmitting}
-                />
+            <Tabs defaultValue="feed" className="w-full">
+                <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="feed">Feed</TabsTrigger>
+                    <TabsTrigger value="members">
+                        Members
+                        {isCreator && pendingUsers && pendingUsers.length > 0 && (
+                            <span className="ml-2 h-5 w-5 text-xs flex items-center justify-center rounded-full bg-primary text-primary-foreground">{pendingUsers.length}</span>
+                        )}
+                    </TabsTrigger>
+                </TabsList>
+                <TabsContent value="feed" className="mt-6">
+                    <div className="space-y-6">
+                        <div className="relative">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <Input
+                                placeholder="Search posts..."
+                                className="pl-10"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                            />
+                        </div>
+                        
+                        <PostForm 
+                            form={postForm}
+                            onSubmit={onPostSubmit}
+                            isSubmitting={isSubmitting}
+                        />
 
-                {filteredPosts && filteredPosts.length > 0 ? (
-                    filteredPosts.map(post => {
-                        const canEdit = user && user.uid === post.authorId;
-                        const canDelete = canEdit || isSuperAdmin;
-                        const isEditingThisPost = editingPostId === post.id;
-                        const combinedContentForRender = post.link ? `${post.content}\n${post.link}` : post.content;
-                        return (
-                            <Card key={post.id}>
-                                <CardHeader>
-                                    <div className="flex items-start justify-between">
-                                        <div className="flex items-center gap-3">
-                                            <Link href={`/expert/${post.authorId}`}>
-                                                <Avatar>
-                                                    <AvatarImage src={post.authorPhotoUrl} />
-                                                    <AvatarFallback>{getInitials(post.authorName)}</AvatarFallback>
-                                                </Avatar>
-                                            </Link>
-                                            <div>
-                                                <Link href={`/expert/${post.authorId}`} className="hover:underline">
-                                                    <p className="font-semibold">{post.authorName}</p>
-                                                </Link>
-                                                <CardDescription className="text-xs">
-                                                    {post.createdAt ? `${formatDistanceToNowStrict(post.createdAt.toDate())} ago` : '...'}
-                                                </CardDescription>
+                        {filteredPosts && filteredPosts.length > 0 ? (
+                            filteredPosts.map(post => {
+                                const canEdit = user && user.uid === post.authorId;
+                                const canDelete = canEdit || isSuperAdmin;
+                                const isEditingThisPost = editingPostId === post.id;
+                                const combinedContentForRender = post.link ? `${post.content}\n${post.link}` : post.content;
+                                return (
+                                    <Card key={post.id}>
+                                        <CardHeader>
+                                            <div className="flex items-start justify-between">
+                                                <div className="flex items-center gap-3">
+                                                    <Link href={`/expert/${post.authorId}`}>
+                                                        <Avatar>
+                                                            <AvatarImage src={post.authorPhotoUrl} />
+                                                            <AvatarFallback>{getInitials(post.authorName)}</AvatarFallback>
+                                                        </Avatar>
+                                                    </Link>
+                                                    <div>
+                                                        <Link href={`/expert/${post.authorId}`} className="hover:underline">
+                                                            <p className="font-semibold">{post.authorName}</p>
+                                                        </Link>
+                                                        <CardDescription className="text-xs">
+                                                            {post.createdAt ? `${formatDistanceToNowStrict(post.createdAt.toDate())} ago` : '...'}
+                                                        </CardDescription>
+                                                    </div>
+                                                </div>
+                                                {(canEdit || canDelete) && (
+                                                    <DropdownMenu>
+                                                        <DropdownMenuTrigger asChild>
+                                                            <Button variant="ghost" className="h-8 w-8 p-0">
+                                                                <MoreHorizontal className="h-4 w-4" />
+                                                            </Button>
+                                                        </DropdownMenuTrigger>
+                                                        <DropdownMenuContent align="end">
+                                                            {canEdit && (
+                                                                <DropdownMenuItem onClick={() => handleEditPost(post)}>
+                                                                    <Pen className="mr-2 h-4 w-4" />
+                                                                    <span>Edit</span>
+                                                                </DropdownMenuItem>
+                                                            )}
+                                                            {canDelete && (
+                                                                <DropdownMenuItem onClick={() => openDeleteDialog(post)} className="text-destructive focus:text-destructive">
+                                                                    <Trash2 className="mr-2 h-4 w-4" />
+                                                                    <span>Delete</span>
+                                                                </DropdownMenuItem>
+                                                            )}
+                                                        </DropdownMenuContent>
+                                                    </DropdownMenu>
+                                                )}
                                             </div>
-                                        </div>
-                                        {(canEdit || canDelete) && (
-                                            <DropdownMenu>
-                                                <DropdownMenuTrigger asChild>
-                                                    <Button variant="ghost" className="h-8 w-8 p-0">
-                                                        <MoreHorizontal className="h-4 w-4" />
-                                                    </Button>
-                                                </DropdownMenuTrigger>
-                                                <DropdownMenuContent align="end">
-                                                    {canEdit && (
-                                                        <DropdownMenuItem onClick={() => handleEditPost(post)}>
-                                                            <Pen className="mr-2 h-4 w-4" />
-                                                            <span>Edit</span>
-                                                        </DropdownMenuItem>
-                                                    )}
-                                                    {canDelete && (
-                                                        <DropdownMenuItem onClick={() => openDeleteDialog(post)} className="text-destructive focus:text-destructive">
-                                                            <Trash2 className="mr-2 h-4 w-4" />
-                                                            <span>Delete</span>
-                                                        </DropdownMenuItem>
-                                                    )}
-                                                </DropdownMenuContent>
-                                            </DropdownMenu>
-                                        )}
-                                    </div>
-                                     {post.title && (
-                                        <CardTitle className="pt-4 text-lg">{post.title}</CardTitle>
-                                    )}
-                                </CardHeader>
-                                <CardContent>
-                                    {isEditingThisPost ? (
-                                        <div className="space-y-2">
-                                            <Textarea
-                                                value={editedPostContent}
-                                                onChange={(e) => setEditedPostContent(e.target.value)}
-                                                className="text-sm whitespace-pre-wrap mb-4"
-                                                rows={4}
-                                            />
-                                            <div className="flex justify-end gap-2">
-                                                <Button variant="ghost" size="sm" onClick={handleCancelEdit}>Cancel</Button>
-                                                <Button size="sm" onClick={handleUpdatePost}>Save Changes</Button>
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        <PostContentRenderer content={combinedContentForRender} />
-                                    )}
+                                             {post.title && (
+                                                <CardTitle className="pt-4 text-lg">{post.title}</CardTitle>
+                                            )}
+                                        </CardHeader>
+                                        <CardContent>
+                                            {isEditingThisPost ? (
+                                                <div className="space-y-2">
+                                                    <Textarea
+                                                        value={editedPostContent}
+                                                        onChange={(e) => setEditedPostContent(e.target.value)}
+                                                        className="text-sm whitespace-pre-wrap mb-4"
+                                                        rows={4}
+                                                    />
+                                                    <div className="flex justify-end gap-2">
+                                                        <Button variant="ghost" size="sm" onClick={handleCancelEdit}>Cancel</Button>
+                                                        <Button size="sm" onClick={handleUpdatePost}>Save Changes</Button>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <PostContentRenderer content={combinedContentForRender} />
+                                            )}
 
-                                    {post.imageUrl && !isEditingThisPost && (
-                                        <ImageLightbox imageUrl={post.imageUrl} altText={`Post image from ${post.authorName}`}>
-                                            <div className="relative rounded-lg overflow-hidden border aspect-video cursor-pointer">
-                                                <Image
-                                                    src={post.imageUrl}
-                                                    alt={`Post image from ${post.authorName}`}
-                                                    fill
-                                                    className="object-cover"
-                                                />
-                                            </div>
-                                        </ImageLightbox>
-                                    )}
-                                </CardContent>
-                                <CardFooter className="flex items-center gap-2">
-                                    <ShareDialog
-                                        shareDetails={{
-                                            type: 'group-post',
-                                            title: `Post in ${group.name}`,
-                                            text: post.content,
-                                            url: `${window.location.href}#${post.id}`
-                                        }}
-                                    >
-                                        <Button variant="ghost" size="sm">
-                                            <Share2 className="mr-2 h-4 w-4" />
-                                            Share
-                                        </Button>
-                                    </ShareDialog>
-                                </CardFooter>
+                                            {post.imageUrl && !isEditingThisPost && (
+                                                <ImageLightbox imageUrl={post.imageUrl} altText={`Post image from ${post.authorName}`}>
+                                                    <div className="relative rounded-lg overflow-hidden border aspect-video cursor-pointer">
+                                                        <Image
+                                                            src={post.imageUrl}
+                                                            alt={`Post image from ${post.authorName}`}
+                                                            fill
+                                                            className="object-cover"
+                                                        />
+                                                    </div>
+                                                </ImageLightbox>
+                                            )}
+                                        </CardContent>
+                                        <CardFooter className="flex items-center gap-2">
+                                            <ShareDialog
+                                                shareDetails={{
+                                                    type: 'group-post',
+                                                    title: `Post in ${group.name}`,
+                                                    text: post.content,
+                                                    url: `${window.location.href}#${post.id}`
+                                                }}
+                                            >
+                                                <Button variant="ghost" size="sm">
+                                                    <Share2 className="mr-2 h-4 w-4" />
+                                                    Share
+                                                </Button>
+                                            </ShareDialog>
+                                        </CardFooter>
+                                    </Card>
+                                )
+                            })
+                        ) : (
+                            <Card className="text-center p-8">
+                                <CardTitle>The feed is empty.</CardTitle>
+                                <CardDescription className="mt-2">Be the first to post in this group!</CardDescription>
                             </Card>
-                        )
-                    })
-                ) : (
-                    <Card className="text-center p-8">
-                        <CardTitle>The feed is empty.</CardTitle>
-                        <CardDescription className="mt-2">Be the first to post in this group!</CardDescription>
+                        )}
+                    </div>
+                </TabsContent>
+                <TabsContent value="members" className="mt-6">
+                    {isCreator && pendingUsers && pendingUsers.length > 0 && (
+                        <Card className="mb-6">
+                            <CardHeader>
+                                <CardTitle>Pending Join Requests</CardTitle>
+                                <CardDescription>Approve or deny requests to join this group.</CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-3">
+                                {isLoadingPending ? <Loader2 className="animate-spin" /> : pendingUsers.map(requestingUser => (
+                                    <div key={requestingUser.id} className="flex items-center justify-between p-2 rounded-lg border">
+                                        <div className="flex items-center gap-3">
+                                            <Avatar>
+                                                <AvatarImage src={requestingUser.photoUrl} />
+                                                <AvatarFallback>{getInitials(`${requestingUser.firstName} ${requestingUser.lastName}`)}</AvatarFallback>
+                                            </Avatar>
+                                            <div>
+                                                <p className="font-semibold">{requestingUser.firstName} {requestingUser.lastName}</p>
+                                                <p className="text-xs text-muted-foreground">{requestingUser.profession}</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex gap-2">
+                                            <Button size="sm" variant="outline" className="text-destructive hover:text-destructive" onClick={() => handleRequest(requestingUser.id, 'deny')} disabled={isManagingRequest === requestingUser.id}>
+                                                {isManagingRequest === requestingUser.id ? <Loader2 className="h-4 w-4 animate-spin"/> : <Ban className="h-4 w-4"/>}
+                                            </Button>
+                                            <Button size="sm" onClick={() => handleRequest(requestingUser.id, 'approve')} disabled={isManagingRequest === requestingUser.id}>
+                                                {isManagingRequest === requestingUser.id ? <Loader2 className="h-4 w-4 animate-spin"/> : <Check className="h-4 w-4"/>}
+                                            </Button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </CardContent>
+                        </Card>
+                    )}
+                    {/* Placeholder for current members list */}
+                    <Card>
+                        <CardHeader><CardTitle>All Members ({group.members.length})</CardTitle></CardHeader>
+                        <CardContent><p className="text-muted-foreground text-sm">Full member list coming soon.</p></CardContent>
                     </Card>
-                )}
-            </div>
+                </TabsContent>
+            </Tabs>
              <AlertDialog open={isPostDeleteDialogOpen} onOpenChange={setIsPostDeleteDialogOpen}>
                 <AlertDialogContent>
                   <AlertDialogHeader>

@@ -292,22 +292,31 @@ service cloud.firestore {
             return request.auth.uid in groupDoc.data.members;
         }
 
-        function isChangingOwnMembership() {
-            let addedMembers = request.resource.data.members.removeAll(resource.data.members);
-            let removedMembers = resource.data.members.removeAll(request.resource.data.members);
-            return (addedMembers.size() == 1 && addedMembers[0] == request.auth.uid) ||
-                   (removedMembers.size() == 1 && removedMembers[0] == request.auth.uid);
+        function isChangingOwnMembership(changeType) {
+            let changes = request.resource.data.members.diff(resource.data.members);
+            if (changeType == 'add') {
+                return changes.added().size() == 1 && changes.added()[0] == request.auth.uid && changes.removed().size() == 0;
+            }
+            if (changeType == 'remove') {
+                return changes.removed().size() == 1 && changes.removed()[0] == request.auth.uid && changes.added().size() == 0;
+            }
+            return false;
         }
-        
+
         function isRequestingToJoin() {
-            let addedPending = request.resource.data.pendingMembers.removeAll(resource.data.pendingMembers);
-            return addedPending.size() == 1 && addedPending[0] == request.auth.uid;
+            let changes = request.resource.data.pendingMembers.diff(resource.data.pendingMembers);
+            return changes.added().size() == 1 && changes.added()[0] == request.auth.uid && changes.removed().size() == 0;
         }
 
         function isCreatorManagingRequests() {
-            return isGroupCreator() && 
-                   (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['members', 'pendingMembers']) || 
-                    request.resource.data.diff(resource.data).affectedKeys().hasOnly(['pendingMembers']));
+            let memberChanges = request.resource.data.members.diff(resource.data.members);
+            let pendingChanges = request.resource.data.pendingMembers.diff(resource.data.pendingMembers);
+            // Creator is adding a member who was previously pending
+            let isApproving = memberChanges.added().size() == 1 && pendingChanges.removed().size() == 1 && memberChanges.added()[0] == pendingChanges.removed()[0];
+            // Creator is just removing a pending member
+            let isDenying = memberChanges.added().size() == 0 && memberChanges.removed().size() == 0 && pendingChanges.added().size() == 0 && pendingChanges.removed().size() > 0;
+            
+            return isGroupCreator() && (isApproving || isDenying);
         }
         
         // Allow anyone to view a single group's details and list all groups
@@ -318,8 +327,8 @@ service cloud.firestore {
         
         allow update: if isSuperAdmin() || 
                        (isGroupCreator() && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['members', 'pendingMembers'])) || // Creator can edit details
-                       (isSignedIn() && resource.data.privacy == 'public' && isChangingOwnMembership()) || // Public group join/leave
-                       (isSignedIn() && resource.data.privacy == 'private' && isRequestingToJoin()) || // Private group request
+                       (isSignedIn() && resource.data.privacy == 'public' && (isChangingOwnMembership('add') || isChangingOwnMembership('remove'))) || // Public group join/leave
+                       (isSignedIn() && resource.data.privacy == 'private' && isRequestingToJoin()) || // Private group request to join
                        isCreatorManagingRequests(); // Creator manages private group requests
                        
         allow delete: if isSuperAdmin() || isGroupCreator();
