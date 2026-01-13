@@ -480,11 +480,14 @@ const POSTS_PER_PAGE = 5;
 
 const PostContentRenderer = ({ content }: { content: string }) => {
     const youtubeRegex = /(https?:\/\/(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11}))/;
-    const match = content.match(youtubeRegex);
+    const instagramRegex = /(https?:\/\/(?:www\.)?instagram\.com\/p\/([a-zA-Z0-9_-]+)\/?)/;
 
-    if (match) {
-        const videoId = match[2];
-        const parts = content.split(match[0]);
+    const youtubeMatch = content.match(youtubeRegex);
+    const instagramMatch = content.match(instagramRegex);
+
+    if (youtubeMatch) {
+        const videoId = youtubeMatch[2];
+        const parts = content.split(youtubeMatch[0]);
         
         return (
             <div className="text-sm whitespace-pre-wrap mb-4">
@@ -500,10 +503,37 @@ const PostContentRenderer = ({ content }: { content: string }) => {
                         allowFullScreen
                     ></iframe>
                 </div>
-                <a href={match[0]} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline break-all">{match[0]}</a>
+                <a href={youtubeMatch[0]} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline break-all">{youtubeMatch[0]}</a>
                 <span>{parts[1]}</span>
             </div>
         );
+    }
+
+    if (instagramMatch) {
+        const postUrl = instagramMatch[0];
+        const parts = content.split(postUrl);
+
+        return (
+            <div className="text-sm whitespace-pre-wrap mb-4">
+                <span>{parts[0]}</span>
+                 <div className="my-4 flex justify-center">
+                    <iframe 
+                        className="instagram-media instagram-media-rendered" 
+                        id="instagram-embed-0" 
+                        src={`${postUrl}embed/captioned`} 
+                        allowTransparency={true} 
+                        allowFullScreen={true} 
+                        frameBorder="0" 
+                        height="550" 
+                        data-instgrm-payload-id="instagram-media-payload-0" 
+                        scrolling="no" 
+                        style={{ background: 'white', border: '1px solid rgb(219, 219, 219)', borderRadius: '3px', display: 'block', margin: '0px', maxWidth: '540px', minWidth: '326px', padding: '0px', width: 'calc(100% - 2px)' }}>
+                    </iframe>
+                </div>
+                 <a href={postUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline break-all">{postUrl}</a>
+                <span>{parts[1]}</span>
+            </div>
+        )
     }
 
     return <p className="text-sm whitespace-pre-wrap mb-4">{content}</p>;
