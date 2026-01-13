@@ -104,14 +104,24 @@ const commentFormSchema = z.object({
 });
 
 
-function getInitials(firstName?: string, lastName?: string) {
-    if (!firstName && !lastName) return 'U';
-    return `${firstName?.charAt(0) || ''}${lastName?.charAt(0) || ''}`.toUpperCase();
+function getInitials(name?: string) {
+    if (!name) return 'U';
+    const names = name.trim().split(' ').filter(Boolean);
+    if (names.length > 1 && names[names.length - 1]) {
+        return `${names[0].charAt(0)}${names[names.length - 1].charAt(0)}`.toUpperCase();
+    }
+    if (names[0] && names[0].length > 1) {
+        return names[0].substring(0, 2).toUpperCase();
+    }
+    if (names[0]) {
+        return names[0].charAt(0).toUpperCase();
+    }
+    return 'U';
 }
 
 
 const PostContentRenderer = ({ content }: { content: string }) => {
-    const youtubeRegex = /(https?:\/\/(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11}))/;
+    const youtubeRegex = /(https?:\/\/(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/live\/)([a-zA-Z0-9_-]+)(?:[?&].*)?)/;
     const instagramRegex = /(https?:\/\/(?:www\.)?instagram\.com\/p\/([a-zA-Z0-9_-]+)\/?)/;
     
     let currentContent = content;
@@ -119,6 +129,8 @@ const PostContentRenderer = ({ content }: { content: string }) => {
     const youtubeMatch = currentContent.match(youtubeRegex);
     if (youtubeMatch) {
         const videoId = youtubeMatch[2];
+        const isLive = youtubeMatch[0].includes('/live/');
+        const embedUrl = isLive ? `https://www.youtube.com/embed/live_stream?channel=${videoId}` : `https://www.youtube.com/embed/${videoId}`;
         const parts = currentContent.split(youtubeMatch[0]);
         return (
             <div className="space-y-4">
@@ -127,7 +139,7 @@ const PostContentRenderer = ({ content }: { content: string }) => {
                     <iframe
                         width="100%"
                         height="100%"
-                        src={`https://www.youtube.com/embed/${videoId}`}
+                        src={embedUrl}
                         title="YouTube video player"
                         frameBorder="0"
                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
@@ -219,7 +231,7 @@ function CommenterInfo({ authorId }: { authorId: string }) {
     }
     
     const displayName = `${commenter.firstName || 'Anonymous'} ${commenter.lastName || ''}`.trim();
-    const displayInitials = getInitials(commenter.firstName, commenter.lastName);
+    const displayInitials = getInitials(`${commenter.firstName} ${commenter.lastName}`);
     const canFollow = user && user.uid !== commenter.id;
     const isFollowing = user && currentUserProfile?.following?.includes(commenter.id);
 
@@ -1204,7 +1216,7 @@ function GroupFeed({ group }: { group: Group }) {
                                         <div className="flex items-center gap-3">
                                             <Avatar>
                                                 <AvatarImage src={requestingUser.photoUrl} />
-                                                <AvatarFallback>{getInitials(requestingUser.firstName, requestingUser.lastName)}</AvatarFallback>
+                                                <AvatarFallback>{getInitials(`${requestingUser.firstName} ${requestingUser.lastName}`)}</AvatarFallback>
                                             </Avatar>
                                             <div>
                                                 <p className="font-semibold">{requestingUser.firstName} {requestingUser.lastName}</p>
