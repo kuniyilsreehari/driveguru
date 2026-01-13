@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -16,26 +17,6 @@ export default function RoleSelectionPage() {
         </p>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {/* Fresher Card */}
-          <Card className="text-center hover:border-primary/50 transition-all duration-300 transform hover:-translate-y-1">
-            <CardHeader>
-              <div className="mx-auto bg-secondary p-4 rounded-full w-fit mb-4">
-                <User className="h-8 w-8 text-secondary-foreground" />
-              </div>
-              <CardTitle className="text-2xl">Fresher</CardTitle>
-              <CardDescription>
-                Start your career journey and find exciting opportunities.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button asChild variant="outline" className="w-full">
-                <Link href="/vacancies">
-                  Get Started <ArrowRight className="ml-2 h-4 w-4" />
-                </Link>
-              </Button>
-            </CardContent>
-          </Card>
-
           {/* Expert Card */}
           <Card className="text-center hover:border-primary/50 transition-all duration-300 transform hover:-translate-y-1 border-primary">
             <CardHeader>
@@ -51,6 +32,26 @@ export default function RoleSelectionPage() {
               <Button asChild className="w-full">
                 <Link href="/signup">
                   Become an Expert <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Fresher Card */}
+          <Card className="text-center hover:border-primary/50 transition-all duration-300 transform hover:-translate-y-1">
+            <CardHeader>
+              <div className="mx-auto bg-secondary p-4 rounded-full w-fit mb-4">
+                <User className="h-8 w-8 text-secondary-foreground" />
+              </div>
+              <CardTitle className="text-2xl">Fresher</CardTitle>
+              <CardDescription>
+                Start your career journey and find exciting opportunities.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button asChild variant="outline" className="w-full">
+                <Link href="/vacancies">
+                  Get Started <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
               </Button>
             </CardContent>
