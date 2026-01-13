@@ -109,7 +109,7 @@ function getInitials(name?: string | null) {
     if (!name) return 'AN';
     const names = name.trim().split(' ').filter(Boolean);
     if (names.length > 1 && names[names.length - 1]) {
-        return `${''names[0].charAt(0)}${''names[names.length - 1].charAt(0)}`.toUpperCase();
+        return `${names[0].charAt(0)}${names[names.length - 1].charAt(0)}`.toUpperCase();
     }
     if (names[0] && names[0].length > 1) {
         return names[0].substring(0, 2).toUpperCase();
@@ -134,7 +134,7 @@ const PostContentRenderer = ({ content }: { content: string }) => {
                     <iframe
                         width="100%"
                         height="100%"
-                        src={`https://www.youtube.com/embed/${''videoId}`}
+                        src={`https://www.youtube.com/embed/${videoId}`}
                         title="YouTube video player"
                         frameBorder="0"
                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
@@ -157,7 +157,7 @@ const PostContentRenderer = ({ content }: { content: string }) => {
                     <iframe 
                         className="instagram-media instagram-media-rendered" 
                         id="instagram-embed-0" 
-                        src={`${''postUrl}embed/captioned`} 
+                        src={`${postUrl}embed/captioned`} 
                         allowFullScreen={true} 
                         frameBorder="0" 
                         height="550" 
@@ -196,19 +196,19 @@ function CommenterInfo({ authorId }: { authorId: string }) {
         );
     }
     
-    const displayName = `${''commenter.firstName || 'Anonymous'} ${''commenter.lastName || ''}`.trim();
+    const displayName = `${commenter.firstName || 'Anonymous'} ${commenter.lastName || ''}`.trim();
     const displayInitials = getInitials(displayName);
 
     return (
         <div className="flex items-center gap-3">
-            <Link href={`/expert/${''authorId}`}>
+            <Link href={`/expert/${authorId}`}>
                 <Avatar className="h-8 w-8">
                     <AvatarImage src={commenter.photoUrl} />
                     <AvatarFallback>{displayInitials}</AvatarFallback>
                 </Avatar>
             </Link>
             <div className="flex-1">
-                <Link href={`/expert/${''authorId}`} className="hover:underline">
+                <Link href={`/expert/${authorId}`} className="hover:underline">
                     <p className="text-sm font-semibold">{displayName}</p>
                 </Link>
             </div>
@@ -349,7 +349,7 @@ function CommentThread({ comment, postId, allComments, onDelete, postAuthorId }:
                 
                     <div className="flex items-center gap-4 text-xs text-muted-foreground mt-1">
                         <p title={comment.createdAt?.toDate().toLocaleString()}>
-                            {comment.createdAt ? `${''formatDistanceToNowStrict(new Date(comment.createdAt.seconds * 1000))} ago` : 'just now'}
+                            {comment.createdAt ? `${formatDistanceToNowStrict(new Date(comment.createdAt.seconds * 1000))} ago` : 'just now'}
                         </p>
                         {user && (
                             <>
@@ -598,7 +598,7 @@ function GroupHeader({ group, isSuperAdmin, onGroupDeleted, onGroupUpdated }: { 
                     updateDoc(userDocRef, { groups: userGroupsUpdate })
                 ]);
                 toastTitle = isMember ? 'Left Group' : 'Joined Group';
-                toastDescription = `You are now ${''isMember ? 'no longer a member of' : 'a member of'} ${''group.name}.`
+                toastDescription = `You are now ${isMember ? 'no longer a member of' : 'a member of'} ${group.name}.`
             } else { // Private group
                 if (isMember) { // Leave
                      await Promise.all([
@@ -632,7 +632,7 @@ function GroupHeader({ group, isSuperAdmin, onGroupDeleted, onGroupUpdated }: { 
             await deleteDocumentNonBlocking(groupDocRef);
             toast({
                 title: 'Group Deleted',
-                description: `The group "${''group.name}" has been successfully deleted.`,
+                description: `The group "${group.name}" has been successfully deleted.`,
             });
             onGroupDeleted();
             router.push('/groups');
@@ -822,7 +822,7 @@ function GroupFeed({ group }: { group: Group }) {
         const lowercasedQuery = memberSearchQuery.toLowerCase();
         return allUsers.filter(u => 
             !group.members.includes(u.id) &&
-            (`${''u.firstName} ${''u.lastName}`.toLowerCase().includes(lowercasedQuery) || u.profession?.toLowerCase().includes(lowercasedQuery))
+            (`${u.firstName} ${u.lastName}`.toLowerCase().includes(lowercasedQuery) || u.profession?.toLowerCase().includes(lowercasedQuery))
         ).slice(0, 5); // Limit results for performance
     }, [memberSearchQuery, allUsers, group.members]);
     
@@ -859,7 +859,7 @@ function GroupFeed({ group }: { group: Group }) {
                 content: values.content,
                 link: values.link || '',
                 authorId: user.uid,
-                authorName: `${''currentUserProfile.firstName || ''} ${''currentUserProfile.lastName || ''}`.trim(),
+                authorName: `${currentUserProfile.firstName || ''} ${currentUserProfile.lastName || ''}`.trim(),
                 authorPhotoUrl: currentUserProfile.photoUrl || '',
                 createdAt: serverTimestamp(),
                 likes: [],
@@ -950,7 +950,7 @@ function GroupFeed({ group }: { group: Group }) {
                 updateDoc(groupDocRef, { members: groupUpdateAction }),
                 updateDoc(userDocRef, { groups: userUpdateAction })
             ]);
-            toast({ title: `Member ${''action === 'add' ? 'Added' : 'Removed'}` });
+            toast({ title: `Member ${action === 'add' ? 'Added' : 'Removed'}` });
             setMemberSearchQuery('');
         } catch (error) {
             console.error('Error managing member:', error);
@@ -1043,24 +1043,24 @@ function GroupFeed({ group }: { group: Group }) {
                                 const canEdit = user && user.uid === post.authorId;
                                 const canDelete = canEdit || isSuperAdmin;
                                 const isEditingThisPost = editingPostId === post.id;
-                                const combinedContentForRender = post.link ? `${''post.content}\n${''post.link}` : post.content;
+                                const combinedContentForRender = post.link ? `${post.content}\n${post.link}` : post.content;
                                 return (
                                     <Card key={post.id}>
                                         <CardHeader>
                                             <div className="flex items-start justify-between">
                                                 <div className="flex items-center gap-3">
-                                                    <Link href={`/expert/${''post.authorId}`}>
+                                                    <Link href={`/expert/${post.authorId}`}>
                                                         <Avatar>
                                                             <AvatarImage src={post.authorPhotoUrl} />
                                                             <AvatarFallback>{getInitials(post.authorName)}</AvatarFallback>
                                                         </Avatar>
                                                     </Link>
                                                     <div>
-                                                        <Link href={`/expert/${''post.authorId}`} className="hover:underline">
+                                                        <Link href={`/expert/${post.authorId}`} className="hover:underline">
                                                             <p className="font-semibold">{post.authorName}</p>
                                                         </Link>
                                                         <CardDescription className="text-xs">
-                                                            {post.createdAt ? `${''formatDistanceToNowStrict(post.createdAt.toDate())} ago` : '...'}
+                                                            {post.createdAt ? `${formatDistanceToNowStrict(post.createdAt.toDate())} ago` : '...'}
                                                         </CardDescription>
                                                     </div>
                                                 </div>
@@ -1111,11 +1111,11 @@ function GroupFeed({ group }: { group: Group }) {
                                             )}
 
                                             {post.imageUrl && !isEditingThisPost && (
-                                                <ImageLightbox imageUrl={post.imageUrl} altText={`Post image from ${''post.authorName}`}>
+                                                <ImageLightbox imageUrl={post.imageUrl} altText={`Post image from ${post.authorName}`}>
                                                     <div className="relative rounded-lg overflow-hidden border aspect-video cursor-pointer">
                                                         <Image
                                                             src={post.imageUrl}
-                                                            alt={`Post image from ${''post.authorName}`}
+                                                            alt={`Post image from ${post.authorName}`}
                                                             fill
                                                             className="object-cover"
                                                         />
@@ -1127,9 +1127,9 @@ function GroupFeed({ group }: { group: Group }) {
                                             <ShareDialog
                                                 shareDetails={{
                                                     type: 'group-post',
-                                                    title: `Post in ${''group.name}`,
+                                                    title: `Post in ${group.name}`,
                                                     text: post.content,
-                                                    url: `${''window.location.href}#${''post.id}`
+                                                    url: `${window.location.href}#${post.id}`
                                                 }}
                                             >
                                                 <Button variant="ghost" size="sm">
@@ -1193,7 +1193,7 @@ function GroupFeed({ group }: { group: Group }) {
                                         <div className="flex items-center gap-3">
                                             <Avatar>
                                                 <AvatarImage src={requestingUser.photoUrl} />
-                                                <AvatarFallback>{getInitials(`${''requestingUser.firstName} ${''requestingUser.lastName}`)}</AvatarFallback>
+                                                <AvatarFallback>{getInitials(`${requestingUser.firstName} ${requestingUser.lastName}`)}</AvatarFallback>
                                             </Avatar>
                                             <div>
                                                 <p className="font-semibold">{requestingUser.firstName} {requestingUser.lastName}</p>
