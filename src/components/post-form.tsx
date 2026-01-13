@@ -16,10 +16,13 @@ import {
 } from '@/components/ui/form';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { Loader2, Send } from 'lucide-react';
+import { Loader2, Send, Type, Link as LinkIcon } from 'lucide-react';
+import { Input } from './ui/input';
 
 const formSchema = z.object({
-  content: z.string().min(2, 'Post must be at least 2 characters.').max(500, 'Post cannot exceed 500 characters.'),
+  title: z.string().min(3, 'Title must be at least 3 characters.').max(100, 'Title cannot exceed 100 characters.'),
+  content: z.string().min(2, 'Post must be at least 2 characters.').max(1000, 'Post cannot exceed 1000 characters.'),
+  link: z.string().url().optional().or(z.literal('')),
 });
 
 interface PostFormProps {
@@ -34,14 +37,30 @@ export function PostForm({ form, onSubmit, isSubmitting }: PostFormProps) {
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <FormField
           control={form.control}
+          name="title"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Post Title</FormLabel>
+               <div className="relative">
+                <Type className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <FormControl>
+                  <Input placeholder="A catchy title for your post" {...field} className="pl-10" />
+                </FormControl>
+              </div>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
           name="content"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="sr-only">Post Content</FormLabel>
+              <FormLabel>Content</FormLabel>
               <FormControl>
                 <Textarea
                   placeholder="What's on your mind? Share an update..."
-                  className="min-h-[100px]"
+                  className="min-h-[120px]"
                   {...field}
                 />
               </FormControl>
@@ -49,9 +68,25 @@ export function PostForm({ form, onSubmit, isSubmitting }: PostFormProps) {
             </FormItem>
           )}
         />
+         <FormField
+          control={form.control}
+          name="link"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Image or Video Link (Optional)</FormLabel>
+               <div className="relative">
+                <LinkIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <FormControl>
+                  <Input placeholder="e.g., https://youtube.com/watch?v=..." {...field} className="pl-10" />
+                </FormControl>
+              </div>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
         
         <div className="flex justify-end items-center gap-4">
-            <p className="text-xs text-muted-foreground">{form.watch('content').length} / 500</p>
+            <p className="text-xs text-muted-foreground">{form.watch('content').length} / 1000</p>
             <Button type="submit" disabled={isSubmitting || !form.formState.isValid}>
               {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
               {isSubmitting ? 'Posting...' : 'Post'}

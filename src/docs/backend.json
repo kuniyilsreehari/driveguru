@@ -312,6 +312,10 @@
           "type": "string",
           "description": "Unique identifier for the post."
         },
+        "title": {
+          "type": "string",
+          "description": "The title of the post."
+        },
         "authorId": {
           "type": "string",
           "description": "The ID of the user who created the post."
@@ -328,6 +332,11 @@
         "content": {
           "type": "string",
           "description": "The text content of the post."
+        },
+        "link": {
+          "type": "string",
+          "format": "uri",
+          "description": "An optional external link, e.g., to a YouTube video or Instagram post."
         },
         "imageUrl": {
           "type": "string",
@@ -404,11 +413,20 @@
         "description": "Represents a post within a professional group.",
         "properties": {
             "id": { "type": "string" },
+            "title": {
+                "type": "string",
+                "description": "The title of the post."
+            },
             "groupId": { "type": "string" },
             "authorId": { "type": "string" },
             "authorName": { "type": "string" },
             "authorPhotoUrl": { "type": "string", "format": "uri" },
             "content": { "type": "string" },
+            "link": {
+                "type": "string",
+                "format": "uri",
+                "description": "An optional external link, e.g., to a YouTube video or Instagram post."
+            },
             "imageUrl": { "type": "string", "format": "uri" },
             "createdAt": { "type": "string", "format": "date-time" }
         },

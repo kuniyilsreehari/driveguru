@@ -50,7 +50,9 @@ type Post = {
     authorId: string;
     authorName: string;
     authorPhotoUrl?: string;
+    title?: string;
     content: string;
+    link?: string;
     imageUrl?: string;
     createdAt: Timestamp;
     likes?: string[];
@@ -481,18 +483,17 @@ const POSTS_PER_PAGE = 5;
 const PostContentRenderer = ({ content }: { content: string }) => {
     const youtubeRegex = /(https?:\/\/(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11}))/;
     const instagramRegex = /(https?:\/\/(?:www\.)?instagram\.com\/p\/([a-zA-Z0-9_-]+)\/?)/;
+    
+    const combinedContent = content;
 
-    const youtubeMatch = content.match(youtubeRegex);
-    const instagramMatch = content.match(instagramRegex);
-
+    const youtubeMatch = combinedContent.match(youtubeRegex);
     if (youtubeMatch) {
         const videoId = youtubeMatch[2];
-        const parts = content.split(youtubeMatch[0]);
-        
+        const textContent = combinedContent.replace(youtubeRegex, '').trim();
         return (
-            <div className="text-sm whitespace-pre-wrap mb-4">
-                <span>{parts[0]}</span>
-                <div className="aspect-video rounded-lg overflow-hidden border my-4">
+            <div className="space-y-4">
+                {textContent && <p className="text-sm whitespace-pre-wrap">{textContent}</p>}
+                <div className="aspect-video rounded-lg overflow-hidden border">
                     <iframe
                         width="100%"
                         height="100%"
@@ -503,18 +504,17 @@ const PostContentRenderer = ({ content }: { content: string }) => {
                         allowFullScreen
                     ></iframe>
                 </div>
-                <span>{parts.slice(1).join(youtubeMatch[0]).replace(new RegExp(`^${youtubeMatch[1]}`), '')}</span>
             </div>
         );
     }
 
+    const instagramMatch = combinedContent.match(instagramRegex);
     if (instagramMatch) {
         const postUrl = instagramMatch[0];
-        const parts = content.split(postUrl);
-
+        const textContent = combinedContent.replace(instagramRegex, '').trim();
         return (
-            <div className="text-sm whitespace-pre-wrap mb-4">
-                <span>{parts[0]}</span>
+             <div className="space-y-4">
+                {textContent && <p className="text-sm whitespace-pre-wrap">{textContent}</p>}
                  <div className="my-4 flex justify-center">
                     <iframe 
                         className="instagram-media instagram-media-rendered" 
@@ -525,15 +525,14 @@ const PostContentRenderer = ({ content }: { content: string }) => {
                         height="550" 
                         data-instgrm-payload-id="instagram-media-payload-0" 
                         scrolling="no" 
-                        style={{ background: 'white', border: '1px solid rgb(219, 219, 219)', borderRadius: '3px', display: 'block', margin: '0px', maxWidth: '540px', minWidth: '326px', padding: '0px', width: 'calc(100% - 2px)' }}>
+                        style={{ background: 'white', border: '1px solid rgb(219, 219, 219)', borderRadius: '3px', display: 'block', margin: '0px auto', maxWidth: '540px', minWidth: '326px', padding: '0px', width: 'calc(100% - 2px)' }}>
                     </iframe>
                 </div>
-                <span>{parts.slice(1).join(postUrl).replace(new RegExp(`^${instagramMatch[1]}`), '')}</span>
             </div>
         )
     }
 
-    return <p className="text-sm whitespace-pre-wrap mb-4">{content}</p>;
+    return <p className="text-sm whitespace-pre-wrap">{content}</p>;
 };
 
 function PostCard({ post }: { post: Post }) {
@@ -640,6 +639,8 @@ function PostCard({ post }: { post: Post }) {
     const isEditingThisPost = editingPostId === post.id;
     const canViewLikes = post.likes && post.likes.length > 0;
     
+    const combinedContentForRender = post.link ? `${post.content}\n${post.link}` : post.content;
+    
     return (
         <Card>
             <CardHeader>
@@ -653,7 +654,7 @@ function PostCard({ post }: { post: Post }) {
                         </Link>
                         <div>
                             <Link href={`/expert/${post.authorId}`} className="hover:underline">
-                                <CardTitle className="text-base">{post.authorName}</CardTitle>
+                                <p className="font-semibold">{post.authorName}</p>
                             </Link>
                             <CardDescription className="text-xs">
                                 {post.createdAt ? `${formatDistanceToNowStrict(post.createdAt.toDate())} ago` : '...'}
@@ -695,6 +696,9 @@ function PostCard({ post }: { post: Post }) {
                         </DropdownMenu>
                     )}
                 </div>
+                 {post.title && (
+                    <CardTitle className="pt-4 text-lg">{post.title}</CardTitle>
+                )}
             </CardHeader>
             <CardContent>
                 {isEditingThisPost ? (
@@ -711,7 +715,7 @@ function PostCard({ post }: { post: Post }) {
                         </div>
                     </div>
                 ) : (
-                    <PostContentRenderer content={post.content} />
+                    <PostContentRenderer content={combinedContentForRender} />
                 )}
 
                 {post.imageUrl && !isEditingThisPost && (

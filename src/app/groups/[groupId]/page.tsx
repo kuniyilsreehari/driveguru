@@ -59,7 +59,9 @@ type GroupPost = {
     authorId: string;
     authorName: string;
     authorPhotoUrl?: string;
+    title?: string;
     content: string;
+    link?: string;
     imageUrl?: string;
     createdAt: Timestamp;
     likes?: string[];
@@ -90,7 +92,9 @@ const editGroupSchema = z.object({
 });
 
 const postFormSchema = z.object({
-  content: z.string().min(2, 'Post must be at least 2 characters.').max(500, 'Post cannot exceed 500 characters.'),
+  title: z.string().min(3, 'Title must be at least 3 characters.').max(100, 'Title cannot exceed 100 characters.'),
+  content: z.string().min(2, 'Post must be at least 2 characters.').max(1000, 'Post cannot exceed 1000 characters.'),
+  link: z.string().url().optional().or(z.literal('')),
 });
 
 const commentFormSchema = z.object({
@@ -113,18 +117,17 @@ function getInitials(name?: string | null) {
 const PostContentRenderer = ({ content }: { content: string }) => {
     const youtubeRegex = /(https?:\/\/(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11}))/;
     const instagramRegex = /(https?:\/\/(?:www\.)?instagram\.com\/p\/([a-zA-Z0-9_-]+)\/?)/;
+    
+    const combinedContent = content;
 
-    const youtubeMatch = content.match(youtubeRegex);
-    const instagramMatch = content.match(instagramRegex);
-
+    const youtubeMatch = combinedContent.match(youtubeRegex);
     if (youtubeMatch) {
         const videoId = youtubeMatch[2];
-        const parts = content.split(youtubeMatch[0]);
-        
+        const textContent = combinedContent.replace(youtubeRegex, '').trim();
         return (
-            <div className="text-sm whitespace-pre-wrap mb-4">
-                <span>{parts[0]}</span>
-                <div className="aspect-video rounded-lg overflow-hidden border my-4">
+            <div className="space-y-4">
+                {textContent && <p className="text-sm whitespace-pre-wrap">{textContent}</p>}
+                <div className="aspect-video rounded-lg overflow-hidden border">
                     <iframe
                         width="100%"
                         height="100%"
@@ -135,18 +138,17 @@ const PostContentRenderer = ({ content }: { content: string }) => {
                         allowFullScreen
                     ></iframe>
                 </div>
-                <span>{parts.slice(1).join(youtubeMatch[0]).replace(new RegExp(`^${youtubeMatch[1]}`), '')}</span>
             </div>
         );
     }
 
+    const instagramMatch = combinedContent.match(instagramRegex);
     if (instagramMatch) {
         const postUrl = instagramMatch[0];
-        const parts = content.split(postUrl);
-
+        const textContent = combinedContent.replace(instagramRegex, '').trim();
         return (
-            <div className="text-sm whitespace-pre-wrap mb-4">
-                <span>{parts[0]}</span>
+             <div className="space-y-4">
+                {textContent && <p className="text-sm whitespace-pre-wrap">{textContent}</p>}
                  <div className="my-4 flex justify-center">
                     <iframe 
                         className="instagram-media instagram-media-rendered" 
@@ -157,15 +159,14 @@ const PostContentRenderer = ({ content }: { content: string }) => {
                         height="550" 
                         data-instgrm-payload-id="instagram-media-payload-0" 
                         scrolling="no" 
-                        style={{ background: 'white', border: '1px solid rgb(219, 219, 219)', borderRadius: '3px', display: 'block', margin: '0px', maxWidth: '540px', minWidth: '326px', padding: '0px', width: 'calc(100% - 2px)' }}>
+                        style={{ background: 'white', border: '1px solid rgb(219, 219, 219)', borderRadius: '3px', display: 'block', margin: '0px auto', maxWidth: '540px', minWidth: '326px', padding: '0px', width: 'calc(100% - 2px)' }}>
                     </iframe>
                 </div>
-                <span>{parts.slice(1).join(postUrl).replace(new RegExp(`^${instagramMatch[1]}`), '')}</span>
             </div>
         )
     }
 
-    return <p className="text-sm whitespace-pre-wrap mb-4">{content}</p>;
+    return <p className="text-sm whitespace-pre-wrap">{content}</p>;
 };
 
 function CommenterInfo({ authorId }: { authorId: string }) {
@@ -747,7 +748,9 @@ function GroupFeed({ group }: { group: Group }) {
     const postForm = useForm<z.infer<typeof postFormSchema>>({
         resolver: zodResolver(postFormSchema),
         defaultValues: {
+            title: '',
             content: '',
+            link: '',
         },
         mode: 'onChange',
     });
@@ -760,7 +763,9 @@ function GroupFeed({ group }: { group: Group }) {
             const postsCollectionRef = collection(firestore, 'groups', group.id, 'posts');
             
             await addDocumentNonBlocking(postsCollectionRef, {
+                title: values.title,
                 content: values.content,
+                link: values.link || '',
                 authorId: user.uid,
                 authorName: `${currentUserProfile.firstName || ''} ${currentUserProfile.lastName || ''}`.trim(),
                 authorPhotoUrl: currentUserProfile.photoUrl || '',
@@ -884,6 +889,7 @@ function GroupFeed({ group }: { group: Group }) {
                         const canEdit = user && user.uid === post.authorId;
                         const canDelete = canEdit || isSuperAdmin;
                         const isEditingThisPost = editingPostId === post.id;
+                        const combinedContentForRender = post.link ? `${post.content}\n${post.link}` : post.content;
                         return (
                             <Card key={post.id}>
                                 <CardHeader>
@@ -897,7 +903,7 @@ function GroupFeed({ group }: { group: Group }) {
                                             </Link>
                                             <div>
                                                 <Link href={`/expert/${post.authorId}`} className="hover:underline">
-                                                    <CardTitle className="text-base">{post.authorName}</CardTitle>
+                                                    <p className="font-semibold">{post.authorName}</p>
                                                 </Link>
                                                 <CardDescription className="text-xs">
                                                     {post.createdAt ? `${formatDistanceToNowStrict(post.createdAt.toDate())} ago` : '...'}
@@ -928,6 +934,9 @@ function GroupFeed({ group }: { group: Group }) {
                                             </DropdownMenu>
                                         )}
                                     </div>
+                                     {post.title && (
+                                        <CardTitle className="pt-4 text-lg">{post.title}</CardTitle>
+                                    )}
                                 </CardHeader>
                                 <CardContent>
                                     {isEditingThisPost ? (
@@ -944,7 +953,7 @@ function GroupFeed({ group }: { group: Group }) {
                                             </div>
                                         </div>
                                     ) : (
-                                        <PostContentRenderer content={post.content} />
+                                        <PostContentRenderer content={combinedContentForRender} />
                                     )}
 
                                     {post.imageUrl && !isEditingThisPost && (
