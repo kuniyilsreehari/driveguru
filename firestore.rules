@@ -213,13 +213,12 @@ service cloud.firestore {
 
       // VERY PERMISSIVE: Any signed-in user can create their own user document.
       allow create: if isOwner(userId);
-
+      
       /* ---------------------------------------------
        * Private Notifications (STRICT PRIVACY)
-       * CORRECTED PLACEMENT
        * --------------------------------------------- */
        match /notifications/{notificationId} {
-         // A user can list and read their own notifications.
+         // A user can read their own notifications.
          allow get, list: if isOwner(userId);
          // A signed-in user can create a notification, but only if they are the "actor".
          allow create: if isSignedIn() && request.auth.uid == requestData().actorId;
@@ -307,10 +306,9 @@ service cloud.firestore {
         
         function isRequestingToJoin() {
             // Check that the ONLY change is adding the current user's ID to the pendingMembers array.
-            let changes = request.resource.data.diff(resource.data);
-            return changes.affectedKeys().hasOnly(['pendingMembers']) &&
-                   changes.addedKeys().hasOnly(['pendingMembers']) &&
-                   changes.addedKeys().size() == 1;
+            return request.resource.data.diff(resource.data).affectedKeys().hasOnly(['pendingMembers']) &&
+                   request.resource.data.pendingMembers.size() == resource.data.pendingMembers.size() + 1 &&
+                   request.auth.uid in request.resource.data.pendingMembers;
         }
         
         function isChangingOwnMembership() {
@@ -398,6 +396,9 @@ service cloud.firestore {
   }
 }
     
+    
+
+
     
 
 
