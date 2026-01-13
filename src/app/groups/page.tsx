@@ -230,19 +230,28 @@ function GroupsList() {
         const groupDocRef = doc(firestore, 'groups', group.id);
         const userDocRef = doc(firestore, 'users', user.uid);
         const isMember = userProfile?.groups?.includes(group.id);
-        const hasRequested = group.pendingMembers?.includes(user.uid || '');
+        const hasRequested = group.pendingMembers?.includes(user?.uid || '');
         
         try {
             if (group.privacy === 'public') {
-                const updateAction = isMember ? arrayRemove(user.uid) : arrayUnion(user.uid);
-                await updateDocumentNonBlocking(groupDocRef, { members: updateAction });
+                const groupUpdateAction = isMember ? arrayRemove(user.uid) : arrayUnion(user.uid);
+                const userUpdateAction = isMember ? arrayRemove(group.id) : arrayUnion(group.id);
+                await Promise.all([
+                    updateDocumentNonBlocking(groupDocRef, { members: groupUpdateAction }),
+                    updateDocumentNonBlocking(userDocRef, { groups: userUpdateAction })
+                ]);
                  toast({
                     title: isMember ? 'Left Group' : 'Joined Group',
                     description: `You are now ${isMember ? 'no longer a member of' : 'a member of'} ${group.name}.`,
                 });
             } else { // Private group
                 if (isMember) { // Leaving
-                    await updateDocumentNonBlocking(groupDocRef, { members: arrayRemove(user.uid) });
+                    const groupUpdateAction = arrayRemove(user.uid);
+                    const userUpdateAction = arrayRemove(group.id);
+                     await Promise.all([
+                        updateDocumentNonBlocking(groupDocRef, { members: groupUpdateAction }),
+                        updateDocumentNonBlocking(userDocRef, { groups: userUpdateAction })
+                    ]);
                     toast({ title: 'Left Group' });
                 } else if (hasRequested) { // Cancel request
                     await updateDocumentNonBlocking(groupDocRef, { pendingMembers: arrayRemove(user.uid) });
