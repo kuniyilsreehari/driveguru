@@ -185,21 +185,6 @@ function CommentThread({ comment, postId, allComments, onDelete, postAuthorId, p
                 parentId: comment.id,
             });
 
-            // Create notification for the author of the parent comment
-            if (comment.authorId !== user.uid) { // Don't notify yourself
-                const notificationRef = collection(firestore, 'users', comment.authorId, 'notifications');
-                await addDoc(notificationRef, {
-                    type: 'comment_reply',
-                    message: `<b>${user.displayName || 'Someone'}</b> replied to your comment on <b>${postAuthorName}</b>'s post.`,
-                    link: `/feed#${postId}`,
-                    read: false,
-                    actorId: user.uid,
-                    actorName: user.displayName,
-                    actorPhotoUrl: user.photoURL,
-                    createdAt: serverTimestamp(),
-                });
-            }
-
             form.reset();
             setShowReplyForm(false);
         } catch (error) {

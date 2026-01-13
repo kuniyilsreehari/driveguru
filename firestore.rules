@@ -1,4 +1,5 @@
 
+
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -213,18 +214,6 @@ service cloud.firestore {
 
       // VERY PERMISSIVE: Any signed-in user can create their own user document.
       allow create: if isOwner(userId);
-      
-      /* ---------------------------------------------
-       * Private Notifications (STRICT PRIVACY)
-       * --------------------------------------------- */
-       match /notifications/{notificationId} {
-         // A user can read their own notifications.
-         allow get, list: if isOwner(userId);
-         // A signed-in user can create a notification, but only if they are the "actor".
-         allow create: if isSignedIn() && request.auth.uid == requestData().actorId;
-         // Only the owner can update (e.g., mark as read) or delete their notifications.
-         allow update, delete: if isOwner(userId);
-       }
        
       /* ---------------------------------------------
        * Private Location Data (STRICT PRIVACY)
