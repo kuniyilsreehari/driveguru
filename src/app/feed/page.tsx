@@ -503,7 +503,7 @@ const PostContentRenderer = ({ content }: { content: string }) => {
                         allowFullScreen
                     ></iframe>
                 </div>
-                <span>{parts[1]}</span>
+                <span>{parts.slice(1).join(youtubeMatch[0]).replace(new RegExp(`^${youtubeMatch[1]}`), '')}</span>
             </div>
         );
     }
@@ -529,7 +529,7 @@ const PostContentRenderer = ({ content }: { content: string }) => {
                         style={{ background: 'white', border: '1px solid rgb(219, 219, 219)', borderRadius: '3px', display: 'block', margin: '0px', maxWidth: '540px', minWidth: '326px', padding: '0px', width: 'calc(100% - 2px)' }}>
                     </iframe>
                 </div>
-                <span>{parts[1]}</span>
+                <span>{parts.slice(1).join(postUrl).replace(new RegExp(`^${instagramMatch[1]}`), '')}</span>
             </div>
         )
     }
