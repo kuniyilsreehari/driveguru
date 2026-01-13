@@ -1,5 +1,4 @@
 
-
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -222,6 +221,18 @@ service cloud.firestore {
       allow delete: if isOwner(userId) || isSuperAdmin();
 
       /* ---------------------------------------------
+       * Private Notifications (STRICT PRIVACY)
+       * --------------------------------------------- */
+       match /notifications/{notificationId} {
+         // A user can list and read their own notifications.
+         allow get, list: if isOwner(userId);
+         // A signed-in user can create a notification, but only if they are the "actor".
+         allow create: if isSignedIn() && request.auth.uid == requestData().actorId;
+         // Only the owner can update (e.g., mark as read) or delete their notifications.
+         allow update, delete: if isOwner(userId);
+       }
+
+      /* ---------------------------------------------
        * Private Location Data (STRICT PRIVACY)
        * --------------------------------------------- */
 
@@ -283,6 +294,7 @@ service cloud.firestore {
             return isSignedIn() && resource.data.creatorId == request.auth.uid;
         }
 
+        // Use a get() call to check membership for sub-collection reads
         function isGroupMember() {
             if (!isSignedIn()) {
                 return false;
@@ -290,23 +302,25 @@ service cloud.firestore {
             let groupDoc = get(/databases/$(database)/documents/groups/$(groupId));
             return request.auth.uid in groupDoc.data.members;
         }
-        
+
         function isChangingOwnMembership() {
-          let added = request.resource.data.members.removeAll(resource.data.members);
-          let removed = resource.data.members.removeAll(request.resource.data.members);
-          // This rule allows a user to either add themselves OR remove themselves, but not both or other changes.
-          return request.resource.data.diff(resource.data).affectedKeys().hasOnly(['members']) &&
-                 ((added.size() == 1 && added[0] == request.auth.uid) ||
-                  (removed.size() == 1 && removed[0] == request.auth.uid));
+          let changes = request.resource.data.diff(resource.data);
+          // Allow changing ONLY the members array
+          if (!changes.affectedKeys().hasOnly(['members'])) {
+            return false;
+          }
+          // Allow only adding or removing SELF from the members array
+          let added = changes.addedKeys().filter(key => key.size() == 2 && key[0] == 'members' && key[1] == request.auth.uid).size() == 1;
+          let removed = changes.removedKeys().filter(key => key.size() == 2 && key[0] == 'members' && key[1] == request.auth.uid).size() == 1;
+          return (added && !removed) || (!added && removed);
         }
 
-        // CORRECTED RULE: This is the proper way to check for a request-to-join action.
         function isRequestingToJoin() {
             // Check that the ONLY change is adding the current user's ID to the pendingMembers array.
             return request.resource.data.diff(resource.data).affectedKeys().hasOnly(['pendingMembers']) &&
                    request.resource.data.pendingMembers == resource.data.pendingMembers.concat([request.auth.uid]);
         }
-
+        
         function isCreatorManagingRequests() {
             return isGroupCreator() && 
                    (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['members', 'pendingMembers']) || 
@@ -320,14 +334,15 @@ service cloud.firestore {
         allow create: if isSignedIn() && requestData().creatorId == request.auth.uid && request.auth.uid in requestData().members;
         
         allow update: if isSuperAdmin() || 
-                       (isGroupCreator() && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['members', 'pendingMembers'])) ||
-                       (isSignedIn() && resource.data.privacy == 'public' && isChangingOwnMembership()) ||
-                       (isSignedIn() && resource.data.privacy == 'private' && isRequestingToJoin()) || 
-                       isCreatorManagingRequests();
+                       (isGroupCreator() && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['members', 'pendingMembers'])) || // Creator can edit details
+                       (isSignedIn() && resource.data.privacy == 'public' && isChangingOwnMembership()) || // Public group join/leave
+                       (isSignedIn() && resource.data.privacy == 'private' && isRequestingToJoin()) || // Private group request to join
+                       isCreatorManagingRequests(); // Creator manages private group requests
                        
         allow delete: if isSuperAdmin() || isGroupCreator();
 
         match /posts/{postId} {
+            // Only group members can read or list posts within the group
             allow read, list: if isGroupMember(); 
             allow create: if isGroupMember() && request.resource.data.authorId == request.auth.uid;
             allow update: if isSuperAdmin() ||
@@ -379,4 +394,9 @@ service cloud.firestore {
   }
 }
     
+    
+
+
+    
+
     
