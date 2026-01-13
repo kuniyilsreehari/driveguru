@@ -568,6 +568,7 @@ function ExpertDashboardPage() {
   const [promptIndex, setPromptIndex] = useState(0);
   const [isPromptDialogOpen, setIsPromptDialogOpen] = useState(false);
   const [isSubmittingPost, setIsSubmittingPost] = useState(false);
+  const [isCreatePostOpen, setIsCreatePostOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('dashboard');
 
   const postForm = useForm<z.infer<typeof postFormSchema>>({
@@ -823,6 +824,7 @@ function ExpertDashboardPage() {
         description: 'Your update is now live on the public feed.',
       });
       postForm.reset();
+      setIsCreatePostOpen(false);
     } catch (error) {
       if ((error as any).name !== 'FirebaseError') {
         toast({
@@ -1144,17 +1146,37 @@ function ExpertDashboardPage() {
                 {userProfile.role === 'Company' && <CompanyVacancies userProfile={userProfile} />}
             </TabsContent>
             <TabsContent value="feed" className="mt-6">
-                <Card>
+                 <Card>
                     <CardHeader>
-                        <CardTitle className="flex items-center gap-2"><Rss className="h-5 w-5"/>Post to the Public Feed</CardTitle>
-                        <CardDescription>Share an update with the community. Your post will be visible to everyone on the platform.</CardDescription>
+                        <CardTitle className="flex items-center gap-2"><Rss className="h-5 w-5" />Engage with the Community</CardTitle>
+                        <CardDescription>Share updates, ask questions, and connect with other professionals on the public feed.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <PostForm 
-                        form={postForm}
-                        onSubmit={onPostSubmit}
-                        isSubmitting={isSubmittingPost}
-                        />
+                        <div className="flex flex-col sm:flex-row gap-4">
+                            <Button asChild className="flex-1">
+                                <Link href="/feed">
+                                    View Public Feed
+                                </Link>
+                            </Button>
+                            <Dialog open={isCreatePostOpen} onOpenChange={setIsCreatePostOpen}>
+                                <DialogTrigger asChild>
+                                    <Button variant="outline" className="flex-1">
+                                        <PlusCircle className="mr-2 h-4 w-4" /> Create New Post
+                                    </Button>
+                                </DialogTrigger>
+                                <DialogContent>
+                                    <DialogHeader>
+                                        <DialogTitle>Create a new post</DialogTitle>
+                                        <DialogDescription>Share an update with the community. Your post will be visible to everyone on the platform.</DialogDescription>
+                                    </DialogHeader>
+                                    <PostForm
+                                        form={postForm}
+                                        onSubmit={onPostSubmit}
+                                        isSubmitting={isSubmittingPost}
+                                    />
+                                </DialogContent>
+                            </Dialog>
+                        </div>
                     </CardContent>
                 </Card>
             </TabsContent>
