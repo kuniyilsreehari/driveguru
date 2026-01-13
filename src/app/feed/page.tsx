@@ -318,7 +318,7 @@ function CommentThread({ comment, postId, allComments, onDelete, postAuthorId }:
                                     <MessageSquareReply className="h-3 w-3" />
                                     Reply
                                 </button>
-                                <Button variant="ghost" size="sm" onClick={handleLikeComment} className="text-xs h-auto p-0 -ml-2 text-muted-foreground hover:text-foreground">
+                                <Button variant="ghost" size="sm" onClick={handleLikeComment} className="text-xs h-auto p-0 flex items-center -ml-2 text-muted-foreground hover:text-foreground">
                                     <Heart className={cn("mr-1 h-3 w-3", hasLiked && "fill-red-500 text-red-500")} />
                                     Like
                                     {canViewLikes && (
@@ -510,7 +510,7 @@ function CommentsSection({ postId, postAuthorId }: { postId: string, postAuthorI
 const POSTS_PER_PAGE = 5;
 
 const PostContentRenderer = ({ content }: { content: string }) => {
-    const youtubeRegex = /(https?:\/\/(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11}))/;
+    const youtubeRegex = /(https?:\/\/(?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/|live\/)|youtu\.be\/)([a-zA-Z0-9_-]+))/;
     const instagramRegex = /(https?:\/\/(?:www\.)?instagram\.com\/p\/([a-zA-Z0-9_-]+)\/?)/;
     
     const combinedContent = content;
@@ -518,7 +518,10 @@ const PostContentRenderer = ({ content }: { content: string }) => {
     const youtubeMatch = combinedContent.match(youtubeRegex);
     if (youtubeMatch) {
         const videoId = youtubeMatch[2];
+        const isLive = youtubeMatch[0].includes('/live/');
+        const embedUrl = isLive ? `https://www.youtube.com/embed/live_stream?channel=${videoId}` : `https://www.youtube.com/embed/${videoId}`;
         const textContent = combinedContent.replace(youtubeRegex, '').trim();
+
         return (
             <div className="space-y-4">
                 {textContent && <p className="text-sm whitespace-pre-wrap">{textContent}</p>}
@@ -526,7 +529,7 @@ const PostContentRenderer = ({ content }: { content: string }) => {
                     <iframe
                         width="100%"
                         height="100%"
-                        src={`https://www.youtube.com/embed/${videoId}`}
+                        src={embedUrl}
                         title="YouTube video player"
                         frameBorder="0"
                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
@@ -805,7 +808,7 @@ function PostCard({ post }: { post: Post }) {
             </CardContent>
             <CardFooter className="flex-col items-start">
                 <div className="flex items-center gap-2 w-full">
-                    <Button variant="ghost" size="sm" onClick={() => handleLike(post)} className={cn("text-muted-foreground hover:text-foreground", hasLiked && "text-red-500")}>
+                    <Button variant="ghost" size="sm" onClick={() => handleLike(post)} className={cn("text-muted-foreground hover:text-foreground flex items-center", hasLiked && "text-red-500")}>
                         <Heart className={cn("mr-2 h-4 w-4", hasLiked && "fill-red-500")} />
                         Like
                         {canViewLikes && (

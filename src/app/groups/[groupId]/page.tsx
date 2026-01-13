@@ -121,7 +121,7 @@ function getInitials(name?: string) {
 
 
 const PostContentRenderer = ({ content }: { content: string }) => {
-    const youtubeRegex = /(https?:\/\/(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/live\/)([a-zA-Z0-9_-]+)(?:[?&].*)?)/;
+    const youtubeRegex = /(https?:\/\/(?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/|live\/)|youtu\.be\/)([a-zA-Z0-9_-]+))/;
     const instagramRegex = /(https?:\/\/(?:www\.)?instagram\.com\/p\/([a-zA-Z0-9_-]+)\/?)/;
     
     let currentContent = content;
@@ -406,7 +406,7 @@ function CommentThread({ comment, postId, allComments, onDelete, postAuthorId }:
                                     <MessageSquareReply className="h-3 w-3" />
                                     Reply
                                 </button>
-                                <Button variant="ghost" size="sm" onClick={handleLikeComment} className="text-xs h-auto p-0 -ml-2 text-muted-foreground hover:text-foreground">
+                                <Button variant="ghost" size="sm" onClick={handleLikeComment} className="text-xs h-auto p-0 flex items-center -ml-2 text-muted-foreground hover:text-foreground">
                                     <Heart className={cn("mr-1 h-3 w-3", hasLiked && "fill-red-500 text-red-500")} />
                                     Like
                                     {canViewLikes && (
