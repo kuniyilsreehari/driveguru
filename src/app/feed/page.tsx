@@ -16,7 +16,7 @@ import { Form, FormControl, FormField, FormItem } from '@/components/ui/form';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Loader2, ChevronLeft, Rss, Search, Heart, Share2, MoreHorizontal, Trash2, Send, LogIn, MessageSquareReply, MessageSquare, Pen, Upload, Image as ImageIcon, X, Linkedin, Twitter, Github, Globe, Youtube } from 'lucide-react';
+import { Loader2, ChevronLeft, Rss, Search, Heart, Share2, MoreHorizontal, Trash2, Send, LogIn, MessageSquareReply, MessageSquare, Pen, Upload, Image as ImageIcon, X, Linkedin, Twitter, Github, Globe, Youtube, UserPlus, UserMinus, Crown, Sparkles, UserCheck } from 'lucide-react';
 import { formatDistanceToNowStrict } from 'date-fns';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
@@ -43,6 +43,7 @@ import { LikesDialog } from '@/components/likes-dialog';
 import { ImageLightbox } from '@/components/image-lightbox';
 import { useSearchParams } from 'next/navigation';
 import { Icons } from '@/components/icons';
+import { Badge } from '@/components/ui/badge';
 
 
 type Post = {
@@ -80,6 +81,9 @@ type UserProfile = {
     facebookUrl?: string;
     instagramUrl?: string;
     youtubeUrl?: string;
+    verified?: boolean;
+    tier?: 'Standard' | 'Premier' | 'Super Premier';
+    following?: string[];
 }
 
 const commentFormSchema = z.object({
@@ -564,6 +568,13 @@ function PostCard({ post }: { post: Post }) {
         return doc(firestore, 'users', post.authorId);
     }, [firestore, post.authorId]);
     const { data: author, isLoading: isAuthorLoading } = useDoc<UserProfile>(authorDocRef);
+    
+    const currentUserDocRef = useMemoFirebase(() => {
+        if (!user) return null;
+        return doc(firestore, 'users', user.uid);
+    }, [user, firestore]);
+    const { data: currentUserProfile } = useDoc<UserProfile>(currentUserDocRef);
+
 
     const handleLike = async (postToLike: Post) => {
         if (!user || !firestore) {
@@ -641,6 +652,25 @@ function PostCard({ post }: { post: Post }) {
         setIsPostDeleteDialogOpen(false);
     }
     
+    const handleToggleFollow = async () => {
+        if (!currentUserDocRef || !author) return;
+
+        try {
+            const isFollowing = currentUserProfile?.following?.includes(author.id);
+            const updateAction = isFollowing ? arrayRemove(author.id) : arrayUnion(author.id);
+            await updateDocumentNonBlocking(currentUserDocRef, { following: updateAction });
+            toast({
+                title: isFollowing ? 'Unfollowed' : 'Followed',
+                description: `You are now ${isFollowing ? 'no longer following' : 'following'} ${post.authorName}.`,
+            });
+        } catch (error) {
+            console.error("Failed to toggle follow", error);
+            if ((error as any).name !== 'FirebaseError') {
+                 toast({ variant: 'destructive', title: 'Error', description: 'Could not update your follow status.' });
+            }
+        }
+    }
+    
     const hasLiked = user ? post.likes?.includes(user.uid) : false;
     const canEdit = user && user.uid === post.authorId;
     const canDelete = canEdit || isSuperAdmin;
@@ -648,6 +678,8 @@ function PostCard({ post }: { post: Post }) {
     const canViewLikes = post.likes && post.likes.length > 0;
     
     const combinedContentForRender = post.link ? `${post.content}\n${post.link}` : post.content;
+    const isFollowing = user && author && currentUserProfile?.following?.includes(author.id);
+    const canFollow = user && user.uid !== post.authorId;
     
     return (
         <Card>
@@ -661,11 +693,26 @@ function PostCard({ post }: { post: Post }) {
                             </Avatar>
                         </Link>
                         <div>
-                            <Link href={`/expert/${post.authorId}`} className="hover:underline">
-                                <p className="font-semibold">{post.authorName}</p>
-                            </Link>
-                            <CardDescription className="text-xs">
-                                {post.createdAt ? `${formatDistanceToNowStrict(post.createdAt.toDate())} ago` : '...'}
+                            <div className="flex items-center gap-2">
+                                <Link href={`/expert/${post.authorId}`} className="hover:underline">
+                                    <p className="font-semibold">{post.authorName}</p>
+                                </Link>
+                                {isAuthorLoading ? <Loader2 className="h-3 w-3 animate-spin"/> : <>
+                                    {author?.verified && <UserCheck className="h-4 w-4 text-green-500"/>}
+                                    {author?.tier === 'Premier' && <Crown className="h-4 w-4 text-purple-500"/>}
+                                    {author?.tier === 'Super Premier' && <Sparkles className="h-4 w-4 text-blue-500"/>}
+                                </>}
+                            </div>
+                            <CardDescription className="text-xs flex items-center gap-2">
+                                <span>{post.createdAt ? `${formatDistanceToNowStrict(post.createdAt.toDate())} ago` : '...'}</span>
+                                {canFollow && (
+                                     <>
+                                        <span className="text-muted-foreground/50">•</span>
+                                        <button onClick={handleToggleFollow} className="text-primary hover:underline font-semibold">
+                                            {isFollowing ? 'Following' : 'Follow'}
+                                        </button>
+                                    </>
+                                )}
                             </CardDescription>
                             <div className="flex items-center gap-2 mt-2">
                               {isAuthorLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <>
