@@ -213,7 +213,7 @@ function GroupsList() {
         return query(collection(firestore, 'groups'), orderBy('createdAt', 'desc'));
     }, [firestore]);
 
-    const { data: allGroups, isLoading, error, mutate: mutateGroups } = useCollection<Group>(groupsQuery);
+    const { data: allGroups, isLoading, error } = useCollection<Group>(groupsQuery);
     
     const filteredGroups = allGroups?.filter(group => 
         group.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -264,8 +264,9 @@ function GroupsList() {
             }
         } finally {
             setIsSubmitting(null);
-            mutateGroups(); // Re-fetch groups to update member counts
-            mutateUserProfile(); // Re-fetch user profile to update their group list
+            // No need to manually mutate, useCollection handles real-time updates.
+            // mutateGroups(); 
+            // mutateUserProfile(); // This will trigger a re-render automatically.
         }
     };
 
