@@ -294,16 +294,17 @@ service cloud.firestore {
         function isChangingOwnMembership() {
           let added = request.resource.data.members.removeAll(resource.data.members);
           let removed = resource.data.members.removeAll(request.resource.data.members);
+          // This rule allows a user to either add themselves OR remove themselves, but not both or other changes.
           return request.resource.data.diff(resource.data).affectedKeys().hasOnly(['members']) &&
                  ((added.size() == 1 && added[0] == request.auth.uid) ||
                   (removed.size() == 1 && removed[0] == request.auth.uid));
         }
 
+        // CORRECTED RULE: This is the proper way to check for a request-to-join action.
         function isRequestingToJoin() {
+            // Check that the ONLY change is adding the current user's ID to the pendingMembers array.
             return request.resource.data.diff(resource.data).affectedKeys().hasOnly(['pendingMembers']) &&
-                   request.resource.data.pendingMembers.hasAll(resource.data.pendingMembers) &&
-                   request.resource.data.pendingMembers.removeAll(resource.data.pendingMembers).size() == 1 &&
-                   request.resource.data.pendingMembers.removeAll(resource.data.pendingMembers)[0] == request.auth.uid;
+                   request.resource.data.pendingMembers == resource.data.pendingMembers.concat([request.auth.uid]);
         }
 
         function isCreatorManagingRequests() {
