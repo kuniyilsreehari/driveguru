@@ -46,23 +46,40 @@ service cloud.firestore {
     
     // A user can update their own profile, but cannot change protected fields.
     function isUpdatingOwnUserDoc(userId) {
-      let protectedFields = ['id', 'createdAt', 'tier', 'verified', 'referralPoints', 'cashPaymentStatus', 'referredByCode'];
-      let incomingRole = requestData().role;
-      let allowedRoles = ["freelancer", "company", "authorized_pro"];
+        let protectedFields = ['id', 'createdAt', 'tier', 'verified', 'referralPoints', 'cashPaymentStatus', 'referredByCode', 'email'];
+        let incomingData = request.resource.data;
+        let changedKeys = incomingData.diff(resource.data).affectedKeys();
 
-      // Check if the role is being changed to a valid, non-admin role.
-      let isRoleUpdateAllowed = incomingRole in allowedRoles;
-      
-      // If the role is not being changed, we don't need to validate it.
-      let isRoleUnchanged = !('role' in request.resource.data) || request.resource.data.role == resource.data.role;
-      
-      // Allow following and groups field to be updated
-      let canUpdateSocial = request.resource.data.diff(resource.data).affectedKeys().hasOnly(['following', 'groups']);
+        // 1. User must be the owner
+        if (!isOwner(userId)) {
+            return false;
+        }
 
-      return isOwner(userId) && 
-             isExistingDoc() &&
-             (isRoleUpdateAllowed || isRoleUnchanged) && // Allow update if role change is valid OR role is not changed
-             (!request.resource.data.diff(resource.data).affectedKeys().hasAny(protectedFields) || canUpdateSocial);
+        // 2. The document must exist
+        if (!isExistingDoc()) {
+            return false;
+        }
+        
+        // 3. If only 'following' or 'groups' are being changed, allow it.
+        if (changedKeys.hasOnly(['following']) || changedKeys.hasOnly(['groups'])) {
+            return true;
+        }
+        
+        // 4. For any other changes, ensure no protected fields are being modified.
+        if (changedKeys.hasAny(protectedFields)) {
+            return false;
+        }
+        
+        // 5. If role is being changed, ensure it's not to an admin role
+        if ('role' in incomingData && incomingData.role != resource.data.role) {
+            let allowedRoles = ["Freelancer", "Company", "Authorized Pro"];
+             if (!(incomingData.role in allowedRoles)) {
+                return false;
+            }
+        }
+        
+        // 6. If all checks pass, allow the update.
+        return true;
     }
 
     // A manager can only update verification and cash payment status.
@@ -128,6 +145,15 @@ service cloud.firestore {
         let post = get(/databases/$(database)/documents/posts/$(postId));
         return isSignedIn() && post.data.authorId == request.auth.uid;
     }
+    
+    function isApplicationOwner(userId) {
+        return request.auth.uid == userId;
+    }
+    
+    function isVacancyOwnerForApplication() {
+        let vacancy = get(/databases/$(database)/documents/vacancies/$(requestData().vacancyId));
+        return isVacancyOwner(vacancy.data);
+    }
 
 
     /* =====================================================
@@ -190,7 +216,7 @@ service cloud.firestore {
       allow create: if isOwner(userId);
 
       // A user can update their own document, or a super admin can update any document.
-      allow update: if isUpdatingOwnUserDoc(userId) || isSuperAdminUpdatingUserDoc();
+      allow update: if isSuperAdminUpdatingUserDoc() || isUpdatingOwnUserDoc(userId);
 
       // Users can delete their own account, and admins can delete any account.
       allow delete: if isOwner(userId) || isSuperAdmin();
@@ -222,7 +248,7 @@ service cloud.firestore {
                        // Any signed in user can update ONLY the likes array
                        (isSignedIn() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes'])) ||
                        // The author can update the content and imageUrl, but not likes or other fields
-                       (isPostAuthor(postId) && request.resource.data.diff(resource.data).hasAny(['content', 'imageUrl']));
+                       (isPostAuthor(postId) && request.resource.data.diff(resource.data).hasAny(['content', 'imageUrl', 'title', 'link']));
 
         
         // Users can delete their own posts, or a super admin can.
@@ -265,6 +291,24 @@ service cloud.firestore {
             let groupDoc = get(/databases/$(database)/documents/groups/$(groupId));
             return request.auth.uid in groupDoc.data.members;
         }
+
+        function isChangingOwnMembership() {
+            let addedMembers = request.resource.data.members.removeAll(resource.data.members);
+            let removedMembers = resource.data.members.removeAll(request.resource.data.members);
+            return (addedMembers.size() == 1 && addedMembers[0] == request.auth.uid) ||
+                   (removedMembers.size() == 1 && removedMembers[0] == request.auth.uid);
+        }
+        
+        function isRequestingToJoin() {
+            let addedPending = request.resource.data.pendingMembers.removeAll(resource.data.pendingMembers);
+            return addedPending.size() == 1 && addedPending[0] == request.auth.uid;
+        }
+
+        function isCreatorManagingRequests() {
+            return isGroupCreator() && 
+                   (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['members', 'pendingMembers']) || 
+                    request.resource.data.diff(resource.data).affectedKeys().hasOnly(['pendingMembers']));
+        }
         
         // Allow anyone to view a single group's details and list all groups
         allow get: if true;
@@ -272,9 +316,11 @@ service cloud.firestore {
         
         allow create: if isSignedIn() && requestData().creatorId == request.auth.uid && request.auth.uid in requestData().members;
         
-        // Only creator can edit name/description. Members can join/leave.
-        allow update: if isSuperAdmin() || isGroupCreator() || 
-                       (isSignedIn() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['members']));
+        allow update: if isSuperAdmin() || 
+                       (isGroupCreator() && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['members', 'pendingMembers'])) || // Creator can edit details
+                       (isSignedIn() && resource.data.privacy == 'public' && isChangingOwnMembership()) || // Public group join/leave
+                       (isSignedIn() && resource.data.privacy == 'private' && isRequestingToJoin()) || // Private group request
+                       isCreatorManagingRequests(); // Creator manages private group requests
                        
         allow delete: if isSuperAdmin() || isGroupCreator();
 
@@ -283,7 +329,7 @@ service cloud.firestore {
             allow read, list: if isGroupMember(); 
             allow create: if isGroupMember() && request.resource.data.authorId == request.auth.uid;
             allow update: if isSuperAdmin() ||
-                           (isGroupMember() && resource.data.authorId == request.auth.uid && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['content']));
+                           (isGroupMember() && resource.data.authorId == request.auth.uid && request.resource.data.diff(resource.data).affectedKeys().hasAny(['content', 'title', 'link']));
             allow delete: if (isGroupMember() && resource.data.authorId == request.auth.uid) || isSuperAdmin();
         }
     }
@@ -301,6 +347,28 @@ service cloud.firestore {
         // Only the company that owns the vacancy (and is premium) or a super admin can delete it.
         allow delete: if (isPremiumCompanyUser() && isVacancyOwner(resource.data)) || isSuperAdmin();
     }
+    
+    /* =====================================================
+     * Applications
+     * ===================================================== */
+    match /applications/{applicationId} {
+      // Allow a user to create their own application document
+      allow create: if isApplicationOwner(requestData().userId);
+
+      // Allow a user to read their own application, a super admin, or the vacancy owner
+      allow get: if isApplicationOwner(resource.data.userId) || isSuperAdmin() || isVacancyOwnerForApplication();
+
+      // Only allow listing by super admins or based on specific queries
+      allow list: if isSuperAdmin() || 
+                    (request.query.where.size() > 0 && 
+                      ((request.query.where.userId == request.auth.uid) || 
+                       (request.query.where.vacancyId != null && isVacancyOwner(get(/databases/$(database)/documents/vacancies/$(request.query.where.vacancyId)).data)))
+                    );
+
+
+      allow update: if false; // No updates allowed after creation
+      allow delete: if isSuperAdmin() || isApplicationOwner(resource.data.userId);
+    }
 
 
     /* =====================================================
@@ -308,3 +376,5 @@ service cloud.firestore {
      * ===================================================== */
   }
 }
+    
+    
