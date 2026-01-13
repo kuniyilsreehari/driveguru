@@ -206,14 +206,14 @@ function GroupsList() {
         if (!user) return null;
         return doc(firestore, 'users', user.uid);
     }, [user, firestore]);
-    const { data: userProfile } = useDoc<UserProfile>(userDocRef);
+    const { data: userProfile, mutate: mutateUserProfile } = useDoc<UserProfile>(userDocRef);
 
     const groupsQuery = useMemoFirebase(() => {
         if (!firestore) return null;
         return query(collection(firestore, 'groups'), orderBy('createdAt', 'desc'));
     }, [firestore]);
 
-    const { data: allGroups, isLoading, error } = useCollection<Group>(groupsQuery);
+    const { data: allGroups, isLoading, error, mutate: mutateGroups } = useCollection<Group>(groupsQuery);
     
     const filteredGroups = allGroups?.filter(group => 
         group.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -230,22 +230,23 @@ function GroupsList() {
         const groupDocRef = doc(firestore, 'groups', group.id);
         const userDocRef = doc(firestore, 'users', user.uid);
         const isMember = userProfile?.groups?.includes(group.id);
-        const hasRequested = group.pendingMembers?.includes(user?.uid || '');
         
         try {
             if (group.privacy === 'public') {
                 const groupUpdateAction = isMember ? arrayRemove(user.uid) : arrayUnion(user.uid);
                 const userUpdateAction = isMember ? arrayRemove(group.id) : arrayUnion(group.id);
+                
                 await Promise.all([
                     updateDocumentNonBlocking(groupDocRef, { members: groupUpdateAction }),
                     updateDocumentNonBlocking(userDocRef, { groups: userUpdateAction })
                 ]);
+
                  toast({
                     title: isMember ? 'Left Group' : 'Joined Group',
                     description: `You are now ${isMember ? 'no longer a member of' : 'a member of'} ${group.name}.`,
                 });
             } else { // Private group
-                if (isMember) { // Leaving
+                 if (isMember) { // Leaving
                     const groupUpdateAction = arrayRemove(user.uid);
                     const userUpdateAction = arrayRemove(group.id);
                      await Promise.all([
@@ -253,12 +254,8 @@ function GroupsList() {
                         updateDocumentNonBlocking(userDocRef, { groups: userUpdateAction })
                     ]);
                     toast({ title: 'Left Group' });
-                } else if (hasRequested) { // Cancel request
-                    await updateDocumentNonBlocking(groupDocRef, { pendingMembers: arrayRemove(user.uid) });
-                    toast({ title: 'Join Request Cancelled' });
                 } else { // Request to join
-                    await updateDocumentNonBlocking(groupDocRef, { pendingMembers: arrayUnion(user.uid) });
-                    toast({ title: 'Join Request Sent', description: 'The group owner has been notified.' });
+                    toast({ title: 'Coming Soon', description: 'The ability to request to join private groups is under development.' });
                 }
             }
         } catch (error) {
@@ -267,6 +264,8 @@ function GroupsList() {
             }
         } finally {
             setIsSubmitting(null);
+            mutateGroups(); // Re-fetch groups to update member counts
+            mutateUserProfile(); // Re-fetch user profile to update their group list
         }
     };
 
@@ -305,12 +304,10 @@ function GroupsList() {
                     {filteredGroups.map(group => {
                         const isMember = userProfile?.groups?.includes(group.id);
                         const isCreator = user?.uid === group.creatorId;
-                        const hasRequested = group.pendingMembers?.includes(user?.uid || '');
 
                         const getButtonContent = () => {
                             if (isSubmitting === group.id) return <><Loader2 className="mr-2 h-4 w-4 animate-spin"/> Processing</>;
                             if (isMember) return <><UserMinus className="mr-2 h-4 w-4"/> Leave</>;
-                            if (group.privacy === 'private' && hasRequested) return 'Pending';
                             if (group.privacy === 'private') return <><UserPlus className="mr-2 h-4 w-4"/> Request to Join</>;
                             return <><UserPlus className="mr-2 h-4 w-4"/> Join</>;
                         };
@@ -344,7 +341,7 @@ function GroupsList() {
                                             className="w-full" 
                                             variant={isMember ? 'secondary' : 'default'}
                                             onClick={() => handleToggleMembership(group)}
-                                            disabled={isSubmitting === group.id || (group.privacy === 'private' && hasRequested)}
+                                            disabled={isSubmitting === group.id}
                                         >
                                            {getButtonContent()}
                                         </Button>
@@ -370,6 +367,8 @@ function GroupsList() {
 
 export default function GroupsPage() {
     const { user } = useUser();
+    const [_, setRender] = useState(0);
+
 
     return (
         <div className="min-h-screen bg-background p-4 sm:p-8">
@@ -383,7 +382,15 @@ export default function GroupsPage() {
                             </div>
                             <p className="text-muted-foreground">Connect, share, and grow with experts in your field.</p>
                         </div>
-                        {user && <CreateGroupDialog onGroupCreated={() => {}} />}
+                        {user ? (
+                           <CreateGroupDialog onGroupCreated={() => setRender(r => r + 1)} />
+                        ) : (
+                            <Button asChild>
+                                <Link href="/login">
+                                    <LogIn className="mr-2 h-4 w-4" /> Login to Create a Group
+                                </Link>
+                            </Button>
+                        )}
                     </div>
                 </header>
                 <main>
