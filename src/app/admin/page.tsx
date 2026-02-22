@@ -9,7 +9,7 @@ import { useUser, useFirestore, useDoc, useMemoFirebase, useAuth, useCollection 
 import { updateDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, CheckCircle2, UserCheck, UserX, Crown, Sparkles, User as UserIcon, Settings, Save, Briefcase, Building, MessageSquare, Search, PlusCircle, Mail, Download, ExternalLink, IndianRupee, X, Upload, HardDriveDownload, Megaphone, Phone, MapPinIcon, Key, Gift, Code, List, Grip, ArrowUp, ArrowDown, Rss, UserPlus, Fingerprint, Award, CircleHelp, CheckCircle, FileJson, MapPin, Clock, AlertCircle, CreditCard, Fingerprint as IdIcon, Check, XCircle } from 'lucide-react';
+import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, CheckCircle2, UserCheck, UserX, Crown, Sparkles, User as UserIcon, Settings, Save, Briefcase, Building, MessageSquare, Search, PlusCircle, Mail, Download, ExternalLink, IndianRupee, X, Upload, HardDriveDownload, Megaphone, Phone, MapPinIcon, Key, Gift, Code, List, Grip, ArrowUp, ArrowDown, Rss, UserPlus, Fingerprint, Award, CircleHelp, CheckCircle, FileJson, MapPin, Clock, AlertCircle, CreditCard, Fingerprint as IdIcon, Check, XCircle, Youtube, Video } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -97,6 +97,7 @@ type Payment = {
 };
 
 type AppConfig = {
+    introVideoUrl?: string;
     featuredExpertsLimit?: number;
     announcementText?: string;
     isAnnouncementEnabled?: boolean;
@@ -132,6 +133,7 @@ export default function AdminDashboardPage() {
   const [userFilter, setUserFilter] = useState<'all' | 'verified' | 'unverified' | 'premier' | 'super'>('all');
 
   // App Config State
+  const [introVideoUrl, setIntroVideoUrl] = useState("");
   const [featuredLimit, setFeaturedLimit] = useState(3);
   const [announcementText, setAnnouncementText] = useState("");
   const [announcementEnabled, setAnnouncementEnabled] = useState(false);
@@ -166,6 +168,7 @@ export default function AdminDashboardPage() {
 
   useEffect(() => {
     if (appConfig) {
+      setIntroVideoUrl(appConfig.introVideoUrl || "");
       setFeaturedLimit(appConfig.featuredExpertsLimit || 3);
       setAnnouncementText(appConfig.announcementText || "");
       setAnnouncementEnabled(appConfig.isAnnouncementEnabled || false);
@@ -227,6 +230,7 @@ export default function AdminDashboardPage() {
     setIsSaving(true);
     try {
       await setDocumentNonBlocking(appConfigDocRef!, {
+        introVideoUrl,
         featuredExpertsLimit: featuredLimit,
         announcementText,
         isAnnouncementEnabled: announcementEnabled,
@@ -836,6 +840,26 @@ export default function AdminDashboardPage() {
           </TabsContent>
 
           <TabsContent value="settings" className="mt-0 space-y-6">
+            <Card className="border-none rounded-2xl overflow-hidden bg-[#24262d]">
+              <CardHeader className="bg-white/5 border-b border-white/5">
+                <div className="flex items-center gap-3">
+                    <Video className="h-6 w-6 text-orange-500" />
+                    <CardTitle className="text-2xl font-black text-white">Content Management</CardTitle>
+                </div>
+                <CardDescription className="text-muted-foreground">Manage dynamic content like introduction videos.</CardDescription>
+              </CardHeader>
+              <CardContent className="p-6 space-y-4">
+                <div className="space-y-2">
+                    <Label className="font-bold text-white/70 text-xs uppercase tracking-widest">Introduction Video URL (YouTube)</Label>
+                    <div className="relative">
+                        <Youtube className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-orange-500" />
+                        <Input value={introVideoUrl} onChange={e => setIntroVideoUrl(e.target.value)} className="rounded-xl h-12 bg-[#1a1c23] border-none pl-10 text-white placeholder:text-muted-foreground" placeholder="https://www.youtube.com/watch?v=..." />
+                    </div>
+                    <p className="text-[10px] text-muted-foreground">This video will be featured at the top of the Guides page.</p>
+                </div>
+              </CardContent>
+            </Card>
+
             <Card className="border-none rounded-2xl overflow-hidden bg-[#24262d]">
               <CardHeader className="bg-white/5 border-b border-white/5">
                 <div className="flex items-center gap-3">

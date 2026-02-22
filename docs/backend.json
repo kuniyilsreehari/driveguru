@@ -602,6 +602,11 @@
       "type": "object",
       "description": "Stores global application settings.",
       "properties": {
+        "introVideoUrl": {
+          "type": "string",
+          "description": "YouTube link for the introduction video on the Guides page.",
+          "format": "uri"
+        },
         "featuredExpertsLimit": {
           "type": "number",
           "description": "The number of featured experts to show on the homepage."
