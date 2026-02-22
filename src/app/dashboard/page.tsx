@@ -8,7 +8,7 @@ import { doc, collection, serverTimestamp, orderBy, query, where, limit, arrayUn
 import { useUser, useAuth, useFirestore, useDoc, useMemoFirebase, useCollection } from '@/firebase';
 import { updateDocumentNonBlocking, addDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Button } from '@/components/ui/button';
-import { LogOut, Loader, Edit, UserCheck, Crown, Sparkles, User as UserIcon, MessageSquare, Gift, Info, Book, Pen, PlusCircle, MapPin, IndianRupee, Calendar, GraduationCap, School, Building, Home, Share2, Rss, UserPlus, Users, Link as LinkIcon, Search, AlertCircle, Briefcase, Check, CheckCircle, ArrowUpCircle, Trash2, MoreHorizontal, Lock, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
+import { LogOut, Loader, Edit, UserCheck, Crown, Sparkles, User as UserIcon, MessageSquare, Gift, Info, Book, Pen, PlusCircle, MapPin, IndianRupee, Calendar, GraduationCap, School, Building, Home, Share2, Rss, UserPlus, Users, Link as LinkIcon, Search, AlertCircle, Briefcase, Check, CheckCircle, ArrowUpCircle, Trash2, MoreHorizontal, Lock, Clock, ChevronLeft, ChevronRight, ChevronDown, ChevronUp } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { EditProfileForm } from '@/components/auth/edit-profile-form';
@@ -46,6 +46,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import type { Vacancy } from '@/app/vacancies/page';
 
 type ExpertUserProfile = {
@@ -100,6 +105,7 @@ export default function ExpertDashboardPage() {
   const [isSubmittingPost, setIsSubmittingPost] = useState(false);
   const [showPostForm, setShowPostForm] = useState(false);
   const [suggestionSearch, setSuggestionSearch] = useState('');
+  const [isProfileExpanded, setIsProfileExpanded] = useState(true);
 
   // Vacancy State
   const [isVacancyFormOpen, setIsVacancyFormOpen] = useState(false);
@@ -240,142 +246,153 @@ export default function ExpertDashboardPage() {
           </TabsList>
 
           <TabsContent value="overview" className="mt-6 space-y-8">
-            <Card className="border-2">
-              <CardHeader className="flex flex-col md:flex-row items-start md:items-center gap-6 pb-2">
-                <Avatar className="h-24 w-24 border-4 border-primary/20 cursor-pointer" onClick={() => setIsEditDialogOpen(true)}>
-                  <AvatarImage src={userProfile.photoUrl} />
-                  <AvatarFallback className="text-[10px] text-center px-2 font-bold leading-tight">click here to chanage image</AvatarFallback>
-                </Avatar>
-                <div className="flex-1 space-y-1">
-                  <div className="flex items-center gap-3">
-                    <h2 className="text-3xl font-bold">Welcome, {userProfile.companyName || userProfile.firstName}!</h2>
-                    <Button variant="ghost" size="icon" onClick={() => setIsEditDialogOpen(true)} className="h-8 w-8">
-                        <Edit className="h-4 w-4" />
-                    </Button>
+            <Card className="border-2 overflow-hidden">
+              <Collapsible open={isProfileExpanded} onOpenChange={setIsProfileExpanded}>
+                <CardHeader className="flex flex-col md:flex-row items-start md:items-center gap-6 pb-2">
+                  <Avatar className="h-24 w-24 border-4 border-primary/20 cursor-pointer" onClick={() => setIsEditDialogOpen(true)}>
+                    <AvatarImage src={userProfile.photoUrl} />
+                    <AvatarFallback className="text-[10px] text-center px-2 font-bold leading-tight">click here to chanage image</AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 space-y-1">
+                    <div className="flex items-center gap-3">
+                      <h2 className="text-3xl font-bold">Welcome, {userProfile.companyName || userProfile.firstName}!</h2>
+                      <div className="flex gap-1">
+                        <Button variant="ghost" size="icon" onClick={() => setIsEditDialogOpen(true)} className="h-8 w-8">
+                            <Edit className="h-4 w-4" />
+                        </Button>
+                        <CollapsibleTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                            {isProfileExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                          </Button>
+                        </CollapsibleTrigger>
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+                      <span className="flex items-center gap-1"><Users className="h-4 w-4" /> {myFollowers?.length || 0} Followers</span>
+                      <span className="flex items-center gap-1"><Users className="h-4 w-4" /> {userProfile.following?.length || 0} Following</span>
+                    </div>
+                    <div className="flex gap-2 mt-2">
+                      {userProfile.verified && <Badge className="bg-green-600"><UserCheck className="h-3 w-3 mr-1" /> Verified</Badge>}
+                      <Badge variant="secondary">{userProfile.role}</Badge>
+                      {userProfile.companyName && <Badge variant="outline">{userProfile.companyName}</Badge>}
+                    </div>
                   </div>
-                  <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
-                    <span className="flex items-center gap-1"><Users className="h-4 w-4" /> {myFollowers?.length || 0} Followers</span>
-                    <span className="flex items-center gap-1"><Users className="h-4 w-4" /> {userProfile.following?.length || 0} Following</span>
+                  <div className="flex flex-col gap-2 w-full md:w-auto">
+                      <Button variant="outline" onClick={() => setIsEditDialogOpen(true)} className="w-full">
+                          <Edit className="mr-2 h-4 w-4" /> Edit Profile
+                      </Button>
                   </div>
-                  <div className="flex gap-2 mt-2">
-                    {userProfile.verified && <Badge className="bg-green-600"><UserCheck className="h-3 w-3 mr-1" /> Verified</Badge>}
-                    <Badge variant="secondary">{userProfile.role}</Badge>
-                    {userProfile.companyName && <Badge variant="outline">{userProfile.companyName}</Badge>}
+                </CardHeader>
+                <CardContent className="space-y-6 pt-4">
+                  <div className="flex items-center gap-6 py-2">
+                      <Switch 
+                          className="scale-150 origin-left" 
+                          checked={userProfile.isAvailable} 
+                          onCheckedChange={(v) => updateDocumentNonBlocking(userDocRef!, { isAvailable: v })} 
+                      />
+                      <span className="text-lg font-bold">I am currently available.</span>
                   </div>
-                </div>
-                <div className="flex flex-col gap-2 w-full md:w-auto">
-                    <Button variant="outline" onClick={() => setIsEditDialogOpen(true)} className="w-full">
-                        <Edit className="mr-2 h-4 w-4" /> Edit Profile
-                    </Button>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-6 pt-4">
-                <div className="flex items-center gap-6 py-2">
-                    <Switch 
-                        className="scale-150 origin-left" 
-                        checked={userProfile.isAvailable} 
-                        onCheckedChange={(v) => updateDocumentNonBlocking(userDocRef!, { isAvailable: v })} 
-                    />
-                    <span className="text-lg font-bold">I am currently available.</span>
-                </div>
 
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm font-bold text-primary">
-                    <span>Profile Completion</span>
-                    <span>{profileCompletion}%</span>
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm font-bold text-primary">
+                      <span>Profile Completion</span>
+                      <span>{profileCompletion}%</span>
+                    </div>
+                    <Progress value={profileCompletion} className="h-3 bg-secondary" />
                   </div>
-                  <Progress value={profileCompletion} className="h-3 bg-secondary" />
-                </div>
 
-                {profileCompletion < 100 && (
-                    <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-                        <div className="flex items-center gap-3">
-                            <AlertCircle className="h-5 w-5 text-primary" />
-                            <div>
-                                <p className="font-bold">Complete Your Profile!</p>
-                                <p className="text-sm text-muted-foreground">A complete profile helps you stand out and attract more clients. Click the button below to add your missing details and attract more clients.</p>
+                  {profileCompletion < 100 && (
+                      <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+                          <div className="flex items-center gap-3">
+                              <AlertCircle className="h-5 w-5 text-primary" />
+                              <div>
+                                  <p className="font-bold">Complete Your Profile!</p>
+                                  <p className="text-sm text-muted-foreground">A complete profile helps you stand out and attract more clients. Click the button below to add your missing details and attract more clients.</p>
+                              </div>
+                          </div>
+                          <Button onClick={() => setIsWizardOpen(true)} className="w-full sm:w-auto">
+                            <Edit className="mr-2 h-4 w-4" /> Update Profile
+                          </Button>
+                      </div>
+                  )}
+
+                  <CollapsibleContent className="space-y-6 transition-all duration-300">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-4 pt-4">
+                        <div className="flex items-center gap-3 text-sm">
+                            <UserIcon className="h-4 w-4 text-muted-foreground" />
+                            <span className="font-semibold w-24">Gender:</span>
+                            <span className={cn(!userProfile.gender && "text-destructive")}>{userProfile.gender || 'Not specified'}</span>
+                        </div>
+                        <div className="flex items-center gap-3 text-sm">
+                            <IndianRupee className="h-4 w-4 text-muted-foreground" />
+                            <span className="font-semibold w-24">Rate:</span>
+                            <span className={cn(!userProfile.pricingValue && "text-destructive")}>{userProfile.pricingValue ? `₹${userProfile.pricingValue} / ${userProfile.pricingModel || 'hr'}` : 'Not specified'}</span>
+                        </div>
+                        <div className="flex items-center gap-3 text-sm">
+                            <Calendar className="h-4 w-4 text-muted-foreground" />
+                            <span className="font-semibold w-24">Experience:</span>
+                            <span className={cn(!userProfile.experienceYears && "text-destructive")}>{userProfile.experienceYears ? `${userProfile.experienceYears} years` : 'Not specified'}</span>
+                        </div>
+                        <div className="flex items-center gap-3 text-sm">
+                            <MapPin className="h-4 w-4 text-muted-foreground" />
+                            <span className="font-semibold w-24">Location:</span>
+                            <span className={cn(!userProfile.city && !userProfile.state && !userProfile.pincode && "text-destructive")}>{[userProfile.city, userProfile.state, userProfile.pincode].filter(Boolean).join(', ') || 'Not specified'}</span>
+                        </div>
+                        <div className="flex items-center gap-3 text-sm">
+                            <GraduationCap className="h-4 w-4 text-muted-foreground" />
+                            <span className="font-semibold w-24">Qualification:</span>
+                            <span className={cn(!userProfile.qualification && "text-destructive")}>{userProfile.qualification || 'Not specified'}</span>
+                        </div>
+                        <div className="flex items-center gap-3 text-sm">
+                            <School className="h-4 w-4 text-muted-foreground" />
+                            <span className="font-semibold w-24">College:</span>
+                            <span className={cn(!userProfile.collegeName && "text-destructive")}>{userProfile.collegeName || 'Not specified'}</span>
+                        </div>
+                        <div className="flex items-center gap-3 text-sm">
+                            <Building className="h-4 w-4 text-muted-foreground" />
+                            <span className="font-semibold w-24">Business:</span>
+                            <span className={cn(!userProfile.companyName && "text-destructive")}>{userProfile.companyName || 'Not specified'}</span>
+                        </div>
+                        <div className="flex items-center gap-3 text-sm">
+                            <Home className="h-4 w-4 text-muted-foreground" />
+                            <span className="font-semibold w-24">Address:</span>
+                            <span className={cn("truncate", !userProfile.address && "text-destructive")}>{userProfile.address || 'Not specified'}</span>
+                        </div>
+                    </div>
+
+                    <Separator />
+
+                    <div className="space-y-6">
+                        <div>
+                            <h4 className="font-bold flex items-center gap-2 mb-2"><Info className="h-4 w-4" /> About Me</h4>
+                            <p className={cn("text-sm", !userProfile.aboutMe ? "text-destructive" : "text-muted-foreground")}>
+                              {userProfile.aboutMe || 'No information provided.'}
+                            </p>
+                        </div>
+                        <div>
+                            <h4 className="font-bold flex items-center gap-2 mb-2"><Pen className="h-4 w-4" /> About My Dream</h4>
+                            <p className={cn("text-sm", !userProfile.aboutYourDream ? "text-destructive" : "text-muted-foreground")}>
+                              {userProfile.aboutYourDream || 'No information provided.'}
+                            </p>
+                        </div>
+                        <div>
+                            <h4 className="font-bold flex items-center gap-2 mb-2"><Briefcase className="h-4 w-4" /> Associated Projects</h4>
+                            <p className={cn("text-sm", !userProfile.associatedProjectsName ? "text-destructive" : "text-muted-foreground")}>
+                              {userProfile.associatedProjectsName || 'No projects listed.'}
+                            </p>
+                        </div>
+                        <div>
+                            <h4 className="font-bold flex items-center gap-2 mb-2"><Book className="h-4 w-4" /> Skills</h4>
+                            <div className="flex flex-wrap gap-2">
+                                {userProfile.skills ? userProfile.skills.split(',').map((s, i) => (
+                                    <Badge key={i} variant="secondary">{s.trim()}</Badge>
+                                )) : <span className="text-sm text-destructive">No skills listed.</span>}
                             </div>
                         </div>
-                        <Button onClick={() => setIsWizardOpen(true)} className="w-full sm:w-auto">
-                          <Edit className="mr-2 h-4 w-4" /> Update Profile
-                        </Button>
                     </div>
-                )}
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-4 pt-4">
-                    <div className="flex items-center gap-3 text-sm">
-                        <UserIcon className="h-4 w-4 text-muted-foreground" />
-                        <span className="font-semibold w-24">Gender:</span>
-                        <span className={cn(!userProfile.gender && "text-destructive")}>{userProfile.gender || 'Not specified'}</span>
-                    </div>
-                    <div className="flex items-center gap-3 text-sm">
-                        <IndianRupee className="h-4 w-4 text-muted-foreground" />
-                        <span className="font-semibold w-24">Rate:</span>
-                        <span className={cn(!userProfile.pricingValue && "text-destructive")}>{userProfile.pricingValue ? `₹${userProfile.pricingValue} / ${userProfile.pricingModel || 'hr'}` : 'Not specified'}</span>
-                    </div>
-                    <div className="flex items-center gap-3 text-sm">
-                        <Calendar className="h-4 w-4 text-muted-foreground" />
-                        <span className="font-semibold w-24">Experience:</span>
-                        <span className={cn(!userProfile.experienceYears && "text-destructive")}>{userProfile.experienceYears ? `${userProfile.experienceYears} years` : 'Not specified'}</span>
-                    </div>
-                    <div className="flex items-center gap-3 text-sm">
-                        <MapPin className="h-4 w-4 text-muted-foreground" />
-                        <span className="font-semibold w-24">Location:</span>
-                        <span className={cn(!userProfile.city && !userProfile.state && !userProfile.pincode && "text-destructive")}>{[userProfile.city, userProfile.state, userProfile.pincode].filter(Boolean).join(', ') || 'Not specified'}</span>
-                    </div>
-                    <div className="flex items-center gap-3 text-sm">
-                        <GraduationCap className="h-4 w-4 text-muted-foreground" />
-                        <span className="font-semibold w-24">Qualification:</span>
-                        <span className={cn(!userProfile.qualification && "text-destructive")}>{userProfile.qualification || 'Not specified'}</span>
-                    </div>
-                    <div className="flex items-center gap-3 text-sm">
-                        <School className="h-4 w-4 text-muted-foreground" />
-                        <span className="font-semibold w-24">College:</span>
-                        <span className={cn(!userProfile.collegeName && "text-destructive")}>{userProfile.collegeName || 'Not specified'}</span>
-                    </div>
-                    <div className="flex items-center gap-3 text-sm">
-                        <Building className="h-4 w-4 text-muted-foreground" />
-                        <span className="font-semibold w-24">Business:</span>
-                        <span className={cn(!userProfile.companyName && "text-destructive")}>{userProfile.companyName || 'Not specified'}</span>
-                    </div>
-                    <div className="flex items-center gap-3 text-sm">
-                        <Home className="h-4 w-4 text-muted-foreground" />
-                        <span className="font-semibold w-24">Address:</span>
-                        <span className={cn("truncate", !userProfile.address && "text-destructive")}>{userProfile.address || 'Not specified'}</span>
-                    </div>
-                </div>
-
-                <Separator />
-
-                <div className="space-y-6">
-                    <div>
-                        <h4 className="font-bold flex items-center gap-2 mb-2"><Info className="h-4 w-4" /> About Me</h4>
-                        <p className={cn("text-sm", !userProfile.aboutMe ? "text-destructive" : "text-muted-foreground")}>
-                          {userProfile.aboutMe || 'No information provided.'}
-                        </p>
-                    </div>
-                    <div>
-                        <h4 className="font-bold flex items-center gap-2 mb-2"><Pen className="h-4 w-4" /> About My Dream</h4>
-                        <p className={cn("text-sm", !userProfile.aboutYourDream ? "text-destructive" : "text-muted-foreground")}>
-                          {userProfile.aboutYourDream || 'No information provided.'}
-                        </p>
-                    </div>
-                    <div>
-                        <h4 className="font-bold flex items-center gap-2 mb-2"><Briefcase className="h-4 w-4" /> Associated Projects</h4>
-                        <p className={cn("text-sm", !userProfile.associatedProjectsName ? "text-destructive" : "text-muted-foreground")}>
-                          {userProfile.associatedProjectsName || 'No projects listed.'}
-                        </p>
-                    </div>
-                    <div>
-                        <h4 className="font-bold flex items-center gap-2 mb-2"><Book className="h-4 w-4" /> Skills</h4>
-                        <div className="flex flex-wrap gap-2">
-                            {userProfile.skills ? userProfile.skills.split(',').map((s, i) => (
-                                <Badge key={i} variant="secondary">{s.trim()}</Badge>
-                            )) : <span className="text-sm text-destructive">No skills listed.</span>}
-                        </div>
-                    </div>
-                </div>
-              </CardContent>
+                  </CollapsibleContent>
+                </CardContent>
+              </Collapsible>
             </Card>
 
             <Card>
