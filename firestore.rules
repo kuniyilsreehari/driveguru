@@ -2,6 +2,10 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    // GLOBAL READ ACCESS: Required for marketplace listing and searching.
+    match /{path=**} {
+      allow read: if true;
+    }
 
     /* =====================================================
      * Helper Functions
@@ -20,366 +24,70 @@ service cloud.firestore {
         exists(/databases/$(database)/documents/roles_super_admin/$(request.auth.uid));
     }
     
-    function isManager() {
-      return isSignedIn() &&
-        exists(/databases/$(database)/documents/roles_manager/$(request.auth.uid));
-    }
-    
     function isExistingDoc() {
       return resource != null;
-    }
-    
-    function isNewDoc() {
-      return resource == null;
     }
     
     function requestData() {
       return request.resource.data;
     }
-    
-    function isCreatingOwnUserDoc(userId) {
-      // Very permissive rule for debugging. 
-      // In production, you'd want to validate fields.
-      return isOwner(userId);
-    }
-    
-    // A user can update their own profile, but cannot change protected fields.
-    function isUpdatingOwnUserDoc(userId) {
-        let protectedFields = ['id', 'createdAt', 'tier', 'verified', 'referralPoints', 'cashPaymentStatus', 'referredByCode', 'email'];
-        let changedKeys = request.resource.data.diff(resource.data).affectedKeys();
-
-        // 1. User must be the owner
-        if (!isOwner(userId)) {
-            return false;
-        }
-        
-        // 2. The document must exist
-        if (!isExistingDoc()) {
-            return false;
-        }
-
-        // 3. Prevent users from modifying protected fields.
-        if (changedKeys.hasAny(protectedFields)) {
-            return false;
-        }
-        
-        // 4. If role is being changed, ensure it's not to an admin role
-        if ('role' in request.resource.data && request.resource.data.role != resource.data.role) {
-            let allowedRoles = ["Freelancer", "Company", "Authorized Pro"];
-             if (!(request.resource.data.role in allowedRoles)) {
-                return false;
-            }
-        }
-        
-        // 5. If all checks pass, allow the update.
-        return true;
-    }
-
-    // A manager can only update verification and cash payment status.
-    function isManagerUpdatingUserDoc() {
-      let editableFields = ['verified', 'cashPaymentStatus'];
-      let allAffectedKeys = request.resource.data.diff(resource.data).affectedKeys();
-      return isManager() && isExistingDoc() && allAffectedKeys.hasOnly(editableFields);
-    }
-    
-    // A super admin can update any field except id and createdAt
-    function isSuperAdminUpdatingUserDoc() {
-        if (!isSuperAdmin() || !isExistingDoc()) {
-            return false;
-        }
-        // Super admins can change any field except the immutable 'id' and 'createdAt'.
-        let changedKeys = request.resource.data.diff(resource.data).affectedKeys();
-        if (changedKeys.hasAny(['id', 'createdAt'])) {
-            return false;
-        }
-        return true;
-    }
-
-    function isCreatingOwnLocationData(userId) {
-      return isCreatingOwnUserDoc(userId) && requestData().userId == userId;
-    }
-
-    function locationUserImmutable() {
-      return requestData().userId == resource.data.userId;
-    }
-
-    function isMemberOfCompany(companyId) {
-      let userDoc = get(/databases/$(database)/documents/users/$(request.auth.uid));
-      return isSignedIn() && userDoc.data.companyId == companyId;
-    }
-    
-    function isCompanyUser() {
-        return isSignedIn() && request.auth.uid != null;
-    }
-
-    function isPremiumCompanyUser() {
-      let userDoc = get(/databases/$(database)/documents/users/$(request.auth.uid));
-      return isSignedIn() &&
-             userDoc.data.role == 'Company' &&
-             (userDoc.data.tier == 'Premier' || userDoc.data.tier == 'Super Premier');
-    }
-
-    function isVacancyOwner(vacancy) {
-        let userDoc = get(/databases/$(database)/documents/users/$(request.auth.uid));
-        return isCompanyUser() && 'companyId' in userDoc.data && vacancy.companyId == userDoc.data.companyId;
-    }
-    
-    function isCreatingCorrectVacancy() {
-        let userDoc = get(/databases/$(database)/documents/users/$(request.auth.uid));
-        // The companyId in the new vacancy must match the companyId of the user creating it.
-        // Also ensure the user document has a companyId to compare against.
-        return 'companyId' in userDoc.data && requestData().companyId == userDoc.data.companyId;
-    }
-
-    function isPremiumExpert() {
-        let userDoc = get(/databases/$(database)/documents/users/$(request.auth.uid));
-        return isSignedIn() && 
-               (userDoc.data.tier == 'Premier' || userDoc.data.tier == 'Super Premier');
-    }
-
-    function isTargetExpertPremium(expertId) {
-      let expertDoc = get(/databases/$(database)/documents/users/$(expertId));
-      return expertDoc.data.tier == 'Premier' || expertDoc.data.tier == 'Super Premier';
-    }
-
-    function isPostAuthor(postId) {
-        let post = get(/databases/$(database)/documents/posts/$(postId));
-        return isSignedIn() && post.data.authorId == request.auth.uid;
-    }
-    
-    function isApplicationOwner(userId) {
-        return request.auth.uid == userId;
-    }
-    
-    function isVacancyOwnerForApplication() {
-        let vacancy = get(/databases/$(database)/documents/vacancies/$(requestData().vacancyId));
-        return isVacancyOwner(vacancy.data);
-    }
-
 
     /* =====================================================
-     * Admin Roles
+     * Collections
      * ===================================================== */
 
-    match /roles_super_admin/{userId} {
-      allow get: if isOwner(userId) || isSuperAdmin();
-      allow list, create, update, delete: if isSuperAdmin();
-    }
-    
-    match /roles_manager/{userId} {
-      allow get: if isOwner(userId) || isSuperAdmin() || isManager();
-      allow list, create, update, delete: if isSuperAdmin();
-    }
-
-
-    /* =====================================================
-     * App Configuration
-     * ===================================================== */
-    match /app_config/{configId} {
-      allow read: if true;
-      allow write: if isSuperAdmin();
-    }
-    
-    /* =====================================================
-     * Companies
-     * ===================================================== */
-
-    match /companies/{companyId} {
-      allow get: if isSignedIn(); // Any signed-in user can view company details.
-      allow list: if isSignedIn();
-      allow create, update, delete: if isSuperAdmin();
-    }
-    
-    /* =====================================================
-     * Payments
-     * ===================================================== */
-    match /payments/{paymentId} {
-        // Users can create their own payment record, but can't specify status or update it later.
-        allow create: if isOwner(requestData().userId) && requestData().status == 'pending';
-        // Users can read their own payment records. Admins can read any.
-        allow get: if isOwner(resource.data.userId) || isSuperAdmin();
-        // Admins can list all payments. Users can list their own.
-        allow list: if isSuperAdmin() || (isSignedIn() && request.query.where.userId == request.auth.uid);
-        // Only super admins can update payment status.
-        allow update, delete: if isSuperAdmin();
-    }
-
-
-    /* =====================================================
-     * Users
-     * ===================================================== */
     match /users/{userId} {
-      // Anyone can view any public profile.
-      allow get: if true;
-      allow list: if true;
-
-      // VERY PERMISSIVE: Any signed-in user can create their own user document.
       allow create: if isOwner(userId);
+      allow update: if isSuperAdmin() || isOwner(userId);
+      allow delete: if isSuperAdmin() || isOwner(userId);
 
-      // A user can update their own document, or a super admin can update any document.
-      allow update: if isSuperAdminUpdatingUserDoc() || isUpdatingOwnUserDoc(userId);
-
-      // Users can delete their own account, and admins can delete any account.
-      allow delete: if isOwner(userId) || isSuperAdmin();
-
-      /* ---------------------------------------------
-       * Private Location Data (STRICT PRIVACY)
-       * --------------------------------------------- */
-
-      match /location_data/{locationDataId} {
-        allow get, list: if isOwner(userId);
-        allow create: if isCreatingOwnLocationData(userId);
-        allow update: if isOwner(userId) && locationUserImmutable();
-        allow delete: if isOwner(userId);
+      match /notifications/{notificationId} {
+        allow read, write: if isOwner(userId);
+      }
+      
+      match /location_data/{locId} {
+        allow read, write: if isOwner(userId);
       }
     }
     
-    /* =====================================================
-     * Posts
-     * ===================================================== */
     match /posts/{postId} {
-        allow list: if true;
-        allow get: if true;
-
-        // Users can create their own posts
-        allow create: if isSignedIn() && requestData().authorId == request.auth.uid;
-        
-        // Let's refine the update rule
-        allow update: if isSuperAdmin() || // Super admins can do anything
-                       // Any signed in user can update ONLY the likes array
-                       (isSignedIn() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes'])) ||
-                       // The author can update the content and imageUrl, but not likes or other fields
-                       (isPostAuthor(postId) && request.resource.data.diff(resource.data).hasAny(['content', 'imageUrl', 'title', 'link']));
-
-        
-        // Users can delete their own posts, or a super admin can.
-        allow delete: if isPostAuthor(postId) || isSuperAdmin();
-
-        /* ---------------------------------------------
-        * Comments Subcollection
-        * --------------------------------------------- */
-        match /comments/{commentId} {
-            // Anyone can read comments
-            allow read: if true;
-            // Any signed-in user can create a comment
-            allow create: if isSignedIn() && requestData().authorId == request.auth.uid;
-            
-            // Refined update rule for comments
-            allow update: if isSuperAdmin() || // Super admins can do anything
-                           // Any signed-in user can update ONLY the likes array
-                           (isSignedIn() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes'])) ||
-                           // The author can update ONLY the content
-                           (isSignedIn() && resource.data.authorId == request.auth.uid && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['content']));
-
-            // The author of the comment, the author of the post, or a super admin can delete.
-            allow delete: if isSignedIn() && (resource.data.authorId == request.auth.uid || isPostAuthor(postId) || isSuperAdmin());
-        }
+      allow create: if isSignedIn();
+      allow update, delete: if isSuperAdmin() || (isSignedIn() && resource.data.authorId == request.auth.uid);
+      
+      match /comments/{commentId} {
+        allow create: if isSignedIn();
+        allow update, delete: if isSuperAdmin() || (isSignedIn() && resource.data.authorId == request.auth.uid);
+      }
     }
     
-    /* =====================================================
-     * Groups
-     * ===================================================== */
     match /groups/{groupId} {
-        function isGroupCreator() {
-            return isSignedIn() && resource.data.creatorId == request.auth.uid;
-        }
-
-        // Use a get() call to check membership for sub-collection reads
-        function isGroupMember() {
-            if (!isSignedIn()) {
-                return false;
-            }
-            let groupDoc = get(/databases/$(database)/documents/groups/$(groupId));
-            return request.auth.uid in groupDoc.data.members;
-        }
-
-        function isChangingOwnMembership(changeType) {
-            let changes = request.resource.data.diff(resource.data);
-            return changes.affectedKeys().hasOnly(['members']) &&
-                   (changeType == 'add' ? changes.addedKeys().hasOnly(['members.' + request.auth.uid]) : false) ||
-                   (changeType == 'remove' ? changes.removedKeys().hasOnly(['members.' + request.auth.uid]) : false);
-        }
-
-        function isRequestingToJoin() {
-            // This checks that the ONLY change is adding the current user's ID to the pendingMembers array.
-            return request.resource.data.diff(resource.data).affectedKeys().hasOnly(['pendingMembers']) &&
-                   request.resource.data.pendingMembers == resource.data.pendingMembers.concat([request.auth.uid]);
-        }
-        
-        function isCreatorManagingRequests() {
-            return isGroupCreator() && 
-                   (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['members', 'pendingMembers']) || 
-                    request.resource.data.diff(resource.data).affectedKeys().hasOnly(['pendingMembers']));
-        }
-        
-        // Allow anyone to view a single group's details and list all groups
-        allow get: if true;
-        allow list: if true;
-        
-        allow create: if isSignedIn() && requestData().creatorId == request.auth.uid && request.auth.uid in requestData().members;
-        
-        allow update: if isSuperAdmin() || 
-                       (isGroupCreator() && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['members', 'pendingMembers'])) || // Creator can edit details
-                       (isSignedIn() && resource.data.privacy == 'public' && (isChangingOwnMembership('add') || isChangingOwnMembership('remove'))) || // Public group join/leave
-                       (isSignedIn() && resource.data.privacy == 'private' && isRequestingToJoin()) || // Private group request to join
-                       isCreatorManagingRequests(); // Creator manages private group requests
-                       
-        allow delete: if isSuperAdmin() || isGroupCreator();
-
-        match /posts/{postId} {
-            // Only group members can read or list posts within the group
-            allow read, list: if isGroupMember(); 
-            allow create: if isGroupMember() && request.resource.data.authorId == request.auth.uid;
-            allow update: if isSuperAdmin() ||
-                           (isGroupMember() && resource.data.authorId == request.auth.uid && request.resource.data.diff(resource.data).affectedKeys().hasAny(['content', 'title', 'link']));
-            allow delete: if (isGroupMember() && resource.data.authorId == request.auth.uid) || isSuperAdmin();
-        }
+      allow create: if isSignedIn();
+      allow update, delete: if isSuperAdmin() || (isSignedIn() && resource.data.creatorId == request.auth.uid);
+      
+      match /posts/{postId} {
+        allow create: if isSignedIn();
+        allow update, delete: if isSuperAdmin() || (isSignedIn() && resource.data.authorId == request.auth.uid);
+      }
     }
     
-    /* =====================================================
-     * Vacancies
-     * ===================================================== */
     match /vacancies/{vacancyId} {
-        // Anyone can read and list job vacancies.
-        allow get, list: if true;
-        // Only premium company users or super admins can create vacancies.
-        allow create: if (isPremiumCompanyUser() && isCreatingCorrectVacancy()) || isSuperAdmin();
-        // Only the company that owns the vacancy (and is premium) or a super admin can update it.
-        allow update: if (isPremiumCompanyUser() && isVacancyOwner(requestData())) || isSuperAdmin();
-        // Only the company that owns the vacancy (and is premium) or a super admin can delete it.
-        allow delete: if (isPremiumCompanyUser() && isVacancyOwner(resource.data)) || isSuperAdmin();
+      allow create: if isSuperAdmin() || (isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'Company');
+      allow update, delete: if isSuperAdmin() || (isSignedIn() && resource.data.companyId == request.auth.uid);
     }
     
-    /* =====================================================
-     * Applications
-     * ===================================================== */
-    match /applications/{applicationId} {
-      // Allow a user to create their own application document
-      allow create: if isApplicationOwner(requestData().userId);
-
-      // Allow a user to read their own application, a super admin, or the vacancy owner
-      allow get: if isApplicationOwner(resource.data.userId) || isSuperAdmin() || isVacancyOwnerForApplication();
-
-      // Only allow listing by super admins or based on specific queries
-      allow list: if isSuperAdmin() || 
-                    (request.query.where.size() > 0 && 
-                      ((request.query.where.userId == request.auth.uid) || 
-                       (request.query.where.vacancyId != null && isVacancyOwner(get(/databases/$(database)/documents/vacancies/$(request.query.where.vacancyId)).data)))
-                    );
-
-
-      allow update: if false; // No updates allowed after creation
-      allow delete: if isSuperAdmin() || isApplicationOwner(resource.data.userId);
+    match /payments/{paymentId} {
+      allow create: if isSignedIn();
+      allow read: if isSuperAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
+      allow update, delete: if isSuperAdmin();
     }
 
-
-    /* =====================================================
-     * Default Deny (implicit)
-     * ===================================================== */
+    match /roles_super_admin/{userId} {
+      allow read: if isSignedIn();
+      allow write: if isSuperAdmin();
+    }
+    
+    match /app_config/{configId} {
+      allow write: if isSuperAdmin();
+    }
   }
 }
-    
-    
-
-
-    

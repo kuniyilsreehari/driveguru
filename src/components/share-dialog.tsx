@@ -12,7 +12,6 @@ import {
 } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { Share2, Copy } from 'lucide-react';
-import type { ExpertUser } from './expert-card';
 
 type ShareDetails = 
     | { type: 'expert-profile'; expertId: string; expertName: string; }
@@ -59,38 +58,40 @@ export function ShareDialog({ shareDetails, children }: ShareDialogProps) {
         dialogDescription = 'Share this post with others.';
     }
 
+    const handleCopyLink = async () => {
+        try {
+            await navigator.clipboard.writeText(shareData.url);
+            toast({
+                title: "Link Copied",
+                description: "The link has been copied to your clipboard.",
+            });
+        } catch (err) {
+            console.error("Clipboard failed:", err);
+        }
+    }
 
     const handleNativeShare = async () => {
         try {
             if (navigator.share) {
+                // User gesture is present via onClick
                 await navigator.share(shareData);
             } else {
-                 // Fallback for browsers that don't support navigator.share
-                await navigator.clipboard.writeText(shareData.url);
-                toast({
-                    title: "Link Copied",
-                    description: "The link has been copied to your clipboard.",
-                });
+                await handleCopyLink();
             }
         } catch (err: any) {
-            if (err.name !== 'AbortError') {
-                console.error("Share failed:", err);
+            // NotAllowedError is common in sandboxed environments or if permission is denied
+            if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError' || err.name === 'SecurityError') {
+                await handleCopyLink();
                 toast({
-                    variant: 'destructive',
-                    title: "Share Failed",
-                    description: "Could not share at this time.",
+                    title: "Link Copied",
+                    description: "Native sharing is restricted in this browser. Link copied instead.",
                 });
+            } else if (err.name !== 'AbortError') {
+                console.error("Share failed:", err);
+                await handleCopyLink();
             }
         }
     };
-    
-    const handleCopyLink = () => {
-        navigator.clipboard.writeText(shareData.url);
-        toast({
-            title: "Link Copied",
-            description: "The link has been copied to your clipboard.",
-        });
-    }
 
     return (
         <Dialog>
@@ -101,11 +102,9 @@ export function ShareDialog({ shareDetails, children }: ShareDialogProps) {
                     <DialogDescription>{dialogDescription}</DialogDescription>
                 </DialogHeader>
                 <div className="flex flex-col gap-4 py-4">
-                    {typeof navigator !== 'undefined' && navigator.share && (
-                        <Button onClick={handleNativeShare}>
-                            <Share2 className="mr-2 h-4 w-4" /> Share via...
-                        </Button>
-                    )}
+                    <Button onClick={handleNativeShare}>
+                        <Share2 className="mr-2 h-4 w-4" /> Share via System
+                    </Button>
                     <Button variant="outline" onClick={handleCopyLink}>
                         <Copy className="mr-2 h-4 w-4" /> Copy Link
                     </Button>
