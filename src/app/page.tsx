@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Suspense, useState, useEffect, useMemo } from 'react';
@@ -62,8 +61,13 @@ function HomePageContent() {
     const [useAiSearch, setUseAiSearch] = useState(false);
     const [isPremiumDialogOpen, setIsPremiumDialogOpen] = useState(false);
     const [moduleSearchQuery, setModuleSearchQuery] = useState('');
+    const [mounted, setMounted] = useState(false);
     
     const { user, isUserLoading } = useUser();
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
 
     const userProfileDocRef = useMemoFirebase(() => {
         if (!firestore || !user) return null;
@@ -449,7 +453,7 @@ function HomePageContent() {
                                     Search
                                 </Button>
                             </div>
-                             {!useAiSearch && userProfile?.tier !== 'Super Premier' && (
+                             {mounted && !useAiSearch && userProfile?.tier !== 'Super Premier' && (
                                 <p className="text-xs text-orange-500 font-bold mt-2 flex items-center gap-1">
                                     <Lock className="h-3 w-3" />
                                     Premium AI search enabled for Super Premier members. <Link href="/dashboard#plans" className="underline hover:text-orange-400">Upgrade</Link>

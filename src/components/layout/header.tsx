@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -38,6 +37,15 @@ type Notification = {
     actorPhotoUrl: string;
     createdAt: any;
 }
+
+const navItems = [
+  { label: 'Home', href: '/', icon: Home },
+  { label: 'Feed', href: '/feed', icon: Rss },
+  { label: 'Groups', href: '/groups', icon: Users },
+  { label: 'Vacancies', href: '/vacancies', icon: Briefcase },
+  { label: 'Featured', href: '/featured-experts', icon: Award },
+  { label: 'Guides', href: '/guides', icon: BookOpen },
+];
 
 function NotificationCenter() {
     const { user } = useUser();
@@ -99,7 +107,7 @@ function NotificationCenter() {
                 </div>
                 <ScrollArea className="h-[400px]">
                     {isLoading ? (
-                        <div className="flex h-32 items-center justify-center"><Loader className="h-5 w-5 animate-spin text-orange-500" /></div>
+                        <div className="flex h-32 items-center justify-center"><Icons.logo className="h-5 w-5 animate-spin text-orange-500" /></div>
                     ) : !notifications || notifications.length === 0 ? (
                         <div className="flex flex-col items-center justify-center h-64 p-8 text-center opacity-40">
                             <Bell className="h-12 w-12 mb-4" />
@@ -146,10 +154,6 @@ function NotificationCenter() {
     );
 }
 
-function Loader({ className }: { className?: string }) {
-    return <Icons.logo className={cn("animate-spin", className)} />;
-}
-
 export function Header() {
   const { user, isUserLoading } = useUser();
   const auth = useAuth();
@@ -157,22 +161,20 @@ export function Header() {
   const router = useRouter();
   const pathname = usePathname();
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
-  const [isCheckingAdmin, setIsCheckingAdmin] = useState(true);
+  const [mounted, setMounted] = useState(false);
   const { setTheme, theme } = useTheme();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     if (user && firestore) {
-      setIsCheckingAdmin(true);
       const superAdminDocRef = doc(firestore, 'roles_super_admin', user.uid);
       const unsub = onSnapshot(superAdminDocRef, (doc) => {
         setIsSuperAdmin(doc.exists());
-        setIsCheckingAdmin(false);
       });
       return () => unsub();
     } else if (!isUserLoading) {
       setIsSuperAdmin(false);
-      setIsCheckingAdmin(false);
     }
   }, [user, isUserLoading, firestore]);
 
@@ -187,15 +189,6 @@ export function Header() {
     if (!email) return 'U';
     return email.substring(0, 2).toUpperCase();
   };
-
-  const navItems = [
-    { label: 'Home', href: '/', icon: Home },
-    { label: 'Feed', href: '/feed', icon: Rss },
-    { label: 'Groups', href: '/groups', icon: Users },
-    { label: 'Vacancies', href: '/vacancies', icon: Briefcase },
-    { label: 'Featured', href: '/featured-experts', icon: Award },
-    { label: 'Guides', href: '/guides', icon: BookOpen },
-  ];
 
   const dashboardPath = isSuperAdmin ? '/admin' : '/dashboard';
 
@@ -220,7 +213,7 @@ export function Header() {
                         <Button 
                             key={item.href} 
                             asChild 
-                            variant={pathname === item.href ? "secondary" : "ghost"} 
+                            variant={mounted && pathname === item.href ? "secondary" : "ghost"} 
                             className="justify-start" 
                             onClick={() => setIsMobileMenuOpen(false)}
                         >
@@ -241,7 +234,7 @@ export function Header() {
         <div className="flex items-center justify-end space-x-2 sm:space-x-4">
           <nav className="hidden sm:flex items-center space-x-1">
             {navItems.map((item) => {
-                const isActive = pathname === item.href;
+                const isActive = mounted && pathname === item.href;
                 return (
                     <Button 
                         key={item.href} 
