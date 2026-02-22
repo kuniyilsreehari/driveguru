@@ -1,13 +1,13 @@
-
 'use client';
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { signOut } from 'firebase/auth';
-import { doc, collection, serverTimestamp, orderBy, query, where, limit, arrayUnion, arrayRemove, getDocs } from 'firebase/firestore';
-import { useUser, useAuth, useFirestore, useDoc, useMemoFirebase, updateDocumentNonBlocking, addDocumentNonBlocking, useCollection } from '@/firebase';
+import { doc, collection, serverTimestamp, orderBy, query, where, limit, arrayUnion, arrayRemove } from 'firebase/firestore';
+import { useUser, useAuth, useFirestore, useDoc, useMemoFirebase, useCollection } from '@/firebase';
+import { updateDocumentNonBlocking, addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Button } from '@/components/ui/button';
-import { LogOut, Loader, Edit, UserCheck, XCircle, Crown, Sparkles, User as UserIcon, Check, ShieldCheck, Link as LinkIcon, Rss, Settings, Users, MessageSquare, Briefcase, Info, Book, Pen, Hash, ArrowRight, PlusCircle, MapPin, IndianRupee, Calendar, GraduationCap, School, Building, Home, Type, Copy, Share2, Search, UserPlus, UserMinus, FileText, AlertCircle } from 'lucide-react';
+import { LogOut, Loader, Edit, UserCheck, Crown, Sparkles, User as UserIcon, MessageSquare, Gift, Info, Book, Pen, PlusCircle, MapPin, IndianRupee, Calendar, GraduationCap, School, Building, Home, Share2, Rss, UserPlus, Users, Link as LinkIcon, Search, AlertCircle } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { EditProfileForm } from '@/components/auth/edit-profile-form';
@@ -24,8 +24,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { UserList } from '@/components/user-list';
-import { PostVacancyForm } from '@/components/auth/post-vacancy-form';
-import type { Vacancy } from '@/app/vacancies/page';
+import { Separator } from '@/components/ui/separator';
+import { Input } from '@/components/ui/input';
 
 type ExpertUserProfile = {
     id: string;
@@ -74,7 +74,6 @@ export default function ExpertDashboardPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [isPostVacancyOpen, setIsPostVacancyOpen] = useState(false);
   const [isSubmittingPost, setIsSubmittingPost] = useState(false);
   const [showPostForm, setShowPostForm] = useState(false);
   const [suggestionSearch, setSuggestionSearch] = useState('');
@@ -109,7 +108,6 @@ export default function ExpertDashboardPage() {
     return Math.round((filled / fields.length) * 100);
   }, [userProfile]);
 
-  // Suggestions: Experts you don't follow
   const suggestionsQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
     return query(collection(firestore, 'users'), limit(10));
@@ -127,14 +125,6 @@ export default function ExpertDashboardPage() {
     ).slice(0, 6);
   }, [allUsers, user, userProfile, suggestionSearch]);
 
-  // My Vacancies
-  const vacanciesQuery = useMemoFirebase(() => {
-    if (!firestore || !user) return null;
-    return query(collection(firestore, 'vacancies'), where('companyId', '==', user.uid), orderBy('postedAt', 'desc'));
-  }, [firestore, user]);
-  const { data: myVacancies } = useCollection<Vacancy>(vacanciesQuery);
-
-  // My Referrals Count
   const referralsQuery = useMemoFirebase(() => {
     if (!firestore || !userProfile?.referralCode) return null;
     return query(collection(firestore, 'users'), where('referredByCode', '==', userProfile.referralCode));
@@ -193,7 +183,6 @@ export default function ExpertDashboardPage() {
           </TabsList>
 
           <TabsContent value="overview" className="mt-6 space-y-8">
-            {/* Top Profile Card */}
             <Card className="border-2">
               <CardHeader className="flex flex-col md:flex-row items-start md:items-center gap-6 pb-2">
                 <Avatar className="h-24 w-24 border-4 border-primary/20">
@@ -320,7 +309,6 @@ export default function ExpertDashboardPage() {
               </CardContent>
             </Card>
 
-            {/* Referral Rewards */}
             <Card>
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
@@ -356,7 +344,6 @@ export default function ExpertDashboardPage() {
                 </CardContent>
             </Card>
 
-            {/* People You May Know */}
             <Card>
                 <CardHeader>
                     <CardTitle>People You May Know</CardTitle>
@@ -392,40 +379,6 @@ export default function ExpertDashboardPage() {
                     </div>
                 </CardContent>
             </Card>
-
-            {/* Manage Vacancies */}
-            {(userProfile.role === 'Company' || userProfile.role === 'Authorized Pro') && (
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between">
-                        <div>
-                            <CardTitle>Manage Vacancies</CardTitle>
-                            <CardDescription>Post and view job openings for your company.</CardDescription>
-                        </div>
-                        <Button size="sm" onClick={() => setIsPostVacancyOpen(true)}>
-                            <PlusCircle className="h-4 w-4 mr-2" /> Post New Vacancy
-                        </Button>
-                    </CardHeader>
-                    <CardContent>
-                        {myVacancies && myVacancies.length > 0 ? (
-                            <div className="space-y-3">
-                                {myVacancies.map(v => (
-                                    <div key={v.id} className="flex items-center justify-between p-3 rounded-lg border">
-                                        <div>
-                                            <p className="font-bold">{v.title}</p>
-                                            <p className="text-xs text-muted-foreground">{v.location} • {v.employmentType}</p>
-                                        </div>
-                                        <Badge variant="secondary">{v.positionsAvailable} Open</Badge>
-                                    </div>
-                                ))}
-                            </div>
-                        ) : (
-                            <div className="text-center py-12 border-2 border-dashed rounded-lg">
-                                <p className="text-muted-foreground">You haven't posted any vacancies yet.</p>
-                            </div>
-                        )}
-                    </CardContent>
-                </Card>
-            )}
           </TabsContent>
 
           <TabsContent value="network" className="mt-6 space-y-6">
@@ -498,7 +451,6 @@ export default function ExpertDashboardPage() {
                     <CardDescription>Manage your subscription and professional visibility.</CardDescription>
                 </CardHeader>
                 <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {/* Simplified Plan Cards */}
                     <div className={cn("p-6 rounded-lg border-2", userProfile.tier === 'Standard' || !userProfile.tier ? "border-primary bg-primary/5" : "bg-secondary/20")}>
                         <h3 className="text-xl font-bold mb-2">Standard</h3>
                         <p className="text-sm text-muted-foreground mb-4">Basic marketplace listing.</p>
@@ -524,18 +476,6 @@ export default function ExpertDashboardPage() {
         <DialogContent className="max-w-3xl overflow-y-auto max-h-[90vh]">
           <DialogHeader><DialogTitle>Edit Your Professional Profile</DialogTitle></DialogHeader>
           {userProfile && <EditProfileForm userProfile={userProfile as any} onSuccess={() => setIsEditDialogOpen(false)} />}
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={isPostVacancyOpen} onOpenChange={setIsPostVacancyOpen}>
-        <DialogContent className="max-w-2xl overflow-y-auto max-h-[90vh]">
-            <DialogHeader><DialogTitle>Post a Job Vacancy</DialogTitle></DialogHeader>
-            <PostVacancyForm 
-                onSuccess={() => setIsPostVacancyOpen(false)} 
-                companyId={user.uid} 
-                companyName={userProfile.companyName} 
-                companyEmail={userProfile.email || ''} 
-            />
         </DialogContent>
       </Dialog>
     </div>

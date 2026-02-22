@@ -80,7 +80,7 @@ service cloud.firestore {
     }
     
     match /vacancies/{vacancyId} {
-      allow create: if isSuperAdmin() || isSignedIn();
+      allow create: if isSuperAdmin() || (isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.tier == 'Super Premier');
       allow update, delete: if isSuperAdmin() || (isSignedIn() && resource.data.companyId == request.auth.uid);
     }
     
