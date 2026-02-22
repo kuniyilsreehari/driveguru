@@ -75,10 +75,10 @@ service cloud.firestore {
       }
     }
     
-    // Job Vacancies (Explicit public access for discovery)
+    // Job Vacancies (Explicit public access for discovery and listing)
     match /vacancies/{vacancyId} {
       allow read, list: if true;
-      allow write: if isSuperAdmin();
+      allow create, update, delete: if isSuperAdmin();
     }
     
     // Payments and Subscriptions
