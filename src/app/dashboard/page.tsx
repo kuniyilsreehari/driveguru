@@ -7,7 +7,7 @@ import { signOut } from 'firebase/auth';
 import { doc, collection, serverTimestamp, orderBy, query, where } from 'firebase/firestore';
 import { useUser, useAuth, useFirestore, useDoc, useMemoFirebase, updateDocumentNonBlocking, addDocumentNonBlocking, useCollection } from '@/firebase';
 import { Button } from '@/components/ui/button';
-import { LogOut, Loader, Edit, UserCheck, XCircle, Crown, Sparkles, User as UserIcon, Check, ShieldCheck, Link as LinkIcon, Rss, Settings, Users, MessageSquare, Briefcase, Info, Book, Pen, Hash, ArrowRight } from 'lucide-react';
+import { LogOut, Loader, Edit, UserCheck, XCircle, Crown, Sparkles, User as UserIcon, Check, ShieldCheck, Link as LinkIcon, Rss, Settings, Users, MessageSquare, Briefcase, Info, Book, Pen, Hash, ArrowRight, PlusCircle } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { EditProfileForm } from '@/components/auth/edit-profile-form';
@@ -106,6 +106,7 @@ export default function ExpertDashboardPage() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isSubmittingPost, setIsSubmittingPost] = useState(false);
   const [isGeneratingBio, setIsGeneratingBio] = useState(false);
+  const [showPostForm, setShowPostForm] = useState(false);
 
   const userDocRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
   const { data: userProfile, isLoading: isProfileLoading } = useDoc<ExpertUserProfile>(userDocRef);
@@ -174,6 +175,7 @@ export default function ExpertDashboardPage() {
       });
       toast({ title: "Post Published!" });
       postForm.reset();
+      setShowPostForm(false);
     } finally {
       setIsSubmittingPost(false);
     }
@@ -191,7 +193,7 @@ export default function ExpertDashboardPage() {
         </header>
 
         <Tabs defaultValue="overview" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-4 bg-secondary/50">
             <TabsTrigger value="overview">Dashboard</TabsTrigger>
             <TabsTrigger value="network">My Network</TabsTrigger>
             <TabsTrigger value="feed">Feed</TabsTrigger>
@@ -303,13 +305,41 @@ export default function ExpertDashboardPage() {
             </Tabs>
           </TabsContent>
 
-          <TabsContent value="feed" className="mt-6">
-            <Card>
-              <CardHeader><CardTitle>Publish Update</CardTitle><CardDescription>Share your recent work or news with the community.</CardDescription></CardHeader>
-              <CardContent>
-                <PostForm form={postForm} onSubmit={onPostSubmit} isSubmitting={isSubmittingPost} />
-              </CardContent>
-            </Card>
+          <TabsContent value="feed" className="mt-6 space-y-6">
+            {!showPostForm ? (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Rss className="h-5 w-5 text-primary" />
+                    Engage with the Community
+                  </CardTitle>
+                  <CardDescription>
+                    Share updates, ask questions, and connect with other professionals on the public feed.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="flex flex-col sm:flex-row gap-4">
+                  <Button asChild className="flex-1" size="lg">
+                    <Link href="/feed">View Public Feed</Link>
+                  </Button>
+                  <Button variant="secondary" className="flex-1" size="lg" onClick={() => setShowPostForm(true)}>
+                    <PlusCircle className="mr-2 h-4 w-4" /> Create New Post
+                  </Button>
+                </CardContent>
+              </Card>
+            ) : (
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <div>
+                    <CardTitle>Publish Update</CardTitle>
+                    <CardDescription>Share your recent work or news with the community.</CardDescription>
+                  </div>
+                  <Button variant="ghost" size="sm" onClick={() => setShowPostForm(false)}>Cancel</Button>
+                </CardHeader>
+                <CardContent>
+                  <PostForm form={postForm} onSubmit={onPostSubmit} isSubmitting={isSubmittingPost} />
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
 
           <TabsContent value="plans" className="mt-6">
