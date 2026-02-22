@@ -1,11 +1,10 @@
-
 'use server';
 /**
  * @fileOverview A flow for a super admin to create a new user.
  *
  * This file defines a Genkit flow that allows a Super Admin to create a new user
  * in both Firebase Authentication for login and in the Firestore database for their profile.
- * It also handles assigning special roles like 'manager' or 'super_admin'.
+ * It also handles assigning special roles like 'Manager' or 'Super Admin'.
  *
  * - createUser - The main function to initiate user creation.
  * - CreateUserInput - The Zod schema for the input required to create a user.
@@ -23,7 +22,7 @@ const CreateUserInputSchema = z.object({
   password: z.string().min(8),
   firstName: z.string().min(1),
   lastName: z.string().min(1),
-  role: z.enum(["freelancer", "company", "authorized_pro", "manager", "super_admin"]),
+  role: z.enum(["Freelancer", "Company", "Authorized Pro", "Manager", "Super Admin"]),
 });
 export type CreateUserInput = z.infer<typeof CreateUserInputSchema>;
 
@@ -81,11 +80,11 @@ const createUserFlow = ai.defineFlow(
       
       await userDocRef.set(userData);
 
-       // 3. If the role is super_admin or manager, add them to the respective roles collection
-      if (input.role === 'super_admin') {
+       // 3. If the role is Super Admin or Manager, add them to the respective roles collection
+      if (input.role === 'Super Admin') {
         await firestore.collection('roles_super_admin').doc(userId).set({ uid: userId });
       }
-      if (input.role === 'manager') {
+      if (input.role === 'Manager') {
          await firestore.collection('roles_manager').doc(userId).set({ uid: userId });
       }
 
