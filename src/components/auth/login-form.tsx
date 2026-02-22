@@ -19,7 +19,7 @@ import {
   browserSessionPersistence,
   browserLocalPersistence,
 } from 'firebase/auth';
-import { doc, getDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, serverTimestamp } from 'firebase/firestore';
 
 import { Button } from "@/components/ui/button";
 import {
@@ -91,14 +91,14 @@ export function LoginForm() {
   
   useEffect(() => {
     if (view === 'phone' && auth && recaptchaContainerRef.current) {
-        if (!(window as any).recaptchaVerifier) {
-             (window as any).recaptchaVerifier = new RecaptchaVerifier(auth, recaptchaContainerRef.current, {
-                'size': 'invisible',
-                'callback': (response: any) => {
-                    // reCAPTCHA solved, allow signInWithPhoneNumber.
-                }
-            });
-        }
+        const verifier = new RecaptchaVerifier(auth, recaptchaContainerRef.current, {
+            'size': 'invisible',
+        });
+        (window as any).recaptchaVerifier = verifier;
+        return () => {
+            verifier.clear();
+            delete (window as any).recaptchaVerifier;
+        };
     }
   }, [view, auth]);
 
@@ -157,7 +157,6 @@ export function LoginForm() {
       const persistence = values.rememberMe ? browserLocalPersistence : browserSessionPersistence;
       await setPersistence(auth, persistence);
       await signInWithEmailAndPassword(auth, values.email, values.password);
-      // The useEffect above will handle the redirect after the user state is updated.
     } catch (error: any) {
       let errorMessage = "An unexpected error occurred. Please try again.";
       if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
@@ -177,10 +176,9 @@ export function LoginForm() {
     if (!auth) return;
     setIsSubmitting(true);
     const fullPhoneNumber = `+91${values.phoneNumber}`;
-    setPhoneNumberForSignup(fullPhoneNumber); // Save for potential new user profile
+    setPhoneNumberForSignup(fullPhoneNumber);
     try {
         const verifier = (window as any).recaptchaVerifier;
-        await verifier.render(); // Explicitly render the verifier
         const result = await signInWithPhoneNumber(auth, fullPhoneNumber, verifier);
         setConfirmationResult(result);
         setView('otp');
@@ -215,17 +213,17 @@ export function LoginForm() {
                 id: user.uid,
                 firstName: 'New',
                 lastName: 'User',
-                email: null, // No email with phone signup
+                email: null,
                 phoneNumber: phoneNumberForSignup,
                 role: 'Freelancer',
                 verified: false,
                 isAvailable: true,
                 createdAt: serverTimestamp(),
             };
-            await setDocumentNonBlocking(userDocRef, userData, { merge: true });
+            setDocumentNonBlocking(userDocRef, userData, { merge: true });
             toast({
                 title: "Welcome!",
-                description: "Your account has been created with your phone number. Please complete your profile in the dashboard.",
+                description: "Your account has been created with your phone number.",
             });
         } else {
              toast({
@@ -233,7 +231,6 @@ export function LoginForm() {
                 description: "You have successfully signed in.",
             });
         }
-        // Redirect is handled by the main useEffect
     } catch (error: any) {
         console.error("OTP verification failed:", error);
         toast({
@@ -348,7 +345,7 @@ export function LoginForm() {
             </>}
           </Button>
 
-           <Button variant="outline" className="w-full bg-green-600 text-white hover:bg-green-700 transition-transform duration-150 ease-in-out hover:scale-[1.02] active:scale-[0.98]" onClick={() => setView('phone')}>
+           <Button variant="outline" className="w-full bg-green-600 text-white hover:bg-green-700" onClick={() => setView('phone')}>
                 <Phone className="mr-2 h-4 w-4" />
                 Sign in with Phone
             </Button>

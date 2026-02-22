@@ -25,7 +25,6 @@ import * as z from 'zod';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { UserList } from '@/components/user-list';
 import { generateAboutMe } from '@/ai/flows/generate-about-me-flow';
-import { suggestSkills } from '@/ai/flows/suggest-skills-flow';
 
 type ExpertUserProfile = {
     id: string;
@@ -112,10 +111,11 @@ export default function ExpertDashboardPage() {
   const { data: userProfile, isLoading: isProfileLoading } = useDoc<ExpertUserProfile>(userDocRef);
 
   useEffect(() => {
-    if (!isUserLoading && !isProfileLoading && (!user || !userProfile)) {
+    // Correctly handle redirection in useEffect to avoid render-phase router updates
+    if (!isUserLoading && !user) {
       router.push('/login');
     }
-  }, [user, userProfile, isUserLoading, isProfileLoading, router]);
+  }, [user, isUserLoading, router]);
 
   const postForm = useForm<z.infer<typeof postFormSchema>>({
     resolver: zodResolver(postFormSchema),
@@ -152,7 +152,7 @@ export default function ExpertDashboardPage() {
         qualification: userProfile.qualification || '',
       });
       if (result.aboutMe) {
-        await updateDocumentNonBlocking(userDocRef!, { aboutMe: result.aboutMe });
+        updateDocumentNonBlocking(userDocRef!, { aboutMe: result.aboutMe });
         toast({ title: "AI Bio Generated", description: "Your profile has been updated." });
       }
     } catch (e) {
@@ -166,7 +166,7 @@ export default function ExpertDashboardPage() {
     if (!firestore || !user) return;
     setIsSubmittingPost(true);
     try {
-      await addDocumentNonBlocking(collection(firestore, 'posts'), {
+      addDocumentNonBlocking(collection(firestore, 'posts'), {
         ...values,
         authorId: user.uid,
         authorName: `${userProfile?.firstName} ${userProfile?.lastName}`,
@@ -182,7 +182,7 @@ export default function ExpertDashboardPage() {
   }
 
   if (isUserLoading || isProfileLoading) return <div className="flex h-screen items-center justify-center"><Loader className="animate-spin" /></div>;
-  if (!user || !userProfile) return null;
+  if (!user) return null; // Let useEffect handle redirect
 
   return (
     <div className="min-h-screen bg-background p-4 sm:p-8">
@@ -203,17 +203,17 @@ export default function ExpertDashboardPage() {
           <TabsContent value="overview" className="mt-6 space-y-6">
             <Card>
               <CardHeader className="flex flex-row items-center gap-4">
-                <Avatar className="h-20 w-20"><AvatarImage src={userProfile.photoUrl} /><AvatarFallback>{userProfile.firstName[0]}</AvatarFallback></Avatar>
+                <Avatar className="h-20 w-20"><AvatarImage src={userProfile?.photoUrl} /><AvatarFallback>{userProfile?.firstName?.[0] || 'U'}</AvatarFallback></Avatar>
                 <div className="flex-1">
-                  <CardTitle className="text-2xl">Welcome, {userProfile.firstName}!</CardTitle>
+                  <CardTitle className="text-2xl">Welcome, {userProfile?.firstName || 'User'}!</CardTitle>
                   <div className="flex gap-2 mt-2">
-                    {userProfile.verified && <Badge className="bg-green-500"><UserCheck className="h-3 w-3 mr-1" /> Verified</Badge>}
-                    <Badge variant="secondary">{userProfile.tier || 'Standard'}</Badge>
+                    {userProfile?.verified && <Badge className="bg-green-500"><UserCheck className="h-3 w-3 mr-1" /> Verified</Badge>}
+                    <Badge variant="secondary">{userProfile?.tier || 'Standard'}</Badge>
                   </div>
                 </div>
                 <div className="flex flex-col gap-2">
                   <Button variant="outline" onClick={() => setIsEditDialogOpen(true)}><Edit className="mr-2 h-4 w-4" /> Edit Profile</Button>
-                  {(userProfile.tier === 'Premier' || userProfile.tier === 'Super Premier') && (
+                  {userProfile && (userProfile.tier === 'Premier' || userProfile.tier === 'Super Premier') && (
                     <Button variant="secondary" size="sm" onClick={handleAIGenerateBio} disabled={isGeneratingBio}>
                       {isGeneratingBio ? <Loader className="h-3 w-3 animate-spin mr-2" /> : <Sparkles className="h-3 w-3 mr-2" />}
                       AI Bio Builder
@@ -233,16 +233,18 @@ export default function ExpertDashboardPage() {
               <Card>
                 <CardHeader><CardTitle className="text-sm">Referral Status</CardTitle></CardHeader>
                 <CardContent className="text-center">
-                  <div className="text-3xl font-bold text-primary">{userProfile.referralPoints || 0}</div>
+                  <div className="text-3xl font-bold text-primary">{userProfile?.referralPoints || 0}</div>
                   <p className="text-xs text-muted-foreground mt-1">Reward Points</p>
-                  <Button variant="ghost" size="sm" className="mt-4 w-full" onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/signup?ref=${userProfile.referralCode}`); toast({ title: "Copied!" }); }}><LinkIcon className="h-4 w-4 mr-2" /> Copy Referral Link</Button>
+                  {userProfile?.referralCode && (
+                    <Button variant="ghost" size="sm" className="mt-4 w-full" onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/signup?ref=${userProfile.referralCode}`); toast({ title: "Copied!" }); }}><LinkIcon className="h-4 w-4 mr-2" /> Copy Referral Link</Button>
+                  )}
                 </CardContent>
               </Card>
               <Card>
                 <CardHeader><CardTitle className="text-sm">Availability</CardTitle></CardHeader>
                 <CardContent className="flex items-center justify-between">
-                  <span className="text-sm font-medium">{userProfile.isAvailable ? 'Publicly Available' : 'Currently Hidden'}</span>
-                  <Switch checked={userProfile.isAvailable} onCheckedChange={v => updateDocumentNonBlocking(userDocRef!, { isAvailable: v })} />
+                  <span className="text-sm font-medium">{userProfile?.isAvailable ? 'Publicly Available' : 'Currently Hidden'}</span>
+                  <Switch checked={userProfile?.isAvailable || false} onCheckedChange={v => updateDocumentNonBlocking(userDocRef!, { isAvailable: v })} />
                 </CardContent>
               </Card>
             </div>
@@ -300,7 +302,7 @@ export default function ExpertDashboardPage() {
                 </TabsContent>
 
                 <TabsContent value="following" className="mt-4">
-                    <UserList userIds={userProfile.following || []} emptyStateMessage="You aren't following any experts yet." />
+                    <UserList userIds={userProfile?.following || []} emptyStateMessage="You aren't following any experts yet." />
                 </TabsContent>
             </Tabs>
           </TabsContent>
@@ -343,7 +345,7 @@ export default function ExpertDashboardPage() {
           </TabsContent>
 
           <TabsContent value="plans" className="mt-6">
-            <PlanManagement userProfile={userProfile} />
+            {userProfile && <PlanManagement userProfile={userProfile} />}
           </TabsContent>
         </Tabs>
       </div>
@@ -351,7 +353,7 @@ export default function ExpertDashboardPage() {
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="max-w-3xl overflow-y-auto max-h-[90vh]">
           <DialogHeader><DialogTitle>Professional Profile</DialogTitle></DialogHeader>
-          <EditProfileForm userProfile={userProfile as any} onSuccess={() => setIsEditDialogOpen(false)} />
+          {userProfile && <EditProfileForm userProfile={userProfile as any} onSuccess={() => setIsEditDialogOpen(false)} />}
         </DialogContent>
       </Dialog>
     </div>

@@ -56,6 +56,7 @@ service cloud.firestore {
     
     match /posts/{postId} {
       allow create: if isSignedIn();
+      // Allow the author to edit everything, and other users to only update 'likes'
       allow update: if isSuperAdmin() || (isSignedIn() && (resource.data.authorId == request.auth.uid || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes'])));
       allow delete: if isSuperAdmin() || (isSignedIn() && resource.data.authorId == request.auth.uid);
       
@@ -68,7 +69,8 @@ service cloud.firestore {
     
     match /groups/{groupId} {
       allow create: if isSignedIn();
-      allow update: if isSuperAdmin() || (isSignedIn() && (resource.data.creatorId == request.auth.uid || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['members', 'pendingMembers'])));
+      // Allow updates to membership lists for joining/leaving
+      allow update: if isSuperAdmin() || (isSignedIn() && (resource.data.creatorId == request.auth.uid || request.resource.data.diff(resource.data).affectedKeys().hasAny(['members', 'pendingMembers'])));
       allow delete: if isSuperAdmin() || (isSignedIn() && resource.data.creatorId == request.auth.uid);
       
       match /posts/{postId} {
