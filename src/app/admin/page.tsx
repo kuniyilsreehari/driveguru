@@ -193,6 +193,16 @@ export default function AdminDashboardPage() {
     }
   };
 
+  const handleUpdateUserTier = async (userId: string, newTier: 'Standard' | 'Premier' | 'Super Premier') => {
+    const userRef = doc(firestore, 'users', userId);
+    try {
+      await updateDocumentNonBlocking(userRef, { tier: newTier });
+      toast({ title: "Tier Updated", description: `User tier changed to ${newTier}` });
+    } catch (e) {
+      toast({ variant: "destructive", title: "Update Failed" });
+    }
+  };
+
   const handleExport = async () => {
     setIsExporting(true);
     try {
@@ -348,11 +358,53 @@ export default function AdminDashboardPage() {
                                                                 <DropdownMenu>
                                                                     <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="rounded-xl"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
                                                                     <DropdownMenuContent align="end" className="rounded-xl border-2">
-                                                                        <DropdownMenuItem onClick={() => { setSelectedUser(u); setIsEditDialogOpen(true); }} className="rounded-lg"><Edit className="mr-2 h-4 w-4" /> Edit Profile</DropdownMenuItem>
+                                                                        <DropdownMenuSub>
+                                                                            <DropdownMenuSubTrigger className="rounded-lg">
+                                                                                <Sparkles className="mr-2 h-4 w-4" /> Change Tier
+                                                                            </DropdownMenuSubTrigger>
+                                                                            <DropdownMenuPortal>
+                                                                                <DropdownMenuSubContent className="rounded-xl border-2">
+                                                                                    <DropdownMenuItem onClick={() => handleUpdateUserTier(u.id, 'Standard')}>
+                                                                                        <UserIcon className="mr-2 h-4 w-4" /> Standard
+                                                                                    </DropdownMenuItem>
+                                                                                    <DropdownMenuItem onClick={() => handleUpdateUserTier(u.id, 'Premier')}>
+                                                                                        <Crown className="mr-2 h-4 w-4" /> Premier
+                                                                                    </DropdownMenuItem>
+                                                                                    <DropdownMenuItem onClick={() => handleUpdateUserTier(u.id, 'Super Premier')}>
+                                                                                        <Sparkles className="mr-2 h-4 w-4" /> Super Premier
+                                                                                    </DropdownMenuItem>
+                                                                                </DropdownMenuSubContent>
+                                                                            </DropdownMenuPortal>
+                                                                        </DropdownMenuSub>
+                                                                        
+                                                                        <DropdownMenuSub>
+                                                                            <DropdownMenuSubTrigger className="rounded-lg">
+                                                                                <Briefcase className="mr-2 h-4 w-4" /> Change Role
+                                                                            </DropdownMenuSubTrigger>
+                                                                            <DropdownMenuPortal>
+                                                                                <DropdownMenuSubContent className="rounded-xl border-2">
+                                                                                    <DropdownMenuItem onClick={() => handleUpdateUserRole(u.id, 'Super Admin')}>Super Admin</DropdownMenuItem>
+                                                                                    <DropdownMenuItem onClick={() => handleUpdateUserRole(u.id, 'Manager')}>Manager</DropdownMenuItem>
+                                                                                    <DropdownMenuItem onClick={() => handleUpdateUserRole(u.id, 'Freelancer')}>Freelancer</DropdownMenuItem>
+                                                                                    <DropdownMenuItem onClick={() => handleUpdateUserRole(u.id, 'Company')}>Company</DropdownMenuItem>
+                                                                                    <DropdownMenuItem onClick={() => handleUpdateUserRole(u.id, 'Authorized Pro')}>Authorized Pro</DropdownMenuItem>
+                                                                                </DropdownMenuSubContent>
+                                                                            </DropdownMenuPortal>
+                                                                        </DropdownMenuSub>
+
+                                                                        <DropdownMenuItem onClick={() => { setSelectedUser(u); setIsEditDialogOpen(true); }} className="rounded-lg">
+                                                                            <Edit className="mr-2 h-4 w-4" /> Edit
+                                                                        </DropdownMenuItem>
+                                                                        
                                                                         <DropdownMenuSeparator />
-                                                                        <DropdownMenuSub><DropdownMenuSubTrigger className="rounded-lg"><Key className="mr-2 h-4 w-4" /> Change Role</DropdownMenuSubTrigger><DropdownMenuPortal><DropdownMenuSubContent className="rounded-xl border-2"><DropdownMenuItem onClick={() => handleUpdateUserRole(u.id, 'Super Admin')}>Super Admin</DropdownMenuItem><DropdownMenuItem onClick={() => handleUpdateUserRole(u.id, 'Manager')}>Manager</DropdownMenuItem><DropdownMenuItem onClick={() => handleUpdateUserRole(u.id, 'Freelancer')}>Freelancer</DropdownMenuItem></DropdownMenuSubContent></DropdownMenuPortal></DropdownMenuSub>
-                                                                        <DropdownMenuItem onClick={() => updateDocumentNonBlocking(doc(firestore, 'users', u.id), { verified: !u.verified })} className="rounded-lg"><Shield className="mr-2 h-4 w-4" /> Toggle Verification</DropdownMenuItem>
-                                                                        <DropdownMenuItem className="text-destructive focus:text-destructive rounded-lg" onClick={() => { setSelectedUser(u); setIsDeleteDialogOpen(true); }}><Trash2 className="mr-2 h-4 w-4" /> Delete</DropdownMenuItem>
+                                                                        
+                                                                        <DropdownMenuItem onClick={() => updateDocumentNonBlocking(doc(firestore, 'users', u.id), { verified: !u.verified })} className="rounded-lg">
+                                                                            <Shield className="mr-2 h-4 w-4" /> Toggle Verification
+                                                                        </DropdownMenuItem>
+                                                                        
+                                                                        <DropdownMenuItem className="text-destructive focus:text-destructive rounded-lg" onClick={() => { setSelectedUser(u); setIsDeleteDialogOpen(true); }}>
+                                                                            <Trash2 className="mr-2 h-4 w-4" /> Delete
+                                                                        </DropdownMenuItem>
                                                                     </DropdownMenuContent>
                                                                 </DropdownMenu>
                                                             </TableCell>
@@ -498,10 +550,22 @@ export default function AdminDashboardPage() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel className="rounded-xl border-2">Cancel</AlertDialogCancel>
-            <AlertDialogAction className="bg-destructive hover:bg-destructive/90 rounded-xl" onClick={() => selectedUser && deleteDoc(doc(firestore, 'users', selectedUser.id))}>Permanently Delete User</AlertDialogAction>
+            <AlertDialogAction onClick={handleDeleteUser} className="bg-destructive hover:bg-destructive/90 rounded-xl">Permanently Delete User</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
     </div>
   );
+
+  async function handleDeleteUser() {
+    if (!selectedUser) return;
+    try {
+        await deleteDoc(doc(firestore, 'users', selectedUser.id));
+        toast({ title: "User Deleted" });
+    } catch (e) {
+        toast({ variant: "destructive", title: "Deletion Failed" });
+    } finally {
+        setIsDeleteDialogOpen(false);
+    }
+  }
 }
