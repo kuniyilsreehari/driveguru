@@ -26,24 +26,15 @@ service cloud.firestore {
     }
 
     /* =====================================================
-     * Global Read Access (Marketplace Visibility)
-     * ===================================================== */
-    match /users/{userId} { allow read, list: if true; }
-    match /posts/{postId} { allow read, list: if true; }
-    match /groups/{groupId} { allow read, list: if true; }
-    match /app_config/{configId} { allow read, list: if true; }
-    match /vacancies/{vacancyId} { allow read, list: if true; }
-    match /roles_super_admin/{userId} { allow read: if isSignedIn(); }
-    match /roles_manager/{userId} { allow read: if isSignedIn(); }
-
-    /* =====================================================
-     * Specialized Write Access
+     * Collection Rules
      * ===================================================== */
 
+    // User Profiles and related data
     match /users/{userId} {
+      allow read, list: if true;
       allow create: if isOwner(userId);
       allow update: if isSuperAdmin() || isOwner(userId);
-      allow delete: if isSuperAdmin() || isOwner(userId);
+      allow delete: if isSuperAdmin();
 
       match /notifications/{notificationId} {
         allow read, update, delete: if isOwner(userId);
@@ -55,7 +46,9 @@ service cloud.firestore {
       }
     }
     
+    // Public Feed Posts
     match /posts/{postId} {
+      allow read, list: if true;
       allow create: if isSignedIn();
       allow update: if isSuperAdmin() || (isSignedIn() && (resource.data.authorId == request.auth.uid || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes'])));
       allow delete: if isSuperAdmin() || (isSignedIn() && resource.data.authorId == request.auth.uid);
@@ -68,7 +61,9 @@ service cloud.firestore {
       }
     }
     
+    // Professional Groups
     match /groups/{groupId} {
+      allow read, list: if true;
       allow create: if isSignedIn();
       allow update: if isSuperAdmin() || (isSignedIn() && (resource.data.creatorId == request.auth.uid || request.resource.data.diff(resource.data).affectedKeys().hasAny(['members', 'pendingMembers'])));
       allow delete: if isSuperAdmin() || (isSignedIn() && resource.data.creatorId == request.auth.uid);
@@ -80,18 +75,34 @@ service cloud.firestore {
       }
     }
     
+    // Job Vacancies (Public read, Admin-only write)
     match /vacancies/{vacancyId} {
+      allow read, list: if true;
       allow create, update, delete: if isSuperAdmin();
     }
     
+    // Payments and Subscriptions
     match /payments/{paymentId} {
       allow create: if isSignedIn();
       allow read: if isSuperAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
       allow update, delete: if isSuperAdmin();
     }
 
-    match /roles_super_admin/{userId} { allow write: if isSuperAdmin(); }
-    match /roles_manager/{userId} { allow write: if isSuperAdmin(); }
-    match /app_config/{configId} { allow write: if isSuperAdmin(); }
+    // Role Management Collections
+    match /roles_super_admin/{userId} { 
+      allow read: if isSignedIn();
+      allow write: if isSuperAdmin(); 
+    }
+    
+    match /roles_manager/{userId} { 
+      allow read: if isSignedIn();
+      allow write: if isSuperAdmin(); 
+    }
+    
+    // Global App Configuration
+    match /app_config/{configId} { 
+      allow read, list: if true;
+      allow write: if isSuperAdmin(); 
+    }
   }
 }
