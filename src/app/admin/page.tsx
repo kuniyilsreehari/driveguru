@@ -9,7 +9,7 @@ import { useUser, useFirestore, useDoc, useMemoFirebase, useAuth, useCollection 
 import { updateDocumentNonBlocking, setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, CheckCircle2, UserCheck, UserX, Crown, Sparkles, User as UserIcon, Settings, Save, Briefcase, Building, MessageSquare, Search, PlusCircle, Mail, Download, ExternalLink, IndianRupee, X, Upload, HardDriveDownload, Megaphone, Phone, MapPinIcon, CreditCard, Key, Gift, Code, List, Grip, ArrowUp, ArrowDown, Rss } from 'lucide-react';
+import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, CheckCircle2, UserCheck, UserX, Crown, Sparkles, User as UserIcon, Settings, Save, Briefcase, Building, MessageSquare, Search, PlusCircle, Mail, Download, ExternalLink, IndianRupee, X, Upload, HardDriveDownload, Megaphone, Phone, MapPinIcon, CreditCard, Key, Gift, Code, List, Grip, ArrowUp, ArrowDown, Rss, UserPlus, Fingerprint } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -51,38 +51,23 @@ import { Textarea } from '@/components/ui/textarea';
 import { format, formatDistanceToNow } from 'date-fns';
 import { exportAllData } from '@/ai/flows/export-data-flow';
 import { Slider } from '@/components/ui/slider';
-import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
-import { Bar, BarChart, CartesianGrid, XAxis } from "recharts";
 import { EditProfileForm } from '@/components/auth/edit-profile-form';
+import { cn } from '@/lib/utils';
 
 type ExpertUser = {
     id: string;
     firstName: string;
     lastName: string;
     email: string;
-    role: 'Super Admin' | 'Manager' | 'Freelancer' | 'Company' | 'Authorized Pro';
+    role: string;
     photoUrl?: string;
     verified?: boolean;
     tier?: 'Standard' | 'Premier' | 'Super Premier';
     referralCode?: string;
     referralPoints?: number;
+    referredByCode?: string | null;
     createdAt?: Timestamp;
-};
-
-type Post = {
-    id: string;
-    authorId: string;
-    authorName: string;
-    content: string;
-    createdAt: Timestamp;
-};
-
-type Vacancy = {
-    id: string;
-    title: string;
-    companyName: string;
-    location: string;
-    postedAt: Timestamp;
+    profession?: string;
 };
 
 type AppConfig = {
@@ -97,13 +82,6 @@ type AppConfig = {
     superPremierPlanPrices?: { daily: number; monthly: number; yearly: number };
 };
 
-const chartConfig = {
-  users: {
-    label: "Users Joined",
-    color: "hsl(var(--primary))",
-  },
-} satisfies ChartConfig;
-
 export default function AdminDashboardPage() {
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
@@ -116,6 +94,8 @@ export default function AdminDashboardPage() {
   const [selectedUser, setSelectedUser] = useState<ExpertUser | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [userSearchQuery, setUserSearchQuery] = useState('');
+  const [userFilter, setUserFilter] = useState<'all' | 'verified' | 'unverified' | 'premier' | 'super'>('all');
 
   // App Config State
   const [featuredLimit, setFeaturedLimit] = useState(3);
@@ -133,12 +113,6 @@ export default function AdminDashboardPage() {
   const usersQuery = useMemoFirebase(() => isSuperAdmin ? query(collection(firestore, 'users'), orderBy('createdAt', 'desc')) : null, [firestore, isSuperAdmin]);
   const { data: users, isLoading: isUsersLoading } = useCollection<ExpertUser>(usersQuery);
 
-  const postsQuery = useMemoFirebase(() => isSuperAdmin ? query(collection(firestore, 'posts'), orderBy('createdAt', 'desc')) : null, [firestore, isSuperAdmin]);
-  const { data: posts } = useCollection<Post>(postsQuery);
-
-  const vacanciesQuery = useMemoFirebase(() => isSuperAdmin ? query(collection(firestore, 'vacancies'), orderBy('postedAt', 'desc')) : null, [firestore, isSuperAdmin]);
-  const { data: vacancies } = useCollection<Vacancy>(vacanciesQuery);
-
   const appConfigDocRef = useMemoFirebase(() => doc(firestore, 'app_config', 'homepage'), [firestore]);
   const { data: appConfig } = useDoc<AppConfig>(appConfigDocRef);
 
@@ -154,15 +128,36 @@ export default function AdminDashboardPage() {
     }
   }, [appConfig]);
 
-  const growthData = useMemo(() => {
-    if (!users) return [];
-    const counts: Record<string, number> = {};
-    users.forEach(u => {
-      const date = u.createdAt ? format(u.createdAt.toDate(), 'MMM dd') : 'Unknown';
-      counts[date] = (counts[date] || 0) + 1;
-    });
-    return Object.entries(counts).map(([date, count]) => ({ date, users: count })).reverse().slice(-7);
+  const stats = useMemo(() => {
+    if (!users) return { total: 0, verified: 0, unverified: 0, premier: 0, super: 0, referrals: 0 };
+    return {
+        total: users.length,
+        verified: users.filter(u => u.verified).length,
+        unverified: users.filter(u => !u.verified).length,
+        premier: users.filter(u => u.tier === 'Premier').length,
+        super: users.filter(u => u.tier === 'Super Premier').length,
+        referrals: users.filter(u => u.referredByCode).length,
+    };
   }, [users]);
+
+  const filteredUsers = useMemo(() => {
+    if (!users) return [];
+    return users.filter(u => {
+        const matchesSearch = 
+            `${u.firstName} ${u.lastName}`.toLowerCase().includes(userSearchQuery.toLowerCase()) ||
+            u.email?.toLowerCase().includes(userSearchQuery.toLowerCase()) ||
+            u.referralCode?.toLowerCase().includes(userSearchQuery.toLowerCase());
+        
+        const matchesFilter = 
+            userFilter === 'all' ? true :
+            userFilter === 'verified' ? u.verified :
+            userFilter === 'unverified' ? !u.verified :
+            userFilter === 'premier' ? u.tier === 'Premier' :
+            userFilter === 'super' ? u.tier === 'Super Premier' : true;
+
+        return matchesSearch && matchesFilter;
+    });
+  }, [users, userSearchQuery, userFilter]);
 
   const handleSaveSettings = async () => {
     setIsSaving(true);
@@ -222,103 +217,264 @@ export default function AdminDashboardPage() {
       <div className="mx-auto max-w-7xl">
         <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-8 gap-4">
           <div className="flex items-center gap-4">
-            <Shield className="h-10 w-10 text-primary" />
+            <div className="bg-primary/10 p-3 rounded-xl">
+                <Shield className="h-10 w-10 text-primary" />
+            </div>
             <div>
-              <h1 className="text-3xl font-bold">Admin Panel</h1>
-              <p className="text-muted-foreground">Platform oversight and growth management.</p>
+              <h1 className="text-4xl font-black tracking-tight">Super Admin</h1>
+              <p className="text-muted-foreground text-sm font-medium">Welcome, {user?.email}</p>
             </div>
           </div>
-          <Button variant="outline" onClick={() => auth && signOut(auth).then(() => router.push('/'))}><LogOut className="mr-2 h-4 w-4" /> Log Out</Button>
+          <Button variant="outline" className="rounded-xl border-2" onClick={() => auth && signOut(auth).then(() => router.push('/'))}><LogOut className="mr-2 h-4 w-4" /> Log Out</Button>
         </header>
 
-        <Tabs defaultValue="overview" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6 lg:w-fit gap-2">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="users">Users</TabsTrigger>
-            <TabsTrigger value="vacancies">Vacancies</TabsTrigger>
-            <TabsTrigger value="posts">Feed</TabsTrigger>
-            <TabsTrigger value="settings">Settings</TabsTrigger>
-            <TabsTrigger value="tools">Tools</TabsTrigger>
+        <Tabs defaultValue="dashboard" className="w-full">
+          <TabsList className="grid w-full grid-cols-3 bg-secondary/50 p-1 h-12 rounded-xl mb-8">
+            <TabsTrigger value="dashboard" className="rounded-lg data-[state=active]:bg-background">Dashboard</TabsTrigger>
+            <TabsTrigger value="settings" className="rounded-lg data-[state=active]:bg-background">Settings</TabsTrigger>
+            <TabsTrigger value="data" className="rounded-lg data-[state=active]:bg-background">Data Management</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="overview" className="mt-6 space-y-6">
-            <div className="grid gap-4 md:grid-cols-3">
-              <Card><CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Total Experts</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold">{users?.length || 0}</div></CardContent></Card>
-              <Card><CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Verified Users</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold">{users?.filter(u => u.verified).length || 0}</div></CardContent></Card>
-              <Card><CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Premium Members</CardTitle></CardHeader><CardContent><div className="text-2xl font-bold">{users?.filter(u => u.tier === 'Premier' || u.tier === 'Super Premier').length || 0}</div></CardContent></Card>
+          <TabsContent value="dashboard" className="mt-0 space-y-8">
+            {/* Stats Grid */}
+            <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-6">
+              <Card className="border-none bg-secondary/20"><CardHeader className="pb-2"><CardTitle className="text-sm font-bold opacity-70">Total Experts</CardTitle></CardHeader><CardContent><div className="text-3xl font-black">{stats.total}</div><p className="text-[10px] text-muted-foreground mt-1">Total registered users</p></CardContent></Card>
+              <Card className="border-none bg-secondary/20"><CardHeader className="pb-2"><CardTitle className="text-sm font-bold opacity-70">Verified Experts</CardTitle></CardHeader><CardContent><div className="text-3xl font-black">{stats.verified}</div><p className="text-[10px] text-muted-foreground mt-1">Total verified experts</p></CardContent></Card>
+              <Card className="border-none bg-secondary/20"><CardHeader className="pb-2"><CardTitle className="text-sm font-bold opacity-70">Unverified Experts</CardTitle></CardHeader><CardContent><div className="text-3xl font-black">{stats.unverified}</div><p className="text-[10px] text-muted-foreground mt-1">Pending verification</p></CardContent></Card>
+              <Card className="border-none bg-secondary/20"><CardHeader className="pb-2"><CardTitle className="text-sm font-bold opacity-70">Premier Experts</CardTitle></CardHeader><CardContent><div className="text-3xl font-black text-purple-500">{stats.premier}</div><p className="text-[10px] text-muted-foreground mt-1">Total Premier experts</p></CardContent></Card>
+              <Card className="border-none bg-secondary/20"><CardHeader className="pb-2"><CardTitle className="text-sm font-bold opacity-70">Super Premier</CardTitle></CardHeader><CardContent><div className="text-3xl font-black text-blue-500">{stats.super}</div><p className="text-[10px] text-muted-foreground mt-1">Total Super Premier</p></CardContent></Card>
+              <Card className="border-none bg-secondary/20"><CardHeader className="pb-2"><CardTitle className="text-sm font-bold opacity-70">Referrals Used</CardTitle></CardHeader><CardContent><div className="text-3xl font-black">{stats.referrals}</div><p className="text-[10px] text-muted-foreground mt-1">Total signups via referral</p></CardContent></Card>
             </div>
-            <Card>
-              <CardHeader><CardTitle>User Growth</CardTitle></CardHeader>
-              <CardContent className="h-[300px]">
-                <ChartContainer config={chartConfig} className="h-full w-full">
-                  <BarChart data={growthData}>
-                    <CartesianGrid vertical={false} />
-                    <XAxis dataKey="date" tickLine={false} tickMargin={10} axisLine={false} />
-                    <ChartTooltip content={<ChartTooltipContent />} />
-                    <Bar dataKey="users" fill="var(--color-users)" radius={4} />
-                  </BarChart>
-                </ChartContainer>
-              </CardContent>
-            </Card>
+
+            <Tabs defaultValue="users" className="w-full">
+                <TabsList className="flex w-full bg-secondary/30 p-1 rounded-xl mb-6">
+                    <TabsTrigger value="users" className="flex-1 rounded-lg">User Management</TabsTrigger>
+                    <TabsTrigger value="vacancies" className="flex-1 rounded-lg">Vacancy Management</TabsTrigger>
+                    <TabsTrigger value="payments" className="flex-1 rounded-lg">Payment Management</TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="users">
+                    <Card className="border-2 border-secondary/50 rounded-2xl overflow-hidden">
+                        <CardHeader className="bg-secondary/10 pb-6 border-b">
+                            <div className="flex items-center gap-3">
+                                <Users className="h-6 w-6 text-primary" />
+                                <div>
+                                    <CardTitle className="text-2xl font-black">Expert Users</CardTitle>
+                                    <CardDescription className="font-medium">Manage all registered users in the system.</CardDescription>
+                                </div>
+                            </div>
+                        </CardHeader>
+                        <CardContent className="p-6 space-y-6">
+                            {/* Search and Quick Filters */}
+                            <div className="flex flex-col lg:flex-row items-center gap-4">
+                                <div className="relative flex-1 w-full">
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                    <Input 
+                                        placeholder="Search by name, email, or referral code..." 
+                                        className="pl-10 h-12 bg-secondary/20 border-none rounded-xl"
+                                        value={userSearchQuery}
+                                        onChange={(e) => setUserSearchQuery(e.target.value)}
+                                    />
+                                </div>
+                                <div className="flex items-center gap-2 w-full lg:w-auto overflow-x-auto pb-2 lg:pb-0">
+                                    <Button variant={userFilter === 'verified' ? 'default' : 'secondary'} size="sm" className="rounded-lg font-bold" onClick={() => setUserFilter(userFilter === 'verified' ? 'all' : 'verified')}>Verified</Button>
+                                    <Button variant={userFilter === 'unverified' ? 'default' : 'secondary'} size="sm" className="rounded-lg font-bold" onClick={() => setUserFilter(userFilter === 'unverified' ? 'all' : 'unverified')}>Unverified</Button>
+                                    <Button variant={userFilter === 'premier' ? 'default' : 'secondary'} size="sm" className="rounded-lg font-bold" onClick={() => setUserFilter(userFilter === 'premier' ? 'all' : 'premier')}>Premier</Button>
+                                    <Button variant={userFilter === 'super' ? 'default' : 'secondary'} size="sm" className="rounded-lg font-bold" onClick={() => setUserFilter(userFilter === 'super' ? 'all' : 'super')}>Super Premier</Button>
+                                </div>
+                            </div>
+
+                            <Tabs defaultValue="all" className="w-full">
+                                <TabsList className="grid grid-cols-4 bg-secondary/20 p-1 rounded-xl mb-4">
+                                    <TabsTrigger value="all" className="rounded-lg font-bold">All Users</TabsTrigger>
+                                    <TabsTrigger value="freelancer" className="rounded-lg font-bold">Freelancers</TabsTrigger>
+                                    <TabsTrigger value="company" className="rounded-lg font-bold">Companies</TabsTrigger>
+                                    <TabsTrigger value="pro" className="rounded-lg font-bold">Authorized Pros</TabsTrigger>
+                                </TabsList>
+
+                                {['all', 'freelancer', 'company', 'pro'].map((roleTab) => (
+                                    <TabsContent key={roleTab} value={roleTab}>
+                                        <div className="rounded-xl border overflow-hidden">
+                                            <Table>
+                                                <TableHeader className="bg-secondary/10">
+                                                    <TableRow>
+                                                        <TableHead className="font-bold">Avatar</TableHead>
+                                                        <TableHead className="font-bold">Full Name</TableHead>
+                                                        <TableHead className="font-bold">Referral</TableHead>
+                                                        <TableHead className="font-bold">Role</TableHead>
+                                                        <TableHead className="font-bold">Joined</TableHead>
+                                                        <TableHead className="font-bold">Tier</TableHead>
+                                                        <TableHead className="font-bold">Verified</TableHead>
+                                                        <TableHead className="text-right font-bold">Actions</TableHead>
+                                                    </TableRow>
+                                                </TableHeader>
+                                                <TableBody>
+                                                    {filteredUsers
+                                                        .filter(u => roleTab === 'all' || u.role.toLowerCase().includes(roleTab))
+                                                        .map(u => (
+                                                        <TableRow key={u.id} className="hover:bg-secondary/5 transition-colors">
+                                                            <TableCell>
+                                                                <Avatar className="h-10 w-10 border-2 border-secondary">
+                                                                    <AvatarImage src={u.photoUrl} />
+                                                                    <AvatarFallback className="bg-primary/10 text-primary font-bold">{u.firstName[0]}{u.lastName[0]}</AvatarFallback>
+                                                                </Avatar>
+                                                            </TableCell>
+                                                            <TableCell>
+                                                                <div className="font-black text-sm">{u.firstName} {u.lastName}</div>
+                                                                <div className="text-[10px] text-muted-foreground font-medium">{u.email}</div>
+                                                            </TableCell>
+                                                            <TableCell className="font-mono text-xs font-bold text-primary">{u.referralCode || '-'}</TableCell>
+                                                            <TableCell><Badge variant="outline" className="rounded-md font-bold text-[10px] uppercase tracking-wider">{u.role}</Badge></TableCell>
+                                                            <TableCell className="text-xs font-medium opacity-70">
+                                                                {u.createdAt ? format(u.createdAt.toDate(), 'MMM dd, yyyy') : '-'}
+                                                            </TableCell>
+                                                            <TableCell>
+                                                                {u.tier === 'Super Premier' ? (
+                                                                    <Badge className="bg-blue-500/10 text-blue-500 border-blue-500/20 rounded-md font-black text-[10px] uppercase">Super</Badge>
+                                                                ) : u.tier === 'Premier' ? (
+                                                                    <Badge className="bg-purple-500/10 text-purple-500 border-purple-500/20 rounded-md font-black text-[10px] uppercase">Premier</Badge>
+                                                                ) : (
+                                                                    <Badge variant="outline" className="opacity-50 rounded-md font-bold text-[10px] uppercase">Standard</Badge>
+                                                                )}
+                                                            </TableCell>
+                                                            <TableCell>
+                                                                {u.verified ? (
+                                                                    <CheckCircle2 className="h-5 w-5 text-green-500" />
+                                                                ) : (
+                                                                    <UserX className="h-5 w-5 text-muted-foreground opacity-30" />
+                                                                )}
+                                                            </TableCell>
+                                                            <TableCell className="text-right">
+                                                                <DropdownMenu>
+                                                                    <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="rounded-xl"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
+                                                                    <DropdownMenuContent align="end" className="rounded-xl border-2">
+                                                                        <DropdownMenuItem onClick={() => { setSelectedUser(u); setIsEditDialogOpen(true); }} className="rounded-lg"><Edit className="mr-2 h-4 w-4" /> Edit Profile</DropdownMenuItem>
+                                                                        <DropdownMenuSeparator />
+                                                                        <DropdownMenuSub><DropdownMenuSubTrigger className="rounded-lg"><Key className="mr-2 h-4 w-4" /> Change Role</DropdownMenuSubTrigger><DropdownMenuPortal><DropdownMenuSubContent className="rounded-xl border-2"><DropdownMenuItem onClick={() => handleUpdateUserRole(u.id, 'Super Admin')}>Super Admin</DropdownMenuItem><DropdownMenuItem onClick={() => handleUpdateUserRole(u.id, 'Manager')}>Manager</DropdownMenuItem><DropdownMenuItem onClick={() => handleUpdateUserRole(u.id, 'Freelancer')}>Freelancer</DropdownMenuItem></DropdownMenuSubContent></DropdownMenuPortal></DropdownMenuSub>
+                                                                        <DropdownMenuItem onClick={() => updateDocumentNonBlocking(doc(firestore, 'users', u.id), { verified: !u.verified })} className="rounded-lg"><Shield className="mr-2 h-4 w-4" /> Toggle Verification</DropdownMenuItem>
+                                                                        <DropdownMenuItem className="text-destructive focus:text-destructive rounded-lg" onClick={() => { setSelectedUser(u); setIsDeleteDialogOpen(true); }}><Trash2 className="mr-2 h-4 w-4" /> Delete</DropdownMenuItem>
+                                                                    </DropdownMenuContent>
+                                                                </DropdownMenu>
+                                                            </TableCell>
+                                                        </TableRow>
+                                                    ))}
+                                                </TableBody>
+                                            </Table>
+                                        </div>
+                                    </TabsContent>
+                                ))}
+                            </Tabs>
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+
+                <TabsContent value="vacancies">
+                    <Card className="p-12 text-center border-dashed">
+                        <Briefcase className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                        <h3 className="text-lg font-bold">Vacancy Management</h3>
+                        <p className="text-muted-foreground">Detailed job listing controls are under development.</p>
+                    </Card>
+                </TabsContent>
+
+                <TabsContent value="payments">
+                    <Card className="p-12 text-center border-dashed">
+                        <CreditCard className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                        <h3 className="text-lg font-bold">Payment Management</h3>
+                        <p className="text-muted-foreground">Financial oversight and ledger controls are under development.</p>
+                    </Card>
+                </TabsContent>
+            </Tabs>
           </TabsContent>
 
-          <TabsContent value="users" className="mt-6">
-            <Card>
-              <CardHeader><CardTitle>Expert Directory</CardTitle></CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader><TableRow><TableHead>Expert</TableHead><TableHead>Role</TableHead><TableHead>Tier</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>
-                  <TableBody>
-                    {users?.map(u => (
-                      <TableRow key={u.id}>
-                        <TableCell><div className="flex items-center gap-3"><Avatar className="h-8 w-8"><AvatarImage src={u.photoUrl} /><AvatarFallback>{u.firstName[0]}</AvatarFallback></Avatar><div><div className="font-medium">{u.firstName} {u.lastName}</div><div className="text-xs text-muted-foreground">{u.email}</div></div></div></TableCell>
-                        <TableCell><Badge variant="secondary">{u.role}</Badge></TableCell>
-                        <TableCell>{u.tier === 'Super Premier' ? <Badge className="bg-blue-500">Super</Badge> : u.tier === 'Premier' ? <Badge className="bg-purple-500">Premier</Badge> : <Badge variant="outline">Standard</Badge>}</TableCell>
-                        <TableCell className="text-right">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => { setSelectedUser(u); setIsEditDialogOpen(true); }}><Edit className="mr-2 h-4 w-4" /> Edit Profile</DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuSub><DropdownMenuSubTrigger><Key className="mr-2 h-4 w-4" /> Change Role</DropdownMenuSubTrigger><DropdownMenuPortal><DropdownMenuSubContent><DropdownMenuItem onClick={() => handleUpdateUserRole(u.id, 'Super Admin')}>Super Admin</DropdownMenuItem><DropdownMenuItem onClick={() => handleUpdateUserRole(u.id, 'Manager')}>Manager</DropdownMenuItem><DropdownMenuItem onClick={() => handleUpdateUserRole(u.id, 'Freelancer')}>Freelancer</DropdownMenuItem></DropdownMenuSubContent></DropdownMenuPortal></DropdownMenuSub>
-                              <DropdownMenuItem onClick={() => updateDocumentNonBlocking(doc(firestore, 'users', u.id), { verified: !u.verified })}><Shield className="mr-2 h-4 w-4" /> Toggle Verification</DropdownMenuItem>
-                              <DropdownMenuItem className="text-destructive" onClick={() => { setSelectedUser(u); setIsDeleteDialogOpen(true); }}><Trash2 className="mr-2 h-4 w-4" /> Delete</DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="settings" className="mt-6 space-y-6">
-            <Card>
-              <CardHeader><CardTitle>Global Controls</CardTitle></CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between"><Label>Enable Banner</Label><Switch checked={announcementEnabled} onCheckedChange={setAnnouncementEnabled} /></div>
-                <div className="space-y-2"><Label>Banner Text</Label><Input value={announcementText} onChange={e => setAnnouncementText(e.target.value)} /></div>
-                <div className="space-y-2"><Label>Scroll Speed ({announcementSpeed}s)</Label><Slider value={[announcementSpeed]} onValueChange={v => setAnnouncementSpeed(v[0])} min={5} max={60} step={1} /></div>
+          <TabsContent value="settings" className="mt-0 space-y-6">
+            <Card className="border-2 rounded-2xl overflow-hidden">
+              <CardHeader className="bg-secondary/10 border-b">
+                <div className="flex items-center gap-3">
+                    <Settings className="h-6 w-6 text-primary" />
+                    <CardTitle className="text-2xl font-black">Global Controls</CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent className="p-6 space-y-6">
+                <div className="flex items-center justify-between p-4 bg-secondary/10 rounded-xl">
+                    <div>
+                        <Label className="text-base font-bold">Announcement Banner</Label>
+                        <p className="text-xs text-muted-foreground">Toggle the visibility of the scrolling banner.</p>
+                    </div>
+                    <Switch checked={announcementEnabled} onCheckedChange={setAnnouncementEnabled} />
+                </div>
+                <div className="space-y-2">
+                    <Label className="font-bold">Banner Text</Label>
+                    <Input value={announcementText} onChange={e => setAnnouncementText(e.target.value)} className="rounded-xl h-12 bg-secondary/20 border-none" />
+                </div>
+                <div className="space-y-4">
+                    <div className="flex justify-between items-end">
+                        <Label className="font-bold">Scroll Speed</Label>
+                        <span className="text-xs font-black text-primary">{announcementSpeed}s</span>
+                    </div>
+                    <Slider value={[announcementSpeed]} onValueChange={v => setAnnouncementSpeed(v[0])} min={5} max={60} step={1} />
+                </div>
                 <Separator />
-                <div className="space-y-2"><Label>Referral Points</Label><Input type="number" value={referralPoints} onChange={e => setReferralPoints(Number(e.target.value))} /></div>
+                <div className="space-y-2">
+                    <Label className="font-bold">Referral Points Reward</Label>
+                    <div className="relative">
+                        <Gift className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-primary" />
+                        <Input type="number" value={referralPoints} onChange={e => setReferralPoints(Number(e.target.value))} className="pl-10 rounded-xl h-12 bg-secondary/20 border-none font-bold" />
+                    </div>
+                </div>
               </CardContent>
-              <CardFooter><Button onClick={handleSaveSettings} disabled={isSaving} className="w-full">{isSaving ? <Loader className="animate-spin h-4 w-4 mr-2" /> : <Save className="mr-2 h-4 w-4" />} Save All Settings</Button></CardFooter>
+              <CardFooter className="bg-secondary/10 p-6 border-t">
+                <Button onClick={handleSaveSettings} disabled={isSaving} className="w-full h-12 rounded-xl font-black text-lg">
+                    {isSaving ? <Loader className="animate-spin h-5 w-5 mr-2" /> : <Save className="mr-2 h-5 w-5" />} 
+                    Save All Settings
+                </Button>
+              </CardFooter>
             </Card>
           </TabsContent>
 
-          <TabsContent value="tools" className="mt-6 space-y-6">
-            <Card>
-              <CardHeader><CardTitle>Manual Creation</CardTitle></CardHeader>
-              <CardContent><CreateUserForm onSuccess={() => toast({ title: "User created" })} /></CardContent>
+          <TabsContent value="data" className="mt-0 space-y-6">
+            <Card className="border-2 rounded-2xl">
+              <CardHeader className="bg-secondary/10 border-b rounded-t-2xl">
+                <div className="flex items-center gap-3">
+                    <UserPlus className="h-6 w-6 text-primary" />
+                    <CardTitle className="text-2xl font-black">Manual User Provisioning</CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent className="p-6">
+                <CreateUserForm onSuccess={() => toast({ title: "User created" })} />
+              </CardContent>
             </Card>
-            <Card>
-              <CardHeader><CardTitle>Platform Data</CardTitle></CardHeader>
-              <CardContent className="space-y-4">
-                <Button variant="outline" onClick={handleExport} disabled={isExporting} className="w-full">{isExporting ? <Loader className="animate-spin mr-2 h-4 w-4" /> : <HardDriveDownload className="mr-2 h-4 w-4" />} Export JSON Backup</Button>
+
+            <Card className="border-2 rounded-2xl">
+              <CardHeader className="bg-secondary/10 border-b rounded-t-2xl">
+                <div className="flex items-center gap-3">
+                    <HardDriveDownload className="h-6 w-6 text-primary" />
+                    <CardTitle className="text-2xl font-black">System Maintenance</CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent className="p-6 space-y-6">
+                <div className="p-6 bg-secondary/10 rounded-2xl space-y-4">
+                    <div className="flex items-center gap-3">
+                        <Fingerprint className="h-5 w-5 text-primary" />
+                        <h4 className="font-black">JSON Data Backup</h4>
+                    </div>
+                    <p className="text-sm text-muted-foreground font-medium">Export a complete snapshot of all critical platform collections including Users, Companies, Vacancies, and App Configuration.</p>
+                    <Button variant="outline" onClick={handleExport} disabled={isExporting} className="w-full h-12 rounded-xl border-2 font-bold">
+                        {isExporting ? <Loader className="animate-spin mr-2 h-4 w-4" /> : <HardDriveDownload className="mr-2 h-4 w-4" />} 
+                        Generate Export Package
+                    </Button>
+                </div>
                 <Separator />
-                <div className="space-y-4"><Label>Bulk CSV Import</Label><Textarea placeholder="firstName, lastName, email, role..." className="min-h-[100px]" /><Button variant="secondary" className="w-full"><Upload className="mr-2 h-4 w-4" /> Process CSV</Button></div>
+                <div className="space-y-4">
+                    <div className="flex items-center gap-3">
+                        <Upload className="h-5 w-5 text-primary" />
+                        <Label className="text-base font-black">Bulk CSV Import</Label>
+                    </div>
+                    <Textarea placeholder="firstName, lastName, email, role, password..." className="min-h-[120px] rounded-xl bg-secondary/20 border-none p-4 font-mono text-xs" />
+                    <Button variant="secondary" className="w-full h-12 rounded-xl font-bold">
+                        <Upload className="mr-2 h-4 w-4" /> 
+                        Process Import Stream
+                    </Button>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
@@ -326,16 +482,24 @@ export default function AdminDashboardPage() {
       </div>
 
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-3xl overflow-y-auto max-h-[90vh]">
-          <DialogHeader><DialogTitle>Edit Profile</DialogTitle></DialogHeader>
+        <DialogContent className="max-w-3xl overflow-y-auto max-h-[90vh] rounded-2xl border-2">
+          <DialogHeader><DialogTitle className="text-2xl font-black">Edit Expert Profile</DialogTitle></DialogHeader>
           {selectedUser && <EditProfileForm userProfile={selectedUser as any} isAdmin onSuccess={() => setIsEditDialogOpen(false)} />}
         </DialogContent>
       </Dialog>
 
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader><AlertDialogTitle>Confirm Deletion</AlertDialogTitle><AlertDialogDescription>This action is permanent.</AlertDialogDescription></AlertDialogHeader>
-          <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction className="bg-destructive" onClick={() => selectedUser && deleteDoc(doc(firestore, 'users', selectedUser.id))}>Delete</AlertDialogAction></AlertDialogFooter>
+        <AlertDialogContent className="rounded-2xl border-2">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-2xl font-black">Confirm Deletion</AlertDialogTitle>
+            <AlertDialogDescription className="font-medium">
+                This action is permanent and will remove this expert's profile, post history, and authentication credentials.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="rounded-xl border-2">Cancel</AlertDialogCancel>
+            <AlertDialogAction className="bg-destructive hover:bg-destructive/90 rounded-xl" onClick={() => selectedUser && deleteDoc(doc(firestore, 'users', selectedUser.id))}>Permanently Delete User</AlertDialogAction>
+          </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
     </div>
