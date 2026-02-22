@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
@@ -8,7 +9,7 @@ import { useUser, useFirestore, useDoc, useMemoFirebase, useAuth, useCollection 
 import { updateDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, CheckCircle2, UserCheck, UserX, Crown, Sparkles, User as UserIcon, Settings, Save, Briefcase, Building, MessageSquare, Search, PlusCircle, Mail, Download, ExternalLink, IndianRupee, X, Upload, HardDriveDownload, Megaphone, Phone, MapPinIcon, Key, Gift, Code, List, Grip, ArrowUp, ArrowDown, Rss, UserPlus, Fingerprint, Award, CircleHelp, CheckCircle, FileJson, MapPin, Clock, AlertCircle, CreditCard, Fingerprint as IdIcon } from 'lucide-react';
+import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, CheckCircle2, UserCheck, UserX, Crown, Sparkles, User as UserIcon, Settings, Save, Briefcase, Building, MessageSquare, Search, PlusCircle, Mail, Download, ExternalLink, IndianRupee, X, Upload, HardDriveDownload, Megaphone, Phone, MapPinIcon, Key, Gift, Code, List, Grip, ArrowUp, ArrowDown, Rss, UserPlus, Fingerprint, Award, CircleHelp, CheckCircle, FileJson, MapPin, Clock, AlertCircle, CreditCard, Fingerprint as IdIcon, Check, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -55,6 +56,8 @@ import { importUsers } from '@/ai/flows/import-users-flow';
 import { EditProfileForm } from '@/components/auth/edit-profile-form';
 import { cn } from '@/lib/utils';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import type { Vacancy } from '@/app/vacancies/page';
+import { PostVacancyForm } from '@/components/auth/post-vacancy-form';
 
 export type HomepageCategory = {
     id: string;
@@ -119,7 +122,9 @@ export default function AdminDashboardPage() {
   const [isExporting, setIsExporting] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const [selectedUser, setSelectedUser] = useState<ExpertUser | null>(null);
+  const [selectedVacancy, setSelectedVacancy] = useState<Vacancy | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isVacancyDialogOpen, setIsVacancyDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isAwardDialogOpen, setIsAwardDialogOpen] = useState(false);
   const [awardPoints, setAwardPoints] = useState(100);
@@ -152,6 +157,9 @@ export default function AdminDashboardPage() {
 
   const paymentsQuery = useMemoFirebase(() => isSuperAdmin ? query(collection(firestore, 'payments'), orderBy('createdAt', 'desc')) : null, [firestore, isSuperAdmin]);
   const { data: payments, isLoading: isPaymentsLoading } = useCollection<Payment>(paymentsQuery);
+
+  const vacanciesQuery = useMemoFirebase(() => isSuperAdmin ? query(collection(firestore, 'vacancies'), orderBy('postedAt', 'desc')) : null, [firestore, isSuperAdmin]);
+  const { data: vacancies, isLoading: isVacanciesLoading } = useCollection<Vacancy>(vacanciesQuery);
 
   const appConfigDocRef = useMemoFirebase(() => doc(firestore, 'app_config', 'homepage'), [firestore]);
   const { data: appConfig } = useDoc<AppConfig>(appConfigDocRef);
@@ -271,6 +279,26 @@ export default function AdminDashboardPage() {
         setIsAwardDialogOpen(false);
     } catch (e) {
         toast({ variant: "destructive", title: "Action Failed" });
+    }
+  };
+
+  const handleUpdateVacancyStatus = async (vacancyId: string, newStatus: 'Pending' | 'Approved' | 'Rejected') => {
+    const vacancyRef = doc(firestore, 'vacancies', vacancyId);
+    try {
+        await updateDocumentNonBlocking(vacancyRef, { status: newStatus });
+        toast({ title: "Status Updated", description: `Vacancy is now ${newStatus}` });
+    } catch (e) {
+        toast({ variant: "destructive", title: "Update Failed" });
+    }
+  };
+
+  const handleDeleteVacancy = async (vacancyId: string) => {
+    const vacancyRef = doc(firestore, 'vacancies', vacancyId);
+    try {
+        await deleteDocumentNonBlocking(vacancyRef);
+        toast({ title: "Vacancy Deleted" });
+    } catch (e) {
+        toast({ variant: "destructive", title: "Delete Failed" });
     }
   };
 
@@ -417,6 +445,7 @@ export default function AdminDashboardPage() {
             <Tabs defaultValue="users" className="w-full">
                 <TabsList className="flex w-full bg-[#24262d] p-1 rounded-xl mb-6">
                     <TabsTrigger value="users" className="flex-1 rounded-lg font-bold">User Management</TabsTrigger>
+                    <TabsTrigger value="vacancies" className="flex-1 rounded-lg font-bold">Vacancy Management</TabsTrigger>
                     <TabsTrigger value="payments" className="flex-1 rounded-lg font-bold">Payment Management</TabsTrigger>
                 </TabsList>
 
@@ -633,6 +662,98 @@ export default function AdminDashboardPage() {
                                     </TabsContent>
                                 ))}
                             </Tabs>
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+
+                <TabsContent value="vacancies">
+                    <Card className="border-none bg-[#24262d] rounded-2xl overflow-hidden">
+                        <CardHeader className="bg-white/5 pb-6 border-b border-white/5">
+                            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                                <div className="flex items-center gap-3">
+                                    <Briefcase className="h-6 w-6 text-orange-500" />
+                                    <div>
+                                        <CardTitle className="text-2xl font-black">Vacancy Moderation</CardTitle>
+                                        <CardDescription className="text-muted-foreground">Approve or reject job listings posted by companies.</CardDescription>
+                                    </div>
+                                </div>
+                                <Button onClick={() => { setSelectedVacancy(null); setIsVacancyDialogOpen(true); }} className="rounded-xl font-bold bg-orange-500 hover:bg-orange-600">
+                                    <PlusCircle className="mr-2 h-4 w-4" /> Post New Job
+                                </Button>
+                            </div>
+                        </CardHeader>
+                        <CardContent className="p-6">
+                            <div className="rounded-xl border border-white/5 overflow-hidden">
+                                <Table>
+                                    <TableHeader className="bg-white/5">
+                                        <TableRow className="border-white/5">
+                                            <TableHead className="font-bold text-white">Job Title & Company</TableHead>
+                                            <TableHead className="font-bold text-white">Location</TableHead>
+                                            <TableHead className="font-bold text-white text-center">Status</TableHead>
+                                            <TableHead className="font-bold text-white">Posted</TableHead>
+                                            <TableHead className="text-right font-bold text-white"></TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {isVacanciesLoading ? (
+                                            <TableRow><TableCell colSpan={5} className="text-center py-8"><Loader className="animate-spin mx-auto" /></TableCell></TableRow>
+                                        ) : !vacancies || vacancies.length === 0 ? (
+                                            <TableRow><TableCell colSpan={5} className="text-center py-12 text-muted-foreground font-medium">No vacancies found.</TableCell></TableRow>
+                                        ) : (
+                                            vacancies.map(v => (
+                                                <TableRow key={v.id} className="hover:bg-white/5 transition-colors border-white/5">
+                                                    <TableCell>
+                                                        <div className="space-y-1">
+                                                            <div className="font-bold text-white">{v.title}</div>
+                                                            <div className="text-[10px] text-muted-foreground flex items-center gap-1">
+                                                                <Building className="h-3 w-3" /> {v.companyName}
+                                                            </div>
+                                                        </div>
+                                                    </TableCell>
+                                                    <TableCell className="text-xs text-muted-foreground">
+                                                        <div className="flex items-center gap-1">
+                                                            <MapPin className="h-3 w-3" /> {v.location}
+                                                        </div>
+                                                    </TableCell>
+                                                    <TableCell className="text-center">
+                                                        <Badge className={cn(
+                                                            "text-[9px] font-black uppercase h-5 px-2 rounded-full border-none",
+                                                            v.status === 'Approved' ? "bg-green-500 text-white" : 
+                                                            v.status === 'Rejected' ? "bg-red-500 text-white" : 
+                                                            "bg-yellow-500 text-white"
+                                                        )}>
+                                                            {v.status}
+                                                        </Badge>
+                                                    </TableCell>
+                                                    <TableCell className="text-[10px] text-muted-foreground">
+                                                        {v.postedAt ? format(v.postedAt.toDate(), 'PP') : '-'}
+                                                    </TableCell>
+                                                    <TableCell className="text-right">
+                                                        <DropdownMenu>
+                                                            <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-white/5"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
+                                                            <DropdownMenuContent align="end" className="bg-[#1a1c23] border-white/10 text-white">
+                                                                <DropdownMenuItem onClick={() => handleUpdateVacancyStatus(v.id, 'Approved')} className="focus:bg-green-500/10 focus:text-green-500">
+                                                                    <Check className="mr-2 h-4 w-4" /> Approve
+                                                                </DropdownMenuItem>
+                                                                <DropdownMenuItem onClick={() => handleUpdateVacancyStatus(v.id, 'Rejected')} className="focus:bg-red-500/10 focus:text-red-500">
+                                                                    <XCircle className="mr-2 h-4 w-4" /> Reject
+                                                                </DropdownMenuItem>
+                                                                <DropdownMenuItem onClick={() => { setSelectedVacancy(v); setIsVacancyDialogOpen(true); }}>
+                                                                    <Edit className="mr-2 h-4 w-4" /> Edit
+                                                                </DropdownMenuItem>
+                                                                <DropdownMenuSeparator className="bg-white/5" />
+                                                                <DropdownMenuItem onClick={() => handleDeleteVacancy(v.id)} className="text-red-500 focus:text-red-500 focus:bg-red-500/10">
+                                                                    <Trash2 className="mr-2 h-4 w-4" /> Delete
+                                                                </DropdownMenuItem>
+                                                            </DropdownMenuContent>
+                                                        </DropdownMenu>
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))
+                                        )}
+                                    </TableBody>
+                                </Table>
+                            </div>
                         </CardContent>
                     </Card>
                 </TabsContent>
@@ -953,6 +1074,13 @@ export default function AdminDashboardPage() {
         <DialogContent className="max-w-3xl overflow-y-auto max-h-[90vh] rounded-2xl border-none bg-[#1a1c23] text-white">
           <DialogHeader><DialogTitle className="text-2xl font-black">Edit Expert Profile</DialogTitle></DialogHeader>
           {selectedUser && <EditProfileForm userProfile={selectedUser as any} isAdmin onSuccess={() => setIsEditDialogOpen(false)} />}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isVacancyDialogOpen} onOpenChange={setIsVacancyDialogOpen}>
+        <DialogContent className="max-w-3xl overflow-y-auto max-h-[90vh] rounded-2xl border-none bg-[#1a1c23] text-white">
+          <DialogHeader><DialogTitle className="text-2xl font-black">{selectedVacancy ? 'Edit Job Opening' : 'Post New Job'}</DialogTitle></DialogHeader>
+          <PostVacancyForm isAdmin vacancy={selectedVacancy || undefined} onSuccess={() => setIsVacancyDialogOpen(false)} />
         </DialogContent>
       </Dialog>
 

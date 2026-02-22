@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "User": {
@@ -454,6 +455,83 @@
         },
         "required": ["id", "groupId", "authorId", "content", "createdAt"]
     },
+    "Vacancy": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Vacancy",
+      "type": "object",
+      "description": "Represents a job vacancy posted by a company.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the vacancy."
+        },
+        "title": {
+          "type": "string",
+          "description": "The title of the job vacancy."
+        },
+        "description": {
+          "type": "string",
+          "description": "A detailed description of the job."
+        },
+        "companyId": {
+          "type": "string",
+          "description": "The ID of the company that posted the vacancy."
+        },
+        "companyName": {
+          "type": "string",
+          "description": "The name of the company that posted the vacancy."
+        },
+        "companyEmail": {
+          "type": "string",
+          "description": "The contact email for applications.",
+          "format": "email"
+        },
+        "contactPhone": {
+            "type": "string",
+            "description": "The contact phone number for the vacancy."
+        },
+        "location": {
+          "type": "string",
+          "description": "The location of the job."
+        },
+        "employmentType": {
+          "type": "string",
+          "description": "The type of employment (e.g., Full-time, Contract).",
+          "enum": ["Full-time", "Part-time", "Contract", "Internship"]
+        },
+        "skillsRequired": {
+          "type": "string",
+          "description": "A comma-separated list of required skills."
+        },
+        "isImmediate": {
+            "type": "boolean",
+            "description": "Indicates if the hiring is immediate."
+        },
+        "positionsAvailable": {
+            "type": "number",
+            "description": "The number of open positions for this vacancy."
+        },
+        "isCompanyVerified": {
+            "type": "boolean",
+            "description": "Indicates if the company posting the vacancy is verified."
+        },
+        "companyTier": {
+            "type": "string",
+            "description": "The tier of the company posting the vacancy.",
+            "enum": ["Standard", "Premier", "Super Premier"]
+        },
+        "status": {
+          "type": "string",
+          "enum": ["Pending", "Approved", "Rejected"]
+        },
+        "postedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp of when the vacancy was posted."
+        }
+      },
+      "required": ["id", "title", "description", "companyId", "companyName", "companyEmail", "location", "employmentType", "postedAt", "positionsAvailable", "status"]
+    },
      "Payment": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Payment",
@@ -753,6 +831,22 @@
           "entityName": "GroupPost",
           "schema": { "$ref": "#/backend/entities/GroupPost" },
           "description": "Stores posts made within a specific group."
+        }
+      },
+      {
+        "path": "/vacancies/{vacancyId}",
+        "definition": {
+            "entityName": "Vacancy",
+            "schema": {
+                "$ref": "#/backend/entities/Vacancy"
+            },
+            "description": "Stores job vacancies posted by companies.",
+            "params": [
+                {
+                    "name": "vacancyId",
+                    "description": "The unique identifier of the vacancy."
+                }
+            ]
         }
       },
       {
