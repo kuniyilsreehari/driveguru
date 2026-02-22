@@ -1,30 +1,22 @@
-
 'use client';
 
-import React, { useEffect, useState, useMemo, Suspense } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import React, { useState, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import { signOut } from 'firebase/auth';
-import { doc, collection, query, where, getDoc, serverTimestamp, arrayUnion, arrayRemove, limit } from 'firebase/firestore';
-import { useUser, useAuth, useFirestore, useDoc, useCollection, useMemoFirebase, updateDocumentNonBlocking, addDocumentNonBlocking } from '@/firebase';
+import { doc, collection, serverTimestamp, orderBy, query, where } from 'firebase/firestore';
+import { useUser, useAuth, useFirestore, useDoc, useMemoFirebase, updateDocumentNonBlocking, addDocumentNonBlocking, useCollection } from '@/firebase';
 import { Button } from '@/components/ui/button';
-import { LogOut, Briefcase, Loader, Edit, UserCheck, XCircle, MapPin, IndianRupee, Calendar, Book, GraduationCap, School, Info, User as UserIcon, Check, Power, Building, PlusCircle, Crown, Sparkles, Lock, Home, ArrowUpCircle, ShieldCheck, Gift, Link as LinkIcon, MessageSquare, PenSquare, Factory, Users, Type, UserPlus, UserMinus, Terminal, ArrowLeft, ArrowRight, Rss } from 'lucide-react';
+import { LogOut, Loader, Edit, UserCheck, XCircle, Crown, Sparkles, User as UserIcon, Check, ShieldCheck, Link as LinkIcon, Rss, Settings, Users, MessageSquare } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { EditProfileForm } from '@/components/auth/edit-profile-form';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
-import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { PostForm } from '@/components/post-form';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -39,33 +31,12 @@ type ExpertUserProfile = {
     email: string | null;
     role: string;
     photoUrl?: string;
-    city?: string;
-    state?: string;
-    pincode?: string;
-    address?: string;
     verified?: boolean;
-    pricingModel?: string;
-    pricingValue?: number;
-    experienceYears?: number;
-    experienceMonths?: number;
-    gender?: string;
-    qualification?: string;
-    collegeName?: string;
-    skills?: string;
-    aboutMe?: string;
-    aboutYourDream?: string;
-    associatedProjectsName?: string;
-    phoneNumber?: string;
-    companyName?: string;
-    profession?: string;
-    department?: string;
+    tier?: 'Standard' | 'Premier' | 'Super Premier';
     isAvailable?: boolean;
     referralCode?: string;
     referralPoints?: number;
-    referredByCode?: string | null;
-    tier?: 'Standard' | 'Premier' | 'Super Premier';
     following?: string[];
-    groups?: string[];
 };
 
 const postFormSchema = z.object({
@@ -74,7 +45,7 @@ const postFormSchema = z.object({
   link: z.string().url().optional().or(z.literal('')),
 });
 
-function PlanManagement({ userProfile, appConfig }: { userProfile: ExpertUserProfile; appConfig: any }) {
+function PlanManagement({ userProfile }: { userProfile: ExpertUserProfile }) {
     const PlanCard = ({ title, icon, description, features, current, link }: any) => (
         <Card className={cn("flex flex-col h-full", current && "border-primary ring-2 ring-primary")}>
             <CardHeader className="text-center">
@@ -94,7 +65,7 @@ function PlanManagement({ userProfile, appConfig }: { userProfile: ExpertUserPro
                     <Button variant="outline" disabled className="w-full"><ShieldCheck className="mr-2 h-4 w-4" /> Current Plan</Button>
                 ) : (
                     <Button asChild className="w-full mt-auto">
-                        <Link href={link || '#'}><ArrowUpCircle className="mr-2 h-4 w-4" /> Upgrade to {title}</Link>
+                        <Link href={link || '#'}><ArrowUpCircle className="mr-2 h-4 w-4" /> Upgrade</Link>
                     </Button>
                 )}
             </CardFooter>
@@ -102,20 +73,16 @@ function PlanManagement({ userProfile, appConfig }: { userProfile: ExpertUserPro
     );
 
     return (
-        <Card id="plan-management">
-            <CardHeader>
-                <CardTitle>Professional Tiers</CardTitle>
-                <CardDescription>Upgrade to unlock AI tools and priority listing.</CardDescription>
-            </CardHeader>
-            <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <PlanCard title="Standard" icon={<UserIcon />} description="Basic free listing." features={["Public profile", "Search results"]} current={!userProfile.tier || userProfile.tier === 'Standard'} />
-                    <PlanCard title="Premier" icon={<Crown />} description="Enhanced visibility." features={["Priority search", "AI suggestions"]} current={userProfile.tier === 'Premier'} link="/payment/premier" />
-                    <PlanCard title="Super Premier" icon={<Sparkles />} description="Ultimate status." features={["Top search ranking", "AI search access"]} current={userProfile.tier === 'Super Premier'} link="/payment/super-premier" />
-                </div>
-            </CardContent>
-        </Card>
+        <div id="plan-management" className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <PlanCard title="Standard" icon={<UserIcon />} description="Basic listing." features={["Public profile", "Search results"]} current={!userProfile.tier || userProfile.tier === 'Standard'} />
+            <PlanCard title="Premier" icon={<Crown />} description="Enhanced visibility." features={["Priority search", "AI suggestions"]} current={userProfile.tier === 'Premier'} link="/payment/premier" />
+            <PlanCard title="Super Premier" icon={<Sparkles />} description="Ultimate status." features={["Top ranking", "AI search access"]} current={userProfile.tier === 'Super Premier'} link="/payment/super-premier" />
+        </div>
     );
+}
+
+function ArrowUpCircle({ className }: { className?: string }) {
+    return <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"/><path d="m16 12-4-4-4 4"/><path d="M12 16V8"/></svg>;
 }
 
 export default function ExpertDashboardPage() {
@@ -129,7 +96,6 @@ export default function ExpertDashboardPage() {
 
   const userDocRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
   const { data: userProfile, isLoading: isProfileLoading } = useDoc<ExpertUserProfile>(userDocRef);
-  const { data: appConfig } = useDoc<any>(doc(firestore, 'app_config', 'homepage'));
 
   const postForm = useForm<z.infer<typeof postFormSchema>>({
     resolver: zodResolver(postFormSchema),
@@ -138,7 +104,7 @@ export default function ExpertDashboardPage() {
 
   const profileCompletion = useMemo(() => {
     if (!userProfile) return 0;
-    const fields = [userProfile.city, userProfile.phoneNumber, userProfile.pricingValue, userProfile.skills, userProfile.aboutMe, userProfile.photoUrl];
+    const fields = [userProfile.firstName, userProfile.photoUrl, userProfile.referralCode];
     const filled = fields.filter(f => !!f).length;
     return Math.round((filled / fields.length) * 100);
   }, [userProfile]);
@@ -172,15 +138,15 @@ export default function ExpertDashboardPage() {
           <Button variant="outline" onClick={() => signOut(auth!).then(() => router.push('/'))}><LogOut className="mr-2 h-4 w-4" /> Log Out</Button>
         </header>
 
-        <Tabs defaultValue="dashboard" className="w-full">
+        <Tabs defaultValue="overview" className="w-full">
           <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="dashboard">Overview</TabsTrigger>
+            <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="feed">My Feed</TabsTrigger>
             <TabsTrigger value="network">Network</TabsTrigger>
-            <TabsTrigger value="plan">Plans</TabsTrigger>
+            <TabsTrigger value="plans">Plans</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="dashboard" className="mt-6 space-y-6">
+          <TabsContent value="overview" className="mt-6 space-y-6">
             <Card>
               <CardHeader className="flex flex-row items-center gap-4">
                 <Avatar className="h-20 w-20"><AvatarImage src={userProfile.photoUrl} /><AvatarFallback>{userProfile.firstName[0]}</AvatarFallback></Avatar>
@@ -222,7 +188,7 @@ export default function ExpertDashboardPage() {
 
           <TabsContent value="feed" className="mt-6">
             <Card>
-              <CardHeader><CardTitle>Publish Update</CardTitle><CardDescription>Share your recent work or news with the public feed.</CardDescription></CardHeader>
+              <CardHeader><CardTitle>Publish Update</CardTitle><CardDescription>Share your recent work or news with the community.</CardDescription></CardHeader>
               <CardContent>
                 <PostForm form={postForm} onSubmit={onPostSubmit} isSubmitting={isSubmittingPost} />
               </CardContent>
@@ -238,8 +204,8 @@ export default function ExpertDashboardPage() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="plan" className="mt-6">
-            <PlanManagement userProfile={userProfile} appConfig={appConfig} />
+          <TabsContent value="plans" className="mt-6">
+            <PlanManagement userProfile={userProfile} />
           </TabsContent>
         </Tabs>
       </div>

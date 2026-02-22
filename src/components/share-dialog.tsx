@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Button } from '@/components/ui/button';
@@ -73,23 +72,14 @@ export function ShareDialog({ shareDetails, children }: ShareDialogProps) {
     const handleNativeShare = async () => {
         try {
             if (navigator.share) {
-                // User gesture is present via onClick
                 await navigator.share(shareData);
             } else {
                 await handleCopyLink();
             }
         } catch (err: any) {
-            // NotAllowedError is common in sandboxed environments or if permission is denied
-            if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError' || err.name === 'SecurityError') {
-                await handleCopyLink();
-                toast({
-                    title: "Link Copied",
-                    description: "Native sharing is restricted in this browser. Link copied instead.",
-                });
-            } else if (err.name !== 'AbortError') {
-                console.error("Share failed:", err);
-                await handleCopyLink();
-            }
+            // Gracefully handle permission denials or restricted environments
+            console.warn("System share failed, falling back to clipboard:", err.name);
+            await handleCopyLink();
         }
     };
 

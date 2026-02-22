@@ -1,13 +1,12 @@
-
-
 'use client';
 
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Icons } from '@/components/icons';
-import { useUser, useAuth, useFirestore, useCollection, useMemoFirebase, updateDocumentNonBlocking } from '@/firebase';
+import { useUser, useAuth, useFirestore } from '@/firebase';
 import { signOut } from 'firebase/auth';
-import { doc, onSnapshot, collection, query, where, orderBy, limit, writeBatch } from 'firebase/firestore';
+import { doc, onSnapshot } from 'firebase/firestore';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,68 +17,22 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { User as UserIcon, LogOut, LayoutDashboard, MessageSquare, Home, Award, Briefcase, Moon, Sun, Menu, Download, Info, Rss, Users, BookOpen, Bell } from 'lucide-react';
+import { User as UserIcon, LogOut, LayoutDashboard, Home, Award, Briefcase, Moon, Sun, Menu, Rss, Users, BookOpen } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useTheme } from 'next-themes';
-import { installPromptAtom } from '@/lib/store';
-import { useAtom } from 'jotai';
-import { InstallPwaDialog } from '@/components/install-pwa-dialog';
-import { AnnouncementBanner } from './announcement-banner';
-import { formatDistanceToNowStrict } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { ScrollArea } from '../ui/scroll-area';
 
 export function Header() {
   const { user, isUserLoading } = useUser();
   const auth = useAuth();
   const firestore = useFirestore();
   const router = useRouter();
+  const pathname = usePathname();
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [isCheckingAdmin, setIsCheckingAdmin] = useState(true);
-  const [mounted, setMounted] = useState(false);
   const { setTheme, theme } = useTheme();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [installPrompt, setInstallPrompt] = useAtom(installPromptAtom);
-  const [showInstallDialog, setShowInstallDialog] = useState(false);
-  const [isOnline, setIsOnline] = useState(true);
-
-  useEffect(() => {
-    // Client-side only check for online status
-    setIsOnline(navigator.onLine);
-
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
-
-    window.addEventListener('online', handleOnline);
-    window.removeEventListener('offline', handleOffline);
-
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-    };
-  }, []);
-
-
-  useEffect(() => {
-    const handleBeforeInstallPrompt = (e: Event) => {
-      e.preventDefault();
-      setInstallPrompt(e);
-      // Automatically show the dialog if the event fires
-      setShowInstallDialog(true); 
-    };
-
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-
-    return () => {
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-    };
-  }, [setInstallPrompt]);
-
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   useEffect(() => {
     if (user && firestore) {
@@ -108,73 +61,18 @@ export function Header() {
     return email.substring(0, 2).toUpperCase();
   };
 
+  const navItems = [
+    { label: 'Home', href: '/', icon: Home },
+    { label: 'Feed', href: '/feed', icon: Rss },
+    { label: 'Groups', href: '/groups', icon: Users },
+    { label: 'Vacancies', href: '/vacancies', icon: Briefcase },
+    { label: 'Featured', href: '/featured-experts', icon: Award },
+    { label: 'Guides', href: '/guides', icon: BookOpen },
+  ];
+
   const dashboardPath = isSuperAdmin ? '/admin' : '/dashboard';
 
-  const isLoading = isUserLoading || isCheckingAdmin;
-  
-  if (!mounted) {
-    return (
-      <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-14 max-w-screen-2xl items-center">
-          <Link href="/" className="mr-6 flex items-center space-x-2">
-            <Icons.logo className="h-6 w-6" />
-            <span className="hidden font-bold sm:inline-block">DriveGuru</span>
-          </Link>
-          <div className="flex flex-1 items-center justify-end space-x-4">
-            <nav className="hidden sm:flex items-center space-x-2">
-               <Button asChild variant="ghost">
-                <Link href="/">
-                  <Home className="mr-2 h-4 w-4" />
-                  Home
-                </Link>
-              </Button>
-               <Button asChild variant="ghost">
-                <Link href="/feed">
-                  <Rss className="mr-2 h-4 w-4" />
-                  Feed
-                </Link>
-              </Button>
-              <Button asChild variant="ghost">
-                <Link href="/groups">
-                    <Users className="mr-2 h-4 w-4" />
-                    Groups
-                </Link>
-              </Button>
-              <Button asChild variant="ghost">
-                <Link href="/vacancies">
-                    <Briefcase className="mr-2 h-4 w-4" />
-                    Vacancies
-                </Link>
-              </Button>
-               <Button asChild variant="ghost">
-                <Link href="/featured-experts">
-                  <Award className="mr-2 h-4 w-4" />
-                  Featured
-                </Link>
-              </Button>
-               <Button asChild variant="ghost">
-                <Link href="/guides">
-                  <BookOpen className="mr-2 h-4 w-4" />
-                  Guides
-                </Link>
-              </Button>
-              <div className="h-8 w-20" />
-            </nav>
-          </div>
-        </div>
-      </header>
-    );
-  }
-
   return (
-    <>
-    <AnnouncementBanner />
-     {!isOnline && (
-        <div className="bg-destructive text-destructive-foreground p-2 text-center text-sm flex items-center justify-center gap-2">
-            <Icons.wifiOff className="h-4 w-4" />
-            You are currently offline. Some features may be unavailable.
-        </div>
-    )}
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-14 max-w-screen-2xl items-center">
         
@@ -182,54 +80,28 @@ export function Header() {
             <SheetTrigger asChild>
                 <Button variant="ghost" size="icon" className="sm:hidden mr-2">
                     <Menu className="h-5 w-5" />
-                    <span className="sr-only">Open Menu</span>
                 </Button>
             </SheetTrigger>
-            <SheetContent side="left" className="pr-0">
-                <SheetHeader className="sr-only">
-                    <SheetTitle>Mobile Menu</SheetTitle>
+            <SheetContent side="left">
+                <SheetHeader className="mb-6">
+                    <SheetTitle className="flex items-center gap-2">
+                        <Icons.logo className="h-6 w-6" /> DriveGuru
+                    </SheetTitle>
                 </SheetHeader>
-                <Link href="/" className="flex items-center space-x-2 mb-6" onClick={() => setIsMobileMenuOpen(false)}>
-                    <Icons.logo className="h-6 w-6" />
-                    <span className="font-bold">DriveGuru</span>
-                </Link>
                 <div className="flex flex-col space-y-2">
-                    <Button asChild variant="ghost" className="justify-start" onClick={() => setIsMobileMenuOpen(false)}>
-                        <Link href="/">
-                            <Home className="mr-2 h-4 w-4" /> Home
-                        </Link>
-                    </Button>
-                    <Button asChild variant="ghost" className="justify-start" onClick={() => setIsMobileMenuOpen(false)}>
-                        <Link href="/feed">
-                            <Rss className="mr-2 h-4 w-4" /> Feed
-                        </Link>
-                    </Button>
-                    <Button asChild variant="ghost" className="justify-start" onClick={() => setIsMobileMenuOpen(false)}>
-                        <Link href="/groups">
-                            <Users className="mr-2 h-4 w-4" /> Groups
-                        </Link>
-                    </Button>
-                    <Button asChild variant="ghost" className="justify-start" onClick={() => setIsMobileMenuOpen(false)}>
-                        <Link href="/vacancies">
-                            <Briefcase className="mr-2 h-4 w-4" /> Vacancies
-                        </Link>
-                    </Button>
-                    <Button asChild variant="ghost" className="justify-start" onClick={() => setIsMobileMenuOpen(false)}>
-                        <Link href="/featured-experts">
-                            <Award className="mr-2 h-4 w-4" /> Featured
-                        </Link>
-                    </Button>
-                     <Button asChild variant="ghost" className="justify-start" onClick={() => setIsMobileMenuOpen(false)}>
-                        <Link href="/guides">
-                            <BookOpen className="mr-2 h-4 w-4" /> Guides
-                        </Link>
-                    </Button>
-                    {installPrompt && (
-                      <Button onClick={() => setShowInstallDialog(true)} variant="ghost" className="justify-start">
-                        <Download className="mr-2 h-4 w-4" />
-                        Install App
-                      </Button>
-                    )}
+                    {navItems.map((item) => (
+                        <Button 
+                            key={item.href} 
+                            asChild 
+                            variant={pathname === item.href ? "secondary" : "ghost"} 
+                            className="justify-start" 
+                            onClick={() => setIsMobileMenuOpen(false)}
+                        >
+                            <Link href={item.href}>
+                                <item.icon className="mr-2 h-4 w-4" /> {item.label}
+                            </Link>
+                        </Button>
+                    ))}
                 </div>
             </SheetContent>
         </Sheet>
@@ -238,108 +110,68 @@ export function Header() {
           <Icons.logo className="h-6 w-6" />
           <span className="hidden font-bold sm:inline-block">DriveGuru</span>
         </Link>
-        <div className="flex items-center justify-end space-x-1 sm:space-x-2">
+
+        <div className="flex items-center justify-end space-x-4">
           <nav className="hidden sm:flex items-center space-x-1">
-            <Button asChild variant="ghost">
-              <Link href="/">
-                <Home className="mr-2 h-4 w-4" />
-                Home
-              </Link>
-            </Button>
-            <Button asChild variant="ghost">
-                <Link href="/feed">
-                    <Rss className="mr-2 h-4 w-4" />
-                    Feed
-                </Link>
-            </Button>
-             <Button asChild variant="ghost">
-                <Link href="/groups">
-                    <Users className="mr-2 h-4 w-4" />
-                    Groups
-                </Link>
-              </Button>
-             <Button asChild variant="ghost">
-                <Link href="/vacancies">
-                    <Briefcase className="mr-2 h-4 w-4" />
-                    Vacancies
-                </Link>
-              </Button>
-            <Button asChild variant="ghost">
-                <Link href="/featured-experts">
-                  <Award className="mr-2 h-4 w-4" />
-                  Featured
-                </Link>
-            </Button>
-            <Button asChild variant="ghost">
-                <Link href="/guides">
-                  <BookOpen className="mr-2 h-4 w-4" />
-                  Guides
-                </Link>
-              </Button>
-             {installPrompt && (
-                <Button onClick={() => setShowInstallDialog(true)} variant="outline" size="sm" className="mr-2">
-                    <Download className="mr-2 h-4 w-4" />
-                    Install
+            {navItems.map((item) => (
+                <Button 
+                    key={item.href} 
+                    asChild 
+                    variant={pathname === item.href ? "secondary" : "ghost"} 
+                    size="sm"
+                    className={cn(pathname === item.href && "text-primary font-bold")}
+                >
+                    <Link href={item.href}>
+                        <item.icon className="mr-2 h-4 w-4" /> {item.label}
+                    </Link>
                 </Button>
-            )}
+            ))}
           </nav>
             
-            {isLoading ? (
-              <div className="h-8 w-20 animate-pulse rounded-md bg-muted" />
-            ) : user ? (
-              <>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                      <Avatar className="h-8 w-8">
-                        <AvatarImage src={user.photoURL || undefined} alt={user.email || ''} />
-                        <AvatarFallback>{getInitials(user.email)}</AvatarFallback>
-                      </Avatar>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-56" align="end" forceMount>
-                    <DropdownMenuLabel className="font-normal">
-                      <div className="flex flex-col space-y-1">
-                        <p className="text-sm font-medium leading-none">My Account</p>
-                        <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
-                      </div>
-                    </DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => router.push(dashboardPath)}>
-                      <LayoutDashboard className="mr-2 h-4 w-4" />
-                      <span>Dashboard</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={handleSignOut}>
-                      <LogOut className="mr-2 h-4 w-4" />
-                      <span>Log out</span>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </>
-            ) : (
-              <nav className='flex items-center'>
-                <Button asChild variant="ghost">
-                  <Link href="/login">Login</Link>
-                </Button>
-                <Button asChild>
-                  <Link href="/signup/role">Sign Up</Link>
-                </Button>
-              </nav>
+            {!isUserLoading && user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src={user.photoURL || undefined} />
+                      <AvatarFallback>{getInitials(user.email)}</AvatarFallback>
+                    </Avatar>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56" align="end">
+                  <DropdownMenuLabel className="font-normal">
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-sm font-medium leading-none">Account</p>
+                      <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => router.push(dashboardPath)}>
+                    <LayoutDashboard className="mr-2 h-4 w-4" /> Dashboard
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleSignOut}>
+                    <LogOut className="mr-2 h-4 w-4" /> Log out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : !isUserLoading && (
+              <div className="flex items-center gap-2">
+                <Button asChild variant="ghost" size="sm"><Link href="/login">Login</Link></Button>
+                <Button asChild size="sm"><Link href="/signup/role">Join</Link></Button>
+              </div>
             )}
+
            <Button
               variant="ghost"
               size="icon"
               onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
             >
-              <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-              <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-              <span className="sr-only">Toggle theme</span>
+              <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+              <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
           </Button>
         </div>
       </div>
     </header>
-    <InstallPwaDialog open={showInstallDialog} onOpenChange={setShowInstallDialog} />
-    </>
   );
 }
