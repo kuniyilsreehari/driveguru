@@ -1,10 +1,8 @@
-
-
 'use client';
 
 import { Suspense, useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { Briefcase, Building, ChevronDown, Laptop, LocateIcon, MapPin, Search, Smartphone, Wrench, Loader2, Star, UserCheck, Crown, Sparkles, HelpCircle, Bot, Lock, Users, User, Check, GraduationCap } from "lucide-react"
+import { Briefcase, Building, ChevronDown, LocateIcon, MapPin, Search, Loader2, UserCheck, Crown, Sparkles, Bot, Lock, Users, User, Check, GraduationCap, UserPlus, ChevronLeft, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
@@ -14,8 +12,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Icons } from "@/components/icons"
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { useFirestore, useCollection, useDoc, useMemoFirebase, useUser } from '@/firebase';
-import { collection, query, where, limit, doc } from 'firebase/firestore';
+import { useFirestore, useCollection, useDoc, useMemoFirebase, useUser, updateDocumentNonBlocking } from '@/firebase';
+import { collection, query, where, limit, doc, arrayUnion, arrayRemove } from 'firebase/firestore';
 import { ExpertCard } from '@/components/expert-card';
 import type { ExpertUser } from '@/components/expert-card';
 import * as LucideIcons from 'lucide-react';
@@ -35,6 +33,7 @@ import {
   DialogFooter
 } from "@/components/ui/dialog"
 import { Switch } from '@/components/ui/switch';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 
 type AppConfig = {
@@ -82,6 +81,17 @@ function HomePageContent() {
     const featuredExpertsLimit = appConfig?.featuredExpertsLimit || 3;
     const homepageCategories = appConfig?.homepageCategories || [];
 
+
+    const topExpertsQuery = useMemoFirebase(() => {
+        if (!firestore) return null;
+        return query(
+            collection(firestore, 'users'), 
+            where('tier', '==', 'Super Premier'),
+            limit(10)
+        );
+    }, [firestore]);
+    
+    const { data: topExperts, isLoading: isLoadingTopExperts } = useCollection<ExpertUser>(topExpertsQuery);
 
     const expertsQuery = useMemoFirebase(() => {
         if (!firestore) return null;
@@ -225,6 +235,27 @@ function HomePageContent() {
         router.push(`/search?${queryParams.toString()}`);
     };
 
+    const handleToggleFollow = async (expertId: string) => {
+        if (!user) {
+            router.push('/login');
+            return;
+        }
+        if (!userProfileDocRef) return;
+
+        const isFollowing = userProfile?.following?.includes(expertId);
+        const action = isFollowing ? arrayRemove(expertId) : arrayUnion(expertId);
+        
+        try {
+            await updateDocumentNonBlocking(userProfileDocRef, { following: action });
+            toast({
+                title: isFollowing ? "Unfollowed" : "Following",
+                description: isFollowing ? "You've stopped following this expert." : "You are now following this expert.",
+            });
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
     const getIcon = (name: string) => {
         const Icon = (LucideIcons as any)[name];
         return Icon ? <Icon className="w-8 h-8 text-primary" /> : <Briefcase className="w-8 h-8 text-primary" />;
@@ -250,6 +281,62 @@ function HomePageContent() {
                 </header>
 
                 <main className="space-y-12">
+                    {/* Top Experts Carousel (Matching provided design) */}
+                    <section className="bg-[#24262d] rounded-[2.5rem] p-6 sm:p-8 shadow-2xl">
+                        <div className="flex gap-6 overflow-x-auto pb-8 pt-2 scrollbar-hide snap-x px-1">
+                            {isLoadingTopExperts ? (
+                                [...Array(4)].map((_, i) => (
+                                    <div key={i} className="min-w-[240px] max-w-[240px] h-[380px] bg-[#1a1c23] rounded-[2rem] animate-pulse" />
+                                ))
+                            ) : topExperts && topExperts.length > 0 ? (
+                                topExperts.map(expert => (
+                                    <Card key={expert.id} className="min-w-[240px] max-w-[240px] bg-[#1a1c23] border-white/5 flex flex-col items-center p-8 text-center rounded-[2rem] snap-start transition-all hover:scale-[1.02] group shadow-xl">
+                                        <div className="relative mb-6">
+                                            <Avatar className="h-24 w-24 border-4 border-white/10 group-hover:border-orange-500/50 transition-colors duration-500">
+                                                <AvatarImage src={expert.photoUrl} className="object-cover" />
+                                                <AvatarFallback className="bg-orange-500/10 text-orange-500 text-3xl font-black">
+                                                    {expert.firstName?.[0]}
+                                                </AvatarFallback>
+                                            </Avatar>
+                                            {expert.verified && (
+                                                <div className="absolute -bottom-1 -right-1 bg-green-500 p-1.5 rounded-full border-4 border-[#1a1c23]">
+                                                    <UserCheck className="h-3 w-3 text-white" />
+                                                </div>
+                                            )}
+                                        </div>
+                                        <p className="font-black text-white text-xl line-clamp-1 mb-1 tracking-tight">{expert.firstName} {expert.lastName}</p>
+                                        <p className="text-[11px] text-[#8a92a6] uppercase tracking-[0.15em] font-black mb-10 line-clamp-1 h-4">{expert.profession || expert.role}</p>
+                                        <Button 
+                                            className="w-full bg-orange-500 hover:bg-orange-600 text-white rounded-2xl font-black text-sm h-12 shadow-lg shadow-orange-500/20 active:scale-95 transition-transform"
+                                            onClick={() => handleToggleFollow(expert.id)}
+                                        >
+                                            <UserPlus className="h-4 w-4 mr-2" />
+                                            {userProfile?.following?.includes(expert.id) ? 'Following' : 'Follow'}
+                                        </Button>
+                                    </Card>
+                                ))
+                            ) : (
+                                <div className="w-full flex flex-col items-center justify-center py-16 opacity-40">
+                                    <Users className="h-16 w-16 mb-4" />
+                                    <p className="font-bold">No experts to show right now.</p>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Custom Scroll Indicator matching the design */}
+                        <div className="flex items-center justify-between mt-4 px-2">
+                            <Button variant="ghost" size="icon" className="text-muted-foreground/40 hover:text-white hover:bg-white/5 rounded-full h-8 w-8">
+                                <ChevronLeft className="h-6 w-6" />
+                            </Button>
+                            <div className="flex-1 mx-8 h-1.5 bg-white/5 rounded-full overflow-hidden relative">
+                                <div className="absolute left-[30%] top-0 bottom-0 w-[40%] bg-white/30 rounded-full shadow-[0_0_10px_rgba(255,255,255,0.1)]" />
+                            </div>
+                            <Button variant="ghost" size="icon" className="text-muted-foreground/40 hover:text-white hover:bg-white/5 rounded-full h-8 w-8">
+                                <ChevronRight className="h-6 w-6" />
+                            </Button>
+                        </div>
+                    </section>
+
                     <Card className="transition-all border-2 border-transparent hover:border-orange-500/50 hover:shadow-2xl hover:shadow-orange-500/10 focus-within:border-orange-500/50 focus-within:shadow-orange-500/10">
                         <CardHeader>
                              <div className="flex items-center justify-between">
@@ -365,8 +452,8 @@ function HomePageContent() {
                             <div className="space-y-4 mb-6">
                                 <div>
                                     <Label className="text-base font-semibold">Location</Label>
-                                    <Button variant="outline" size="sm" onClick={handleDetectLocation} disabled={isDetecting} className="float-right">
-                                        {isDetecting ? (
+                                    <Button variant="outline" size="sm" onClick={handleDetectLocation} disabled={isDetectingLocation} className="float-right">
+                                        {isDetectingLocation ? (
                                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                                         ) : (
                                             <LocateIcon className="mr-2 h-4 w-4" />
