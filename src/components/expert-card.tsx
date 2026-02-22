@@ -43,6 +43,7 @@ export type ExpertUser = {
     phoneNumber?: string;
     showPhoneNumberOnProfile?: boolean;
     following?: string[];
+    hiddenUntil?: any;
 };
 
 interface ExpertCardProps {
@@ -84,7 +85,13 @@ export function ExpertCard({ expert }: ExpertCardProps) {
                 <div className="flex items-start space-x-4">
                     <Link href={`/expert/${expert.id}`} className="block cursor-pointer">
                         <Avatar className="h-20 w-20 text-3xl">
-                            <AvatarImage src={expert.photoUrl} alt={getDisplayName(expert)} />
+                            <AvatarImage 
+                                src={expert.photoUrl} 
+                                alt={getDisplayName(expert)} 
+                                onContextMenu={(e) => e.preventDefault()} 
+                                draggable={false}
+                                className="select-none"
+                            />
                             <AvatarFallback>{getInitials(expert)}</AvatarFallback>
                         </Avatar>
                     </Link>

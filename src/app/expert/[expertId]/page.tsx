@@ -325,7 +325,13 @@ function ExpertProfileContent() {
                         <div className="flex flex-col sm:flex-row items-start gap-6">
                             <ImageLightbox imageUrl={expert.photoUrl || ''} altText={displayName}>
                                 <Avatar className="h-32 w-32 text-5xl transition-all hover:scale-105 hover:opacity-90 active:scale-95 shadow-lg">
-                                    <AvatarImage src={expert.photoUrl} alt={displayName} />
+                                    <AvatarImage 
+                                        src={expert.photoUrl} 
+                                        alt={displayName} 
+                                        onContextMenu={(e) => e.preventDefault()} 
+                                        draggable={false}
+                                        className="select-none"
+                                    />
                                     <AvatarFallback>{getInitials(expert.firstName, expert.lastName)}</AvatarFallback>
                                 </Avatar>
                             </ImageLightbox>

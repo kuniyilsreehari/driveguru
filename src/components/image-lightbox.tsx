@@ -37,8 +37,10 @@ export function ImageLightbox({ imageUrl, altText, children, className }: ImageL
                 alt={altText}
                 width={800}
                 height={800}
-                className="object-contain w-auto h-auto max-w-full max-h-[85vh] rounded-xl shadow-2xl"
+                className="object-contain w-auto h-auto max-w-full max-h-[85vh] rounded-xl shadow-2xl select-none"
                 priority
+                onContextMenu={(e) => e.preventDefault()}
+                draggable={false}
             />
         </div>
       </DialogContent>
