@@ -128,11 +128,6 @@ export default function ExpertDashboardPage() {
     return Math.round((filled / fields.length) * 100);
   }, [userProfile]);
 
-  const myGroupsQuery = useMemoFirebase(() => {
-    if (!firestore || !user) return null;
-    return query(collection(firestore, 'groups'), where('members', 'contains', user.uid));
-  }, [firestore, user]);
-  // Fallback for "contains" vs "array-contains" depending on logic, but backend uses arrays
   const myGroupsArrQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
     return query(collection(firestore, 'groups'), where('members', 'array-contains', user.uid));
@@ -268,8 +263,8 @@ export default function ExpertDashboardPage() {
                         <div className="flex justify-center p-8"><Loader className="animate-spin" /></div>
                     ) : myGroups && myGroups.length > 0 ? (
                         myGroups.map(group => (
-                            <Card key={group.id} className="hover:bg-accent/5 transition-colors cursor-pointer" asChild>
-                                <Link href={`/groups/${group.id}`}>
+                            <Link href={`/groups/${group.id}`} key={group.id} className="block">
+                                <Card className="hover:bg-accent/5 transition-colors cursor-pointer">
                                     <CardContent className="p-4 flex items-center justify-between">
                                         <div className="flex items-center gap-3">
                                             <div className="bg-primary/10 p-2 rounded-lg">
@@ -282,8 +277,8 @@ export default function ExpertDashboardPage() {
                                         </div>
                                         <ArrowRight className="h-4 w-4 text-muted-foreground" />
                                     </CardContent>
-                                </Link>
-                            </Card>
+                                </Card>
+                            </Link>
                         ))
                     ) : (
                         <Card className="border-dashed">
