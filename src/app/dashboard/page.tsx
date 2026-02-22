@@ -2,14 +2,14 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { collection, serverTimestamp, orderBy, query, where, limit, arrayUnion, arrayRemove, doc, increment } from 'firebase/firestore';
+import { collection, serverTimestamp, orderBy, query, where, limit, arrayUnion, arrayRemove, doc } from 'firebase/firestore';
 import { signOut } from 'firebase/auth';
 import { useUser, useAuth, useFirestore, useDoc, useMemoFirebase, useCollection } from '@/firebase';
-import { updateDocumentNonBlocking, addDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { updateDocumentNonBlocking, addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Button } from '@/components/ui/button';
-import { LogOut, Loader, Edit, UserCheck, Crown, Sparkles, User as UserIcon, MessageSquare, Gift, Info, Book, Pen, PlusCircle, MapPin, IndianRupee, Calendar, GraduationCap, School, Building, Home, Share2, Rss, UserPlus, Users, Link as LinkIcon, Search, AlertCircle, Briefcase, Check, CheckCircle, ArrowUpCircle, Trash2, MoreHorizontal, Lock, Clock, ChevronLeft, ChevronRight, ChevronDown, ChevronUp } from 'lucide-react';
+import { LogOut, Loader, Edit, UserCheck, User as UserIcon, MessageSquare, Gift, Info, Book, Pen, PlusCircle, MapPin, IndianRupee, Calendar, GraduationCap, School, Building, Home, Share2, Rss, UserPlus, Users, Link as LinkIcon, Search, AlertCircle, Check, CheckCircle, ArrowUpCircle, ChevronLeft, ChevronRight, ChevronDown, ChevronUp } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { EditProfileForm } from '@/components/auth/edit-profile-form';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
@@ -27,30 +27,11 @@ import { UserList } from '@/components/user-list';
 import { Separator } from '@/components/ui/separator';
 import { Input } from '@/components/ui/input';
 import { ProfileCompletionWizard } from '@/components/profile-completion-wizard';
-import { PostVacancyForm } from '@/components/auth/post-vacancy-form';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription as UiAlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import type { Vacancy } from '@/app/vacancies/page';
 
 type ExpertUserProfile = {
     id: string;
@@ -105,11 +86,6 @@ export default function ExpertDashboardPage() {
   const [showPostForm, setShowPostForm] = useState(false);
   const [suggestionSearch, setSuggestionSearch] = useState('');
   const [isProfileExpanded, setIsProfileExpanded] = useState(true);
-
-  // Vacancy State
-  const [isVacancyFormOpen, setIsVacancyFormOpen] = useState(false);
-  const [selectedVacancy, setSelectedVacancy] = useState<Vacancy | null>(null);
-  const [isVacancyDeleteDialogOpen, setIsVacancyDeleteDialogOpen] = useState(false);
 
   const userDocRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
   const { data: userProfile, isLoading: isProfileLoading } = useDoc<ExpertUserProfile>(userDocRef);
@@ -177,19 +153,12 @@ export default function ExpertDashboardPage() {
   }, [firestore, userProfile?.groups]);
   const { data: myGroups, isLoading: isMyGroupsLoading } = useCollection(myGroupsQuery);
 
-  const myVacanciesQuery = useMemoFirebase(() => {
-    if (!firestore || !user || userProfile?.role !== 'Company') return null;
-    return query(collection(firestore, 'vacancies'), where('companyId', '==', user.uid), orderBy('postedAt', 'desc'));
-  }, [firestore, user, userProfile?.role]);
-  const { data: myVacancies, isLoading: isVacanciesLoading } = useCollection<Vacancy>(myVacanciesQuery);
-
   const handleToggleFollow = async (targetId: string, isFollowing: boolean) => {
     if (!userDocRef || !userProfile) return;
     const action = isFollowing ? arrayRemove(targetId) : arrayUnion(targetId);
     updateDocumentNonBlocking(userDocRef, { following: action });
     
     if (!isFollowing) {
-        // Create notification for the target user
         const targetNotifRef = collection(firestore, 'users', targetId, 'notifications');
         addDocumentNonBlocking(targetNotifRef, {
             type: 'new_follower',
@@ -225,23 +194,8 @@ export default function ExpertDashboardPage() {
     }
   }
 
-  const handleDeleteVacancy = async () => {
-    if (!selectedVacancy || !firestore) return;
-    try {
-        await deleteDocumentNonBlocking(doc(firestore, 'vacancies', selectedVacancy.id));
-        toast({ title: "Vacancy Deleted" });
-    } catch (e) {
-        toast({ variant: "destructive", title: "Delete Failed" });
-    } finally {
-        setIsVacancyDeleteDialogOpen(false);
-        setSelectedVacancy(null);
-    }
-  };
-
   if (isUserLoading || isProfileLoading) return <div className="flex h-screen items-center justify-center"><Loader className="animate-spin" /></div>;
   if (!user || !userProfile) return null;
-
-  const canPostVacancies = userProfile.role === 'Company' && (userProfile.tier === 'Premier' || userProfile.tier === 'Super Premier');
 
   return (
     <div className="min-h-screen bg-background p-4 sm:p-8">
@@ -252,10 +206,9 @@ export default function ExpertDashboardPage() {
         </header>
 
         <Tabs defaultValue="overview" className="w-full">
-          <TabsList className={cn("grid w-full bg-secondary/50", userProfile.role === 'Company' ? "grid-cols-5" : "grid-cols-4")}>
+          <TabsList className="grid w-full bg-secondary/50 grid-cols-4">
             <TabsTrigger value="overview">Dashboard</TabsTrigger>
             <TabsTrigger value="network">My Network</TabsTrigger>
-            {userProfile.role === 'Company' && <TabsTrigger value="vacancies">Job Vacancies</TabsTrigger>}
             <TabsTrigger value="feed">Feed</TabsTrigger>
             <TabsTrigger value="plans">My Plan</TabsTrigger>
           </TabsList>
@@ -322,7 +275,7 @@ export default function ExpertDashboardPage() {
                               <AlertCircle className="h-5 w-5 text-primary" />
                               <div>
                                   <p className="font-bold">Complete Your Profile!</p>
-                                  <p className="text-sm text-muted-foreground">A complete profile helps you stand out and attract more clients. Click the button below to add your missing details and attract more clients.</p>
+                                  <p className="text-sm text-muted-foreground">A complete profile helps you stand out and attract more clients. Click the button below to add your missing details.</p>
                               </div>
                           </div>
                           <Button onClick={() => setIsWizardOpen(true)} className="w-full sm:w-auto">
@@ -391,7 +344,7 @@ export default function ExpertDashboardPage() {
                             </p>
                         </div>
                         <div>
-                            <h4 className="font-bold flex items-center gap-2 mb-2"><Briefcase className="h-4 w-4" /> Associated Projects</h4>
+                            <h4 className="font-bold flex items-center gap-2 mb-2"><Building className="h-4 w-4" /> Associated Projects</h4>
                             <p className={cn("text-sm", !userProfile.associatedProjectsName ? "text-destructive" : "text-muted-foreground")}>
                               {userProfile.associatedProjectsName || 'No projects listed.'}
                             </p>
@@ -451,7 +404,6 @@ export default function ExpertDashboardPage() {
                     <CardDescription className="text-muted-foreground font-medium">Expand your network by following other experts.</CardDescription>
                 </CardHeader>
                 <CardContent className="p-6 space-y-8">
-                    {/* Branded Search Bar */}
                     <div className="relative group">
                         <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground group-focus-within:text-orange-500 transition-colors" />
                         <Input 
@@ -462,7 +414,6 @@ export default function ExpertDashboardPage() {
                         />
                     </div>
 
-                    {/* Expert Carousel */}
                     <div className="relative">
                         <div className="flex gap-6 overflow-x-auto pb-8 pt-2 scrollbar-hide snap-x px-1">
                             {suggestedExperts.map(expert => (
@@ -498,7 +449,6 @@ export default function ExpertDashboardPage() {
                             )}
                         </div>
 
-                        {/* Custom Scroll/Progress Controls */}
                         <div className="flex items-center justify-between mt-4 px-2">
                             <Button variant="ghost" size="icon" className="text-muted-foreground/40 hover:text-white hover:bg-white/5 rounded-full h-8 w-8">
                                 <ChevronLeft className="h-6 w-6" />
@@ -566,95 +516,6 @@ export default function ExpertDashboardPage() {
             </Card>
           </TabsContent>
 
-          {userProfile.role === 'Company' && (
-            <TabsContent value="vacancies" className="mt-6">
-                <Card className="border-none bg-[#24262d] rounded-2xl overflow-hidden">
-                    <CardHeader className="bg-white/5 pb-6 border-b border-white/5">
-                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                            <div className="flex items-center gap-3">
-                                <Briefcase className="h-6 w-6 text-orange-500" />
-                                <div>
-                                    <CardTitle className="text-2xl font-black">Manage Vacancies</CardTitle>
-                                    <CardDescription className="text-muted-foreground">Post and manage your company's job openings.</CardDescription>
-                                </div>
-                            </div>
-                            {canPostVacancies ? (
-                                <Button onClick={() => { setSelectedVacancy(null); setIsVacancyFormOpen(true); }} className="bg-orange-500 hover:bg-orange-600 rounded-xl font-bold">
-                                    <PlusCircle className="mr-2 h-4 w-4" /> Post New Vacancy
-                                </Button>
-                            ) : (
-                                <Button variant="secondary" className="rounded-xl font-bold" asChild>
-                                    <Link href="/dashboard#plans"><Lock className="mr-2 h-4 w-4" /> Upgrade to Post Jobs</Link>
-                                </Button>
-                            )}
-                        </div>
-                    </CardHeader>
-                    <CardContent className="p-6">
-                        {isVacanciesLoading ? (
-                            <div className="flex justify-center p-8"><Loader className="animate-spin h-8 w-8 text-primary" /></div>
-                        ) : myVacancies && myVacancies.length > 0 ? (
-                            <div className="rounded-xl border border-white/5 overflow-hidden">
-                                <Table>
-                                    <TableHeader className="bg-white/5">
-                                        <TableRow className="border-white/5">
-                                            <TableHead className="font-bold text-white">Title</TableHead>
-                                            <TableHead className="font-bold text-white">Location</TableHead>
-                                            <TableHead className="font-bold text-white text-center">Positions</TableHead>
-                                            <TableHead className="font-bold text-white">Status</TableHead>
-                                            <TableHead className="text-right font-bold text-white">Actions</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {myVacancies.map(v => (
-                                            <TableRow key={v.id} className="hover:bg-white/5 transition-colors border-white/5">
-                                                <TableCell className="font-bold text-white">{v.title}</TableCell>
-                                                <TableCell className="text-sm text-muted-foreground">{v.location}</TableCell>
-                                                <TableCell className="text-center font-black text-orange-500">{v.positionsAvailable}</TableCell>
-                                                <TableCell>
-                                                    <div className="flex flex-col gap-1">
-                                                        <Badge className={cn(
-                                                            "text-[8px] uppercase border-none h-5 px-2 rounded-full w-fit",
-                                                            v.status === 'Approved' ? "bg-green-500 text-white" : 
-                                                            v.status === 'Rejected' ? "bg-red-500 text-white" : 
-                                                            "bg-yellow-500 text-white"
-                                                        )}>
-                                                            {v.status || 'Pending'}
-                                                        </Badge>
-                                                        {v.isImmediate && <Badge className="bg-orange-500 text-[8px] h-4 uppercase w-fit">Immediate</Badge>}
-                                                    </div>
-                                                </TableCell>
-                                                <TableCell className="text-right">
-                                                    <DropdownMenu>
-                                                        <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="rounded-xl hover:bg-white/5 text-muted-foreground"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
-                                                        <DropdownMenuContent align="end" className="rounded-xl border-2 border-white/10 bg-[#1a1c23] text-white">
-                                                            <DropdownMenuItem onClick={() => { setSelectedVacancy(v); setIsVacancyFormOpen(true); }} className="rounded-lg focus:bg-white/5 focus:text-white">
-                                                                <Edit className="mr-2 h-4 w-4" /> Edit
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuItem onClick={() => { setSelectedVacancy(v); setIsVacancyDeleteDialogOpen(true); }} className="text-red-500 focus:text-red-500 rounded-lg focus:bg-red-500/5">
-                                                                <Trash2 className="mr-2 h-4 w-4" /> Delete
-                                                            </DropdownMenuItem>
-                                                        </DropdownMenuContent>
-                                                    </DropdownMenu>
-                                                </TableCell>
-                                            </TableRow>
-                                        ))}
-                                    </TableBody>
-                                </Table>
-                            </div>
-                        ) : (
-                            <div className="text-center py-12 bg-white/5 rounded-2xl border-2 border-dashed border-white/10">
-                                <Briefcase className="h-12 w-12 mx-auto text-muted-foreground mb-4 opacity-20" />
-                                <p className="text-muted-foreground font-bold">You haven't posted any job vacancies yet.</p>
-                                {canPostVacancies && (
-                                    <Button variant="link" className="mt-2 text-orange-500" onClick={() => setIsVacancyFormOpen(true)}>Post your first job now</Button>
-                                )}
-                            </div>
-                        )}
-                    </CardContent>
-                </Card>
-            </TabsContent>
-          )}
-
           <TabsContent value="feed" className="mt-6 space-y-6">
             {!showPostForm ? (
               <Card>
@@ -701,7 +562,6 @@ export default function ExpertDashboardPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6 p-6">
-                {/* Standard Plan */}
                 <div className={cn(
                   "relative flex flex-col items-center p-8 rounded-2xl border-2 transition-all",
                   (userProfile.tier === 'Standard' || !userProfile.tier) 
@@ -737,7 +597,6 @@ export default function ExpertDashboardPage() {
                   )}
                 </div>
 
-                {/* Premier Plan */}
                 <div className={cn(
                   "relative flex flex-col items-center p-8 rounded-2xl border-2 transition-all",
                   userProfile.tier === 'Premier' 
@@ -775,7 +634,6 @@ export default function ExpertDashboardPage() {
                   )}
                 </div>
 
-                {/* Super Premier Plan */}
                 <div className={cn(
                   "relative flex flex-col items-center p-8 rounded-2xl border-2 transition-all",
                   userProfile.tier === 'Super Premier' 
@@ -830,37 +688,6 @@ export default function ExpertDashboardPage() {
         onOpenChange={setIsWizardOpen} 
         userProfile={userProfile} 
       />
-
-      <Dialog open={isVacancyFormOpen} onOpenChange={setIsVacancyFormOpen}>
-        <DialogContent className="max-w-3xl overflow-y-auto max-h-[90vh] rounded-2xl border-none bg-[#1a1c23] text-white">
-          <DialogHeader>
-            <DialogTitle className="text-2xl font-black">{selectedVacancy ? 'Edit Vacancy' : 'Post New Vacancy'}</DialogTitle>
-            <DialogDescription className="text-muted-foreground">Fill out the details for your job opening.</DialogDescription>
-          </DialogHeader>
-          <PostVacancyForm 
-            vacancy={selectedVacancy || undefined} 
-            companyId={user.uid}
-            companyName={userProfile.companyName}
-            companyEmail={userProfile.email || ''}
-            onSuccess={() => { setIsVacancyFormOpen(false); setSelectedVacancy(null); }} 
-          />
-        </DialogContent>
-      </Dialog>
-
-      <AlertDialog open={isVacancyDeleteDialogOpen} onOpenChange={setIsVacancyDeleteDialogOpen}>
-        <AlertDialogContent className="rounded-2xl border-none bg-[#1a1c23] text-white">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="text-2xl font-black text-white">Confirm Deletion</AlertDialogTitle>
-            <UiAlertDialogDescription className="text-muted-foreground">
-                This action is permanent and will remove this job listing from the marketplace.
-            </UiAlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel className="rounded-xl border-white/10 bg-transparent text-white hover:bg-white/5">Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteVacancy} className="bg-red-500 hover:bg-red-600 text-white rounded-xl">Permanently Delete Vacancy</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }
