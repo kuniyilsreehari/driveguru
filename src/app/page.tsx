@@ -49,7 +49,7 @@ function HomePageContent() {
     const [pincode, setPincode] = useState('');
     const [maxRate, setMaxRate] = useState<number | null>(null);
     const [role, setRole] = useState<string>('all');
-    const [isDetecting, setIsDetecting] = useState(false);
+    const [isDetectingLocation, setIsDetectingLocation] = useState(false);
     const [showVerifiedOnly, setShowVerifiedOnly] = useState(false);
     const [showAvailableOnly, setShowAvailableOnly] = useState(false);
     const { toast } = useToast();
@@ -118,7 +118,7 @@ function HomePageContent() {
     }
 
     const handleDetectLocation = () => {
-        setIsDetecting(true);
+        setIsDetectingLocation(true);
         getCurrentPosition().then(async (position) => {
             const { latitude, longitude } = position.coords;
             try {
@@ -146,10 +146,10 @@ function HomePageContent() {
                     description: 'Please enter your location manually.'
                 });
             } finally {
-                setIsDetecting(false);
+                setIsDetectingLocation(false);
             }
         }).catch((error) => {
-            setIsDetecting(false);
+            setIsDetectingLocation(false);
             toast({
                 variant: 'destructive',
                 title: 'Unable to retrieve your location.',
