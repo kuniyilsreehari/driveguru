@@ -286,6 +286,27 @@ export default function AdminDashboardPage() {
     }
   };
 
+  const handleToggleVacancyVerified = async (vacancyId: string, currentStatus: boolean) => {
+    const vacancyRef = doc(firestore, 'vacancies', vacancyId);
+    try {
+        await updateDocumentNonBlocking(vacancyRef, { isCompanyVerified: !currentStatus });
+        toast({ title: "Verification Toggled" });
+    } catch (e) {
+        toast({ variant: "destructive", title: "Update Failed" });
+    }
+  };
+
+  const handleToggleVacancyTier = async (vacancyId: string, currentTier?: string) => {
+    const vacancyRef = doc(firestore, 'vacancies', vacancyId);
+    try {
+        const nextTier = currentTier === 'Premier' ? 'Standard' : 'Premier';
+        await updateDocumentNonBlocking(vacancyRef, { companyTier: nextTier });
+        toast({ title: "Tier Toggled" });
+    } catch (e) {
+        toast({ variant: "destructive", title: "Update Failed" });
+    }
+  };
+
   const handleUpdateVacancyStatus = async (vacancyId: string, newStatus: 'Pending' | 'Approved' | 'Rejected') => {
     const vacancyRef = doc(firestore, 'vacancies', vacancyId);
     try {
@@ -671,88 +692,95 @@ export default function AdminDashboardPage() {
                 </TabsContent>
 
                 <TabsContent value="vacancies">
-                    <Card className="border-none bg-[#24262d] rounded-2xl overflow-hidden">
-                        <CardHeader className="bg-white/5 pb-6 border-b border-white/5">
+                    <Card className="border-none bg-white rounded-2xl overflow-hidden shadow-sm">
+                        <CardHeader className="pb-6 px-8 pt-8">
                             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                                <div className="flex items-center gap-3">
-                                    <div className="bg-orange-500/10 p-2 rounded-lg">
-                                        <Briefcase className="h-6 w-6 text-orange-500" />
+                                <div className="flex items-center gap-4">
+                                    <div className="bg-white border-2 border-black p-3 rounded-xl shadow-sm">
+                                        <Briefcase className="h-6 w-6 text-black" />
                                     </div>
                                     <div>
-                                        <CardTitle className="text-2xl font-black text-white">Vacancy Moderation</CardTitle>
-                                        <CardDescription className="text-muted-foreground text-xs font-medium">Approve or reject job listings posted by companies.</CardDescription>
+                                        <CardTitle className="text-3xl font-black text-[#1a1c23] tracking-tight">Vacancy Management</CardTitle>
+                                        <CardDescription className="text-muted-foreground text-sm font-medium">Manage all job vacancies in the system.</CardDescription>
                                     </div>
                                 </div>
-                                <Button onClick={() => { setSelectedVacancy(null); setIsVacancyDialogOpen(true); }} className="rounded-full font-black bg-orange-500 hover:bg-orange-600 h-11 px-6 shadow-lg shadow-orange-500/20">
-                                    <PlusCircle className="mr-2 h-4 w-4" /> Post New Job
+                                <Button onClick={() => { setSelectedVacancy(null); setIsVacancyDialogOpen(true); }} className="rounded-xl font-black bg-orange-500 hover:bg-orange-600 h-12 px-6 shadow-lg shadow-orange-500/20">
+                                    <PlusCircle className="mr-2 h-5 w-5" /> Post New Vacancy
                                 </Button>
                             </div>
                         </CardHeader>
-                        <CardContent className="p-6">
-                            <div className="rounded-xl border border-white/5 overflow-hidden">
+                        <CardContent className="px-8 pb-8">
+                            <div className="rounded-xl border border-border/50 overflow-hidden bg-white">
                                 <Table>
-                                    <TableHeader className="bg-white/5 border-b border-white/5">
-                                        <TableRow className="hover:bg-transparent border-none">
-                                            <TableHead className="font-black text-white text-[11px] uppercase tracking-wider h-12">Job Title & Company</TableHead>
-                                            <TableHead className="font-black text-white text-[11px] uppercase tracking-wider h-12">Location</TableHead>
-                                            <TableHead className="font-black text-white text-[11px] uppercase tracking-wider h-12 text-center">Status</TableHead>
-                                            <TableHead className="font-black text-white text-[11px] uppercase tracking-wider h-12">Posted</TableHead>
-                                            <TableHead className="text-right font-black text-white text-[11px] uppercase tracking-wider h-12"></TableHead>
+                                    <TableHeader className="bg-slate-50/50">
+                                        <TableRow className="hover:bg-transparent border-b border-border/50">
+                                            <TableHead className="font-bold text-slate-500 text-xs uppercase tracking-wider h-14 pl-6">Title</TableHead>
+                                            <TableHead className="font-bold text-slate-500 text-xs uppercase tracking-wider h-14">Company</TableHead>
+                                            <TableHead className="font-bold text-slate-500 text-xs uppercase tracking-wider h-14">Location</TableHead>
+                                            <TableHead className="font-bold text-slate-500 text-xs uppercase tracking-wider h-14 text-center">Type</TableHead>
+                                            <TableHead className="font-bold text-slate-500 text-xs uppercase tracking-wider h-14">Posted</TableHead>
+                                            <TableHead className="text-right font-bold text-slate-500 text-xs uppercase tracking-wider h-14 pr-6">Actions</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
                                         {isVacanciesLoading ? (
-                                            <TableRow className="border-none hover:bg-transparent"><TableCell colSpan={5} className="text-center py-12"><Loader className="animate-spin mx-auto text-orange-500" /></TableCell></TableRow>
+                                            <TableRow className="border-none hover:bg-transparent"><TableCell colSpan={6} className="text-center py-12"><Loader className="animate-spin mx-auto text-orange-500" /></TableCell></TableRow>
                                         ) : !vacancies || vacancies.length === 0 ? (
-                                            <TableRow className="border-none hover:bg-transparent"><TableCell colSpan={5} className="text-center py-20 text-muted-foreground font-medium">No job vacancies found.</TableCell></TableRow>
+                                            <TableRow className="border-none hover:bg-transparent"><TableCell colSpan={6} className="text-center py-20 text-muted-foreground font-medium">No job vacancies found.</TableCell></TableRow>
                                         ) : (
                                             vacancies.map(v => (
-                                                <TableRow key={v.id} className="hover:bg-white/[0.02] transition-colors border-b border-white/5 h-20">
+                                                <TableRow key={v.id} className="hover:bg-slate-50/30 transition-colors border-b border-border/30 h-24">
+                                                    <TableCell className="py-4 pl-6">
+                                                        <div className="font-bold text-[#1a1c23] text-base">{v.title}</div>
+                                                    </TableCell>
                                                     <TableCell className="py-4">
-                                                        <div className="space-y-1">
-                                                            <div className="font-black text-white text-sm tracking-tight">{v.title}</div>
-                                                            <div className="text-[10px] text-muted-foreground font-bold flex items-center gap-1.5 uppercase tracking-wide">
-                                                                <Building className="h-3 w-3" /> {v.companyName}
+                                                        <div className="space-y-1.5">
+                                                            <div className="text-sm font-bold text-[#1a1c23]">{v.companyName}</div>
+                                                            <div className="flex items-center gap-2">
+                                                                {v.isCompanyVerified && (
+                                                                    <Badge variant="outline" className="h-5 px-2 rounded-md border-green-500/30 bg-green-50/50 text-green-600 text-[10px] font-bold flex items-center gap-1">
+                                                                        <UserCheck className="h-2.5 w-2.5" /> Verified
+                                                                    </Badge>
+                                                                )}
+                                                                {v.companyTier === 'Premier' && (
+                                                                    <Badge variant="outline" className="h-5 px-2 rounded-md border-purple-500/30 bg-purple-50/50 text-purple-600 text-[10px] font-bold flex items-center gap-1">
+                                                                        <Crown className="h-2.5 w-2.5" /> Premier
+                                                                    </Badge>
+                                                                )}
                                                             </div>
                                                         </div>
                                                     </TableCell>
-                                                    <TableCell className="py-4">
-                                                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-medium">
-                                                            <MapPin className="h-3.5 w-3.5 text-white/20" />
-                                                            {v.location}
-                                                        </div>
+                                                    <TableCell className="py-4 text-slate-600 font-medium">
+                                                        {v.location}
                                                     </TableCell>
                                                     <TableCell className="text-center py-4">
-                                                        <div className="flex justify-center">
-                                                            <div className={cn(
-                                                                "h-3 w-3 rounded-full shadow-[0_0_10px_rgba(0,0,0,0.5)]",
-                                                                v.status === 'Approved' ? "bg-green-500 shadow-green-500/20" : 
-                                                                v.status === 'Rejected' ? "bg-red-500 shadow-red-500/20" : 
-                                                                "bg-yellow-500 shadow-yellow-500/20"
-                                                            )} title={v.status} />
-                                                        </div>
+                                                        <Badge variant="secondary" className="bg-slate-100 text-slate-700 hover:bg-slate-100 rounded-full px-3 py-0.5 text-[11px] font-bold">
+                                                            {v.employmentType}
+                                                        </Badge>
                                                     </TableCell>
-                                                    <TableCell className="py-4">
-                                                        <div className="text-[11px] text-muted-foreground font-bold uppercase tracking-wider">
-                                                            {v.postedAt ? format(v.postedAt.toDate(), 'MMM dd, yyyy') : '-'}
-                                                        </div>
+                                                    <TableCell className="py-4 text-slate-500 text-sm">
+                                                        {v.postedAt ? formatDistanceToNow(v.postedAt.toDate(), { addSuffix: true }) : '-'}
                                                     </TableCell>
-                                                    <TableCell className="text-right py-4">
+                                                    <TableCell className="text-right py-4 pr-6">
                                                         <DropdownMenu>
-                                                            <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-white/10 text-muted-foreground"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
-                                                            <DropdownMenuContent align="end" className="bg-[#1a1c23] border-white/10 text-white rounded-xl shadow-2xl">
-                                                                <DropdownMenuItem onClick={() => handleUpdateVacancyStatus(v.id, 'Approved')} className="focus:bg-green-500/10 focus:text-green-500 font-bold text-xs">
-                                                                    <Check className="mr-2 h-4 w-4" /> Approve
+                                                            <DropdownMenuTrigger asChild>
+                                                                <Button variant="ghost" size="icon" className="h-10 w-10 hover:bg-slate-100 text-slate-400">
+                                                                    <MoreHorizontal className="h-5 w-5" />
+                                                                </Button>
+                                                            </DropdownMenuTrigger>
+                                                            <DropdownMenuContent align="end" className="bg-white border-border/50 text-[#1a1c23] rounded-xl shadow-2xl w-48 p-1">
+                                                                <DropdownMenuItem onClick={() => { setSelectedVacancy(v); setIsVacancyDialogOpen(true); }} className="font-bold text-xs h-10 px-3 rounded-lg focus:bg-slate-50">
+                                                                    <Edit className="mr-2 h-4 w-4 text-slate-500" /> Edit
                                                                 </DropdownMenuItem>
-                                                                <DropdownMenuItem onClick={() => handleUpdateVacancyStatus(v.id, 'Rejected')} className="focus:bg-red-500/10 focus:text-red-500 font-bold text-xs">
-                                                                    <XCircle className="mr-2 h-4 w-4" /> Reject
+                                                                <DropdownMenuItem onClick={() => handleToggleVacancyVerified(v.id, v.isCompanyVerified || false)} className="font-bold text-xs h-10 px-3 rounded-lg focus:bg-slate-50">
+                                                                    <UserCheck className="mr-2 h-4 w-4 text-slate-500" /> Toggle Verified
                                                                 </DropdownMenuItem>
-                                                                <DropdownMenuItem onClick={() => { setSelectedVacancy(v); setIsVacancyDialogOpen(true); }} className="font-bold text-xs">
-                                                                    <Edit className="mr-2 h-4 w-4" /> Edit Details
+                                                                <DropdownMenuItem onClick={() => handleToggleVacancyTier(v.id, v.companyTier)} className="font-bold text-xs h-10 px-3 rounded-lg focus:bg-slate-50">
+                                                                    <Crown className="mr-2 h-4 w-4 text-slate-500" /> Toggle Premier
                                                                 </DropdownMenuItem>
-                                                                <DropdownMenuSeparator className="bg-white/5" />
-                                                                <DropdownMenuItem onClick={() => handleDeleteVacancy(v.id)} className="text-red-500 focus:text-red-500 focus:bg-red-500/10 font-bold text-xs">
-                                                                    <Trash2 className="mr-2 h-4 w-4" /> Delete Job
+                                                                <DropdownMenuSeparator className="bg-slate-100" />
+                                                                <DropdownMenuItem onClick={() => handleDeleteVacancy(v.id)} className="text-red-500 focus:text-red-500 focus:bg-red-50 rounded-lg font-bold text-xs h-10 px-3">
+                                                                    <Trash2 className="mr-2 h-4 w-4" /> Delete
                                                                 </DropdownMenuItem>
                                                             </DropdownMenuContent>
                                                         </DropdownMenu>
