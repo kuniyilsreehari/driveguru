@@ -8,7 +8,7 @@ import { doc, collection, serverTimestamp, orderBy, query, where, limit, arrayUn
 import { useUser, useAuth, useFirestore, useDoc, useMemoFirebase, useCollection } from '@/firebase';
 import { updateDocumentNonBlocking, addDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Button } from '@/components/ui/button';
-import { LogOut, Loader, Edit, UserCheck, Crown, Sparkles, User as UserIcon, MessageSquare, Gift, Info, Book, Pen, PlusCircle, MapPin, IndianRupee, Calendar, GraduationCap, School, Building, Home, Share2, Rss, UserPlus, Users, Link as LinkIcon, Search, AlertCircle, Briefcase, Check, CheckCircle, ArrowUpCircle, Trash2, MoreHorizontal, Lock, Clock } from 'lucide-react';
+import { LogOut, Loader, Edit, UserCheck, Crown, Sparkles, User as UserIcon, MessageSquare, Gift, Info, Book, Pen, PlusCircle, MapPin, IndianRupee, Calendar, GraduationCap, School, Building, Home, Share2, Rss, UserPlus, Users, Link as LinkIcon, Search, AlertCircle, Briefcase, Check, CheckCircle, ArrowUpCircle, Trash2, MoreHorizontal, Lock, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { EditProfileForm } from '@/components/auth/edit-profile-form';
@@ -138,7 +138,7 @@ export default function ExpertDashboardPage() {
 
   const suggestionsQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
-    return query(collection(firestore, 'users'), limit(10));
+    return query(collection(firestore, 'users'), limit(20));
   }, [firestore, user]);
   const { data: allUsers } = useCollection<ExpertUserProfile>(suggestionsQuery);
 
@@ -149,8 +149,9 @@ export default function ExpertDashboardPage() {
         !(userProfile?.following?.includes(u.id)) &&
         (suggestionSearch === '' || 
          `${u.firstName} ${u.lastName}`.toLowerCase().includes(suggestionSearch.toLowerCase()) ||
-         u.profession?.toLowerCase().includes(suggestionSearch.toLowerCase()))
-    ).slice(0, 6);
+         u.profession?.toLowerCase().includes(suggestionSearch.toLowerCase()) ||
+         u.role?.toLowerCase().includes(suggestionSearch.toLowerCase()))
+    );
   }, [allUsers, user, userProfile, suggestionSearch]);
 
   const referralsQuery = useMemoFirebase(() => {
@@ -412,37 +413,52 @@ export default function ExpertDashboardPage() {
                 </CardContent>
             </Card>
 
-            <Card>
-                <CardHeader>
-                    <CardTitle>People You May Know</CardTitle>
-                    <CardDescription>Expand your network by following other experts.</CardDescription>
+            <Card className="border-none bg-[#24262d] rounded-2xl overflow-hidden">
+                <CardHeader className="bg-white/5 border-b border-white/5 pb-6">
+                    <CardTitle className="text-2xl font-black text-white">People You May Know</CardTitle>
+                    <CardDescription className="text-muted-foreground font-medium">Expand your network by following other experts.</CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
+                <CardContent className="p-6 space-y-6">
                     <div className="relative">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input 
                             placeholder="Search suggestions..." 
-                            className="pl-10" 
+                            className="pl-10 h-12 bg-[#1a1c23] border-none rounded-xl text-white placeholder:text-muted-foreground" 
                             value={suggestionSearch} 
                             onChange={(e) => setSuggestionSearch(e.target.value)} 
                         />
                     </div>
-                    <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
-                        {suggestedExperts.map(expert => (
-                            <Card key={expert.id} className="min-w-[200px] max-w-[200px] flex flex-col items-center p-4 text-center">
-                                <Avatar className="h-16 w-16 mb-3">
-                                    <AvatarImage src={expert.photoUrl} />
-                                    <AvatarFallback>{expert.firstName[0]}</AvatarFallback>
-                                </Avatar>
-                                <p className="font-bold text-sm line-clamp-1">{expert.firstName} {expert.lastName}</p>
-                                <p className="text-xs text-muted-foreground mb-4 line-clamp-1">{expert.profession || expert.role}</p>
-                                <Button size="sm" className="w-full" onClick={() => handleToggleFollow(expert.id, false)}>
-                                    <UserPlus className="h-3 w-3 mr-1" /> Follow
-                                </Button>
-                            </Card>
-                        ))}
-                        {suggestedExperts.length === 0 && (
-                            <p className="text-sm text-muted-foreground text-center w-full py-8">No new suggestions at the moment.</p>
+                    <div className="relative group">
+                        <div className="flex gap-4 overflow-x-auto pb-6 scrollbar-hide snap-x">
+                            {suggestedExperts.map(expert => (
+                                <Card key={expert.id} className="min-w-[220px] max-w-[220px] bg-[#1a1c23] border-white/5 flex flex-col items-center p-6 text-center rounded-2xl snap-start transition-transform hover:scale-[1.02]">
+                                    <Avatar className="h-20 w-20 mb-4 border-2 border-white/10">
+                                        <AvatarImage src={expert.photoUrl} />
+                                        <AvatarFallback className="bg-primary/10 text-primary text-xl font-bold">{expert.firstName[0]}</AvatarFallback>
+                                    </Avatar>
+                                    <p className="font-black text-white text-base line-clamp-1 mb-1">{expert.firstName} {expert.lastName}</p>
+                                    <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-black mb-6 line-clamp-1 h-4">{expert.profession || expert.role}</p>
+                                    <Button 
+                                        className="w-full bg-orange-500 hover:bg-orange-600 rounded-xl font-black text-sm h-11"
+                                        onClick={() => handleToggleFollow(expert.id, false)}
+                                    >
+                                        <UserPlus className="h-4 w-4 mr-2" /> Follow
+                                    </Button>
+                                </Card>
+                            ))}
+                            {suggestedExperts.length === 0 && (
+                                <div className="w-full flex flex-col items-center justify-center py-12 bg-white/5 rounded-2xl border-2 border-dashed border-white/10">
+                                    <Users className="h-12 w-12 text-muted-foreground opacity-20 mb-4" />
+                                    <p className="text-sm text-muted-foreground font-bold">No suggestions at the moment.</p>
+                                </div>
+                            )}
+                        </div>
+                        {suggestedExperts.length > 4 && (
+                            <div className="absolute -bottom-2 left-0 right-0 flex items-center justify-center gap-2 pointer-events-none">
+                                <div className="h-1.5 w-12 bg-white/10 rounded-full overflow-hidden">
+                                    <div className="h-full w-1/3 bg-white/30 rounded-full" />
+                                </div>
+                            </div>
                         )}
                     </div>
                 </CardContent>
