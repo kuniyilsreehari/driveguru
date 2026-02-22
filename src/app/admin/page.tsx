@@ -3,13 +3,13 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { collection, Timestamp, orderBy, query, doc, deleteDoc, getDocs, where } from 'firebase/firestore';
+import { collection, Timestamp, orderBy, query, doc, deleteDoc, getDocs, where, increment } from 'firebase/firestore';
 import { signOut } from 'firebase/auth';
 import { useUser, useFirestore, useDoc, useMemoFirebase, useAuth, useCollection } from '@/firebase';
 import { updateDocumentNonBlocking, setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, CheckCircle2, UserCheck, UserX, Crown, Sparkles, User as UserIcon, Settings, Save, Briefcase, Building, MessageSquare, Search, PlusCircle, Mail, Download, ExternalLink, IndianRupee, X, Upload, HardDriveDownload, Megaphone, Phone, MapPinIcon, CreditCard, Key, Gift, Code, List, Grip, ArrowUp, ArrowDown, Rss, UserPlus, Fingerprint } from 'lucide-react';
+import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, CheckCircle2, UserCheck, UserX, Crown, Sparkles, User as UserIcon, Settings, Save, Briefcase, Building, MessageSquare, Search, PlusCircle, Mail, Download, ExternalLink, IndianRupee, X, Upload, HardDriveDownload, Megaphone, Phone, MapPinIcon, CreditCard, Key, Gift, Code, List, Grip, ArrowUp, ArrowDown, Rss, UserPlus, Fingerprint, Award, CircleHelp, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -38,6 +38,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from '@/components/ui/dialog';
 import { CreateUserForm } from '@/components/auth/create-user-form';
 import { useToast } from '@/hooks/use-toast';
@@ -68,6 +69,8 @@ type ExpertUser = {
     referredByCode?: string | null;
     createdAt?: Timestamp;
     profession?: string;
+    phoneNumber?: string;
+    companyName?: string;
 };
 
 type AppConfig = {
@@ -94,6 +97,8 @@ export default function AdminDashboardPage() {
   const [selectedUser, setSelectedUser] = useState<ExpertUser | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isAwardDialogOpen, setIsAwardDialogOpen] = useState(false);
+  const [awardPoints, setAwardPoints] = useState(100);
   const [userSearchQuery, setUserSearchQuery] = useState('');
   const [userFilter, setUserFilter] = useState<'all' | 'verified' | 'unverified' | 'premier' | 'super'>('all');
 
@@ -138,6 +143,18 @@ export default function AdminDashboardPage() {
         super: users.filter(u => u.tier === 'Super Premier').length,
         referrals: users.filter(u => u.referredByCode).length,
     };
+  }, [users]);
+
+  const referralUsageMap = useMemo(() => {
+    const map: Record<string, number> = {};
+    if (users) {
+        users.forEach(u => {
+            if (u.referredByCode) {
+                map[u.referredByCode] = (map[u.referredByCode] || 0) + 1;
+            }
+        });
+    }
+    return map;
   }, [users]);
 
   const filteredUsers = useMemo(() => {
@@ -200,6 +217,18 @@ export default function AdminDashboardPage() {
       toast({ title: "Tier Updated", description: `User tier changed to ${newTier}` });
     } catch (e) {
       toast({ variant: "destructive", title: "Update Failed" });
+    }
+  };
+
+  const handleAwardPoints = async () => {
+    if (!selectedUser) return;
+    try {
+        const userRef = doc(firestore, 'users', selectedUser.id);
+        await updateDocumentNonBlocking(userRef, { referralPoints: increment(awardPoints) });
+        toast({ title: "Points Awarded", description: `Successfully awarded ${awardPoints} points to ${selectedUser.firstName}` });
+        setIsAwardDialogOpen(false);
+    } catch (e) {
+        toast({ variant: "destructive", title: "Action Failed" });
     }
   };
 
@@ -308,108 +337,159 @@ export default function AdminDashboardPage() {
                                             <Table>
                                                 <TableHeader className="bg-secondary/10">
                                                     <TableRow>
-                                                        <TableHead className="font-bold">Avatar</TableHead>
-                                                        <TableHead className="font-bold">Full Name</TableHead>
-                                                        <TableHead className="font-bold">Referral</TableHead>
+                                                        <TableHead className="font-bold">Expert Details</TableHead>
+                                                        <TableHead className="font-bold">Rewards</TableHead>
                                                         <TableHead className="font-bold">Role</TableHead>
-                                                        <TableHead className="font-bold">Joined</TableHead>
-                                                        <TableHead className="font-bold">Tier</TableHead>
-                                                        <TableHead className="font-bold">Verified</TableHead>
-                                                        <TableHead className="text-right font-bold">Actions</TableHead>
+                                                        <TableHead className="font-bold text-center">Joined</TableHead>
+                                                        <TableHead className="font-bold text-center">Tier</TableHead>
+                                                        <TableHead className="font-bold text-center">Verification</TableHead>
+                                                        <TableHead className="text-right font-bold"></TableHead>
                                                     </TableRow>
                                                 </TableHeader>
                                                 <TableBody>
                                                     {filteredUsers
                                                         .filter(u => roleTab === 'all' || u.role.toLowerCase().includes(roleTab))
-                                                        .map(u => (
-                                                        <TableRow key={u.id} className="hover:bg-secondary/5 transition-colors">
-                                                            <TableCell>
-                                                                <Avatar className="h-10 w-10 border-2 border-secondary">
-                                                                    <AvatarImage src={u.photoUrl} />
-                                                                    <AvatarFallback className="bg-primary/10 text-primary font-bold">{u.firstName[0]}{u.lastName[0]}</AvatarFallback>
-                                                                </Avatar>
-                                                            </TableCell>
-                                                            <TableCell>
-                                                                <div className="font-black text-sm">{u.firstName} {u.lastName}</div>
-                                                                <div className="text-[10px] text-muted-foreground font-medium">{u.email}</div>
-                                                            </TableCell>
-                                                            <TableCell className="font-mono text-xs font-bold text-primary">{u.referralCode || '-'}</TableCell>
-                                                            <TableCell><Badge variant="outline" className="rounded-md font-bold text-[10px] uppercase tracking-wider">{u.role}</Badge></TableCell>
-                                                            <TableCell className="text-xs font-medium opacity-70">
-                                                                {u.createdAt ? format(u.createdAt.toDate(), 'MMM dd, yyyy') : '-'}
-                                                            </TableCell>
-                                                            <TableCell>
-                                                                {u.tier === 'Super Premier' ? (
-                                                                    <Badge className="bg-blue-500/10 text-blue-500 border-blue-500/20 rounded-md font-black text-[10px] uppercase">Super</Badge>
-                                                                ) : u.tier === 'Premier' ? (
-                                                                    <Badge className="bg-purple-500/10 text-purple-500 border-purple-500/20 rounded-md font-black text-[10px] uppercase">Premier</Badge>
-                                                                ) : (
-                                                                    <Badge variant="outline" className="opacity-50 rounded-md font-bold text-[10px] uppercase">Standard</Badge>
-                                                                )}
-                                                            </TableCell>
-                                                            <TableCell>
-                                                                {u.verified ? (
-                                                                    <CheckCircle2 className="h-5 w-5 text-green-500" />
-                                                                ) : (
-                                                                    <UserX className="h-5 w-5 text-muted-foreground opacity-30" />
-                                                                )}
-                                                            </TableCell>
-                                                            <TableCell className="text-right">
-                                                                <DropdownMenu>
-                                                                    <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="rounded-xl"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
-                                                                    <DropdownMenuContent align="end" className="rounded-xl border-2">
-                                                                        <DropdownMenuSub>
-                                                                            <DropdownMenuSubTrigger className="rounded-lg">
-                                                                                <Sparkles className="mr-2 h-4 w-4" /> Change Tier
-                                                                            </DropdownMenuSubTrigger>
-                                                                            <DropdownMenuPortal>
-                                                                                <DropdownMenuSubContent className="rounded-xl border-2">
-                                                                                    <DropdownMenuItem onClick={() => handleUpdateUserTier(u.id, 'Standard')}>
-                                                                                        <UserIcon className="mr-2 h-4 w-4" /> Standard
-                                                                                    </DropdownMenuItem>
-                                                                                    <DropdownMenuItem onClick={() => handleUpdateUserTier(u.id, 'Premier')}>
-                                                                                        <Crown className="mr-2 h-4 w-4" /> Premier
-                                                                                    </DropdownMenuItem>
-                                                                                    <DropdownMenuItem onClick={() => handleUpdateUserTier(u.id, 'Super Premier')}>
-                                                                                        <Sparkles className="mr-2 h-4 w-4" /> Super Premier
-                                                                                    </DropdownMenuItem>
-                                                                                </DropdownMenuSubContent>
-                                                                            </DropdownMenuPortal>
-                                                                        </DropdownMenuSub>
-                                                                        
-                                                                        <DropdownMenuSub>
-                                                                            <DropdownMenuSubTrigger className="rounded-lg">
-                                                                                <Briefcase className="mr-2 h-4 w-4" /> Change Role
-                                                                            </DropdownMenuSubTrigger>
-                                                                            <DropdownMenuPortal>
-                                                                                <DropdownMenuSubContent className="rounded-xl border-2">
-                                                                                    <DropdownMenuItem onClick={() => handleUpdateUserRole(u.id, 'Super Admin')}>Super Admin</DropdownMenuItem>
-                                                                                    <DropdownMenuItem onClick={() => handleUpdateUserRole(u.id, 'Manager')}>Manager</DropdownMenuItem>
-                                                                                    <DropdownMenuItem onClick={() => handleUpdateUserRole(u.id, 'Freelancer')}>Freelancer</DropdownMenuItem>
-                                                                                    <DropdownMenuItem onClick={() => handleUpdateUserRole(u.id, 'Company')}>Company</DropdownMenuItem>
-                                                                                    <DropdownMenuItem onClick={() => handleUpdateUserRole(u.id, 'Authorized Pro')}>Authorized Pro</DropdownMenuItem>
-                                                                                </DropdownMenuSubContent>
-                                                                            </DropdownMenuPortal>
-                                                                        </DropdownMenuSub>
+                                                        .map(u => {
+                                                            const usedCount = referralUsageMap[u.referralCode || ''] || 0;
+                                                            return (
+                                                                <TableRow key={u.id} className="hover:bg-secondary/5 transition-colors">
+                                                                    <TableCell>
+                                                                        <div className="flex items-start gap-3">
+                                                                            <Avatar className="h-12 w-12 border-2 border-secondary shrink-0 mt-1">
+                                                                                <AvatarImage src={u.photoUrl} />
+                                                                                <AvatarFallback className="bg-primary/10 text-primary font-bold">{u.firstName[0]}{u.lastName[0]}</AvatarFallback>
+                                                                            </Avatar>
+                                                                            <div className="space-y-1">
+                                                                                <div className="font-black text-sm">{u.firstName} {u.lastName}</div>
+                                                                                <div className="text-[10px] text-muted-foreground font-medium">{u.email}</div>
+                                                                                {u.companyName && (
+                                                                                    <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                                                                                        <Building className="h-3 w-3" /> {u.companyName}
+                                                                                    </div>
+                                                                                )}
+                                                                                <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                                                                                    <Phone className="h-3 w-3" /> +91 {u.phoneNumber || 'N/A'}
+                                                                                </div>
+                                                                                <div className="flex flex-wrap items-center gap-2 mt-1">
+                                                                                    <div className="flex items-center gap-1 text-[10px] font-mono font-bold bg-secondary/50 px-1.5 py-0.5 rounded">
+                                                                                        <Key className="h-2.5 w-2.5" /> {u.referralCode || '-'}
+                                                                                    </div>
+                                                                                    {u.referredByCode && (
+                                                                                        <Badge variant="outline" className="text-[9px] px-1.5 py-0 rounded h-4 border-primary/20 bg-primary/5">{u.referredByCode}</Badge>
+                                                                                    )}
+                                                                                    <Badge className={cn("text-[9px] px-1.5 py-0 rounded h-4", usedCount > 0 ? "bg-orange-500 hover:bg-orange-600" : "bg-muted")}>Used: {usedCount}</Badge>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    </TableCell>
+                                                                    <TableCell>
+                                                                        <div className="flex flex-col gap-2">
+                                                                            <div className="flex items-center gap-2">
+                                                                                <div className="text-xs font-bold text-primary">{u.referralPoints || 0}</div>
+                                                                                <div className="text-[10px] font-medium opacity-70">Points</div>
+                                                                            </div>
+                                                                            <Button 
+                                                                                variant="outline" 
+                                                                                size="sm" 
+                                                                                className="h-7 px-2 rounded-lg text-[10px] font-bold border-2"
+                                                                                onClick={() => { setSelectedUser(u); setIsAwardDialogOpen(true); }}
+                                                                            >
+                                                                                <Award className="mr-1 h-3 w-3" /> Award
+                                                                            </Button>
+                                                                        </div>
+                                                                    </TableCell>
+                                                                    <TableCell>
+                                                                        <Badge variant="secondary" className="rounded-md font-bold text-[10px] uppercase tracking-wider h-6">{u.role}</Badge>
+                                                                    </TableCell>
+                                                                    <TableCell className="text-center">
+                                                                        <div className="text-[10px] font-medium opacity-70">
+                                                                            {u.createdAt ? formatDistanceToNow(u.createdAt.toDate(), { addSuffix: true }) : '-'}
+                                                                        </div>
+                                                                    </TableCell>
+                                                                    <TableCell className="text-center">
+                                                                        <div className="flex justify-center">
+                                                                            {u.tier === 'Super Premier' ? (
+                                                                                <Badge className="bg-blue-500/10 text-blue-500 border-blue-500/20 rounded-full font-black text-[10px] uppercase h-6 px-3 flex gap-1">
+                                                                                    <Sparkles className="h-3 w-3" /> Super
+                                                                                </Badge>
+                                                                            ) : u.tier === 'Premier' ? (
+                                                                                <Badge className="bg-purple-500/10 text-purple-500 border-purple-500/20 rounded-full font-black text-[10px] uppercase h-6 px-3 flex gap-1">
+                                                                                    <Crown className="h-3 w-3" /> Premier
+                                                                                </Badge>
+                                                                            ) : (
+                                                                                <Badge variant="outline" className="opacity-50 rounded-full font-bold text-[10px] uppercase h-6 px-3 flex gap-1">
+                                                                                    <UserIcon className="h-3 w-3" /> Standard
+                                                                                </Badge>
+                                                                            )}
+                                                                        </div>
+                                                                    </TableCell>
+                                                                    <TableCell>
+                                                                        <div className="flex items-center justify-center gap-3">
+                                                                            <Switch 
+                                                                                checked={u.verified} 
+                                                                                onCheckedChange={(v) => updateDocumentNonBlocking(doc(firestore, 'users', u.id), { verified: v })} 
+                                                                                className="scale-90"
+                                                                            />
+                                                                            {u.verified ? (
+                                                                                <CheckCircle2 className="h-5 w-5 text-green-500" />
+                                                                            ) : (
+                                                                                <UserX className="h-5 w-5 text-muted-foreground opacity-30" />
+                                                                            )}
+                                                                        </div>
+                                                                    </TableCell>
+                                                                    <TableCell className="text-right">
+                                                                        <DropdownMenu>
+                                                                            <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="rounded-xl"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
+                                                                            <DropdownMenuContent align="end" className="rounded-xl border-2">
+                                                                                <DropdownMenuSub>
+                                                                                    <DropdownMenuSubTrigger className="rounded-lg">
+                                                                                        <Sparkles className="mr-2 h-4 w-4" /> Change Tier
+                                                                                    </DropdownMenuSubTrigger>
+                                                                                    <DropdownMenuPortal>
+                                                                                        <DropdownMenuSubContent className="rounded-xl border-2">
+                                                                                            <DropdownMenuItem onClick={() => handleUpdateUserTier(u.id, 'Standard')}>
+                                                                                                <UserIcon className="mr-2 h-4 w-4" /> Standard
+                                                                                            </DropdownMenuItem>
+                                                                                            <DropdownMenuItem onClick={() => handleUpdateUserTier(u.id, 'Premier')}>
+                                                                                                <Crown className="mr-2 h-4 w-4" /> Premier
+                                                                                            </DropdownMenuItem>
+                                                                                            <DropdownMenuItem onClick={() => handleUpdateUserTier(u.id, 'Super Premier')}>
+                                                                                                <Sparkles className="mr-2 h-4 w-4" /> Super Premier
+                                                                                            </DropdownMenuItem>
+                                                                                        </DropdownMenuSubContent>
+                                                                                    </DropdownMenuPortal>
+                                                                                </DropdownMenuSub>
+                                                                                
+                                                                                <DropdownMenuSub>
+                                                                                    <DropdownMenuSubTrigger className="rounded-lg">
+                                                                                        <Briefcase className="mr-2 h-4 w-4" /> Change Role
+                                                                                    </DropdownMenuSubTrigger>
+                                                                                    <DropdownMenuPortal>
+                                                                                        <DropdownMenuSubContent className="rounded-xl border-2">
+                                                                                            <DropdownMenuItem onClick={() => handleUpdateUserRole(u.id, 'Super Admin')}>Super Admin</DropdownMenuItem>
+                                                                                            <DropdownMenuItem onClick={() => handleUpdateUserRole(u.id, 'Manager')}>Manager</DropdownMenuItem>
+                                                                                            <DropdownMenuItem onClick={() => handleUpdateUserRole(u.id, 'Freelancer')}>Freelancer</DropdownMenuItem>
+                                                                                            <DropdownMenuItem onClick={() => handleUpdateUserRole(u.id, 'Company')}>Company</DropdownMenuItem>
+                                                                                            <DropdownMenuItem onClick={() => handleUpdateUserRole(u.id, 'Authorized Pro')}>Authorized Pro</DropdownMenuItem>
+                                                                                        </DropdownMenuSubContent>
+                                                                                    </DropdownMenuPortal>
+                                                                                </DropdownMenuSub>
 
-                                                                        <DropdownMenuItem onClick={() => { setSelectedUser(u); setIsEditDialogOpen(true); }} className="rounded-lg">
-                                                                            <Edit className="mr-2 h-4 w-4" /> Edit
-                                                                        </DropdownMenuItem>
-                                                                        
-                                                                        <DropdownMenuSeparator />
-                                                                        
-                                                                        <DropdownMenuItem onClick={() => updateDocumentNonBlocking(doc(firestore, 'users', u.id), { verified: !u.verified })} className="rounded-lg">
-                                                                            <Shield className="mr-2 h-4 w-4" /> Toggle Verification
-                                                                        </DropdownMenuItem>
-                                                                        
-                                                                        <DropdownMenuItem className="text-destructive focus:text-destructive rounded-lg" onClick={() => { setSelectedUser(u); setIsDeleteDialogOpen(true); }}>
-                                                                            <Trash2 className="mr-2 h-4 w-4" /> Delete
-                                                                        </DropdownMenuItem>
-                                                                    </DropdownMenuContent>
-                                                                </DropdownMenu>
-                                                            </TableCell>
-                                                        </TableRow>
-                                                    ))}
+                                                                                <DropdownMenuItem onClick={() => { setSelectedUser(u); setIsEditDialogOpen(true); }} className="rounded-lg">
+                                                                                    <Edit className="mr-2 h-4 w-4" /> Edit Profile
+                                                                                </DropdownMenuItem>
+                                                                                
+                                                                                <DropdownMenuSeparator />
+                                                                                
+                                                                                <DropdownMenuItem className="text-destructive focus:text-destructive rounded-lg" onClick={() => { setSelectedUser(u); setIsDeleteDialogOpen(true); }}>
+                                                                                    <Trash2 className="mr-2 h-4 w-4" /> Delete Account
+                                                                                </DropdownMenuItem>
+                                                                            </DropdownMenuContent>
+                                                                        </DropdownMenu>
+                                                                    </TableCell>
+                                                                </TableRow>
+                                                            );
+                                                        })}
                                                 </TableBody>
                                             </Table>
                                         </div>
@@ -537,6 +617,32 @@ export default function AdminDashboardPage() {
         <DialogContent className="max-w-3xl overflow-y-auto max-h-[90vh] rounded-2xl border-2">
           <DialogHeader><DialogTitle className="text-2xl font-black">Edit Expert Profile</DialogTitle></DialogHeader>
           {selectedUser && <EditProfileForm userProfile={selectedUser as any} isAdmin onSuccess={() => setIsEditDialogOpen(false)} />}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isAwardDialogOpen} onOpenChange={setIsAwardDialogOpen}>
+        <DialogContent className="rounded-2xl border-2">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-black">Award Referral Points</DialogTitle>
+            <DialogDescription className="font-medium">
+                Manually grant extra referral points to {selectedUser?.firstName}.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4 space-y-4">
+            <div className="space-y-2">
+                <Label className="font-bold">Points Amount</Label>
+                <Input 
+                    type="number" 
+                    value={awardPoints} 
+                    onChange={(e) => setAwardPoints(Number(e.target.value))}
+                    className="rounded-xl h-12 bg-secondary/20 border-none font-black text-xl"
+                />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsAwardDialogOpen(false)} className="rounded-xl border-2">Cancel</Button>
+            <Button onClick={handleAwardPoints} className="rounded-xl font-bold">Grant Reward</Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 
