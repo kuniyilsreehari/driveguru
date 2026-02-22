@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { User as UserIcon, LogOut, LayoutDashboard, Home, Award, Briefcase, Moon, Sun, Menu, Rss, Users, BookOpen, Bell, CheckCircle2 } from 'lucide-react';
+import { User as UserIcon, LogOut, LayoutDashboard, Home, Award, Briefcase, Moon, Sun, Menu, Rss, Users, BookOpen, Bell, CheckCircle2, Sparkles, Crown } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, useMemo } from 'react';
 import { useTheme } from 'next-themes';
@@ -302,16 +302,11 @@ export function Header() {
               variant="ghost"
               size="icon"
               className="h-9 w-9 rounded-full"
-              onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
+              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
             >
-              {mounted ? (
-                <>
-                  <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-                  <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-                </>
-              ) : (
-                <div className="h-4 w-4" />
-              )}
+              <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+              <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+              <span className="sr-only">Toggle theme</span>
           </Button>
         </div>
       </div>

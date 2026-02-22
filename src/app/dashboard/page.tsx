@@ -26,7 +26,6 @@ import * as z from 'zod';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { UserList } from '@/components/user-list';
 import { Separator } from '@/components/ui/separator';
-import { Input } from '@/components/ui/input';
 import { ProfileCompletionWizard } from '@/components/profile-completion-wizard';
 import {
   Collapsible,
@@ -100,7 +99,6 @@ export default function ExpertDashboardPage() {
     }
   }, [user, isUserLoading, router]);
 
-  // Automatic Reshow Logic: If hiddenUntil has passed, clear it in the DB
   useEffect(() => {
     if (userProfile?.hiddenUntil && userDocRef) {
         const hideDate = userProfile.hiddenUntil.toDate();
@@ -253,7 +251,7 @@ export default function ExpertDashboardPage() {
                 <CardHeader className="flex flex-col md:flex-row items-start md:items-center gap-6 pb-2">
                   <Avatar className="h-24 w-24 border-4 border-primary/20 cursor-pointer" onClick={() => setIsEditDialogOpen(true)}>
                     <AvatarImage src={userProfile.photoUrl} />
-                    <AvatarFallback className="text-[10px] text-center px-2 font-bold leading-tight">click here to chanage image</AvatarFallback>
+                    <AvatarFallback className="text-[10px] text-center px-2 font-bold leading-tight">click here to change image</AvatarFallback>
                   </Avatar>
                   <div className="flex-1 space-y-1">
                     <div className="flex items-center gap-3">
@@ -273,10 +271,20 @@ export default function ExpertDashboardPage() {
                       <span className="flex items-center gap-1"><Users className="h-4 w-4" /> {myFollowers?.length || 0} Followers</span>
                       <span className="flex items-center gap-1"><Users className="h-4 w-4" /> {userProfile.following?.length || 0} Following</span>
                     </div>
-                    <div className="flex gap-2 mt-2">
-                      {userProfile.verified && <Badge className="bg-green-600"><UserCheck className="h-3 w-3 mr-1" /> Verified</Badge>}
-                      <Badge variant="secondary">{userProfile.role}</Badge>
-                      {userProfile.companyName && <Badge variant="outline">{userProfile.companyName}</Badge>}
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {userProfile.verified && <Badge className="bg-green-600 text-white border-none font-bold"><UserCheck className="h-3 w-3 mr-1" /> Verified</Badge>}
+                      {userProfile.tier === 'Super Premier' && (
+                        <Badge className="bg-blue-600 text-white border-none font-black text-[10px] uppercase h-6 px-3 flex items-center gap-1 shadow-lg shadow-blue-500/20">
+                          <Sparkles className="h-3 w-3" /> Super Premier
+                        </Badge>
+                      )}
+                      {userProfile.tier === 'Premier' && (
+                        <Badge className="bg-purple-600 text-white border-none font-black text-[10px] uppercase h-6 px-3 flex items-center gap-1 shadow-lg shadow-purple-500/20">
+                          <Crown className="h-3 w-3" /> Premier
+                        </Badge>
+                      )}
+                      <Badge variant="secondary" className="font-bold">{userProfile.role}</Badge>
+                      {userProfile.companyName && <Badge variant="outline" className="font-bold">{userProfile.companyName}</Badge>}
                     </div>
                   </div>
                   <div className="flex flex-col gap-2 w-full md:w-auto">
