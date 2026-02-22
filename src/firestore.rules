@@ -28,6 +28,12 @@ service cloud.firestore {
      * Collection Rules
      * ===================================================== */
 
+    // Job Vacancies (v1.5: Explicit Public List/Read Access)
+    match /vacancies/{vacancyId} {
+      allow read, list: if true;
+      allow create, update, delete: if isSuperAdmin();
+    }
+
     // User Profiles and related data
     match /users/{userId} {
       allow read, list: if true;
@@ -72,12 +78,6 @@ service cloud.firestore {
         allow create: if isSignedIn() && request.auth.uid in get(/databases/$(database)/documents/groups/$(groupId)).data.members;
         allow update, delete: if isSuperAdmin() || (isSignedIn() && resource.data.authorId == request.auth.uid);
       }
-    }
-    
-    // Job Vacancies (v1.2: Stabilized Public Access)
-    match /vacancies/{vacancyId} {
-      allow read, list: if true;
-      allow create, update, delete: if isSuperAdmin();
     }
     
     // Payments and Subscriptions

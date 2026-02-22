@@ -240,7 +240,7 @@ export function Header() {
         <div className="flex items-center justify-end space-x-2 sm:space-x-4">
           <nav className="hidden sm:flex items-center space-x-1">
             {navItems.map((item) => {
-                const isActive = pathname === item.href;
+                const isActive = mounted && pathname === item.href;
                 return (
                     <Button 
                         key={item.href} 
