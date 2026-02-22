@@ -41,6 +41,7 @@ type ExpertUserProfile = {
     referralCode?: string;
     referralPoints?: number;
     following?: string[];
+    groups?: string[];
     profession?: string;
     category?: string;
     qualification?: string;
@@ -138,6 +139,12 @@ export default function ExpertDashboardPage() {
     return query(collection(firestore, 'users'), where('following', 'array-contains', user.uid));
   }, [firestore, user]);
   const { data: myFollowers } = useCollection(followersQuery);
+
+  const myGroupsQuery = useMemoFirebase(() => {
+    if (!firestore || !userProfile?.groups || userProfile.groups.length === 0) return null;
+    return query(collection(firestore, 'groups'), where('__name__', 'in', userProfile.groups));
+  }, [firestore, userProfile?.groups]);
+  const { data: myGroups, isLoading: isMyGroupsLoading } = useCollection(myGroupsQuery);
 
   const handleToggleFollow = async (targetId: string, isFollowing: boolean) => {
     if (!userDocRef) return;
@@ -395,30 +402,55 @@ export default function ExpertDashboardPage() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="network" className="mt-6 space-y-6">
-            <div className="space-y-1">
-                <h2 className="text-2xl font-bold">My Network</h2>
-                <p className="text-muted-foreground text-sm">Manage your groups and connections.</p>
-            </div>
-            <Tabs defaultValue="my-groups" className="w-full">
-                <TabsList className="grid w-full grid-cols-3 bg-secondary/50">
-                    <TabsTrigger value="my-groups">My Groups</TabsTrigger>
-                    <TabsTrigger value="followers">Followers</TabsTrigger>
-                    <TabsTrigger value="following">Following</TabsTrigger>
-                </TabsList>
-                
-                <TabsContent value="my-groups" className="mt-4 space-y-4">
-                    <UserList userIdsQuery={null} emptyStateMessage="You haven't joined any groups yet." />
-                </TabsContent>
+          <TabsContent value="network" className="mt-6">
+            <Card>
+                <CardHeader>
+                    <CardTitle>My Network</CardTitle>
+                    <CardDescription>Manage your groups and connections.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Tabs defaultValue="my-groups" className="w-full">
+                        <TabsList className="grid w-full grid-cols-3 bg-secondary/50 mb-6">
+                            <TabsTrigger value="my-groups">My Groups</TabsTrigger>
+                            <TabsTrigger value="followers">Followers</TabsTrigger>
+                            <TabsTrigger value="following">Following</TabsTrigger>
+                        </TabsList>
+                        
+                        <TabsContent value="my-groups" className="space-y-4">
+                            {isMyGroupsLoading ? (
+                                <div className="flex justify-center p-8"><Loader className="animate-spin h-8 w-8 text-primary" /></div>
+                            ) : myGroups && myGroups.length > 0 ? (
+                                <div className="space-y-3">
+                                    {myGroups.map(group => (
+                                        <Link key={group.id} href={`/groups/${group.id}`}>
+                                            <div className="p-4 border rounded-lg hover:bg-accent/50 transition-colors">
+                                                <h4 className="font-bold text-base">{group.name}</h4>
+                                                <p className="text-xs text-muted-foreground">{group.members?.length || 0} member{group.members?.length !== 1 ? 's' : ''}</p>
+                                            </div>
+                                        </Link>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="text-center py-12 bg-secondary/10 rounded-lg border-2 border-dashed">
+                                    <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4 opacity-20" />
+                                    <p className="text-muted-foreground">You haven't joined any groups yet.</p>
+                                    <Button variant="link" asChild className="mt-2">
+                                        <Link href="/groups">Explore Groups</Link>
+                                    </Button>
+                                </div>
+                            )}
+                        </TabsContent>
 
-                <TabsContent value="followers" className="mt-4">
-                    <UserList userIdsQuery={followersQuery} emptyStateMessage="No one is following you yet." />
-                </TabsContent>
+                        <TabsContent value="followers">
+                            <UserList userIdsQuery={followersQuery} emptyStateMessage="No one is following you yet." />
+                        </TabsContent>
 
-                <TabsContent value="following" className="mt-4">
-                    <UserList userIds={userProfile?.following || []} emptyStateMessage="You aren't following any experts yet." />
-                </TabsContent>
-            </Tabs>
+                        <TabsContent value="following">
+                            <UserList userIds={userProfile?.following || []} emptyStateMessage="You aren't following any experts yet." />
+                        </TabsContent>
+                    </Tabs>
+                </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="feed" className="mt-6 space-y-6">
