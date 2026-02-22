@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -37,20 +36,6 @@ export default function WelcomePage() {
                   </Link>
                 </Button>
               </div>
-              <div className="bg-secondary/50 p-6 rounded-lg">
-                <div className="flex items-center gap-3 mb-2">
-                  <Briefcase className="h-6 w-6 text-primary" />
-                  <h3 className="text-xl font-semibold">Find a Job</h3>
-                </div>
-                <p className="text-muted-foreground mb-4">
-                  Looking to start your career? Browse job vacancies posted by top companies in your field.
-                </p>
-                <Button asChild variant="outline">
-                  <Link href="/vacancies">
-                    Browse Vacancies <ArrowRight className="ml-2 h-4 w-4" />
-                  </Link>
-                </Button>
-              </div>
                <div className="bg-secondary/50 p-6 rounded-lg">
                 <div className="flex items-center gap-3 mb-2">
                   <UserCheck className="h-6 w-6 text-primary" />
@@ -76,6 +61,20 @@ export default function WelcomePage() {
                 <Button asChild variant="outline">
                   <Link href="/groups">
                     Explore Groups <ArrowRight className="ml-2 h-4 w-4" />
+                  </Link>
+                </Button>
+              </div>
+              <div className="bg-secondary/50 p-6 rounded-lg">
+                <div className="flex items-center gap-3 mb-2">
+                  <Rss className="h-6 w-6 text-primary" />
+                  <h3 className="text-xl font-semibold">View Public Feed</h3>
+                </div>
+                <p className="text-muted-foreground mb-4">
+                  Stay updated with the latest news, projects, and insights from the DriveGuru professional community.
+                </p>
+                <Button asChild variant="outline">
+                  <Link href="/feed">
+                    Go to Feed <ArrowRight className="ml-2 h-4 w-4" />
                   </Link>
                 </Button>
               </div>

@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Button } from '@/components/ui/button';
@@ -15,8 +14,7 @@ import { Share2, Copy } from 'lucide-react';
 
 type ShareDetails = 
     | { type: 'expert-profile'; expertId: string; expertName: string; }
-    | { type: 'group-post'; title: string; text: string; url: string; }
-    | { type: 'vacancy'; vacancyId: string; vacancyTitle: string; companyName: string; };
+    | { type: 'group-post'; title: string; text: string; url: string; };
 
 interface ShareDialogProps {
   shareDetails: ShareDetails;
@@ -39,15 +37,6 @@ export function ShareDialog({ shareDetails, children }: ShareDialogProps) {
         };
         dialogTitle = 'Share Profile';
         dialogDescription = `Share ${shareDetails.expertName}'s profile with others.`;
-    } else if (shareDetails.type === 'vacancy') {
-        const vacancyUrl = `${window.location.origin}/vacancies#${shareDetails.vacancyId}`;
-        shareData = {
-            title: `Job Opening: ${shareDetails.vacancyTitle} at ${shareDetails.companyName}`,
-            text: `Check out this job opening for a ${shareDetails.vacancyTitle} at ${shareDetails.companyName} on DriveGuru!`,
-            url: vacancyUrl
-        };
-        dialogTitle = 'Share Vacancy';
-        dialogDescription = `Share this job opportunity with others.`;
     } else { // group-post
         shareData = {
             title: shareDetails.title,

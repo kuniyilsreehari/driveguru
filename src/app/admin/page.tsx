@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
@@ -56,8 +55,6 @@ import { importUsers } from '@/ai/flows/import-users-flow';
 import { EditProfileForm } from '@/components/auth/edit-profile-form';
 import { cn } from '@/lib/utils';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { PostVacancyForm } from '@/components/auth/post-vacancy-form';
-import type { Vacancy } from '@/app/vacancies/page';
 
 export type HomepageCategory = {
     id: string;
@@ -129,12 +126,6 @@ export default function AdminDashboardPage() {
   const [userSearchQuery, setUserSearchQuery] = useState('');
   const [userFilter, setUserFilter] = useState<'all' | 'verified' | 'unverified' | 'premier' | 'super'>('all');
 
-  // Vacancy Management State
-  const [selectedVacancy, setSelectedVacancy] = useState<Vacancy | null>(null);
-  const [isVacancyFormOpen, setIsVacancyFormOpen] = useState(false);
-  const [isVacancyDeleteDialogOpen, setIsVacancyDeleteDialogOpen] = useState(false);
-  const [vacancySort, setVacancySort] = useState<{ field: keyof Vacancy, direction: 'asc' | 'desc' }>({ field: 'postedAt', direction: 'desc' });
-
   // App Config State
   const [featuredLimit, setFeaturedLimit] = useState(3);
   const [announcementText, setAnnouncementText] = useState("");
@@ -158,9 +149,6 @@ export default function AdminDashboardPage() {
 
   const usersQuery = useMemoFirebase(() => isSuperAdmin ? query(collection(firestore, 'users'), orderBy('createdAt', 'desc')) : null, [firestore, isSuperAdmin]);
   const { data: users, isLoading: isUsersLoading } = useCollection<ExpertUser>(usersQuery);
-
-  const vacanciesQuery = useMemoFirebase(() => isSuperAdmin ? collection(firestore, 'vacancies') : null, [firestore, isSuperAdmin]);
-  const { data: vacancies, isLoading: isVacanciesLoading } = useCollection<Vacancy>(vacanciesQuery);
 
   const paymentsQuery = useMemoFirebase(() => isSuperAdmin ? query(collection(firestore, 'payments'), orderBy('createdAt', 'desc')) : null, [firestore, isSuperAdmin]);
   const { data: payments, isLoading: isPaymentsLoading } = useCollection<Payment>(paymentsQuery);
@@ -226,31 +214,6 @@ export default function AdminDashboardPage() {
         return matchesSearch && matchesFilter;
     });
   }, [users, userSearchQuery, userFilter]);
-
-  const sortedVacancies = useMemo(() => {
-    if (!vacancies) return [];
-    return [...vacancies].sort((a, b) => {
-        let aVal = a[vacancySort.field];
-        let bVal = b[vacancySort.field];
-        
-        if (aVal instanceof Timestamp) aVal = aVal.toMillis();
-        if (bVal instanceof Timestamp) bVal = bVal.toMillis();
-        
-        if (aVal === undefined) aVal = '';
-        if (bVal === undefined) bVal = '';
-
-        if (aVal < bVal) return vacancySort.direction === 'asc' ? -1 : 1;
-        if (aVal > bVal) return vacancySort.direction === 'asc' ? 1 : -1;
-        return 0;
-    });
-  }, [vacancies, vacancySort]);
-
-  const toggleVacancySort = (field: keyof Vacancy) => {
-    setVacancySort(prev => ({
-        field,
-        direction: prev.field === field && prev.direction === 'desc' ? 'asc' : 'desc'
-    }));
-  };
 
   const handleSaveSettings = async () => {
     setIsSaving(true);
@@ -414,51 +377,6 @@ export default function AdminDashboardPage() {
     setDepartments(departments.filter(d => d !== name));
   };
 
-  const handleDeleteVacancy = async () => {
-    if (!selectedVacancy) return;
-    try {
-        await deleteDocumentNonBlocking(doc(firestore, 'vacancies', selectedVacancy.id));
-        toast({ title: "Vacancy Deleted" });
-    } catch (e) {
-        toast({ variant: "destructive", title: "Delete Failed" });
-    } finally {
-        setIsVacancyDeleteDialogOpen(false);
-        setSelectedVacancy(null);
-    }
-  };
-
-  const handleToggleVacancyVerified = async (vacancy: Vacancy) => {
-    try {
-        await updateDocumentNonBlocking(doc(firestore, 'vacancies', vacancy.id), {
-            isCompanyVerified: !vacancy.isCompanyVerified
-        });
-        toast({ title: `Company ${!vacancy.isCompanyVerified ? 'Verified' : 'Unverified'}` });
-    } catch (e) {
-        toast({ variant: "destructive", title: "Action Failed" });
-    }
-  };
-
-  const handleToggleVacancyPremier = async (vacancy: Vacancy) => {
-    const newTier = vacancy.companyTier === 'Premier' ? 'Standard' : 'Premier';
-    try {
-        await updateDocumentNonBlocking(doc(firestore, 'vacancies', vacancy.id), {
-            companyTier: newTier
-        });
-        toast({ title: `Tier set to ${newTier}` });
-    } catch (e) {
-        toast({ variant: "destructive", title: "Action Failed" });
-    }
-  };
-
-  const handleUpdateVacancyStatus = async (vacancyId: string, status: 'Pending' | 'Approved' | 'Rejected') => {
-    try {
-        await updateDocumentNonBlocking(doc(firestore, 'vacancies', vacancyId), { status });
-        toast({ title: `Vacancy ${status}` });
-    } catch (e) {
-        toast({ variant: "destructive", title: "Action Failed" });
-    }
-  };
-
   if (isUserLoading || isRoleLoading) return <div className="flex h-screen items-center justify-center"><Loader className="animate-spin" /></div>;
   if (!isSuperAdmin) return <div className="flex h-screen items-center justify-center">Access Denied.</div>;
 
@@ -499,7 +417,6 @@ export default function AdminDashboardPage() {
             <Tabs defaultValue="users" className="w-full">
                 <TabsList className="flex w-full bg-[#24262d] p-1 rounded-xl mb-6">
                     <TabsTrigger value="users" className="flex-1 rounded-lg font-bold">User Management</TabsTrigger>
-                    <TabsTrigger value="vacancies" className="flex-1 rounded-lg font-bold">Vacancy Management</TabsTrigger>
                     <TabsTrigger value="payments" className="flex-1 rounded-lg font-bold">Payment Management</TabsTrigger>
                 </TabsList>
 
@@ -716,129 +633,6 @@ export default function AdminDashboardPage() {
                                     </TabsContent>
                                 ))}
                             </Tabs>
-                        </CardContent>
-                    </Card>
-                </TabsContent>
-
-                <TabsContent value="vacancies">
-                    <Card className="border-none bg-[#24262d] rounded-2xl overflow-hidden">
-                        <CardHeader className="bg-white/5 pb-6 border-b border-white/5">
-                            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                                <div className="flex items-center gap-3">
-                                    <Briefcase className="h-6 w-6 text-orange-500" />
-                                    <div>
-                                        <CardTitle className="text-2xl font-black">Vacancy Management</CardTitle>
-                                        <CardDescription className="text-muted-foreground">Manage all job vacancies in the system.</CardDescription>
-                                    </div>
-                                </div>
-                                <Button onClick={() => { setSelectedVacancy(null); setIsVacancyFormOpen(true); }} className="bg-orange-500 hover:bg-orange-600 rounded-xl font-bold">
-                                    <PlusCircle className="mr-2 h-4 w-4" /> Post New Vacancy
-                                </Button>
-                            </div>
-                        </CardHeader>
-                        <CardContent className="p-6">
-                            <div className="rounded-xl border border-white/5 overflow-hidden">
-                                <Table>
-                                    <TableHeader className="bg-white/5">
-                                        <TableRow className="border-white/5">
-                                            <TableHead className="font-bold text-white cursor-pointer hover:text-orange-500 transition-colors" onClick={() => toggleVacancySort('title')}>
-                                                <div className="flex items-center gap-1">
-                                                    Title {vacancySort.field === 'title' && (vacancySort.direction === 'asc' ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />)}
-                                                </div>
-                                            </TableHead>
-                                            <TableHead className="font-bold text-white cursor-pointer hover:text-orange-500 transition-colors" onClick={() => toggleVacancySort('companyName')}>
-                                                <div className="flex items-center gap-1">
-                                                    Company {vacancySort.field === 'companyName' && (vacancySort.direction === 'asc' ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />)}
-                                                </div>
-                                            </TableHead>
-                                            <TableHead className="font-bold text-white cursor-pointer hover:text-orange-500 transition-colors" onClick={() => toggleVacancySort('location')}>
-                                                <div className="flex items-center gap-1">
-                                                    Location {vacancySort.field === 'location' && (vacancySort.direction === 'asc' ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />)}
-                                                </div>
-                                            </TableHead>
-                                            <TableHead className="font-bold text-white">Status</TableHead>
-                                            <TableHead className="font-bold text-white cursor-pointer hover:text-orange-500 transition-colors" onClick={() => toggleVacancySort('postedAt')}>
-                                                <div className="flex items-center gap-1">
-                                                    Posted {vacancySort.field === 'postedAt' && (vacancySort.direction === 'asc' ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />)}
-                                                </div>
-                                            </TableHead>
-                                            <TableHead className="text-right font-bold text-white">Actions</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {isVacanciesLoading ? (
-                                            <TableRow><TableCell colSpan={6} className="text-center py-8"><Loader className="animate-spin mx-auto" /></TableCell></TableRow>
-                                        ) : sortedVacancies.map(v => (
-                                            <TableRow key={v.id} className="hover:bg-white/5 transition-colors border-white/5">
-                                                <TableCell className="font-bold text-white">{v.title}</TableCell>
-                                                <TableCell>
-                                                    <div className="space-y-1">
-                                                        <div className="text-sm font-medium text-white">{v.companyName}</div>
-                                                        <div className="flex items-center gap-1">
-                                                            {v.isCompanyVerified && (
-                                                                <Badge variant="outline" className="text-[8px] rounded-full border-green-500/30 bg-green-500/10 text-green-500 font-bold px-2 py-0">
-                                                                    <UserCheck className="h-2 w-2 mr-1" /> Verified
-                                                                </Badge>
-                                                            )}
-                                                            {v.companyTier === 'Premier' && (
-                                                                <Badge variant="outline" className="text-[8px] rounded-full border-purple-500/30 bg-purple-500/10 text-purple-500 font-bold px-2 py-0">
-                                                                    <Crown className="h-2 w-2 mr-1" /> Premier
-                                                                </Badge>
-                                                            )}
-                                                            {v.companyTier === 'Super Premier' && (
-                                                                <Badge variant="outline" className="text-[8px] rounded-full border-blue-500/30 bg-blue-500/10 text-blue-500 font-bold px-2 py-0">
-                                                                    <Sparkles className="h-2 w-2 mr-1" /> Super Premier
-                                                                </Badge>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                </TableCell>
-                                                <TableCell className="text-sm text-muted-foreground">{v.location}</TableCell>
-                                                <TableCell>
-                                                    <Badge className={cn(
-                                                        "text-[10px] font-bold uppercase rounded-full px-3 h-6 border-none",
-                                                        v.status === 'Approved' ? "bg-green-500 text-white" : 
-                                                        v.status === 'Rejected' ? "bg-red-500 text-white" : 
-                                                        "bg-yellow-500 text-white"
-                                                    )}>
-                                                        {v.status || 'Pending'}
-                                                    </Badge>
-                                                </TableCell>
-                                                <TableCell className="text-[10px] text-muted-foreground font-medium">
-                                                    {v.postedAt ? formatDistanceToNow(v.postedAt.toDate(), { addSuffix: true }) : '-'}
-                                                </TableCell>
-                                                <TableCell className="text-right">
-                                                    <DropdownMenu>
-                                                        <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="rounded-xl hover:bg-white/5 text-muted-foreground"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
-                                                        <DropdownMenuContent align="end" className="rounded-xl border-2 border-white/10 bg-[#1a1c23] text-white">
-                                                            <DropdownMenuItem onClick={() => handleUpdateVacancyStatus(v.id, 'Approved')} className="rounded-lg focus:bg-white/5 focus:text-white">
-                                                                <CheckCircle className="mr-2 h-4 w-4 text-green-500" /> Approve
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuItem onClick={() => handleUpdateVacancyStatus(v.id, 'Rejected')} className="rounded-lg focus:bg-white/5 focus:text-white">
-                                                                <Ban className="mr-2 h-4 w-4 text-red-500" /> Reject
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuSeparator className="bg-white/5" />
-                                                            <DropdownMenuItem onClick={() => { setSelectedVacancy(v); setIsVacancyFormOpen(true); }} className="rounded-lg focus:bg-white/5 focus:text-white">
-                                                                <Edit className="mr-2 h-4 w-4" /> Edit
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuItem onClick={() => handleToggleVacancyVerified(v)} className="rounded-lg focus:bg-white/5 focus:text-white">
-                                                                <UserCheck className="mr-2 h-4 w-4" /> Toggle Verified
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuItem onClick={() => handleToggleVacancyPremier(v)} className="rounded-lg focus:bg-white/5 focus:text-white">
-                                                                <Crown className="mr-2 h-4 w-4" /> Toggle Premier
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuSeparator className="bg-white/5" />
-                                                            <DropdownMenuItem onClick={() => { setSelectedVacancy(v); setIsVacancyDeleteDialogOpen(true); }} className="text-red-500 focus:text-red-500 rounded-lg focus:bg-red-500/5">
-                                                                <Trash2 className="mr-2 h-4 w-4" /> Delete
-                                                            </DropdownMenuItem>
-                                                        </DropdownMenuContent>
-                                                    </DropdownMenu>
-                                                </TableCell>
-                                            </TableRow>
-                                        ))}
-                                    </TableBody>
-                                </Table>
-                            </div>
                         </CardContent>
                     </Card>
                 </TabsContent>
@@ -1187,32 +981,6 @@ export default function AdminDashboardPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      <Dialog open={isVacancyFormOpen} onOpenChange={setIsVacancyFormOpen}>
-        <DialogContent className="max-w-3xl overflow-y-auto max-h-[90vh] rounded-2xl border-none bg-[#1a1c23] text-white">
-          <DialogHeader><DialogTitle className="text-2xl font-black">{selectedVacancy ? 'Edit Vacancy' : 'Post New Vacancy'}</DialogTitle></DialogHeader>
-          <PostVacancyForm 
-            vacancy={selectedVacancy || undefined} 
-            isAdmin 
-            onSuccess={() => { setIsVacancyFormOpen(false); setSelectedVacancy(null); }} 
-          />
-        </DialogContent>
-      </Dialog>
-
-      <AlertDialog open={isVacancyDeleteDialogOpen} onOpenChange={setIsVacancyDeleteDialogOpen}>
-        <AlertDialogContent className="rounded-2xl border-none bg-[#1a1c23] text-white">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="text-2xl font-black text-white">Confirm Deletion</AlertDialogTitle>
-            <AlertDialogDescription className="text-muted-foreground">
-                This action is permanent and will remove this job listing from the marketplace.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel className="rounded-xl border-white/10 bg-transparent text-white hover:bg-white/5">Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteVacancy} className="bg-red-500 hover:bg-red-600 text-white rounded-xl">Permanently Delete Vacancy</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
 
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent className="rounded-2xl border-none bg-[#1a1c23] text-white">

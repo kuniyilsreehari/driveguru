@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -37,21 +36,21 @@ export default function RoleSelectionPage() {
             </CardContent>
           </Card>
 
-          {/* Fresher Card */}
+          {/* Client Card */}
           <Card className="text-center hover:border-primary/50 transition-all duration-300 transform hover:-translate-y-1">
             <CardHeader>
               <div className="mx-auto bg-secondary p-4 rounded-full w-fit mb-4">
                 <User className="h-8 w-8 text-secondary-foreground" />
               </div>
-              <CardTitle className="text-2xl">Fresher</CardTitle>
+              <CardTitle className="text-2xl">I&apos;m a Client</CardTitle>
               <CardDescription>
-                Start your career journey and find exciting opportunities.
+                Find and hire the best local professionals for your next project or maintenance need.
               </CardDescription>
             </CardHeader>
             <CardContent>
               <Button asChild variant="outline" className="w-full">
-                <Link href="/vacancies">
-                  Get Started <ArrowRight className="ml-2 h-4 w-4" />
+                <Link href="/">
+                  Search for Talent <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
               </Button>
             </CardContent>

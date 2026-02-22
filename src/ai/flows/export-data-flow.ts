@@ -1,4 +1,3 @@
-
 'use server';
 /**
  * @fileOverview A flow for exporting all application data from Firestore.
@@ -18,14 +17,12 @@ import { getAdminApp } from './get-admin-app';
 
 const UserSchema = z.any();
 const CompanySchema = z.any();
-const VacancySchema = z.any();
 const AppConfigSchema = z.any();
 const PaymentSchema = z.any();
 
 const ExportDataOutputSchema = z.object({
   users: z.array(UserSchema),
   companies: z.array(CompanySchema),
-  vacancies: z.array(VacancySchema),
   app_config: z.array(AppConfigSchema),
   payments: z.array(PaymentSchema),
 });
@@ -51,10 +48,9 @@ const exportDataFlow = ai.defineFlow(
   },
   async () => {
     
-    const [users, companies, vacancies, app_config, payments] = await Promise.all([
+    const [users, companies, app_config, payments] = await Promise.all([
         getAllFromCollection('users'),
         getAllFromCollection('companies'),
-        getAllFromCollection('vacancies'),
         getAllFromCollection('app_config'),
         getAllFromCollection('payments'),
     ]);
@@ -62,7 +58,6 @@ const exportDataFlow = ai.defineFlow(
     return {
       users,
       companies,
-      vacancies,
       app_config,
       payments,
     };

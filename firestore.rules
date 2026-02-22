@@ -30,7 +30,6 @@ service cloud.firestore {
     match /users/{userId} { allow read, list: if true; }
     match /posts/{postId} { allow read, list: if true; }
     match /groups/{groupId} { allow read, list: if true; }
-    match /vacancies/{vacancyId} { allow read, list: if true; }
     match /app_config/{configId} { allow read, list: if true; }
     match /roles_super_admin/{userId} { allow read: if isSignedIn(); }
     match /roles_manager/{userId} { allow read: if isSignedIn(); }
@@ -79,17 +78,6 @@ service cloud.firestore {
         allow create: if isSignedIn() && request.auth.uid in get(/databases/$(database)/documents/groups/$(groupId)).data.members;
         allow update, delete: if isSuperAdmin() || (isSignedIn() && resource.data.authorId == request.auth.uid);
       }
-    }
-    
-    match /vacancies/{vacancyId} {
-      // Read access is handled in the Global section above
-      allow create: if isSuperAdmin() || (
-        isSignedIn() && 
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'Company' &&
-        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.tier == 'Premier' || 
-         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.tier == 'Super Premier')
-      );
-      allow update, delete: if isSuperAdmin() || (isSignedIn() && (resource.data.companyId == request.auth.uid || isSuperAdmin()));
     }
     
     match /payments/{paymentId} {

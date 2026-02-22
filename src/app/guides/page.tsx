@@ -83,23 +83,6 @@ export default function GuidesPage() {
                             </ol>
                         </AccordionContent>
                     </AccordionItem>
-                    <AccordionItem value="item-4">
-                        <AccordionTrigger>
-                            <div className="flex items-center gap-3">
-                                <Briefcase className="h-5 w-5 text-primary" />
-                                <span>How to post a Job Vacancy?</span>
-                            </div>
-                        </AccordionTrigger>
-                        <AccordionContent className="space-y-4 text-muted-foreground pl-8">
-                            <p>Posting a job vacancy is a premium feature available for 'Company' user roles on a 'Premier' or 'Super Premier' plan.</p>
-                             <ol className="list-decimal list-inside space-y-2">
-                                <li>First, ensure you are registered as a 'Company' and have upgraded to a premium plan from your dashboard.</li>
-                                <li>In your dashboard, go to the "Manage Vacancies" section.</li>
-                                <li>Click the "Post New Vacancy" button.</li>
-                                <li>Fill out all the required details for the job opening and submit the form.</li>
-                            </ol>
-                        </AccordionContent>
-                    </AccordionItem>
                 </Accordion>
             </CardContent>
         </Card>
