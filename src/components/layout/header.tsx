@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -211,19 +210,22 @@ export function Header() {
                     </SheetTitle>
                 </SheetHeader>
                 <div className="flex flex-col space-y-2">
-                    {navItems.map((item) => (
-                        <Button 
-                            key={item.href} 
-                            asChild 
-                            variant={mounted && pathname === item.href ? "secondary" : "ghost"} 
-                            className="justify-start" 
-                            onClick={() => setIsMobileMenuOpen(false)}
-                        >
-                            <Link href={item.href}>
-                                <item.icon className="mr-2 h-4 w-4" /> {item.label}
-                            </Link>
-                        </Button>
-                    ))}
+                    {navItems.map((item) => {
+                        const isActive = pathname === item.href;
+                        return (
+                            <Button 
+                                key={item.href} 
+                                asChild 
+                                variant={isActive ? "secondary" : "ghost"} 
+                                className="justify-start" 
+                                onClick={() => setIsMobileMenuOpen(false)}
+                            >
+                                <Link href={item.href}>
+                                    <item.icon className="mr-2 h-4 w-4" /> {item.label}
+                                </Link>
+                            </Button>
+                        );
+                    })}
                 </div>
             </SheetContent>
         </Sheet>
@@ -236,7 +238,7 @@ export function Header() {
         <div className="flex items-center justify-end space-x-2 sm:space-x-4">
           <nav className="hidden sm:flex items-center space-x-1">
             {navItems.map((item) => {
-                const isActive = mounted && pathname === item.href;
+                const isActive = pathname === item.href;
                 return (
                     <Button 
                         key={item.href} 
