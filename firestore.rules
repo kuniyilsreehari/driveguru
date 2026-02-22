@@ -23,6 +23,11 @@ service cloud.firestore {
         exists(/databases/$(database)/documents/roles_super_admin/$(request.auth.uid));
     }
     
+    function isManager() {
+      return isSignedIn() &&
+        exists(/databases/$(database)/documents/roles_manager/$(request.auth.uid));
+    }
+    
     function isExistingDoc() {
       return resource != null;
     }
@@ -36,6 +41,7 @@ service cloud.firestore {
      * ===================================================== */
 
     match /users/{userId} {
+      allow read: if true;
       allow create: if isOwner(userId);
       allow update: if isSuperAdmin() || isOwner(userId);
       allow delete: if isSuperAdmin() || isOwner(userId);
@@ -50,27 +56,35 @@ service cloud.firestore {
     }
     
     match /posts/{postId} {
+      allow read: if true;
       allow create: if isSignedIn();
-      allow update, delete: if isSuperAdmin() || (isSignedIn() && resource.data.authorId == request.auth.uid);
+      allow update: if isSuperAdmin() || (isSignedIn() && (resource.data.authorId == request.auth.uid || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes'])));
+      allow delete: if isSuperAdmin() || (isSignedIn() && resource.data.authorId == request.auth.uid);
       
       match /comments/{commentId} {
+        allow read: if true;
         allow create: if isSignedIn();
-        allow update, delete: if isSuperAdmin() || (isSignedIn() && resource.data.authorId == request.auth.uid);
+        allow update: if isSuperAdmin() || (isSignedIn() && (resource.data.authorId == request.auth.uid || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes'])));
+        allow delete: if isSuperAdmin() || (isSignedIn() && (resource.data.authorId == request.auth.uid || get(/databases/$(database)/documents/posts/$(postId)).data.authorId == request.auth.uid));
       }
     }
     
     match /groups/{groupId} {
+      allow read: if true;
       allow create: if isSignedIn();
-      allow update, delete: if isSuperAdmin() || (isSignedIn() && resource.data.creatorId == request.auth.uid);
+      allow update: if isSuperAdmin() || (isSignedIn() && (resource.data.creatorId == request.auth.uid || request.resource.data.diff(resource.data).affectedKeys().hasAny(['members', 'pendingMembers'])));
+      allow delete: if isSuperAdmin() || (isSignedIn() && resource.data.creatorId == request.auth.uid);
       
       match /posts/{postId} {
-        allow create: if isSignedIn();
+        allow read, list: if isSignedIn() && request.auth.uid in get(/databases/$(database)/documents/groups/$(groupId)).data.members;
+        allow create: if isSignedIn() && request.auth.uid in get(/databases/$(database)/documents/groups/$(groupId)).data.members;
         allow update, delete: if isSuperAdmin() || (isSignedIn() && resource.data.authorId == request.auth.uid);
       }
     }
     
     match /vacancies/{vacancyId} {
-      allow create: if isSuperAdmin() || (isSignedIn());
+      allow read: if true;
+      allow create: if isSuperAdmin() || isSignedIn();
       allow update, delete: if isSuperAdmin() || (isSignedIn() && resource.data.companyId == request.auth.uid);
     }
     
@@ -91,6 +105,7 @@ service cloud.firestore {
     }
     
     match /app_config/{configId} {
+      allow read: if true;
       allow write: if isSuperAdmin();
     }
   }
