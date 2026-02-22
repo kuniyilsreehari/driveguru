@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -252,22 +251,22 @@ export default function ExpertDashboardPage() {
                     <div className="flex items-center gap-3 text-sm">
                         <UserIcon className="h-4 w-4 text-muted-foreground" />
                         <span className="font-semibold w-24">Gender:</span>
-                        <span>{userProfile.gender || 'Not specified'}</span>
+                        <span className={cn(!userProfile.gender && "text-destructive")}>{userProfile.gender || 'Not specified'}</span>
                     </div>
                     <div className="flex items-center gap-3 text-sm">
                         <IndianRupee className="h-4 w-4 text-muted-foreground" />
                         <span className="font-semibold w-24">Rate:</span>
-                        <span>{userProfile.pricingValue ? `₹${userProfile.pricingValue} / ${userProfile.pricingModel || 'hr'}` : 'Not specified'}</span>
+                        <span className={cn(!userProfile.pricingValue && "text-destructive")}>{userProfile.pricingValue ? `₹${userProfile.pricingValue} / ${userProfile.pricingModel || 'hr'}` : 'Not specified'}</span>
                     </div>
                     <div className="flex items-center gap-3 text-sm">
                         <Calendar className="h-4 w-4 text-muted-foreground" />
                         <span className="font-semibold w-24">Experience:</span>
-                        <span>{userProfile.experienceYears ? `${userProfile.experienceYears} years` : 'Not specified'}</span>
+                        <span className={cn(!userProfile.experienceYears && "text-destructive")}>{userProfile.experienceYears ? `${userProfile.experienceYears} years` : 'Not specified'}</span>
                     </div>
                     <div className="flex items-center gap-3 text-sm">
                         <MapPin className="h-4 w-4 text-muted-foreground" />
                         <span className="font-semibold w-24">Location:</span>
-                        <span>{[userProfile.city, userProfile.state, userProfile.pincode].filter(Boolean).join(', ') || 'Not specified'}</span>
+                        <span className={cn(!userProfile.city && !userProfile.state && !userProfile.pincode && "text-destructive")}>{[userProfile.city, userProfile.state, userProfile.pincode].filter(Boolean).join(', ') || 'Not specified'}</span>
                     </div>
                     <div className="flex items-center gap-3 text-sm">
                         <GraduationCap className="h-4 w-4 text-muted-foreground" />
@@ -277,17 +276,17 @@ export default function ExpertDashboardPage() {
                     <div className="flex items-center gap-3 text-sm">
                         <School className="h-4 w-4 text-muted-foreground" />
                         <span className="font-semibold w-24">College:</span>
-                        <span>{userProfile.collegeName || 'Not specified'}</span>
+                        <span className={cn(!userProfile.collegeName && "text-destructive")}>{userProfile.collegeName || 'Not specified'}</span>
                     </div>
                     <div className="flex items-center gap-3 text-sm">
                         <Building className="h-4 w-4 text-muted-foreground" />
                         <span className="font-semibold w-24">Business:</span>
-                        <span>{userProfile.companyName || 'N/A'}</span>
+                        <span className={cn(!userProfile.companyName && "text-destructive")}>{userProfile.companyName || 'Not specified'}</span>
                     </div>
                     <div className="flex items-center gap-3 text-sm">
                         <Home className="h-4 w-4 text-muted-foreground" />
                         <span className="font-semibold w-24">Address:</span>
-                        <span className="truncate">{userProfile.address || 'Not specified'}</span>
+                        <span className={cn("truncate", !userProfile.address && "text-destructive")}>{userProfile.address || 'Not specified'}</span>
                     </div>
                 </div>
 
@@ -302,11 +301,15 @@ export default function ExpertDashboardPage() {
                     </div>
                     <div>
                         <h4 className="font-bold flex items-center gap-2 mb-2"><Pen className="h-4 w-4" /> About My Dream</h4>
-                        <p className="text-sm text-muted-foreground">{userProfile.aboutYourDream || 'No information provided.'}</p>
+                        <p className={cn("text-sm", !userProfile.aboutYourDream ? "text-destructive" : "text-muted-foreground")}>
+                          {userProfile.aboutYourDream || 'No information provided.'}
+                        </p>
                     </div>
                     <div>
                         <h4 className="font-bold flex items-center gap-2 mb-2"><Briefcase className="h-4 w-4" /> Associated Projects</h4>
-                        <p className="text-sm text-muted-foreground">{userProfile.associatedProjectsName || 'No projects listed.'}</p>
+                        <p className={cn("text-sm", !userProfile.associatedProjectsName ? "text-destructive" : "text-muted-foreground")}>
+                          {userProfile.associatedProjectsName || 'No projects listed.'}
+                        </p>
                     </div>
                     <div>
                         <h4 className="font-bold flex items-center gap-2 mb-2"><Book className="h-4 w-4" /> Skills</h4>
