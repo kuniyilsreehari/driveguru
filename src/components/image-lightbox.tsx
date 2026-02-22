@@ -5,6 +5,8 @@ import {
   Dialog,
   DialogContent,
   DialogTrigger,
+  DialogTitle,
+  DialogDescription,
 } from '@/components/ui/dialog';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
@@ -27,6 +29,8 @@ export function ImageLightbox({ imageUrl, altText, children, className }: ImageL
         </div>
       </DialogTrigger>
       <DialogContent className="p-0 border-0 max-w-3xl bg-transparent shadow-none flex items-center justify-center overflow-hidden sm:rounded-3xl">
+        <DialogTitle className="sr-only">Enlarged Profile Image</DialogTitle>
+        <DialogDescription className="sr-only">Full size view of {altText}</DialogDescription>
         <div className="relative w-full h-full max-h-[85vh] aspect-square sm:aspect-auto flex items-center justify-center">
             <Image
                 src={imageUrl}
