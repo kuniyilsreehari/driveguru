@@ -4,10 +4,10 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { signOut } from 'firebase/auth';
-import { doc, collection, serverTimestamp, orderBy, query, where } from 'firebase/firestore';
+import { doc, collection, serverTimestamp, orderBy, query, where, limit, arrayUnion, arrayRemove, getDocs } from 'firebase/firestore';
 import { useUser, useAuth, useFirestore, useDoc, useMemoFirebase, updateDocumentNonBlocking, addDocumentNonBlocking, useCollection } from '@/firebase';
 import { Button } from '@/components/ui/button';
-import { LogOut, Loader, Edit, UserCheck, XCircle, Crown, Sparkles, User as UserIcon, Check, ShieldCheck, Link as LinkIcon, Rss, Settings, Users, MessageSquare, Briefcase, Info, Book, Pen, Hash, ArrowRight, PlusCircle } from 'lucide-react';
+import { LogOut, Loader, Edit, UserCheck, XCircle, Crown, Sparkles, User as UserIcon, Check, ShieldCheck, Link as LinkIcon, Rss, Settings, Users, MessageSquare, Briefcase, Info, Book, Pen, Hash, ArrowRight, PlusCircle, MapPin, IndianRupee, Calendar, GraduationCap, School, Building, Home, Type, Copy, Share2, Search, UserPlus, UserMinus, FileText, AlertCircle } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { EditProfileForm } from '@/components/auth/edit-profile-form';
@@ -24,7 +24,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { UserList } from '@/components/user-list';
-import { generateAboutMe } from '@/ai/flows/generate-about-me-flow';
+import { PostVacancyForm } from '@/components/auth/post-vacancy-form';
+import type { Vacancy } from '@/app/vacancies/page';
 
 type ExpertUserProfile = {
     id: string;
@@ -40,14 +41,24 @@ type ExpertUserProfile = {
     referralPoints?: number;
     following?: string[];
     profession?: string;
+    category?: string;
     qualification?: string;
+    collegeName?: string;
     skills?: string;
-};
-
-type Group = {
-    id: string;
-    name: string;
-    members: string[];
+    experienceYears?: number;
+    pricingModel?: string;
+    pricingValue?: number;
+    city?: string;
+    state?: string;
+    pincode?: string;
+    address?: string;
+    companyName?: string;
+    department?: string;
+    aboutMe?: string;
+    aboutYourDream?: string;
+    associatedProjectsName?: string;
+    gender?: string;
+    phoneNumber?: string;
 };
 
 const postFormSchema = z.object({
@@ -56,46 +67,6 @@ const postFormSchema = z.object({
   link: z.string().url().optional().or(z.literal('')),
 });
 
-function PlanManagement({ userProfile }: { userProfile: ExpertUserProfile }) {
-    const PlanCard = ({ title, icon, description, features, current, link }: any) => (
-        <Card className={cn("flex flex-col h-full", current && "border-primary ring-2 ring-primary")}>
-            <CardHeader className="text-center">
-                <div className={cn("mx-auto w-fit rounded-full p-3 mb-2", current ? "bg-primary/10 text-primary" : "bg-secondary")}>{icon}</div>
-                <CardTitle>{title}</CardTitle>
-                <CardDescription>{description}</CardDescription>
-            </CardHeader>
-            <CardContent className="flex-grow space-y-3 text-sm">
-                <ul className="space-y-2">
-                    {features.map((f: string, i: number) => (
-                        <li key={i} className="flex items-start gap-2"><Check className="h-4 w-4 mt-0.5 text-green-500" /><span>{f}</span></li>
-                    ))}
-                </ul>
-            </CardContent>
-            <CardFooter className="pt-4 mt-auto">
-                {current ? (
-                    <Button variant="outline" disabled className="w-full"><ShieldCheck className="mr-2 h-4 w-4" /> Current Plan</Button>
-                ) : (
-                    <Button asChild className="w-full">
-                        <Link href={link || '#'}><ArrowUpCircle className="mr-2 h-4 w-4" /> Upgrade</Link>
-                    </Button>
-                )}
-            </CardFooter>
-        </Card>
-    );
-
-    return (
-        <div id="plan-management" className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <PlanCard title="Standard" icon={<UserIcon />} description="Basic listing." features={["Public profile", "Search results"]} current={!userProfile.tier || userProfile.tier === 'Standard'} />
-            <PlanCard title="Premier" icon={<Crown />} description="Enhanced visibility." features={["Priority search", "AI suggestions"]} current={userProfile.tier === 'Premier'} link="/payment/premier" />
-            <PlanCard title="Super Premier" icon={<Sparkles />} description="Ultimate status." features={["Top ranking", "AI search access"]} current={userProfile.tier === 'Super Premier'} link="/payment/super-premier" />
-        </div>
-    );
-}
-
-function ArrowUpCircle({ className }: { className?: string }) {
-    return <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"/><path d="m16 12-4-4-4 4"/><path d="M12 16V8"/></svg>;
-}
-
 export default function ExpertDashboardPage() {
   const { user, isUserLoading } = useUser();
   const auth = useAuth();
@@ -103,15 +74,15 @@ export default function ExpertDashboardPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isPostVacancyOpen, setIsPostVacancyOpen] = useState(false);
   const [isSubmittingPost, setIsSubmittingPost] = useState(false);
-  const [isGeneratingBio, setIsGeneratingBio] = useState(false);
   const [showPostForm, setShowPostForm] = useState(false);
+  const [suggestionSearch, setSuggestionSearch] = useState('');
 
   const userDocRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
   const { data: userProfile, isLoading: isProfileLoading } = useDoc<ExpertUserProfile>(userDocRef);
 
   useEffect(() => {
-    // Correctly handle redirection in useEffect to avoid render-phase router updates
     if (!isUserLoading && !user) {
       router.push('/login');
     }
@@ -124,43 +95,64 @@ export default function ExpertDashboardPage() {
 
   const profileCompletion = useMemo(() => {
     if (!userProfile) return 0;
-    const fields = [userProfile.firstName, userProfile.photoUrl, userProfile.profession, userProfile.skills, userProfile.qualification];
+    const fields = [
+        userProfile.firstName, 
+        userProfile.photoUrl, 
+        userProfile.profession, 
+        userProfile.skills, 
+        userProfile.qualification,
+        userProfile.aboutMe,
+        userProfile.city,
+        userProfile.phoneNumber
+    ];
     const filled = fields.filter(f => !!f).length;
     return Math.round((filled / fields.length) * 100);
   }, [userProfile]);
 
-  const myGroupsArrQuery = useMemoFirebase(() => {
+  // Suggestions: Experts you don't follow
+  const suggestionsQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
-    return query(collection(firestore, 'groups'), where('members', 'array-contains', user.uid));
+    return query(collection(firestore, 'users'), limit(10));
   }, [firestore, user]);
-  const { data: myGroups, isLoading: isGroupsLoading } = useCollection<Group>(myGroupsArrQuery);
+  const { data: allUsers } = useCollection<ExpertUserProfile>(suggestionsQuery);
+
+  const suggestedExperts = useMemo(() => {
+    if (!allUsers || !user) return [];
+    return allUsers.filter(u => 
+        u.id !== user.uid && 
+        !(userProfile?.following?.includes(u.id)) &&
+        (suggestionSearch === '' || 
+         `${u.firstName} ${u.lastName}`.toLowerCase().includes(suggestionSearch.toLowerCase()) ||
+         u.profession?.toLowerCase().includes(suggestionSearch.toLowerCase()))
+    ).slice(0, 6);
+  }, [allUsers, user, userProfile, suggestionSearch]);
+
+  // My Vacancies
+  const vacanciesQuery = useMemoFirebase(() => {
+    if (!firestore || !user) return null;
+    return query(collection(firestore, 'vacancies'), where('companyId', '==', user.uid), orderBy('postedAt', 'desc'));
+  }, [firestore, user]);
+  const { data: myVacancies } = useCollection<Vacancy>(vacanciesQuery);
+
+  // My Referrals Count
+  const referralsQuery = useMemoFirebase(() => {
+    if (!firestore || !userProfile?.referralCode) return null;
+    return query(collection(firestore, 'users'), where('referredByCode', '==', userProfile.referralCode));
+  }, [firestore, userProfile?.referralCode]);
+  const { data: myReferrals } = useCollection(referralsQuery);
 
   const followersQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
     return query(collection(firestore, 'users'), where('following', 'array-contains', user.uid));
   }, [firestore, user]);
+  const { data: myFollowers } = useCollection(followersQuery);
 
-  async function handleAIGenerateBio() {
-    if (!userProfile) return;
-    setIsGeneratingBio(true);
-    try {
-      const result = await generateAboutMe({
-        firstName: userProfile.firstName,
-        role: userProfile.role,
-        skills: userProfile.skills || '',
-        yearsOfExperience: 5, 
-        qualification: userProfile.qualification || '',
-      });
-      if (result.aboutMe) {
-        updateDocumentNonBlocking(userDocRef!, { aboutMe: result.aboutMe });
-        toast({ title: "AI Bio Generated", description: "Your profile has been updated." });
-      }
-    } catch (e) {
-      toast({ variant: "destructive", title: "AI Generation Failed" });
-    } finally {
-      setIsGeneratingBio(false);
-    }
-  }
+  const handleToggleFollow = async (targetId: string, isFollowing: boolean) => {
+    if (!userDocRef) return;
+    const action = isFollowing ? arrayRemove(targetId) : arrayUnion(targetId);
+    updateDocumentNonBlocking(userDocRef, { following: action });
+    toast({ title: isFollowing ? "Unfollowed" : "Following" });
+  };
 
   async function onPostSubmit(values: z.infer<typeof postFormSchema>) {
     if (!firestore || !user) return;
@@ -182,11 +174,11 @@ export default function ExpertDashboardPage() {
   }
 
   if (isUserLoading || isProfileLoading) return <div className="flex h-screen items-center justify-center"><Loader className="animate-spin" /></div>;
-  if (!user) return null; // Let useEffect handle redirect
+  if (!user || !userProfile) return null;
 
   return (
     <div className="min-h-screen bg-background p-4 sm:p-8">
-      <div className="mx-auto max-w-4xl space-y-8">
+      <div className="mx-auto max-w-5xl space-y-8">
         <header className="flex items-center justify-between">
           <h1 className="text-3xl font-bold">Expert Dashboard</h1>
           <Button variant="outline" onClick={() => signOut(auth!).then(() => router.push('/'))}><LogOut className="mr-2 h-4 w-4" /> Log Out</Button>
@@ -200,54 +192,240 @@ export default function ExpertDashboardPage() {
             <TabsTrigger value="plans">My Plan</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="overview" className="mt-6 space-y-6">
-            <Card>
-              <CardHeader className="flex flex-row items-center gap-4">
-                <Avatar className="h-20 w-20"><AvatarImage src={userProfile?.photoUrl} /><AvatarFallback>{userProfile?.firstName?.[0] || 'U'}</AvatarFallback></Avatar>
-                <div className="flex-1">
-                  <CardTitle className="text-2xl">Welcome, {userProfile?.firstName || 'User'}!</CardTitle>
+          <TabsContent value="overview" className="mt-6 space-y-8">
+            {/* Top Profile Card */}
+            <Card className="border-2">
+              <CardHeader className="flex flex-col md:flex-row items-start md:items-center gap-6 pb-2">
+                <Avatar className="h-24 w-24 border-4 border-primary/20">
+                  <AvatarImage src={userProfile.photoUrl} />
+                  <AvatarFallback className="text-2xl">{userProfile.firstName[0]}</AvatarFallback>
+                </Avatar>
+                <div className="flex-1 space-y-1">
+                  <div className="flex items-center gap-3">
+                    <h2 className="text-3xl font-bold">Welcome, {userProfile.companyName || userProfile.firstName}!</h2>
+                    <Button variant="ghost" size="icon" onClick={() => setIsEditDialogOpen(true)} className="h-8 w-8">
+                        <Edit className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+                    <span className="flex items-center gap-1"><Users className="h-4 w-4" /> {myFollowers?.length || 0} Followers</span>
+                    <span className="flex items-center gap-1"><Users className="h-4 w-4" /> {userProfile.following?.length || 0} Following</span>
+                  </div>
                   <div className="flex gap-2 mt-2">
-                    {userProfile?.verified && <Badge className="bg-green-500"><UserCheck className="h-3 w-3 mr-1" /> Verified</Badge>}
-                    <Badge variant="secondary">{userProfile?.tier || 'Standard'}</Badge>
+                    {userProfile.verified && <Badge className="bg-green-600"><UserCheck className="h-3 w-3 mr-1" /> Verified</Badge>}
+                    <Badge variant="secondary">{userProfile.role}</Badge>
+                    {userProfile.companyName && <Badge variant="outline">{userProfile.companyName}</Badge>}
                   </div>
                 </div>
-                <div className="flex flex-col gap-2">
-                  <Button variant="outline" onClick={() => setIsEditDialogOpen(true)}><Edit className="mr-2 h-4 w-4" /> Edit Profile</Button>
-                  {userProfile && (userProfile.tier === 'Premier' || userProfile.tier === 'Super Premier') && (
-                    <Button variant="secondary" size="sm" onClick={handleAIGenerateBio} disabled={isGeneratingBio}>
-                      {isGeneratingBio ? <Loader className="h-3 w-3 animate-spin mr-2" /> : <Sparkles className="h-3 w-3 mr-2" />}
-                      AI Bio Builder
+                <div className="flex flex-col gap-2 w-full md:w-auto">
+                    <Button variant="outline" onClick={() => setIsEditDialogOpen(true)} className="w-full">
+                        <Edit className="mr-2 h-4 w-4" /> Edit Profile
                     </Button>
-                  )}
                 </div>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-6 pt-4">
+                <div className="flex items-center gap-2 text-sm font-medium">
+                    <Switch checked={userProfile.isAvailable} onCheckedChange={(v) => updateDocumentNonBlocking(userDocRef!, { isAvailable: v })} />
+                    <span>I am currently available.</span>
+                </div>
+
                 <div className="space-y-2">
-                  <div className="flex justify-between text-sm"><span>Profile Strength</span><span>{profileCompletion}%</span></div>
-                  <Progress value={profileCompletion} className="h-2" />
+                  <div className="flex justify-between text-sm font-bold text-primary">
+                    <span>Profile Completion</span>
+                    <span>{profileCompletion}%</span>
+                  </div>
+                  <Progress value={profileCompletion} className="h-3 bg-secondary" />
+                </div>
+
+                {profileCompletion < 100 && (
+                    <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+                        <div className="flex items-center gap-3">
+                            <AlertCircle className="h-5 w-5 text-primary" />
+                            <div>
+                                <p className="font-bold">Complete Your Profile!</p>
+                                <p className="text-sm text-muted-foreground">A complete profile helps you stand out and attract more clients.</p>
+                            </div>
+                        </div>
+                        <Button onClick={() => setIsEditDialogOpen(true)} className="w-full sm:w-auto">Update Profile</Button>
+                    </div>
+                )}
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-4 pt-4">
+                    <div className="flex items-center gap-3 text-sm">
+                        <UserIcon className="h-4 w-4 text-muted-foreground" />
+                        <span className="font-semibold w-24">Gender:</span>
+                        <span>{userProfile.gender || 'Not specified'}</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-sm">
+                        <IndianRupee className="h-4 w-4 text-muted-foreground" />
+                        <span className="font-semibold w-24">Rate:</span>
+                        <span>{userProfile.pricingValue ? `₹${userProfile.pricingValue} / ${userProfile.pricingModel || 'hr'}` : 'Not specified'}</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-sm">
+                        <Calendar className="h-4 w-4 text-muted-foreground" />
+                        <span className="font-semibold w-24">Experience:</span>
+                        <span>{userProfile.experienceYears ? `${userProfile.experienceYears} years` : 'Not specified'}</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-sm">
+                        <MapPin className="h-4 w-4 text-muted-foreground" />
+                        <span className="font-semibold w-24">Location:</span>
+                        <span>{[userProfile.city, userProfile.state, userProfile.pincode].filter(Boolean).join(', ') || 'Not specified'}</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-sm">
+                        <GraduationCap className="h-4 w-4 text-muted-foreground" />
+                        <span className="font-semibold w-24">Qualification:</span>
+                        <span>{userProfile.qualification || 'Not specified'}</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-sm">
+                        <School className="h-4 w-4 text-muted-foreground" />
+                        <span className="font-semibold w-24">College:</span>
+                        <span>{userProfile.collegeName || 'Not specified'}</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-sm">
+                        <Building className="h-4 w-4 text-muted-foreground" />
+                        <span className="font-semibold w-24">Business:</span>
+                        <span>{userProfile.companyName || 'N/A'}</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-sm">
+                        <Home className="h-4 w-4 text-muted-foreground" />
+                        <span className="font-semibold w-24">Address:</span>
+                        <span className="truncate">{userProfile.address || 'Not specified'}</span>
+                    </div>
+                </div>
+
+                <Separator />
+
+                <div className="space-y-6">
+                    <div>
+                        <h4 className="font-bold flex items-center gap-2 mb-2"><Info className="h-4 w-4" /> About Me</h4>
+                        <p className="text-sm text-muted-foreground">{userProfile.aboutMe || 'No information provided.'}</p>
+                    </div>
+                    <div>
+                        <h4 className="font-bold flex items-center gap-2 mb-2"><Pen className="h-4 w-4" /> About My Dream</h4>
+                        <p className="text-sm text-muted-foreground">{userProfile.aboutYourDream || 'No information provided.'}</p>
+                    </div>
+                    <div>
+                        <h4 className="font-bold flex items-center gap-2 mb-2"><Briefcase className="h-4 w-4" /> Associated Projects</h4>
+                        <p className="text-sm text-muted-foreground">{userProfile.associatedProjectsName || 'No projects listed.'}</p>
+                    </div>
+                    <div>
+                        <h4 className="font-bold flex items-center gap-2 mb-2"><Book className="h-4 w-4" /> Skills</h4>
+                        <div className="flex flex-wrap gap-2">
+                            {userProfile.skills ? userProfile.skills.split(',').map((s, i) => (
+                                <Badge key={i} variant="secondary">{s.trim()}</Badge>
+                            )) : <span className="text-sm text-muted-foreground">No skills listed.</span>}
+                        </div>
+                    </div>
                 </div>
               </CardContent>
             </Card>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Card>
-                <CardHeader><CardTitle className="text-sm">Referral Status</CardTitle></CardHeader>
-                <CardContent className="text-center">
-                  <div className="text-3xl font-bold text-primary">{userProfile?.referralPoints || 0}</div>
-                  <p className="text-xs text-muted-foreground mt-1">Reward Points</p>
-                  {userProfile?.referralCode && (
-                    <Button variant="ghost" size="sm" className="mt-4 w-full" onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/signup?ref=${userProfile.referralCode}`); toast({ title: "Copied!" }); }}><LinkIcon className="h-4 w-4 mr-2" /> Copy Referral Link</Button>
-                  )}
+            {/* Referral Rewards */}
+            <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                        <Gift className="h-5 w-5 text-primary" /> Referral Rewards
+                    </CardTitle>
+                    <CardDescription>Invite others and earn rewards.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                    <div className="bg-secondary/30 rounded-lg p-4 flex flex-col md:flex-row items-center justify-between gap-4">
+                        <div>
+                            <p className="text-xs text-muted-foreground mb-1 uppercase font-bold">Your Referral Code</p>
+                            <p className="text-2xl font-mono font-bold tracking-widest">{userProfile.referralCode || 'N/A'}</p>
+                        </div>
+                        <div className="flex gap-2 w-full md:w-auto">
+                            <Button variant="outline" size="sm" onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/signup?ref=${userProfile.referralCode}`); toast({ title: "Copied!" }); }} className="flex-1">
+                                <LinkIcon className="h-4 w-4 mr-2" /> Copy Link
+                            </Button>
+                            <Button variant="outline" size="sm" className="bg-green-600/10 text-green-600 border-green-600/20 hover:bg-green-600 hover:text-white flex-1">
+                                <MessageSquare className="h-4 w-4 mr-2" /> WhatsApp
+                            </Button>
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="bg-secondary/20 rounded-lg p-4 text-center">
+                            <p className="text-2xl font-bold text-primary">{userProfile.referralPoints || 0}</p>
+                            <p className="text-xs text-muted-foreground uppercase font-bold">Total Points Earned</p>
+                        </div>
+                        <div className="bg-secondary/20 rounded-lg p-4 text-center">
+                            <p className="text-2xl font-bold">{myReferrals?.length || 0}</p>
+                            <p className="text-xs text-muted-foreground uppercase font-bold">Referrals Used</p>
+                        </div>
+                    </div>
                 </CardContent>
-              </Card>
-              <Card>
-                <CardHeader><CardTitle className="text-sm">Availability</CardTitle></CardHeader>
-                <CardContent className="flex items-center justify-between">
-                  <span className="text-sm font-medium">{userProfile?.isAvailable ? 'Publicly Available' : 'Currently Hidden'}</span>
-                  <Switch checked={userProfile?.isAvailable || false} onCheckedChange={v => updateDocumentNonBlocking(userDocRef!, { isAvailable: v })} />
+            </Card>
+
+            {/* People You May Know */}
+            <Card>
+                <CardHeader>
+                    <CardTitle>People You May Know</CardTitle>
+                    <CardDescription>Expand your network by following other experts.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <div className="relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input 
+                            placeholder="Search suggestions..." 
+                            className="pl-10" 
+                            value={suggestionSearch} 
+                            onChange={(e) => setSuggestionSearch(e.target.value)} 
+                        />
+                    </div>
+                    <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
+                        {suggestedExperts.map(expert => (
+                            <Card key={expert.id} className="min-w-[200px] max-w-[200px] flex flex-col items-center p-4 text-center">
+                                <Avatar className="h-16 w-16 mb-3">
+                                    <AvatarImage src={expert.photoUrl} />
+                                    <AvatarFallback>{expert.firstName[0]}</AvatarFallback>
+                                </Avatar>
+                                <p className="font-bold text-sm line-clamp-1">{expert.firstName} {expert.lastName}</p>
+                                <p className="text-xs text-muted-foreground mb-4 line-clamp-1">{expert.profession || expert.role}</p>
+                                <Button size="sm" className="w-full" onClick={() => handleToggleFollow(expert.id, false)}>
+                                    <UserPlus className="h-3 w-3 mr-1" /> Follow
+                                </Button>
+                            </Card>
+                        ))}
+                        {suggestedExperts.length === 0 && (
+                            <p className="text-sm text-muted-foreground text-center w-full py-8">No new suggestions at the moment.</p>
+                        )}
+                    </div>
                 </CardContent>
-              </Card>
-            </div>
+            </Card>
+
+            {/* Manage Vacancies */}
+            {(userProfile.role === 'Company' || userProfile.role === 'Authorized Pro') && (
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between">
+                        <div>
+                            <CardTitle>Manage Vacancies</CardTitle>
+                            <CardDescription>Post and view job openings for your company.</CardDescription>
+                        </div>
+                        <Button size="sm" onClick={() => setIsPostVacancyOpen(true)}>
+                            <PlusCircle className="h-4 w-4 mr-2" /> Post New Vacancy
+                        </Button>
+                    </CardHeader>
+                    <CardContent>
+                        {myVacancies && myVacancies.length > 0 ? (
+                            <div className="space-y-3">
+                                {myVacancies.map(v => (
+                                    <div key={v.id} className="flex items-center justify-between p-3 rounded-lg border">
+                                        <div>
+                                            <p className="font-bold">{v.title}</p>
+                                            <p className="text-xs text-muted-foreground">{v.location} • {v.employmentType}</p>
+                                        </div>
+                                        <Badge variant="secondary">{v.positionsAvailable} Open</Badge>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="text-center py-12 border-2 border-dashed rounded-lg">
+                                <p className="text-muted-foreground">You haven't posted any vacancies yet.</p>
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
+            )}
           </TabsContent>
 
           <TabsContent value="network" className="mt-6 space-y-6">
@@ -263,42 +441,11 @@ export default function ExpertDashboardPage() {
                 </TabsList>
                 
                 <TabsContent value="my-groups" className="mt-4 space-y-4">
-                    {isGroupsLoading ? (
-                        <div className="flex justify-center p-8"><Loader className="animate-spin" /></div>
-                    ) : myGroups && myGroups.length > 0 ? (
-                        myGroups.map(group => (
-                            <Link href={`/groups/${group.id}`} key={group.id} className="block">
-                                <Card className="hover:bg-accent/5 transition-colors cursor-pointer">
-                                    <CardContent className="p-4 flex items-center justify-between">
-                                        <div className="flex items-center gap-3">
-                                            <div className="bg-primary/10 p-2 rounded-lg">
-                                                <Hash className="h-5 w-5 text-primary" />
-                                            </div>
-                                            <div>
-                                                <h4 className="font-bold">{group.name}</h4>
-                                                <p className="text-xs text-muted-foreground">{group.members.length} {group.members.length === 1 ? 'member' : 'members'}</p>
-                                            </div>
-                                        </div>
-                                        <ArrowRight className="h-4 w-4 text-muted-foreground" />
-                                    </CardContent>
-                                </Card>
-                            </Link>
-                        ))
-                    ) : (
-                        <Card className="border-dashed">
-                            <CardContent className="p-8 text-center text-muted-foreground">
-                                <Users className="h-8 w-8 mx-auto mb-2 opacity-20" />
-                                <p>You haven't joined any groups yet.</p>
-                                <Button variant="link" asChild className="mt-2">
-                                    <Link href="/groups">Explore Groups</Link>
-                                </Button>
-                            </CardContent>
-                        </Card>
-                    )}
+                    <UserList userIdsQuery={null} emptyStateMessage="You haven't joined any groups yet." />
                 </TabsContent>
 
                 <TabsContent value="followers" className="mt-4">
-                    <UserList userIdsQuery={followersQuery} emptyStateMessage="No one is following you yet. Share your profile to grow your network!" />
+                    <UserList userIdsQuery={followersQuery} emptyStateMessage="No one is following you yet." />
                 </TabsContent>
 
                 <TabsContent value="following" className="mt-4">
@@ -316,7 +463,7 @@ export default function ExpertDashboardPage() {
                     Engage with the Community
                   </CardTitle>
                   <CardDescription>
-                    Share updates, ask questions, and connect with other professionals on the public feed.
+                    Share updates, ask questions, and connect with other professionals.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="flex flex-col sm:flex-row gap-4">
@@ -345,15 +492,50 @@ export default function ExpertDashboardPage() {
           </TabsContent>
 
           <TabsContent value="plans" className="mt-6">
-            {userProfile && <PlanManagement userProfile={userProfile} />}
+             <Card>
+                <CardHeader>
+                    <CardTitle>Professional Plans</CardTitle>
+                    <CardDescription>Manage your subscription and professional visibility.</CardDescription>
+                </CardHeader>
+                <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {/* Simplified Plan Cards */}
+                    <div className={cn("p-6 rounded-lg border-2", userProfile.tier === 'Standard' || !userProfile.tier ? "border-primary bg-primary/5" : "bg-secondary/20")}>
+                        <h3 className="text-xl font-bold mb-2">Standard</h3>
+                        <p className="text-sm text-muted-foreground mb-4">Basic marketplace listing.</p>
+                        {(!userProfile.tier || userProfile.tier === 'Standard') && <Badge className="w-full justify-center">Current Plan</Badge>}
+                    </div>
+                    <div className={cn("p-6 rounded-lg border-2", userProfile.tier === 'Premier' ? "border-purple-500 bg-purple-500/5" : "bg-secondary/20")}>
+                        <h3 className="text-xl font-bold mb-2 text-purple-500">Premier</h3>
+                        <p className="text-sm text-muted-foreground mb-4">Enhanced visibility and AI tools.</p>
+                        {userProfile.tier === 'Premier' ? <Badge className="w-full justify-center bg-purple-500">Current Plan</Badge> : <Button variant="outline" className="w-full" asChild><Link href="/payment/premier">Upgrade</Link></Button>}
+                    </div>
+                    <div className={cn("p-6 rounded-lg border-2", userProfile.tier === 'Super Premier' ? "border-blue-500 bg-blue-500/5" : "bg-secondary/20")}>
+                        <h3 className="text-xl font-bold mb-2 text-blue-500">Super Premier</h3>
+                        <p className="text-sm text-muted-foreground mb-4">Top ranking and full platform access.</p>
+                        {userProfile.tier === 'Super Premier' ? <Badge className="w-full justify-center bg-blue-500">Current Plan</Badge> : <Button variant="outline" className="w-full" asChild><Link href="/payment/super-premier">Upgrade</Link></Button>}
+                    </div>
+                </CardContent>
+             </Card>
           </TabsContent>
         </Tabs>
       </div>
 
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="max-w-3xl overflow-y-auto max-h-[90vh]">
-          <DialogHeader><DialogTitle>Professional Profile</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>Edit Your Professional Profile</DialogTitle></DialogHeader>
           {userProfile && <EditProfileForm userProfile={userProfile as any} onSuccess={() => setIsEditDialogOpen(false)} />}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isPostVacancyOpen} onOpenChange={setIsPostVacancyOpen}>
+        <DialogContent className="max-w-2xl overflow-y-auto max-h-[90vh]">
+            <DialogHeader><DialogTitle>Post a Job Vacancy</DialogTitle></DialogHeader>
+            <PostVacancyForm 
+                onSuccess={() => setIsPostVacancyOpen(false)} 
+                companyId={user.uid} 
+                companyName={userProfile.companyName} 
+                companyEmail={userProfile.email || ''} 
+            />
         </DialogContent>
       </Dialog>
     </div>
