@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
@@ -676,9 +675,6 @@ export default function ExpertDashboardPage() {
                   <ul className="w-full space-y-3 mb-8">
                     <li className="flex items-center gap-2 text-xs font-medium">
                       <Check className="h-4 w-4 text-green-500" /> Higher search ranking
-                    </li>
-                    <li className="flex items-center gap-2 text-xs font-medium">
-                      <Check className="h-4 w-4 text-green-500" /> Post job vacancies
                     </li>
                     <li className="flex items-center gap-2 text-xs font-medium">
                       <Check className="h-4 w-4 text-green-500" /> AI-powered bio & skill suggestions
