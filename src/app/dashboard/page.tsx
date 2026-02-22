@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -7,7 +8,7 @@ import { doc, collection, serverTimestamp, orderBy, query, where, limit, arrayUn
 import { useUser, useAuth, useFirestore, useDoc, useMemoFirebase, useCollection } from '@/firebase';
 import { updateDocumentNonBlocking, addDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Button } from '@/components/ui/button';
-import { LogOut, Loader, Edit, UserCheck, Crown, Sparkles, User as UserIcon, MessageSquare, Gift, Info, Book, Pen, PlusCircle, MapPin, IndianRupee, Calendar, GraduationCap, School, Building, Home, Share2, Rss, UserPlus, Users, Link as LinkIcon, Search, AlertCircle, Briefcase, Check, CheckCircle, ArrowUpCircle, Trash2, MoreHorizontal } from 'lucide-react';
+import { LogOut, Loader, Edit, UserCheck, Crown, Sparkles, User as UserIcon, MessageSquare, Gift, Info, Book, Pen, PlusCircle, MapPin, IndianRupee, Calendar, GraduationCap, School, Building, Home, Share2, Rss, UserPlus, Users, Link as LinkIcon, Search, AlertCircle, Briefcase, Check, CheckCircle, ArrowUpCircle, Trash2, MoreHorizontal, Lock, Clock } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { EditProfileForm } from '@/components/auth/edit-profile-form';
@@ -544,9 +545,16 @@ export default function ExpertDashboardPage() {
                                                 <TableCell className="text-sm text-muted-foreground">{v.location}</TableCell>
                                                 <TableCell className="text-center font-black text-orange-500">{v.positionsAvailable}</TableCell>
                                                 <TableCell>
-                                                    <div className="flex gap-1">
-                                                        {v.isImmediate && <Badge className="bg-yellow-500 text-[8px] h-4 uppercase">Immediate</Badge>}
-                                                        <Badge variant="secondary" className="bg-[#1a1c23] text-white text-[8px] h-4 uppercase">{v.employmentType}</Badge>
+                                                    <div className="flex flex-col gap-1">
+                                                        <Badge className={cn(
+                                                            "text-[8px] uppercase border-none h-5 px-2 rounded-full w-fit",
+                                                            v.status === 'Approved' ? "bg-green-500 text-white" : 
+                                                            v.status === 'Rejected' ? "bg-red-500 text-white" : 
+                                                            "bg-yellow-500 text-white"
+                                                        )}>
+                                                            {v.status || 'Pending'}
+                                                        </Badge>
+                                                        {v.isImmediate && <Badge className="bg-orange-500 text-[8px] h-4 uppercase w-fit">Immediate</Badge>}
                                                     </div>
                                                 </TableCell>
                                                 <TableCell className="text-right">

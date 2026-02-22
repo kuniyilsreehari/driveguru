@@ -1,3 +1,4 @@
+
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -80,13 +81,17 @@ service cloud.firestore {
     }
     
     match /vacancies/{vacancyId} {
-      allow read, list: if true;
+      // Public reading only for approved vacancies
+      allow read, list: if isSuperAdmin() || resource.data.status == 'Approved' || (isSignedIn() && resource.data.companyId == request.auth.uid);
+      
       allow create: if isSuperAdmin() || (
         isSignedIn() && 
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'Company' &&
         (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.tier == 'Premier' || 
-         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.tier == 'Super Premier')
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.tier == 'Super Premier') &&
+        request.resource.data.status == 'Pending'
       );
+      
       allow update, delete: if isSuperAdmin() || (isSignedIn() && (resource.data.companyId == request.auth.uid || isSuperAdmin()));
     }
     

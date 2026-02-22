@@ -1,5 +1,4 @@
 
-
 {
   "entities": {
     "User": {
@@ -490,13 +489,18 @@
             "description": "The tier of the company posting the vacancy.",
             "enum": ["Standard", "Premier", "Super Premier"]
         },
+        "status": {
+          "type": "string",
+          "description": "The approval status of the vacancy.",
+          "enum": ["Pending", "Approved", "Rejected"]
+        },
         "postedAt": {
           "type": "string",
           "format": "date-time",
           "description": "Timestamp of when the vacancy was posted."
         }
       },
-      "required": ["id", "title", "description", "companyId", "companyName", "companyEmail", "location", "employmentType", "postedAt", "positionsAvailable"]
+      "required": ["id", "title", "description", "companyId", "companyName", "companyEmail", "location", "employmentType", "postedAt", "positionsAvailable", "status"]
     },
      "Payment": {
       "$schema": "http://json-schema.org/draft-07/schema#",

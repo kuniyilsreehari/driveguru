@@ -1,10 +1,9 @@
 
-
 'use client';
 
 import { Suspense, useState }from 'react';
 import Link from 'next/link';
-import { collection, query, orderBy, Timestamp } from 'firebase/firestore';
+import { collection, query, orderBy, Timestamp, where } from 'firebase/firestore';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -47,6 +46,7 @@ export type Vacancy = {
     positionsAvailable: number;
     isCompanyVerified?: boolean;
     companyTier?: 'Standard' | 'Premier' | 'Super Premier';
+    status: 'Pending' | 'Approved' | 'Rejected';
     postedAt: Timestamp;
 };
 
@@ -112,7 +112,11 @@ function VacanciesList() {
 
     const vacanciesQuery = useMemoFirebase(() => {
         if (!firestore) return null;
-        return query(collection(firestore, 'vacancies'), orderBy('postedAt', 'desc'));
+        return query(
+            collection(firestore, 'vacancies'), 
+            where('status', '==', 'Approved'),
+            orderBy('postedAt', 'desc')
+        );
     }, [firestore]);
 
     const { data: vacancies, isLoading } = useCollection<Vacancy>(vacanciesQuery);

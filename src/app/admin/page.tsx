@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
@@ -8,7 +9,7 @@ import { useUser, useFirestore, useDoc, useMemoFirebase, useAuth, useCollection 
 import { updateDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, CheckCircle2, UserCheck, UserX, Crown, Sparkles, User as UserIcon, Settings, Save, Briefcase, Building, MessageSquare, Search, PlusCircle, Mail, Download, ExternalLink, IndianRupee, X, Upload, HardDriveDownload, Megaphone, Phone, MapPinIcon, Key, Gift, Code, List, Grip, ArrowUp, ArrowDown, Rss, UserPlus, Fingerprint, Award, CircleHelp, CheckCircle, FileJson, MapPin, Clock, AlertCircle } from 'lucide-react';
+import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, CheckCircle2, UserCheck, UserX, Crown, Sparkles, User as UserIcon, Settings, Save, Briefcase, Building, MessageSquare, Search, PlusCircle, Mail, Download, ExternalLink, IndianRupee, X, Upload, HardDriveDownload, Megaphone, Phone, MapPinIcon, Key, Gift, Code, List, Grip, ArrowUp, ArrowDown, Rss, UserPlus, Fingerprint, Award, CircleHelp, CheckCircle, FileJson, MapPin, Clock, AlertCircle, CreditCard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -448,6 +449,15 @@ export default function AdminDashboardPage() {
     }
   };
 
+  const handleUpdateVacancyStatus = async (vacancyId: string, status: 'Pending' | 'Approved' | 'Rejected') => {
+    try {
+        await updateDocumentNonBlocking(doc(firestore, 'vacancies', vacancyId), { status });
+        toast({ title: `Vacancy ${status}` });
+    } catch (e) {
+        toast({ variant: "destructive", title: "Action Failed" });
+    }
+  };
+
   if (isUserLoading || isRoleLoading) return <div className="flex h-screen items-center justify-center"><Loader className="animate-spin" /></div>;
   if (!isSuperAdmin) return <div className="flex h-screen items-center justify-center">Access Denied.</div>;
 
@@ -736,7 +746,7 @@ export default function AdminDashboardPage() {
                                                     Location {vacancySort.field === 'location' && (vacancySort.direction === 'asc' ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />)}
                                                 </div>
                                             </TableHead>
-                                            <TableHead className="font-bold text-white">Type</TableHead>
+                                            <TableHead className="font-bold text-white">Status</TableHead>
                                             <TableHead className="font-bold text-white cursor-pointer hover:text-orange-500 transition-colors" onClick={() => toggleVacancySort('postedAt')}>
                                                 <div className="flex items-center gap-1">
                                                     Posted {vacancySort.field === 'postedAt' && (vacancySort.direction === 'asc' ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />)}
@@ -775,7 +785,14 @@ export default function AdminDashboardPage() {
                                                 </TableCell>
                                                 <TableCell className="text-sm text-muted-foreground">{v.location}</TableCell>
                                                 <TableCell>
-                                                    <Badge variant="secondary" className="bg-[#1a1c23] text-white text-[10px] font-bold uppercase rounded-full px-3">{v.employmentType}</Badge>
+                                                    <Badge className={cn(
+                                                        "text-[10px] font-bold uppercase rounded-full px-3 h-6 border-none",
+                                                        v.status === 'Approved' ? "bg-green-500 text-white" : 
+                                                        v.status === 'Rejected' ? "bg-red-500 text-white" : 
+                                                        "bg-yellow-500 text-white"
+                                                    )}>
+                                                        {v.status || 'Pending'}
+                                                    </Badge>
                                                 </TableCell>
                                                 <TableCell className="text-[10px] text-muted-foreground font-medium">
                                                     {v.postedAt ? formatDistanceToNow(v.postedAt.toDate(), { addSuffix: true }) : '-'}
@@ -784,6 +801,13 @@ export default function AdminDashboardPage() {
                                                     <DropdownMenu>
                                                         <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="rounded-xl hover:bg-white/5 text-muted-foreground"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
                                                         <DropdownMenuContent align="end" className="rounded-xl border-2 border-white/10 bg-[#1a1c23] text-white">
+                                                            <DropdownMenuItem onClick={() => handleUpdateVacancyStatus(v.id, 'Approved')} className="rounded-lg focus:bg-white/5 focus:text-white">
+                                                                <CheckCircle className="mr-2 h-4 w-4 text-green-500" /> Approve
+                                                            </DropdownMenuItem>
+                                                            <DropdownMenuItem onClick={() => handleUpdateVacancyStatus(v.id, 'Rejected')} className="rounded-lg focus:bg-white/5 focus:text-white">
+                                                                <Ban className="mr-2 h-4 w-4 text-red-500" /> Reject
+                                                            </DropdownMenuItem>
+                                                            <DropdownMenuSeparator className="bg-white/5" />
                                                             <DropdownMenuItem onClick={() => { setSelectedVacancy(v); setIsVacancyFormOpen(true); }} className="rounded-lg focus:bg-white/5 focus:text-white">
                                                                 <Edit className="mr-2 h-4 w-4" /> Edit
                                                             </DropdownMenuItem>

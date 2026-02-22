@@ -141,13 +141,16 @@ export function PostVacancyForm({
         contactPhone: values.contactPhone,
         isCompanyVerified: userProfile?.verified || false,
         companyTier: userProfile?.tier || 'Standard',
+        status: isAdmin ? 'Approved' : 'Pending', // Direct post for admins, pending for others
         postedAt: serverTimestamp(),
       };
 
       addDocumentNonBlocking(vacanciesCollectionRef, newVacancyData).then(() => {
           toast({
-              title: "Vacancy Posted",
-              description: "The new job opening has been successfully posted.",
+              title: isAdmin ? "Vacancy Posted" : "Submitted for Review",
+              description: isAdmin 
+                ? "The job opening is now live." 
+                : "Your job vacancy has been submitted and is awaiting administrative approval.",
           });
           onSuccess();
       }).catch(error => {
@@ -368,7 +371,7 @@ export function PostVacancyForm({
           ) : (
             <>
               <Send className="mr-2 h-4 w-4" />
-              {vacancy ? 'Save Changes' : 'Post Vacancy'}
+              {vacancy ? 'Save Changes' : (isAdmin ? 'Post Vacancy' : 'Submit for Review')}
             </>
           )}
         </Button>
