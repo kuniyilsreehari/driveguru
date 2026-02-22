@@ -675,13 +675,15 @@ export default function AdminDashboardPage() {
                         <CardHeader className="bg-white/5 pb-6 border-b border-white/5">
                             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                                 <div className="flex items-center gap-3">
-                                    <Briefcase className="h-6 w-6 text-orange-500" />
+                                    <div className="bg-orange-500/10 p-2 rounded-lg">
+                                        <Briefcase className="h-6 w-6 text-orange-500" />
+                                    </div>
                                     <div>
-                                        <CardTitle className="text-2xl font-black">Vacancy Moderation</CardTitle>
-                                        <CardDescription className="text-muted-foreground">Approve or reject job listings posted by companies.</CardDescription>
+                                        <CardTitle className="text-2xl font-black text-white">Vacancy Moderation</CardTitle>
+                                        <CardDescription className="text-muted-foreground text-xs font-medium">Approve or reject job listings posted by companies.</CardDescription>
                                     </div>
                                 </div>
-                                <Button onClick={() => { setSelectedVacancy(null); setIsVacancyDialogOpen(true); }} className="rounded-xl font-bold bg-orange-500 hover:bg-orange-600">
+                                <Button onClick={() => { setSelectedVacancy(null); setIsVacancyDialogOpen(true); }} className="rounded-full font-black bg-orange-500 hover:bg-orange-600 h-11 px-6 shadow-lg shadow-orange-500/20">
                                     <PlusCircle className="mr-2 h-4 w-4" /> Post New Job
                                 </Button>
                             </div>
@@ -689,65 +691,68 @@ export default function AdminDashboardPage() {
                         <CardContent className="p-6">
                             <div className="rounded-xl border border-white/5 overflow-hidden">
                                 <Table>
-                                    <TableHeader className="bg-white/5">
-                                        <TableRow className="border-white/5">
-                                            <TableHead className="font-bold text-white">Job Title & Company</TableHead>
-                                            <TableHead className="font-bold text-white">Location</TableHead>
-                                            <TableHead className="font-bold text-white text-center">Status</TableHead>
-                                            <TableHead className="font-bold text-white">Posted</TableHead>
-                                            <TableHead className="text-right font-bold text-white"></TableHead>
+                                    <TableHeader className="bg-white/5 border-b border-white/5">
+                                        <TableRow className="hover:bg-transparent border-none">
+                                            <TableHead className="font-black text-white text-[11px] uppercase tracking-wider h-12">Job Title & Company</TableHead>
+                                            <TableHead className="font-black text-white text-[11px] uppercase tracking-wider h-12">Location</TableHead>
+                                            <TableHead className="font-black text-white text-[11px] uppercase tracking-wider h-12 text-center">Status</TableHead>
+                                            <TableHead className="font-black text-white text-[11px] uppercase tracking-wider h-12">Posted</TableHead>
+                                            <TableHead className="text-right font-black text-white text-[11px] uppercase tracking-wider h-12"></TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
                                         {isVacanciesLoading ? (
-                                            <TableRow><TableCell colSpan={5} className="text-center py-8"><Loader className="animate-spin mx-auto" /></TableCell></TableRow>
+                                            <TableRow className="border-none hover:bg-transparent"><TableCell colSpan={5} className="text-center py-12"><Loader className="animate-spin mx-auto text-orange-500" /></TableCell></TableRow>
                                         ) : !vacancies || vacancies.length === 0 ? (
-                                            <TableRow><TableCell colSpan={5} className="text-center py-12 text-muted-foreground font-medium">No vacancies found.</TableCell></TableRow>
+                                            <TableRow className="border-none hover:bg-transparent"><TableCell colSpan={5} className="text-center py-20 text-muted-foreground font-medium">No job vacancies found.</TableCell></TableRow>
                                         ) : (
                                             vacancies.map(v => (
-                                                <TableRow key={v.id} className="hover:bg-white/5 transition-colors border-white/5">
-                                                    <TableCell>
+                                                <TableRow key={v.id} className="hover:bg-white/[0.02] transition-colors border-b border-white/5 h-20">
+                                                    <TableCell className="py-4">
                                                         <div className="space-y-1">
-                                                            <div className="font-bold text-white">{v.title}</div>
-                                                            <div className="text-[10px] text-muted-foreground flex items-center gap-1">
+                                                            <div className="font-black text-white text-sm tracking-tight">{v.title}</div>
+                                                            <div className="text-[10px] text-muted-foreground font-bold flex items-center gap-1.5 uppercase tracking-wide">
                                                                 <Building className="h-3 w-3" /> {v.companyName}
                                                             </div>
                                                         </div>
                                                     </TableCell>
-                                                    <TableCell className="text-xs text-muted-foreground">
-                                                        <div className="flex items-center gap-1">
-                                                            <MapPin className="h-3 w-3" /> {v.location}
+                                                    <TableCell className="py-4">
+                                                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-medium">
+                                                            <MapPin className="h-3.5 w-3.5 text-white/20" />
+                                                            {v.location}
                                                         </div>
                                                     </TableCell>
-                                                    <TableCell className="text-center">
-                                                        <Badge className={cn(
-                                                            "text-[9px] font-black uppercase h-5 px-2 rounded-full border-none",
-                                                            v.status === 'Approved' ? "bg-green-500 text-white" : 
-                                                            v.status === 'Rejected' ? "bg-red-500 text-white" : 
-                                                            "bg-yellow-500 text-white"
-                                                        )}>
-                                                            {v.status}
-                                                        </Badge>
+                                                    <TableCell className="text-center py-4">
+                                                        <div className="flex justify-center">
+                                                            <div className={cn(
+                                                                "h-3 w-3 rounded-full shadow-[0_0_10px_rgba(0,0,0,0.5)]",
+                                                                v.status === 'Approved' ? "bg-green-500 shadow-green-500/20" : 
+                                                                v.status === 'Rejected' ? "bg-red-500 shadow-red-500/20" : 
+                                                                "bg-yellow-500 shadow-yellow-500/20"
+                                                            )} title={v.status} />
+                                                        </div>
                                                     </TableCell>
-                                                    <TableCell className="text-[10px] text-muted-foreground">
-                                                        {v.postedAt ? format(v.postedAt.toDate(), 'PP') : '-'}
+                                                    <TableCell className="py-4">
+                                                        <div className="text-[11px] text-muted-foreground font-bold uppercase tracking-wider">
+                                                            {v.postedAt ? format(v.postedAt.toDate(), 'MMM dd, yyyy') : '-'}
+                                                        </div>
                                                     </TableCell>
-                                                    <TableCell className="text-right">
+                                                    <TableCell className="text-right py-4">
                                                         <DropdownMenu>
-                                                            <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-white/5"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
-                                                            <DropdownMenuContent align="end" className="bg-[#1a1c23] border-white/10 text-white">
-                                                                <DropdownMenuItem onClick={() => handleUpdateVacancyStatus(v.id, 'Approved')} className="focus:bg-green-500/10 focus:text-green-500">
+                                                            <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-white/10 text-muted-foreground"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
+                                                            <DropdownMenuContent align="end" className="bg-[#1a1c23] border-white/10 text-white rounded-xl shadow-2xl">
+                                                                <DropdownMenuItem onClick={() => handleUpdateVacancyStatus(v.id, 'Approved')} className="focus:bg-green-500/10 focus:text-green-500 font-bold text-xs">
                                                                     <Check className="mr-2 h-4 w-4" /> Approve
                                                                 </DropdownMenuItem>
-                                                                <DropdownMenuItem onClick={() => handleUpdateVacancyStatus(v.id, 'Rejected')} className="focus:bg-red-500/10 focus:text-red-500">
+                                                                <DropdownMenuItem onClick={() => handleUpdateVacancyStatus(v.id, 'Rejected')} className="focus:bg-red-500/10 focus:text-red-500 font-bold text-xs">
                                                                     <XCircle className="mr-2 h-4 w-4" /> Reject
                                                                 </DropdownMenuItem>
-                                                                <DropdownMenuItem onClick={() => { setSelectedVacancy(v); setIsVacancyDialogOpen(true); }}>
-                                                                    <Edit className="mr-2 h-4 w-4" /> Edit
+                                                                <DropdownMenuItem onClick={() => { setSelectedVacancy(v); setIsVacancyDialogOpen(true); }} className="font-bold text-xs">
+                                                                    <Edit className="mr-2 h-4 w-4" /> Edit Details
                                                                 </DropdownMenuItem>
                                                                 <DropdownMenuSeparator className="bg-white/5" />
-                                                                <DropdownMenuItem onClick={() => handleDeleteVacancy(v.id)} className="text-red-500 focus:text-red-500 focus:bg-red-500/10">
-                                                                    <Trash2 className="mr-2 h-4 w-4" /> Delete
+                                                                <DropdownMenuItem onClick={() => handleDeleteVacancy(v.id)} className="text-red-500 focus:text-red-500 focus:bg-red-500/10 font-bold text-xs">
+                                                                    <Trash2 className="mr-2 h-4 w-4" /> Delete Job
                                                                 </DropdownMenuItem>
                                                             </DropdownMenuContent>
                                                         </DropdownMenu>

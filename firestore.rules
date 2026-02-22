@@ -81,7 +81,6 @@ service cloud.firestore {
     }
     
     match /vacancies/{vacancyId} {
-      // allow read, list: if true; // Inherited from Global Read Access
       allow create, update, delete: if isSuperAdmin();
     }
     
