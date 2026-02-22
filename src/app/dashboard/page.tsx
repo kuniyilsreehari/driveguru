@@ -1,12 +1,13 @@
+
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { signOut } from 'firebase/auth';
 import { doc, collection, serverTimestamp, orderBy, query, where } from 'firebase/firestore';
 import { useUser, useAuth, useFirestore, useDoc, useMemoFirebase, updateDocumentNonBlocking, addDocumentNonBlocking, useCollection } from '@/firebase';
 import { Button } from '@/components/ui/button';
-import { LogOut, Loader, Edit, UserCheck, XCircle, Crown, Sparkles, User as UserIcon, Check, ShieldCheck, Link as LinkIcon, Rss, Settings, Users, MessageSquare } from 'lucide-react';
+import { LogOut, Loader, Edit, UserCheck, XCircle, Crown, Sparkles, User as UserIcon, Check, ShieldCheck, Link as LinkIcon, Rss, Settings, Users, MessageSquare, Briefcase, Info, Book, Pen } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { EditProfileForm } from '@/components/auth/edit-profile-form';
@@ -23,6 +24,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { UserList } from '@/components/user-list';
+import { generateAboutMe } from '@/ai/flows/generate-about-me-flow';
+import { suggestSkills } from '@/ai/flows/suggest-skills-flow';
 
 type ExpertUserProfile = {
     id: string;
@@ -37,6 +40,9 @@ type ExpertUserProfile = {
     referralCode?: string;
     referralPoints?: number;
     following?: string[];
+    profession?: string;
+    qualification?: string;
+    skills?: string;
 };
 
 const postFormSchema = z.object({
@@ -93,9 +99,16 @@ export default function ExpertDashboardPage() {
   const { toast } = useToast();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isSubmittingPost, setIsSubmittingPost] = useState(false);
+  const [isGeneratingBio, setIsGeneratingBio] = useState(false);
 
   const userDocRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
   const { data: userProfile, isLoading: isProfileLoading } = useDoc<ExpertUserProfile>(userDocRef);
+
+  useEffect(() => {
+    if (!isUserLoading && !isProfileLoading && (!user || !userProfile)) {
+      router.push('/login');
+    }
+  }, [user, userProfile, isUserLoading, isProfileLoading, router]);
 
   const postForm = useForm<z.infer<typeof postFormSchema>>({
     resolver: zodResolver(postFormSchema),
@@ -104,10 +117,32 @@ export default function ExpertDashboardPage() {
 
   const profileCompletion = useMemo(() => {
     if (!userProfile) return 0;
-    const fields = [userProfile.firstName, userProfile.photoUrl, userProfile.referralCode];
+    const fields = [userProfile.firstName, userProfile.photoUrl, userProfile.profession, userProfile.skills, userProfile.qualification];
     const filled = fields.filter(f => !!f).length;
     return Math.round((filled / fields.length) * 100);
   }, [userProfile]);
+
+  async function handleAIGenerateBio() {
+    if (!userProfile) return;
+    setIsGeneratingBio(true);
+    try {
+      const result = await generateAboutMe({
+        firstName: userProfile.firstName,
+        role: userProfile.role,
+        skills: userProfile.skills || '',
+        yearsOfExperience: 5, // Mock value if missing
+        qualification: userProfile.qualification || '',
+      });
+      if (result.aboutMe) {
+        await updateDocumentNonBlocking(userDocRef!, { aboutMe: result.aboutMe });
+        toast({ title: "AI Bio Generated", description: "Your profile has been updated." });
+      }
+    } catch (e) {
+      toast({ variant: "destructive", title: "AI Generation Failed" });
+    } finally {
+      setIsGeneratingBio(false);
+    }
+  }
 
   async function onPostSubmit(values: z.infer<typeof postFormSchema>) {
     if (!firestore || !user) return;
@@ -128,7 +163,7 @@ export default function ExpertDashboardPage() {
   }
 
   if (isUserLoading || isProfileLoading) return <div className="flex h-screen items-center justify-center"><Loader className="animate-spin" /></div>;
-  if (!user || !userProfile) { router.push('/login'); return null; }
+  if (!user || !userProfile) return null;
 
   return (
     <div className="min-h-screen bg-background p-4 sm:p-8">
@@ -157,7 +192,15 @@ export default function ExpertDashboardPage() {
                     <Badge variant="secondary">{userProfile.tier || 'Standard'}</Badge>
                   </div>
                 </div>
-                <Button variant="outline" onClick={() => setIsEditDialogOpen(true)}><Edit className="mr-2 h-4 w-4" /> Edit Profile</Button>
+                <div className="flex flex-col gap-2">
+                  <Button variant="outline" onClick={() => setIsEditDialogOpen(true)}><Edit className="mr-2 h-4 w-4" /> Edit Profile</Button>
+                  {(userProfile.tier === 'Premier' || userProfile.tier === 'Super Premier') && (
+                    <Button variant="secondary" size="sm" onClick={handleAIGenerateBio} disabled={isGeneratingBio}>
+                      {isGeneratingBio ? <Loader className="h-3 w-3 animate-spin mr-2" /> : <Sparkles className="h-3 w-3 mr-2" />}
+                      AI Bio Builder
+                    </Button>
+                  )}
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
@@ -213,7 +256,7 @@ export default function ExpertDashboardPage() {
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="max-w-3xl overflow-y-auto max-h-[90vh]">
           <DialogHeader><DialogTitle>Professional Profile</DialogTitle></DialogHeader>
-          <EditProfileForm userProfile={userProfile} onSuccess={() => setIsEditDialogOpen(false)} />
+          <EditProfileForm userProfile={userProfile as any} onSuccess={() => setIsEditDialogOpen(false)} />
         </DialogContent>
       </Dialog>
     </div>

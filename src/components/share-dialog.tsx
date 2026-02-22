@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Button } from '@/components/ui/button';
@@ -77,8 +78,8 @@ export function ShareDialog({ shareDetails, children }: ShareDialogProps) {
                 await handleCopyLink();
             }
         } catch (err: any) {
-            // Gracefully handle permission denials or restricted environments
-            console.warn("System share failed, falling back to clipboard:", err.name);
+            // Gracefully fallback to clipboard if permission denied or error
+            console.warn("Native share failed, falling back to clipboard:", err.message);
             await handleCopyLink();
         }
     };
