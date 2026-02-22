@@ -20,6 +20,7 @@ import { Icons } from '@/components/icons';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription as UiDialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { FollowerStats } from '@/components/follower-stats';
 import { ShareDialog } from '@/components/share-dialog';
+import { ImageLightbox } from '@/components/image-lightbox';
 import { cn } from '@/lib/utils';
 
 
@@ -322,10 +323,12 @@ function ExpertProfileContent() {
                 <Card ref={profileCardRef}>
                     <CardHeader>
                         <div className="flex flex-col sm:flex-row items-start gap-6">
-                            <Avatar className="h-32 w-32 text-5xl">
-                                <AvatarImage src={expert.photoUrl} alt={displayName} />
-                                <AvatarFallback>{getInitials(expert.firstName, expert.lastName)}</AvatarFallback>
-                            </Avatar>
+                            <ImageLightbox imageUrl={expert.photoUrl || ''} altText={displayName}>
+                                <Avatar className="h-32 w-32 text-5xl transition-all hover:scale-105 hover:opacity-90 active:scale-95 shadow-lg">
+                                    <AvatarImage src={expert.photoUrl} alt={displayName} />
+                                    <AvatarFallback>{getInitials(expert.firstName, expert.lastName)}</AvatarFallback>
+                                </Avatar>
+                            </ImageLightbox>
                             <div className="flex-1">
                                 <div className="flex items-center justify-between mb-1">
                                     <div className="flex items-center gap-3">

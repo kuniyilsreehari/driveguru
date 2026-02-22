@@ -7,24 +7,34 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import Image from 'next/image';
+import { cn } from '@/lib/utils';
 
 interface ImageLightboxProps {
   imageUrl: string;
   altText: string;
   children: React.ReactNode;
+  className?: string;
 }
 
-export function ImageLightbox({ imageUrl, altText, children }: ImageLightboxProps) {
+export function ImageLightbox({ imageUrl, altText, children, className }: ImageLightboxProps) {
+  if (!imageUrl) return <>{children}</>;
+
   return (
     <Dialog>
-      <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="p-0 border-0 max-w-4xl bg-transparent shadow-none">
-        <div className="relative aspect-video w-full h-auto">
+      <DialogTrigger asChild>
+        <div className={cn("cursor-pointer outline-none", className)}>
+          {children}
+        </div>
+      </DialogTrigger>
+      <DialogContent className="p-0 border-0 max-w-3xl bg-transparent shadow-none flex items-center justify-center overflow-hidden sm:rounded-3xl">
+        <div className="relative w-full h-full max-h-[85vh] aspect-square sm:aspect-auto flex items-center justify-center">
             <Image
                 src={imageUrl}
                 alt={altText}
-                fill
-                className="object-contain"
+                width={800}
+                height={800}
+                className="object-contain w-auto h-auto max-w-full max-h-[85vh] rounded-xl shadow-2xl"
+                priority
             />
         </div>
       </DialogContent>
