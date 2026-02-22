@@ -400,6 +400,29 @@ export default function AdminDashboardPage() {
     }
   };
 
+  const handleToggleVacancyVerified = async (vacancy: Vacancy) => {
+    try {
+        await updateDocumentNonBlocking(doc(firestore, 'vacancies', vacancy.id), {
+            isCompanyVerified: !vacancy.isCompanyVerified
+        });
+        toast({ title: `Company ${!vacancy.isCompanyVerified ? 'Verified' : 'Unverified'}` });
+    } catch (e) {
+        toast({ variant: "destructive", title: "Action Failed" });
+    }
+  };
+
+  const handleToggleVacancyPremier = async (vacancy: Vacancy) => {
+    const newTier = vacancy.companyTier === 'Premier' ? 'Standard' : 'Premier';
+    try {
+        await updateDocumentNonBlocking(doc(firestore, 'vacancies', vacancy.id), {
+            companyTier: newTier
+        });
+        toast({ title: `Tier set to ${newTier}` });
+    } catch (e) {
+        toast({ variant: "destructive", title: "Action Failed" });
+    }
+  };
+
   if (isUserLoading || isRoleLoading) return <div className="flex h-screen items-center justify-center"><Loader className="animate-spin" /></div>;
   if (!isSuperAdmin) return <div className="flex h-screen items-center justify-center">Access Denied.</div>;
 
@@ -692,17 +715,17 @@ export default function AdminDashboardPage() {
                                                         <div className="text-sm font-medium text-white">{v.companyName}</div>
                                                         <div className="flex items-center gap-1">
                                                             {v.isCompanyVerified && (
-                                                                <Badge variant="outline" className="text-[8px] h-4 px-1.5 border-green-500/30 bg-green-500/10 text-green-500">
+                                                                <Badge variant="outline" className="text-[8px] rounded-full border-green-500/30 bg-green-500/10 text-green-500 font-bold px-2 py-0">
                                                                     <UserCheck className="h-2 w-2 mr-1" /> Verified
                                                                 </Badge>
                                                             )}
                                                             {v.companyTier === 'Premier' && (
-                                                                <Badge variant="outline" className="text-[8px] h-4 px-1.5 border-purple-500/30 bg-purple-500/10 text-purple-500">
+                                                                <Badge variant="outline" className="text-[8px] rounded-full border-purple-500/30 bg-purple-500/10 text-purple-500 font-bold px-2 py-0">
                                                                     <Crown className="h-2 w-2 mr-1" /> Premier
                                                                 </Badge>
                                                             )}
                                                             {v.companyTier === 'Super Premier' && (
-                                                                <Badge variant="outline" className="text-[8px] h-4 px-1.5 border-blue-500/30 bg-blue-500/10 text-blue-500">
+                                                                <Badge variant="outline" className="text-[8px] rounded-full border-blue-500/30 bg-blue-500/10 text-blue-500 font-bold px-2 py-0">
                                                                     <Sparkles className="h-2 w-2 mr-1" /> Super Premier
                                                                 </Badge>
                                                             )}
@@ -711,9 +734,9 @@ export default function AdminDashboardPage() {
                                                 </TableCell>
                                                 <TableCell className="text-sm text-muted-foreground">{v.location}</TableCell>
                                                 <TableCell>
-                                                    <Badge variant="secondary" className="bg-[#1a1c23] text-white text-[10px] font-bold uppercase">{v.employmentType}</Badge>
+                                                    <Badge variant="secondary" className="bg-[#1a1c23] text-white text-[10px] font-bold uppercase rounded-full px-3">{v.employmentType}</Badge>
                                                 </TableCell>
-                                                <TableCell className="text-[10px] text-muted-foreground">
+                                                <TableCell className="text-[10px] text-muted-foreground font-medium">
                                                     {v.postedAt ? formatDistanceToNow(v.postedAt.toDate(), { addSuffix: true }) : '-'}
                                                 </TableCell>
                                                 <TableCell className="text-right">
@@ -721,11 +744,17 @@ export default function AdminDashboardPage() {
                                                         <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="rounded-xl hover:bg-white/5 text-muted-foreground"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
                                                         <DropdownMenuContent align="end" className="rounded-xl border-2 border-white/10 bg-[#1a1c23] text-white">
                                                             <DropdownMenuItem onClick={() => { setSelectedVacancy(v); setIsVacancyFormOpen(true); }} className="rounded-lg focus:bg-white/5 focus:text-white">
-                                                                <Edit className="mr-2 h-4 w-4" /> Edit Vacancy
+                                                                <Edit className="mr-2 h-4 w-4" /> Edit
+                                                            </DropdownMenuItem>
+                                                            <DropdownMenuItem onClick={() => handleToggleVacancyVerified(v)} className="rounded-lg focus:bg-white/5 focus:text-white">
+                                                                <UserCheck className="mr-2 h-4 w-4" /> Toggle Verified
+                                                            </DropdownMenuItem>
+                                                            <DropdownMenuItem onClick={() => handleToggleVacancyPremier(v)} className="rounded-lg focus:bg-white/5 focus:text-white">
+                                                                <Crown className="mr-2 h-4 w-4" /> Toggle Premier
                                                             </DropdownMenuItem>
                                                             <DropdownMenuSeparator className="bg-white/5" />
                                                             <DropdownMenuItem onClick={() => { setSelectedVacancy(v); setIsVacancyDeleteDialogOpen(true); }} className="text-red-500 focus:text-red-500 rounded-lg focus:bg-red-500/5">
-                                                                <Trash2 className="mr-2 h-4 w-4" /> Delete Vacancy
+                                                                <Trash2 className="mr-2 h-4 w-4" /> Delete
                                                             </DropdownMenuItem>
                                                         </DropdownMenuContent>
                                                     </DropdownMenu>
