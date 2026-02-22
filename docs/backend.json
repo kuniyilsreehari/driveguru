@@ -148,7 +148,17 @@
         },
         "photoUrl": {
           "type": "string",
-          "description": "URL of the user's profile photo.",
+          "description": "URL of the user's primary profile photo.",
+          "format": "uri"
+        },
+        "photoUrl2": {
+          "type": "string",
+          "description": "URL of the user's second profile photo.",
+          "format": "uri"
+        },
+        "photoUrl3": {
+          "type": "string",
+          "description": "URL of the user's third profile photo.",
           "format": "uri"
         },
         "linkedinUrl": {

@@ -6,7 +6,7 @@ import { useState, useEffect, useRef } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { User as UserIcon, Mail, Lock, Eye, EyeOff, Briefcase, MapPin, Phone, LocateIcon, Loader2, Building, Home, ArrowRight, MessageSquare, Gift, PenSquare, Factory, Shield, Save, Linkedin, Github, Globe, Twitter, Type, List, Youtube } from "lucide-react";
+import { User as UserIcon, Mail, Lock, Eye, EyeOff, Briefcase, MapPin, Phone, LocateIcon, Loader2, Building, Home, ArrowRight, MessageSquare, Gift, PenSquare, Factory, Shield, Save, Linkedin, Github, Globe, Twitter, Type, List, Youtube, Image as ImageIcon, Upload } from "lucide-react";
 import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, getAdditionalUserInfo, RecaptchaVerifier, signInWithPhoneNumber, EmailAuthProvider, linkWithCredential } from 'firebase/auth';
 import { doc, serverTimestamp, collection, query, where, getDocs, limit } from 'firebase/firestore';
 import { getStorage, ref as storageRef, uploadString, getDownloadURL } from "firebase/storage";
@@ -41,7 +41,6 @@ import { Checkbox } from "../ui/checkbox";
 import { generateAboutMe } from "@/ai/flows/generate-about-me-flow";
 import { suggestSkills } from "@/ai/flows/suggest-skills-flow";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
-import { Upload } from "lucide-react";
 import { Separator } from "../ui/separator";
 import { Switch } from "../ui/switch";
 import Link from "next/link";
@@ -59,6 +58,8 @@ const formSchema = z.object({
   firstName: z.string().min(1, { message: "First name is required." }),
   lastName: z.string().min(1, { message: "Last name is required." }),
   photoUrl: z.string().optional().or(z.literal('')),
+  photoUrl2: z.string().optional().or(z.literal('')),
+  photoUrl3: z.string().optional().or(z.literal('')),
   state: z.string().optional(),
   city: z.string().optional(),
   pincode: z.string().optional(),
@@ -105,6 +106,8 @@ type ExpertUserProfile = {
     email: string | null;
     role: string;
     photoUrl?: string;
+    photoUrl2?: string;
+    photoUrl3?: string;
     state?: string;
     city?: string;
     pincode?: string;
@@ -157,8 +160,10 @@ export function EditProfileForm({ userProfile, onSuccess, isAdmin = false }: Edi
   const { user } = useUser();
   const [isGeneratingAboutMe, setIsGeneratingAboutMe] = useState(false);
   const [isSuggestingSkills, setIsSuggestingSkills] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
-  const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const [uploadingSlot, setUploadingSlot] = useState<number | null>(null);
+  const fileInputRef1 = React.useRef<HTMLInputElement>(null);
+  const fileInputRef2 = React.useRef<HTMLInputElement>(null);
+  const fileInputRef3 = React.useRef<HTMLInputElement>(null);
   const [isDetectingLocation, setIsDetectingLocation] = useState(false);
   const [isFetchingPincode, setIsFetchingPincode] = useState(false);
   const [isPremiumDialogOpen, setIsPremiumDialogOpen] = useState(false);
@@ -186,9 +191,7 @@ export function EditProfileForm({ userProfile, onSuccess, isAdmin = false }: Edi
         return { countryCode, phoneNumber };
       }
     }
-    
-    // Fallback if format is unexpected
-    return { countryCode, phoneNumber };
+    return { countryCode: "+91", phoneNumber: fullNumber };
   }
 
   const { countryCode, phoneNumber } = extractPhoneNumberParts(userProfile.phoneNumber);
@@ -199,6 +202,8 @@ export function EditProfileForm({ userProfile, onSuccess, isAdmin = false }: Edi
       firstName: userProfile.firstName || "",
       lastName: userProfile.lastName || "",
       photoUrl: userProfile.photoUrl || "",
+      photoUrl2: userProfile.photoUrl2 || "",
+      photoUrl3: userProfile.photoUrl3 || "",
       state: userProfile.state || "",
       city: userProfile.city || "",
       pincode: userProfile.pincode || "",
@@ -244,6 +249,8 @@ export function EditProfileForm({ userProfile, onSuccess, isAdmin = false }: Edi
 
   const selectedRole = form.watch("role");
   const photoUrl = form.watch("photoUrl");
+  const photoUrl2 = form.watch("photoUrl2");
+  const photoUrl3 = form.watch("photoUrl3");
   const pincodeValue = form.watch("pincode");
 
   useEffect(() => {
@@ -419,10 +426,10 @@ export function EditProfileForm({ userProfile, onSuccess, isAdmin = false }: Edi
     }
   };
 
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>, slot: number) => {
     const file = event.target.files?.[0];
     if (file && user && auth) {
-      setIsUploading(true);
+      setUploadingSlot(slot);
       const reader = new FileReader();
       reader.onload = async (e) => {
         const dataUrl = e.target?.result as string;
@@ -430,15 +437,16 @@ export function EditProfileForm({ userProfile, onSuccess, isAdmin = false }: Edi
         try {
           const storage = getStorage(auth.app);
           const fileExtension = file.type.split('/')[1] || 'jpg';
-          const filePath = `profile-photos/${user.uid}/profile.${fileExtension}`;
+          const filePath = `profile-photos/${user.uid}/profile${slot}.${fileExtension}`;
           const imageRef = storageRef(storage, filePath);
 
           await uploadString(imageRef, dataUrl, 'data_url');
-          const photoUrl = await getDownloadURL(imageRef);
+          const finalUrl = await getDownloadURL(imageRef);
+          const fieldName = slot === 1 ? 'photoUrl' : slot === 2 ? 'photoUrl2' : 'photoUrl3';
           
-          form.setValue('photoUrl', `${photoUrl}?t=${new Date().getTime()}`, { shouldValidate: true });
+          form.setValue(fieldName as any, `${finalUrl}?t=${new Date().getTime()}`, { shouldValidate: true });
           toast({
-            title: "Photo Uploaded!",
+            title: `Photo ${slot} Uploaded!`,
             description: "Your new photo is ready. Click 'Save Changes' to confirm.",
           });
         } catch (error) {
@@ -449,11 +457,11 @@ export function EditProfileForm({ userProfile, onSuccess, isAdmin = false }: Edi
             description: "Could not upload your photo. Please try again.",
           });
         } finally {
-          setIsUploading(false);
+          setUploadingSlot(null);
         }
       };
       reader.onerror = () => {
-        setIsUploading(false);
+        setUploadingSlot(null);
         toast({
           variant: "destructive",
           title: "Upload Failed",
@@ -548,33 +556,47 @@ export function EditProfileForm({ userProfile, onSuccess, isAdmin = false }: Edi
     <>
     <div className="space-y-6">
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           
-          <div className="flex items-center gap-4">
-              <Avatar className="h-20 w-20 cursor-pointer" onClick={() => fileInputRef.current?.click()}>
-                <AvatarImage src={photoUrl ? `${photoUrl}` : undefined} />
-                <AvatarFallback className="text-[10px] text-center px-2 font-bold leading-tight">click here to chanage image</AvatarFallback>
-              </Avatar>
-              <div className="flex-grow">
-                  <FormLabel>Profile Photo</FormLabel>
-                  <div className="flex items-center gap-2 mt-2">
-                      <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()} disabled={isUploading}>
-                          {isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
-                          {isUploading ? 'Uploading...' : 'Upload Image'}
-                      </Button>
-                      <p className="text-xs text-muted-foreground">PNG, JPG, GIF.</p>
-                      <FormControl>
-                          <Input 
-                              type="file"
-                              className="hidden"
-                              ref={fileInputRef}
-                              onChange={handleImageUpload}
-                              accept="image/png, image/jpeg, image/gif"
-                          />
-                      </FormControl>
-                  </div>
+          <div className="space-y-4">
+              <FormLabel className="text-lg font-black uppercase tracking-widest text-primary">Triple Image Profile Slots</FormLabel>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                  {[1, 2, 3].map((slot) => {
+                      const currentPhoto = slot === 1 ? photoUrl : slot === 2 ? photoUrl2 : photoUrl3;
+                      const ref = slot === 1 ? fileInputRef1 : slot === 2 ? fileInputRef2 : fileInputRef3;
+                      return (
+                          <div key={slot} className="flex flex-col items-center gap-3">
+                              <Avatar className="h-32 w-32 cursor-pointer border-2 border-dashed border-white/10 hover:border-primary/50 transition-all" onClick={() => ref.current?.click()}>
+                                <AvatarImage src={currentPhoto ? `${currentPhoto}` : undefined} className="object-cover" />
+                                <AvatarFallback className="text-[10px] text-center px-4 font-bold leading-tight bg-white/5">
+                                    {uploadingSlot === slot ? (
+                                        <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                                    ) : (
+                                        <>Slot {slot}<br/>Click to add</>
+                                    )}
+                                </AvatarFallback>
+                              </Avatar>
+                              <Button type="button" variant="outline" size="sm" className="w-full h-9 rounded-xl border-white/10 bg-white/5 hover:bg-white/10" onClick={() => ref.current?.click()} disabled={uploadingSlot !== null}>
+                                  {uploadingSlot === slot ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4 mr-2" />}
+                                  {slot === 1 ? 'Primary' : `Photo ${slot}`}
+                              </Button>
+                              <FormControl>
+                                  <Input 
+                                      type="file"
+                                      className="hidden"
+                                      ref={ref}
+                                      onChange={(e) => handleImageUpload(e, slot)}
+                                      accept="image/png, image/jpeg, image/gif"
+                                  />
+                              </FormControl>
+                          </div>
+                      );
+                  })}
               </div>
+              <p className="text-[10px] text-muted-foreground text-center italic">Experts with multiple high-quality photos receive 3x more inquiries.</p>
           </div>
+
+          <Separator className="bg-white/5" />
 
           <FormField
             control={form.control}
@@ -1243,22 +1265,22 @@ export function EditProfileForm({ userProfile, onSuccess, isAdmin = false }: Edi
           </div>
 
 
-          <Button type="submit" className="w-full" disabled={form.formState.isSubmitting || isUploading}>
-            <Save className="mr-2 h-4 w-4" />
-            {form.formState.isSubmitting || isUploading ? 'Saving...' : 'Save Changes'}
+          <Button type="submit" className="w-full h-12 rounded-xl bg-orange-500 hover:bg-orange-600 font-black text-lg shadow-lg shadow-orange-500/20" disabled={form.formState.isSubmitting || uploadingSlot !== null}>
+            {form.formState.isSubmitting || uploadingSlot !== null ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Save className="mr-2 h-5 w-5" />}
+            {form.formState.isSubmitting || uploadingSlot !== null ? 'Saving...' : 'Save All Profile Changes'}
           </Button>
         </form>
       </Form>
 
-      <Separator className="my-6" />
+      <Separator className="bg-white/5" />
 
       {!userProfile.email && (
-        <Card>
-          <CardHeader>
+        <Card className="bg-white/5 border-none rounded-2xl overflow-hidden">
+          <CardHeader className="bg-white/5 pb-6">
             <CardTitle>Account Security</CardTitle>
             <CardDescription>Link an email and password to your account for easier login and better security.</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-6">
             <Form {...linkForm}>
               <form onSubmit={linkForm.handleSubmit(handleLinkEmail)} className="space-y-4">
                 <FormField
@@ -1306,26 +1328,26 @@ export function EditProfileForm({ userProfile, onSuccess, isAdmin = false }: Edi
 
     </div>
     <Dialog open={isPremiumDialogOpen} onOpenChange={setIsPremiumDialogOpen}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Premium Feature Locked</DialogTitle>
-          <UiDialogDescription>
+      <DialogContent className="rounded-[2.5rem] border-none bg-[#1a1c23]">
+        <DialogHeader className="items-center text-center">
+          <div className="p-4 bg-orange-500/10 rounded-full w-fit mb-4">
+            <Sparkles className="h-10 w-10 text-orange-500" />
+          </div>
+          <DialogTitle className="text-3xl font-black">Premium AI Feature</DialogTitle>
+          <UiDialogDescription className="text-lg text-muted-foreground font-medium pt-2">
             AI-powered suggestions are only available for Premier and Super Premier members.
           </UiDialogDescription>
         </DialogHeader>
-        <div className="text-center">
-            <div className="mx-auto w-fit rounded-full p-3 mb-2 bg-primary/10">
-              <Lock className="h-8 w-8 text-primary" />
-            </div>
-            <p className="text-center text-sm text-muted-foreground">
+        <div className="text-center space-y-4 py-4 px-2">
+            <p className="text-white/70 font-medium">
               Upgrade your plan to unlock this and many other powerful features to enhance your profile and attract more clients.
             </p>
         </div>
-        <DialogFooter className="flex-col gap-2 pt-4">
-            <Button asChild className="w-full">
-                <Link href="/dashboard#plan-management">Upgrade Your Plan</Link>
+        <DialogFooter className="flex-col gap-3 pt-4 sm:flex-col">
+            <Button asChild className="w-full h-14 rounded-2xl bg-orange-500 hover:bg-orange-600 font-black text-lg">
+                <Link href="/dashboard#plans">View Premium Plans</Link>
             </Button>
-            <Button variant="outline" className="w-full" onClick={() => setIsPremiumDialogOpen(false)}>
+            <Button variant="ghost" className="w-full h-12 rounded-xl text-muted-foreground hover:text-white hover:bg-white/5 font-bold" onClick={() => setIsPremiumDialogOpen(false)}>
                 Maybe Later
             </Button>
         </DialogFooter>
