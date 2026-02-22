@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Suspense, useState, useEffect, useMemo } from 'react';
@@ -93,6 +94,7 @@ function HomePageContent() {
         return query(
             collection(firestore, 'users'), 
             where('tier', 'in', ['Premier', 'Super Premier']),
+            where('verified', '==', true),
             limit(20)
         );
     }, [firestore]);
@@ -115,6 +117,7 @@ function HomePageContent() {
         return query(
             collection(firestore, 'users'), 
             where('tier', '==', 'Super Premier'),
+            where('verified', '==', true),
             limit(featuredExpertsLimit)
         );
     }, [firestore, featuredExpertsLimit]);

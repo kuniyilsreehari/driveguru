@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
@@ -33,7 +34,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 
-type ExpertUserProfile = {
+type ExpertUserProfile {
     id: string;
     firstName: string;
     lastName: string;
@@ -119,7 +120,7 @@ export default function ExpertDashboardPage() {
 
   const suggestionsQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
-    return query(collection(firestore, 'users'), limit(20));
+    return query(collection(firestore, 'users'), where('verified', '==', true), limit(20));
   }, [firestore, user]);
   const { data: allUsers } = useCollection<ExpertUserProfile>(suggestionsQuery);
 
@@ -401,7 +402,7 @@ export default function ExpertDashboardPage() {
             <Card className="border-none bg-[#24262d] rounded-2xl overflow-hidden shadow-xl">
                 <CardHeader className="bg-white/5 border-b border-white/5 pb-6">
                     <CardTitle className="text-2xl font-black text-white">People You May Know</CardTitle>
-                    <CardDescription className="text-muted-foreground font-medium">Expand your network by following other experts.</CardDescription>
+                    <CardDescription className="text-muted-foreground font-medium">Expand your network by following other verified experts.</CardDescription>
                 </CardHeader>
                 <CardContent className="p-6 space-y-8">
                     <div className="relative group">
@@ -444,7 +445,7 @@ export default function ExpertDashboardPage() {
                             {suggestedExperts.length === 0 && (
                                 <div className="w-full flex flex-col items-center justify-center py-16 bg-white/5 rounded-[2rem] border-4 border-dashed border-white/5">
                                     <Users className="h-16 w-16 text-muted-foreground opacity-10 mb-4" />
-                                    <p className="text-lg text-muted-foreground font-black opacity-40">No suggestions match your search.</p>
+                                    <p className="text-lg text-muted-foreground font-black opacity-40">No verified suggestions match your search.</p>
                                 </div>
                             )}
                         </div>

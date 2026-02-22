@@ -3,7 +3,7 @@
 
 import { Suspense, useMemo } from 'react';
 import Link from 'next/link';
-import { collection, query, where, or } from 'firebase/firestore';
+import { collection, query, where, or, and } from 'firebase/firestore';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { Button } from '@/components/ui/button';
 import { Loader2, ChevronLeft, Award } from 'lucide-react';
@@ -18,6 +18,7 @@ function FeaturedExpertsContent() {
         
         return query(
             collection(firestore, 'users'), 
+            where('verified', '==', true),
             or(
                 where('tier', '==', 'Premier'),
                 where('tier', '==', 'Super Premier')
