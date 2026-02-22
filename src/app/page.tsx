@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Suspense, useState, useEffect, useMemo } from 'react';
@@ -84,9 +85,10 @@ function HomePageContent() {
 
     const topExpertsQuery = useMemoFirebase(() => {
         if (!firestore) return null;
+        // Include both Premier and Super Premier to avoid an empty carousel
         return query(
             collection(firestore, 'users'), 
-            where('tier', '==', 'Super Premier'),
+            where('tier', 'in', ['Premier', 'Super Premier']),
             limit(10)
         );
     }, [firestore]);
@@ -281,7 +283,7 @@ function HomePageContent() {
                 </header>
 
                 <main className="space-y-12">
-                    {/* Top Experts Carousel (Matching provided design) */}
+                    {/* Top Experts Carousel */}
                     <section className="bg-[#24262d] rounded-[2.5rem] p-6 sm:p-8 shadow-2xl">
                         <div className="flex gap-6 overflow-x-auto pb-8 pt-2 scrollbar-hide snap-x px-1">
                             {isLoadingTopExperts ? (
@@ -316,14 +318,18 @@ function HomePageContent() {
                                     </Card>
                                 ))
                             ) : (
-                                <div className="w-full flex flex-col items-center justify-center py-16 opacity-40">
-                                    <Users className="h-16 w-16 mb-4" />
-                                    <p className="font-bold">No experts to show right now.</p>
+                                <div className="w-full flex flex-col items-center justify-center py-16 bg-white/5 rounded-[2rem] border-2 border-dashed border-white/10">
+                                    <Sparkles className="h-16 w-16 text-orange-500/20 mb-4 animate-pulse" />
+                                    <p className="text-xl font-black text-white/40 tracking-tight">Our Premium Network is Growing</p>
+                                    <p className="text-sm text-muted-foreground/60 max-w-xs text-center mt-2 font-medium">Be among the first to showcase your expertise at the top of our platform.</p>
+                                    <Button variant="link" className="mt-4 text-orange-500 font-bold" asChild>
+                                        <Link href="/dashboard#plans">Upgrade Your Plan</Link>
+                                    </Button>
                                 </div>
                             )}
                         </div>
 
-                        {/* Custom Scroll Indicator matching the design */}
+                        {/* Custom Scroll Indicator */}
                         <div className="flex items-center justify-between mt-4 px-2">
                             <Button variant="ghost" size="icon" className="text-muted-foreground/40 hover:text-white hover:bg-white/5 rounded-full h-8 w-8">
                                 <ChevronLeft className="h-6 w-6" />
