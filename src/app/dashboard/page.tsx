@@ -7,7 +7,7 @@ import { signOut } from 'firebase/auth';
 import { doc, collection, serverTimestamp, orderBy, query, where } from 'firebase/firestore';
 import { useUser, useAuth, useFirestore, useDoc, useMemoFirebase, updateDocumentNonBlocking, addDocumentNonBlocking, useCollection } from '@/firebase';
 import { Button } from '@/components/ui/button';
-import { LogOut, Loader, Edit, UserCheck, XCircle, Crown, Sparkles, User as UserIcon, Check, ShieldCheck, Link as LinkIcon, Rss, Settings, Users, MessageSquare, Briefcase, Info, Book, Pen } from 'lucide-react';
+import { LogOut, Loader, Edit, UserCheck, XCircle, Crown, Sparkles, User as UserIcon, Check, ShieldCheck, Link as LinkIcon, Rss, Settings, Users, MessageSquare, Briefcase, Info, Book, Pen, Hash, ArrowRight } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { EditProfileForm } from '@/components/auth/edit-profile-form';
@@ -45,6 +45,12 @@ type ExpertUserProfile = {
     skills?: string;
 };
 
+type Group = {
+    id: string;
+    name: string;
+    members: string[];
+};
+
 const postFormSchema = z.object({
   title: z.string().min(3).max(100),
   content: z.string().min(2).max(1000),
@@ -66,11 +72,11 @@ function PlanManagement({ userProfile }: { userProfile: ExpertUserProfile }) {
                     ))}
                 </ul>
             </CardContent>
-            <CardFooter className="pt-4">
+            <CardFooter className="pt-4 mt-auto">
                 {current ? (
                     <Button variant="outline" disabled className="w-full"><ShieldCheck className="mr-2 h-4 w-4" /> Current Plan</Button>
                 ) : (
-                    <Button asChild className="w-full mt-auto">
+                    <Button asChild className="w-full">
                         <Link href={link || '#'}><ArrowUpCircle className="mr-2 h-4 w-4" /> Upgrade</Link>
                     </Button>
                 )}
@@ -122,6 +128,22 @@ export default function ExpertDashboardPage() {
     return Math.round((filled / fields.length) * 100);
   }, [userProfile]);
 
+  const myGroupsQuery = useMemoFirebase(() => {
+    if (!firestore || !user) return null;
+    return query(collection(firestore, 'groups'), where('members', 'contains', user.uid));
+  }, [firestore, user]);
+  // Fallback for "contains" vs "array-contains" depending on logic, but backend uses arrays
+  const myGroupsArrQuery = useMemoFirebase(() => {
+    if (!firestore || !user) return null;
+    return query(collection(firestore, 'groups'), where('members', 'array-contains', user.uid));
+  }, [firestore, user]);
+  const { data: myGroups, isLoading: isGroupsLoading } = useCollection<Group>(myGroupsArrQuery);
+
+  const followersQuery = useMemoFirebase(() => {
+    if (!firestore || !user) return null;
+    return query(collection(firestore, 'users'), where('following', 'array-contains', user.uid));
+  }, [firestore, user]);
+
   async function handleAIGenerateBio() {
     if (!userProfile) return;
     setIsGeneratingBio(true);
@@ -130,7 +152,7 @@ export default function ExpertDashboardPage() {
         firstName: userProfile.firstName,
         role: userProfile.role,
         skills: userProfile.skills || '',
-        yearsOfExperience: 5, // Mock value if missing
+        yearsOfExperience: 5, 
         qualification: userProfile.qualification || '',
       });
       if (result.aboutMe) {
@@ -175,10 +197,10 @@ export default function ExpertDashboardPage() {
 
         <Tabs defaultValue="overview" className="w-full">
           <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="feed">My Feed</TabsTrigger>
-            <TabsTrigger value="network">Network</TabsTrigger>
-            <TabsTrigger value="plans">Plans</TabsTrigger>
+            <TabsTrigger value="overview">Dashboard</TabsTrigger>
+            <TabsTrigger value="network">My Network</TabsTrigger>
+            <TabsTrigger value="feed">Feed</TabsTrigger>
+            <TabsTrigger value="plans">My Plan</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="mt-6 space-y-6">
@@ -229,20 +251,68 @@ export default function ExpertDashboardPage() {
             </div>
           </TabsContent>
 
+          <TabsContent value="network" className="mt-6 space-y-6">
+            <div className="space-y-1">
+                <h2 className="text-2xl font-bold">My Network</h2>
+                <p className="text-muted-foreground text-sm">Manage your groups and connections.</p>
+            </div>
+            <Tabs defaultValue="my-groups" className="w-full">
+                <TabsList className="grid w-full grid-cols-3 bg-secondary/50">
+                    <TabsTrigger value="my-groups">My Groups</TabsTrigger>
+                    <TabsTrigger value="followers">Followers</TabsTrigger>
+                    <TabsTrigger value="following">Following</TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="my-groups" className="mt-4 space-y-4">
+                    {isGroupsLoading ? (
+                        <div className="flex justify-center p-8"><Loader className="animate-spin" /></div>
+                    ) : myGroups && myGroups.length > 0 ? (
+                        myGroups.map(group => (
+                            <Card key={group.id} className="hover:bg-accent/5 transition-colors cursor-pointer" asChild>
+                                <Link href={`/groups/${group.id}`}>
+                                    <CardContent className="p-4 flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <div className="bg-primary/10 p-2 rounded-lg">
+                                                <Hash className="h-5 w-5 text-primary" />
+                                            </div>
+                                            <div>
+                                                <h4 className="font-bold">{group.name}</h4>
+                                                <p className="text-xs text-muted-foreground">{group.members.length} {group.members.length === 1 ? 'member' : 'members'}</p>
+                                            </div>
+                                        </div>
+                                        <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                                    </CardContent>
+                                </Link>
+                            </Card>
+                        ))
+                    ) : (
+                        <Card className="border-dashed">
+                            <CardContent className="p-8 text-center text-muted-foreground">
+                                <Users className="h-8 w-8 mx-auto mb-2 opacity-20" />
+                                <p>You haven't joined any groups yet.</p>
+                                <Button variant="link" asChild className="mt-2">
+                                    <Link href="/groups">Explore Groups</Link>
+                                </Button>
+                            </CardContent>
+                        </Card>
+                    )}
+                </TabsContent>
+
+                <TabsContent value="followers" className="mt-4">
+                    <UserList userIdsQuery={followersQuery} emptyStateMessage="No one is following you yet. Share your profile to grow your network!" />
+                </TabsContent>
+
+                <TabsContent value="following" className="mt-4">
+                    <UserList userIds={userProfile.following || []} emptyStateMessage="You aren't following any experts yet." />
+                </TabsContent>
+            </Tabs>
+          </TabsContent>
+
           <TabsContent value="feed" className="mt-6">
             <Card>
               <CardHeader><CardTitle>Publish Update</CardTitle><CardDescription>Share your recent work or news with the community.</CardDescription></CardHeader>
               <CardContent>
                 <PostForm form={postForm} onSubmit={onPostSubmit} isSubmitting={isSubmittingPost} />
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="network" className="mt-6">
-            <Card>
-              <CardHeader><CardTitle>Connections</CardTitle></CardHeader>
-              <CardContent>
-                <UserList userIds={userProfile.following || []} emptyStateMessage="You aren't following any experts yet." />
               </CardContent>
             </Card>
           </TabsContent>
