@@ -241,9 +241,9 @@ export default function ExpertDashboardPage() {
           <TabsContent value="overview" className="mt-6 space-y-8">
             <Card className="border-2">
               <CardHeader className="flex flex-col md:flex-row items-start md:items-center gap-6 pb-2">
-                <Avatar className="h-24 w-24 border-4 border-primary/20">
+                <Avatar className="h-24 w-24 border-4 border-primary/20 cursor-pointer" onClick={() => setIsEditDialogOpen(true)}>
                   <AvatarImage src={userProfile.photoUrl} />
-                  <AvatarFallback className="text-2xl">{userProfile.firstName[0]}</AvatarFallback>
+                  <AvatarFallback className="text-[10px] text-center px-2 font-bold leading-tight">click here to chanage image</AvatarFallback>
                 </Avatar>
                 <div className="flex-1 space-y-1">
                   <div className="flex items-center gap-3">

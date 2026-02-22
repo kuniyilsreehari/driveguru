@@ -188,7 +188,7 @@ export function EditProfileForm({ userProfile, onSuccess, isAdmin = false }: Edi
     }
     
     // Fallback if format is unexpected
-    return { countryCode: "+91", phoneNumber: fullNumber };
+    return { countryCode, phoneNumber };
   }
 
   const { countryCode, phoneNumber } = extractPhoneNumberParts(userProfile.phoneNumber);
@@ -223,13 +223,13 @@ export function EditProfileForm({ userProfile, onSuccess, isAdmin = false }: Edi
       aboutMe: userProfile.aboutMe || "",
       aboutYourDream: userProfile.aboutYourDream || "",
       associatedProjectsName: userProfile.associatedProjectsName || "",
-      linkedinUrl: userProfile.linkedinUrl || "",
-      twitterUrl: userProfile.twitterUrl || "",
-      githubUrl: userProfile.githubUrl || "",
       portfolioUrl: userProfile.portfolioUrl || "",
       facebookUrl: userProfile.facebookUrl || "",
       instagramUrl: userProfile.instagramUrl || "",
       youtubeUrl: userProfile.youtubeUrl || "",
+      linkedinUrl: userProfile.linkedinUrl || "",
+      twitterUrl: userProfile.twitterUrl || "",
+      githubUrl: userProfile.githubUrl || "",
     },
   });
 
@@ -551,9 +551,9 @@ export function EditProfileForm({ userProfile, onSuccess, isAdmin = false }: Edi
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
           
           <div className="flex items-center gap-4">
-              <Avatar className="h-20 w-20 text-3xl">
+              <Avatar className="h-20 w-20 cursor-pointer" onClick={() => fileInputRef.current?.click()}>
                 <AvatarImage src={photoUrl ? `${photoUrl}` : undefined} />
-                <AvatarFallback>{getInitials(form.getValues('firstName'), form.getValues('lastName'))}</AvatarFallback>
+                <AvatarFallback className="text-[10px] text-center px-2 font-bold leading-tight">click here to chanage image</AvatarFallback>
               </Avatar>
               <div className="flex-grow">
                   <FormLabel>Profile Photo</FormLabel>
