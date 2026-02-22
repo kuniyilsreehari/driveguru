@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -26,6 +27,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { UserList } from '@/components/user-list';
 import { Separator } from '@/components/ui/separator';
 import { Input } from '@/components/ui/input';
+import { ProfileCompletionWizard } from '@/components/profile-completion-wizard';
 
 type ExpertUserProfile = {
     id: string;
@@ -74,6 +76,7 @@ export default function ExpertDashboardPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isWizardOpen, setIsWizardOpen] = useState(false);
   const [isSubmittingPost, setIsSubmittingPost] = useState(false);
   const [showPostForm, setShowPostForm] = useState(false);
   const [suggestionSearch, setSuggestionSearch] = useState('');
@@ -232,10 +235,12 @@ export default function ExpertDashboardPage() {
                             <AlertCircle className="h-5 w-5 text-primary" />
                             <div>
                                 <p className="font-bold">Complete Your Profile!</p>
-                                <p className="text-sm text-muted-foreground">A complete profile helps you stand out and attract more clients.</p>
+                                <p className="text-sm text-muted-foreground">A complete profile helps you stand out and attract more clients. Click the button below to add your missing details and attract more clients.</p>
                             </div>
                         </div>
-                        <Button onClick={() => setIsEditDialogOpen(true)} className="w-full sm:w-auto">Update Profile</Button>
+                        <Button onClick={() => setIsWizardOpen(true)} className="w-full sm:w-auto">
+                          <Edit className="mr-2 h-4 w-4" /> Update Profile
+                        </Button>
                     </div>
                 )}
 
@@ -263,7 +268,7 @@ export default function ExpertDashboardPage() {
                     <div className="flex items-center gap-3 text-sm">
                         <GraduationCap className="h-4 w-4 text-muted-foreground" />
                         <span className="font-semibold w-24">Qualification:</span>
-                        <span>{userProfile.qualification || 'Not specified'}</span>
+                        <span className={cn(!userProfile.qualification && "text-destructive")}>{userProfile.qualification || 'Not specified'}</span>
                     </div>
                     <div className="flex items-center gap-3 text-sm">
                         <School className="h-4 w-4 text-muted-foreground" />
@@ -287,7 +292,9 @@ export default function ExpertDashboardPage() {
                 <div className="space-y-6">
                     <div>
                         <h4 className="font-bold flex items-center gap-2 mb-2"><Info className="h-4 w-4" /> About Me</h4>
-                        <p className="text-sm text-muted-foreground">{userProfile.aboutMe || 'No information provided.'}</p>
+                        <p className={cn("text-sm", !userProfile.aboutMe ? "text-destructive" : "text-muted-foreground")}>
+                          {userProfile.aboutMe || 'No information provided.'}
+                        </p>
                     </div>
                     <div>
                         <h4 className="font-bold flex items-center gap-2 mb-2"><Pen className="h-4 w-4" /> About My Dream</h4>
@@ -302,7 +309,7 @@ export default function ExpertDashboardPage() {
                         <div className="flex flex-wrap gap-2">
                             {userProfile.skills ? userProfile.skills.split(',').map((s, i) => (
                                 <Badge key={i} variant="secondary">{s.trim()}</Badge>
-                            )) : <span className="text-sm text-muted-foreground">No skills listed.</span>}
+                            )) : <span className="text-sm text-destructive">No skills listed.</span>}
                         </div>
                     </div>
                 </div>
@@ -326,7 +333,7 @@ export default function ExpertDashboardPage() {
                             <Button variant="outline" size="sm" onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/signup?ref=${userProfile.referralCode}`); toast({ title: "Copied!" }); }} className="flex-1">
                                 <LinkIcon className="h-4 w-4 mr-2" /> Copy Link
                             </Button>
-                            <Button variant="outline" size="sm" className="bg-green-600/10 text-green-600 border-green-600/20 hover:bg-green-600 hover:text-white flex-1">
+                            <Button variant="outline" size="sm" className="bg-green-600/10 text-green-600 border-green-600/20 hover:bg-green-600 hover:text-white flex-1" onClick={() => window.open(`https://wa.me/?text=Join me on DriveGuru using my referral code: ${userProfile.referralCode}`, '_blank')}>
                                 <MessageSquare className="h-4 w-4 mr-2" /> WhatsApp
                             </Button>
                         </div>
@@ -478,6 +485,12 @@ export default function ExpertDashboardPage() {
           {userProfile && <EditProfileForm userProfile={userProfile as any} onSuccess={() => setIsEditDialogOpen(false)} />}
         </DialogContent>
       </Dialog>
+
+      <ProfileCompletionWizard 
+        isOpen={isWizardOpen} 
+        onOpenChange={setIsWizardOpen} 
+        userProfile={userProfile} 
+      />
     </div>
   );
 }
