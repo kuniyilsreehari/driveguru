@@ -1,15 +1,16 @@
 
 'use client';
 
-import { Suspense, useState }from 'react';
+import { Suspense, useState } from 'react';
 import Link from 'next/link';
 import { collection, query, orderBy, Timestamp, where } from 'firebase/firestore';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Loader2, Briefcase, ChevronLeft, MapPin, Building, Book, Calendar, Phone, Share2, UserCheck, Crown, Sparkles, AlertTriangle, Users, Copy, Mail, UserX, FileText } from 'lucide-react';
-import { format } from 'date-fns';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Loader2, Briefcase, ChevronLeft, MapPin, Building, Calendar, Phone, Share2, UserCheck, Crown, Sparkles, MoreHorizontal, Mail, Copy, FileText } from 'lucide-react';
+import { formatDistanceToNow } from 'date-fns';
 import {
   Dialog,
   DialogContent,
@@ -23,13 +24,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { ShareDialog } from '@/components/share-dialog';
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion"
-
+import { cn } from '@/lib/utils';
 
 export type Vacancy = {
     id: string;
@@ -50,7 +45,7 @@ export type Vacancy = {
     postedAt: Timestamp;
 };
 
-const ApplyDialog = ({ vacancy }: { vacancy: Vacancy }) => {
+const ApplyDialog = ({ vacancy, children }: { vacancy: Vacancy, children: React.ReactNode }) => {
     const { toast } = useToast();
     const subject = `Application for ${vacancy.title}`;
 
@@ -65,15 +60,13 @@ const ApplyDialog = ({ vacancy }: { vacancy: Vacancy }) => {
     return (
         <Dialog>
             <DialogTrigger asChild>
-                <Button size="sm" className="flex-1 bg-orange-500 hover:bg-orange-600">
-                    <Mail className="mr-2 h-4 w-4" /> Apply Now
-                </Button>
+                {children}
             </DialogTrigger>
             <DialogContent className="sm:max-w-[500px]">
                 <DialogHeader>
                     <DialogTitle>Apply for {vacancy.title}</DialogTitle>
                     <DialogDescription>
-                        To apply, please send your resume and a cover letter to the email address below. You can copy the details to your clipboard.
+                        To apply, please send your resume and a cover letter to the email address below.
                     </DialogDescription>
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
@@ -106,7 +99,6 @@ const ApplyDialog = ({ vacancy }: { vacancy: Vacancy }) => {
     );
 };
 
-
 function VacanciesList() {
     const firestore = useFirestore();
 
@@ -125,7 +117,7 @@ function VacanciesList() {
         return (
             <div className="flex h-64 w-full items-center justify-center">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                <p className="ml-4 text-muted-foreground">Loading vacancies...</p>
+                <p className="ml-4 text-muted-foreground">Loading job board...</p>
             </div>
         );
     }
@@ -140,93 +132,99 @@ function VacanciesList() {
     }
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {vacancies.map(vacancy => {
-                const callLink = `tel:${vacancy.contactPhone}`;
-                const canShowCallButton = vacancy.contactPhone && (vacancy.companyTier === 'Premier' || vacancy.companyTier === 'Super Premier');
-
-                return (
-                    <Card key={vacancy.id} id={vacancy.id} className="flex flex-col">
-                        <CardContent className="p-6 flex flex-col flex-grow">
-                            <div className="flex items-center justify-between mb-4">
-                                <div className="flex items-center gap-2 flex-wrap">
-                                    {vacancy.isImmediate && (
-                                        <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-900/50 dark:text-yellow-300 dark:border-yellow-700/50"><AlertTriangle className="mr-1 h-3 w-3" />Immediate</Badge>
-                                    )}
-                                    {vacancy.isCompanyVerified ? (
-                                        <Badge variant="outline" className="border-green-500 text-green-500"><UserCheck className="mr-1 h-3 w-3" />Verified</Badge>
-                                    ) : (
-                                        <Badge variant="destructive"><UserX className="mr-1 h-3 w-3" />Unverified</Badge>
-                                    )}
-                                    {vacancy.companyTier === 'Premier' && (
-                                        <Badge variant="outline" className="border-purple-500 text-purple-500"><Crown className="mr-1 h-3 w-3" />Premier</Badge>
-                                    )}
-                                    {vacancy.companyTier === 'Super Premier' && (
-                                        <Badge variant="outline" className="border-blue-500 text-blue-500"><Sparkles className="mr-1 h-3 w-3" />Super Premier</Badge>
-                                    )}
-                                </div>
-                                 <ShareDialog shareDetails={{ type: 'vacancy', vacancyId: vacancy.id, vacancyTitle: vacancy.title, companyName: vacancy.companyName }}>
-                                    <Button variant="ghost" size="icon" className="h-8 w-8">
-                                        <Share2 className="h-4 w-4" />
-                                    </Button>
-                                </ShareDialog>
-                            </div>
-                            
-                            <h3 className="text-2xl font-bold">{vacancy.title}</h3>
-                            
-                            <Accordion type="single" collapsible className="w-full mt-2">
-                                <AccordionItem value="item-1">
-                                    <AccordionTrigger className="text-sm hover:no-underline">
-                                        <div className="flex items-center gap-2 text-muted-foreground">
-                                            <FileText className="h-4 w-4" />
-                                            <span>View Job Description</span>
+        <Card className="border-none bg-white rounded-2xl overflow-hidden shadow-sm">
+            <CardHeader className="pb-6 px-8 pt-8 border-b border-slate-100">
+                <div className="flex items-center gap-4">
+                    <div className="bg-white border-2 border-black p-3 rounded-xl shadow-sm">
+                        <Briefcase className="h-6 w-6 text-black" />
+                    </div>
+                    <div>
+                        <CardTitle className="text-3xl font-black text-[#1a1c23] tracking-tight">Active Opportunities</CardTitle>
+                        <CardDescription className="text-muted-foreground text-sm font-medium">Find your next career move with verified companies.</CardDescription>
+                    </div>
+                </div>
+            </CardHeader>
+            <CardContent className="px-0 pb-0">
+                <div className="overflow-x-auto">
+                    <Table>
+                        <TableHeader className="bg-slate-50/50">
+                            <TableRow className="hover:bg-transparent border-b border-slate-100">
+                                <TableHead className="font-bold text-slate-500 text-xs uppercase tracking-wider h-14 pl-8">Title</TableHead>
+                                <TableHead className="font-bold text-slate-500 text-xs uppercase tracking-wider h-14">Company</TableHead>
+                                <TableHead className="font-bold text-slate-500 text-xs uppercase tracking-wider h-14">Location</TableHead>
+                                <TableHead className="font-bold text-slate-500 text-xs uppercase tracking-wider h-14 text-center">Type</TableHead>
+                                <TableHead className="font-bold text-slate-500 text-xs uppercase tracking-wider h-14">Posted</TableHead>
+                                <TableHead className="text-right font-bold text-slate-500 text-xs uppercase tracking-wider h-14 pr-8">Action</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {vacancies.map(vacancy => (
+                                <TableRow key={vacancy.id} className="hover:bg-slate-50/30 transition-colors border-b border-slate-50 h-24">
+                                    <TableCell className="py-4 pl-8">
+                                        <div className="font-bold text-[#1a1c23] text-base">{vacancy.title}</div>
+                                    </TableCell>
+                                    <TableCell className="py-4">
+                                        <div className="space-y-1.5">
+                                            <div className="text-sm font-bold text-[#1a1c23]">{vacancy.companyName}</div>
+                                            <div className="flex items-center gap-2">
+                                                {vacancy.isCompanyVerified && (
+                                                    <Badge variant="outline" className="h-5 px-2 rounded-md border-green-500/30 bg-green-50/50 text-green-600 text-[10px] font-bold flex items-center gap-1">
+                                                        <UserCheck className="h-2.5 w-2.5" /> Verified
+                                                    </Badge>
+                                                )}
+                                                {vacancy.companyTier === 'Premier' && (
+                                                    <Badge variant="outline" className="h-5 px-2 rounded-md border-purple-500/30 bg-purple-50/50 text-purple-600 text-[10px] font-bold flex items-center gap-1">
+                                                        <Crown className="h-2.5 w-2.5" /> Premier
+                                                    </Badge>
+                                                )}
+                                            </div>
                                         </div>
-                                    </AccordionTrigger>
-                                    <AccordionContent>
-                                        <p className="text-sm text-muted-foreground whitespace-pre-wrap">{vacancy.description}</p>
-                                    </AccordionContent>
-                                </AccordionItem>
-                            </Accordion>
-
-                            <div className="space-y-3 text-muted-foreground mt-4 text-sm flex-grow">
-                                <div className="flex items-center gap-3"><Building className="h-4 w-4" /> <span>{vacancy.companyName}</span></div>
-                                <div className="flex items-center gap-3"><Calendar className="h-4 w-4" /> <span>Posted: {vacancy.postedAt ? format(vacancy.postedAt.toDate(), 'PP') : 'just now'}</span></div>
-                                <div className="flex items-center gap-3"><MapPin className="h-4 w-4" /> <span>{vacancy.location}</span></div>
-                                <div className="flex items-center gap-3"><Briefcase className="h-4 w-4" /> <Badge variant="secondary">{vacancy.employmentType}</Badge></div>
-                                <div className="flex items-center gap-3"><Users className="h-4 w-4" /> <span>Positions Available: {vacancy.positionsAvailable}</span></div>
-                            </div>
-
-                            <div className="flex gap-2 mt-6">
-                                <ApplyDialog vacancy={vacancy} />
-                                {canShowCallButton && (
-                                    <Button size="sm" asChild variant="outline" className="flex-1">
-                                        <a href={callLink}><Phone className="mr-2 h-4 w-4"/> Call</a>
-                                    </Button>
-                                )}
-                            </div>
-                        </CardContent>
-                    </Card>
-                )
-            })}
-        </div>
+                                    </TableCell>
+                                    <TableCell className="py-4 text-slate-600 font-medium">
+                                        {vacancy.location}
+                                    </TableCell>
+                                    <TableCell className="text-center py-4">
+                                        <Badge variant="secondary" className="bg-slate-100 text-slate-700 hover:bg-slate-100 rounded-full px-3 py-0.5 text-[11px] font-bold">
+                                            {vacancy.employmentType}
+                                        </Badge>
+                                    </TableCell>
+                                    <TableCell className="py-4 text-slate-500 text-sm">
+                                        {vacancy.postedAt ? formatDistanceToNow(vacancy.postedAt.toDate(), { addSuffix: true }) : 'just now'}
+                                    </TableCell>
+                                    <TableCell className="text-right py-4 pr-8">
+                                        <div className="flex items-center justify-end gap-2">
+                                            <ShareDialog shareDetails={{ type: 'vacancy', vacancyId: vacancy.id, vacancyTitle: vacancy.title, companyName: vacancy.companyName }}>
+                                                <Button variant="ghost" size="icon" className="h-9 w-9 hover:bg-slate-100 text-slate-400">
+                                                    <Share2 className="h-4 w-4" />
+                                                </Button>
+                                            </ShareDialog>
+                                            <ApplyDialog vacancy={vacancy}>
+                                                <Button variant="outline" size="sm" className="h-9 rounded-xl font-bold border-slate-200 text-[#1a1c23] hover:bg-slate-50">
+                                                    Apply
+                                                </Button>
+                                            </ApplyDialog>
+                                        </div>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </div>
+            </CardContent>
+        </Card>
     );
 }
 
 export default function VacanciesPage() {
     return (
-        <div className="min-h-screen bg-background p-4 sm:p-8">
+        <div className="min-h-screen bg-[#f8f9fc] p-4 sm:p-8">
             <div className="mx-auto max-w-6xl">
-                <header className="pb-8 text-center">
-                     <div className="flex items-center justify-center gap-3 mb-4">
-                        <Briefcase className="h-10 w-10 text-primary" />
-                        <h1 className="text-4xl sm:text-5xl font-bold">Job Vacancies</h1>
-                    </div>
-                    <p className="text-muted-foreground">Find your next career opportunity with our trusted companies.</p>
-                </header>
-                <main>
-                     <Button variant="outline" asChild className="mb-6">
+                <header className="pb-8">
+                     <Button variant="outline" asChild className="rounded-xl border-slate-200 bg-white shadow-sm">
                         <Link href="/"><ChevronLeft className="mr-2 h-4 w-4" /> Back to Home</Link>
                     </Button>
+                </header>
+                <main>
                     <Suspense fallback={
                         <div className="flex h-64 w-full items-center justify-center">
                             <Loader2 className="h-8 w-8 animate-spin text-primary" />
