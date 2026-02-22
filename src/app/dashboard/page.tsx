@@ -7,7 +7,7 @@ import { doc, collection, serverTimestamp, orderBy, query, where, limit, arrayUn
 import { useUser, useAuth, useFirestore, useDoc, useMemoFirebase, useCollection } from '@/firebase';
 import { updateDocumentNonBlocking, addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Button } from '@/components/ui/button';
-import { LogOut, Loader, Edit, UserCheck, Crown, Sparkles, User as UserIcon, MessageSquare, Gift, Info, Book, Pen, PlusCircle, MapPin, IndianRupee, Calendar, GraduationCap, School, Building, Home, Share2, Rss, UserPlus, Users, Link as LinkIcon, Search, AlertCircle, Briefcase } from 'lucide-react';
+import { LogOut, Loader, Edit, UserCheck, Crown, Sparkles, User as UserIcon, MessageSquare, Gift, Info, Book, Pen, PlusCircle, MapPin, IndianRupee, Calendar, GraduationCap, School, Building, Home, Share2, Rss, UserPlus, Users, Link as LinkIcon, Search, AlertCircle, Briefcase, Check, CheckCircle, ArrowUpCircle } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { EditProfileForm } from '@/components/auth/edit-profile-form';
@@ -491,29 +491,127 @@ export default function ExpertDashboardPage() {
           </TabsContent>
 
           <TabsContent value="plans" className="mt-6">
-             <Card>
-                <CardHeader>
-                    <CardTitle>Professional Plans</CardTitle>
-                    <CardDescription>Manage your subscription and professional visibility.</CardDescription>
-                </CardHeader>
-                <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div className={cn("p-6 rounded-lg border-2", userProfile.tier === 'Standard' || !userProfile.tier ? "border-primary bg-primary/5" : "bg-secondary/20")}>
-                        <h3 className="text-xl font-bold mb-2">Standard</h3>
-                        <p className="text-sm text-muted-foreground mb-4">Basic marketplace listing.</p>
-                        {(!userProfile.tier || userProfile.tier === 'Standard') && <Badge className="w-full justify-center">Current Plan</Badge>}
-                    </div>
-                    <div className={cn("p-6 rounded-lg border-2", userProfile.tier === 'Premier' ? "border-purple-500 bg-purple-500/5" : "bg-secondary/20")}>
-                        <h3 className="text-xl font-bold mb-2 text-purple-500">Premier</h3>
-                        <p className="text-sm text-muted-foreground mb-4">Enhanced visibility and AI tools.</p>
-                        {userProfile.tier === 'Premier' ? <Badge className="w-full justify-center bg-purple-500">Current Plan</Badge> : <Button variant="outline" className="w-full" asChild><Link href="/payment/premier">Upgrade</Link></Button>}
-                    </div>
-                    <div className={cn("p-6 rounded-lg border-2", userProfile.tier === 'Super Premier' ? "border-blue-500 bg-blue-500/5" : "bg-secondary/20")}>
-                        <h3 className="text-xl font-bold mb-2 text-blue-500">Super Premier</h3>
-                        <p className="text-sm text-muted-foreground mb-4">Top ranking and full platform access.</p>
-                        {userProfile.tier === 'Super Premier' ? <Badge className="w-full justify-center bg-blue-500">Current Plan</Badge> : <Button variant="outline" className="w-full" asChild><Link href="/payment/super-premier">Upgrade</Link></Button>}
-                    </div>
-                </CardContent>
-             </Card>
+            <Card className="border-none bg-[#24262d]">
+              <CardHeader>
+                <CardTitle className="text-2xl font-black">Manage Your Plan</CardTitle>
+                <CardDescription className="text-muted-foreground">
+                  Upgrade your plan to unlock powerful new features and increase your visibility.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6 p-6">
+                {/* Standard Plan */}
+                <div className={cn(
+                  "relative flex flex-col items-center p-8 rounded-2xl border-2 transition-all",
+                  (userProfile.tier === 'Standard' || !userProfile.tier) 
+                    ? "border-orange-500 bg-orange-500/5" 
+                    : "border-white/5 bg-[#1a1c23]"
+                )}>
+                  <div className="bg-white/5 p-4 rounded-full mb-4">
+                    <UserIcon className="h-8 w-8 text-muted-foreground" />
+                  </div>
+                  <h3 className="text-2xl font-black mb-1">Standard</h3>
+                  <p className="text-xs text-muted-foreground mb-6">Your current free plan.</p>
+                  
+                  <ul className="w-full space-y-3 mb-8">
+                    <li className="flex items-center gap-2 text-xs font-medium">
+                      <Check className="h-4 w-4 text-green-500" /> Public profile listing
+                    </li>
+                    <li className="flex items-center gap-2 text-xs font-medium">
+                      <Check className="h-4 w-4 text-green-500" /> Appear in search results
+                    </li>
+                    <li className="flex items-center gap-2 text-xs font-medium">
+                      <Check className="h-4 w-4 text-green-500" /> Earn referral points
+                    </li>
+                  </ul>
+
+                  {(userProfile.tier === 'Standard' || !userProfile.tier) ? (
+                    <Button disabled className="w-full h-12 rounded-xl bg-white/5 text-muted-foreground border-none">
+                      <CheckCircle className="mr-2 h-4 w-4" /> Current Plan
+                    </Button>
+                  ) : (
+                    <Button variant="outline" className="w-full h-12 rounded-xl border-white/10 bg-transparent text-white hover:bg-white/5" asChild>
+                      <Link href="/dashboard">Switch to Standard</Link>
+                    </Button>
+                  )}
+                </div>
+
+                {/* Premier Plan */}
+                <div className={cn(
+                  "relative flex flex-col items-center p-8 rounded-2xl border-2 transition-all",
+                  userProfile.tier === 'Premier' 
+                    ? "border-orange-500 bg-orange-500/5" 
+                    : "border-white/5 bg-[#1a1c23]"
+                )}>
+                  <div className="bg-white/5 p-4 rounded-full mb-4">
+                    <Crown className="h-8 w-8 text-orange-500" />
+                  </div>
+                  <h3 className="text-2xl font-black mb-1">Premier</h3>
+                  <p className="text-xs text-muted-foreground mb-6">Enhanced visibility and features.</p>
+                  
+                  <ul className="w-full space-y-3 mb-8">
+                    <li className="flex items-center gap-2 text-xs font-medium">
+                      <Check className="h-4 w-4 text-green-500" /> Higher search ranking
+                    </li>
+                    <li className="flex items-center gap-2 text-xs font-medium">
+                      <Check className="h-4 w-4 text-green-500" /> Post job vacancies
+                    </li>
+                    <li className="flex items-center gap-2 text-xs font-medium">
+                      <Check className="h-4 w-4 text-green-500" /> AI-powered bio & skill suggestions
+                    </li>
+                  </ul>
+
+                  {userProfile.tier === 'Premier' ? (
+                    <Button disabled className="w-full h-12 rounded-xl bg-white/5 text-muted-foreground border-none">
+                      <CheckCircle className="mr-2 h-4 w-4" /> Current Plan
+                    </Button>
+                  ) : (
+                    <Button className="w-full h-12 rounded-xl bg-orange-500 hover:bg-orange-600 font-bold" asChild>
+                      <Link href="/payment/premier">
+                        <ArrowUpCircle className="mr-2 h-4 w-4" /> Upgrade to Premier
+                      </Link>
+                    </Button>
+                  )}
+                </div>
+
+                {/* Super Premier Plan */}
+                <div className={cn(
+                  "relative flex flex-col items-center p-8 rounded-2xl border-2 transition-all",
+                  userProfile.tier === 'Super Premier' 
+                    ? "border-orange-500 bg-orange-500/5" 
+                    : "border-white/5 bg-[#1a1c23]"
+                )}>
+                  <div className="bg-white/5 p-4 rounded-full mb-4">
+                    <Sparkles className="h-8 w-8 text-orange-500" />
+                  </div>
+                  <h3 className="text-2xl font-black mb-1">Super Premier</h3>
+                  <p className="text-xs text-muted-foreground mb-6">Maximum visibility and tools.</p>
+                  
+                  <ul className="w-full space-y-3 mb-8">
+                    <li className="flex items-center gap-2 text-xs font-medium">
+                      <Check className="h-4 w-4 text-green-500" /> All Premier features
+                    </li>
+                    <li className="flex items-center gap-2 text-xs font-medium">
+                      <Check className="h-4 w-4 text-green-500" /> Top placement in search results
+                    </li>
+                    <li className="flex items-center gap-2 text-xs font-medium">
+                      <Check className="h-4 w-4 text-green-500" /> AI-powered search access
+                    </li>
+                  </ul>
+
+                  {userProfile.tier === 'Super Premier' ? (
+                    <Button disabled className="w-full h-12 rounded-xl bg-white/5 text-muted-foreground border-none">
+                      <CheckCircle className="mr-2 h-4 w-4" /> Current Plan
+                    </Button>
+                  ) : (
+                    <Button className="w-full h-12 rounded-xl bg-orange-500 hover:bg-orange-600 font-bold" asChild>
+                      <Link href="/payment/super-premier">
+                        <ArrowUpCircle className="mr-2 h-4 w-4" /> Upgrade to Super Premier
+                      </Link>
+                    </Button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </div>
