@@ -8,7 +8,7 @@ import { useUser, useFirestore, useDoc, useMemoFirebase, useAuth, useCollection 
 import { updateDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, CheckCircle2, UserCheck, UserX, Crown, Sparkles, User as UserIcon, Settings, Save, Briefcase, Building, MessageSquare, Search, PlusCircle, Mail, Download, ExternalLink, IndianRupee, X, Upload, HardDriveDownload, Megaphone, Phone, MapPinIcon, CreditCard, Key, Gift, Code, List, Grip, ArrowUp, ArrowDown, Rss, UserPlus, Fingerprint, Award, CircleHelp, CheckCircle, FileJson, MapPin } from 'lucide-react';
+import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, CheckCircle2, UserCheck, UserX, Crown, Sparkles, User as UserIcon, Settings, Save, Briefcase, Building, MessageSquare, Search, PlusCircle, Mail, Download, ExternalLink, IndianRupee, X, Upload, HardDriveDownload, Megaphone, Phone, MapPinIcon, CreditCard, Key, Gift, Code, List, Grip, ArrowUp, ArrowDown, Rss, UserPlus, Fingerprint, Award, CircleHelp, CheckCircle, FileJson, MapPin, Clock, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -83,6 +83,19 @@ type ExpertUser = {
     companyName?: string;
 };
 
+type Payment = {
+    id: string;
+    userId: string;
+    plan: 'Premier' | 'Super Premier' | 'Verification';
+    billingCycle: string;
+    amount: number;
+    currency: string;
+    orderId: string;
+    status: 'pending' | 'successful' | 'failed';
+    createdAt: Timestamp;
+    updatedAt: Timestamp;
+};
+
 type AppConfig = {
     featuredExpertsLimit?: number;
     announcementText?: string;
@@ -147,6 +160,9 @@ export default function AdminDashboardPage() {
 
   const vacanciesQuery = useMemoFirebase(() => isSuperAdmin ? query(collection(firestore, 'vacancies'), orderBy('postedAt', 'desc')) : null, [firestore, isSuperAdmin]);
   const { data: vacancies, isLoading: isVacanciesLoading } = useCollection<Vacancy>(vacanciesQuery);
+
+  const paymentsQuery = useMemoFirebase(() => isSuperAdmin ? query(collection(firestore, 'payments'), orderBy('createdAt', 'desc')) : null, [firestore, isSuperAdmin]);
+  const { data: payments, isLoading: isPaymentsLoading } = useCollection<Payment>(paymentsQuery);
 
   const appConfigDocRef = useMemoFirebase(() => doc(firestore, 'app_config', 'homepage'), [firestore]);
   const { data: appConfig } = useDoc<AppConfig>(appConfigDocRef);
@@ -724,10 +740,77 @@ export default function AdminDashboardPage() {
                 </TabsContent>
 
                 <TabsContent value="payments">
-                    <Card className="p-12 text-center border-dashed border-white/10 bg-transparent">
-                        <CreditCard className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                        <h3 className="text-lg font-bold">Payment Management</h3>
-                        <p className="text-muted-foreground">Financial oversight and ledger controls are under development.</p>
+                    <Card className="border-none bg-[#24262d] rounded-2xl overflow-hidden">
+                        <CardHeader className="bg-white/5 pb-6 border-b border-white/5">
+                            <div className="flex items-center gap-3">
+                                <CreditCard className="h-6 w-6 text-orange-500" />
+                                <div>
+                                    <CardTitle className="text-2xl font-black">Payment Management</CardTitle>
+                                    <CardDescription className="text-muted-foreground">View and manage all transactions.</CardDescription>
+                                </div>
+                            </div>
+                        </CardHeader>
+                        <CardContent className="p-6">
+                            <div className="rounded-xl border border-white/5 overflow-hidden">
+                                <Table>
+                                    <TableHeader className="bg-white/5">
+                                        <TableRow className="border-white/5">
+                                            <TableHead className="font-bold text-white">User</TableHead>
+                                            <TableHead className="font-bold text-white">Plan</TableHead>
+                                            <TableHead className="font-bold text-white text-center">Amount</TableHead>
+                                            <TableHead className="font-bold text-white">Order ID</TableHead>
+                                            <TableHead className="font-bold text-white text-center">Status</TableHead>
+                                            <TableHead className="font-bold text-white">Date</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {isPaymentsLoading ? (
+                                            <TableRow><TableCell colSpan={6} className="text-center py-8"><Loader className="animate-spin mx-auto" /></TableCell></TableRow>
+                                        ) : !payments || payments.length === 0 ? (
+                                            <TableRow>
+                                                <TableCell colSpan={6} className="text-center py-12 text-muted-foreground font-medium">
+                                                    No payments found.
+                                                </TableCell>
+                                            </TableRow>
+                                        ) : (
+                                            payments.map(p => (
+                                                <TableRow key={p.id} className="hover:bg-white/5 transition-colors border-white/5">
+                                                    <TableCell className="font-mono text-[10px] text-muted-foreground">{p.userId}</TableCell>
+                                                    <TableCell>
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="text-xs font-bold text-white">{p.plan}</span>
+                                                            <Badge variant="outline" className="text-[8px] h-4 uppercase border-white/10 bg-white/5 text-muted-foreground">{p.billingCycle}</Badge>
+                                                        </div>
+                                                    </TableCell>
+                                                    <TableCell className="text-center">
+                                                        <div className="flex items-center justify-center gap-1 text-xs font-black text-orange-500">
+                                                            <IndianRupee className="h-3 w-3" /> {p.amount}
+                                                        </div>
+                                                    </TableCell>
+                                                    <TableCell className="font-mono text-[10px] opacity-70">{p.orderId}</TableCell>
+                                                    <TableCell className="text-center">
+                                                        <Badge className={cn(
+                                                            "text-[9px] font-black uppercase h-5 px-2 rounded-full border-none",
+                                                            p.status === 'successful' ? "bg-green-500 text-white" : 
+                                                            p.status === 'failed' ? "bg-red-500 text-white" : 
+                                                            "bg-yellow-500 text-white"
+                                                        )}>
+                                                            {p.status}
+                                                        </Badge>
+                                                    </TableCell>
+                                                    <TableCell className="text-[10px] text-muted-foreground">
+                                                        <div className="flex items-center gap-1">
+                                                            <Clock className="h-3 w-3" />
+                                                            {p.createdAt ? format(p.createdAt.toDate(), 'PP p') : '-'}
+                                                        </div>
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))
+                                        )}
+                                    </TableBody>
+                                </Table>
+                            </div>
+                        </CardContent>
                     </Card>
                 </TabsContent>
             </Tabs>
