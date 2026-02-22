@@ -95,17 +95,25 @@ function HomePageContent() {
             collection(firestore, 'users'), 
             where('tier', 'in', ['Premier', 'Super Premier']),
             where('verified', '==', true),
-            limit(20)
+            limit(30)
         );
     }, [firestore]);
     
     const { data: topExperts, isLoading: isLoadingTopExperts } = useCollection<ExpertUser>(topExpertsQuery);
 
+    const filterHidden = (experts: ExpertUser[] | null) => {
+        if (!experts) return [];
+        return experts.filter(e => {
+            if (!e.hiddenUntil) return true;
+            return e.hiddenUntil.toDate() < new Date();
+        });
+    }
+
     const filteredTopExperts = useMemo(() => {
-        if (!topExperts) return [];
-        if (!moduleSearchQuery) return topExperts;
+        const visibleExperts = filterHidden(topExperts);
+        if (!moduleSearchQuery) return visibleExperts;
         const lowQuery = moduleSearchQuery.toLowerCase();
-        return topExperts.filter(e => 
+        return visibleExperts.filter(e => 
             `${e.firstName} ${e.lastName}`.toLowerCase().includes(lowQuery) ||
             e.profession?.toLowerCase().includes(lowQuery) ||
             e.role?.toLowerCase().includes(lowQuery)
@@ -116,13 +124,16 @@ function HomePageContent() {
         if (!firestore) return null;
         return query(
             collection(firestore, 'users'), 
-            where('tier', '==', 'Super Premier'),
             where('verified', '==', true),
-            limit(featuredExpertsLimit)
+            limit(featuredExpertsLimit + 10) // Fetch extra to account for hidden filtering
         );
     }, [firestore, featuredExpertsLimit]);
     
-    const { data: featuredExperts, isLoading: isLoadingExperts } = useCollection<ExpertUser>(featuredExpertsQuery);
+    const { data: rawFeaturedExperts, isLoading: isLoadingExperts } = useCollection<ExpertUser>(featuredExpertsQuery);
+
+    const featuredExperts = useMemo(() => {
+        return filterHidden(rawFeaturedExperts).slice(0, featuredExpertsLimit);
+    }, [rawFeaturedExperts, featuredExpertsLimit]);
 
 
     const getCurrentPosition = (): Promise<GeolocationPosition> => {

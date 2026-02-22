@@ -195,6 +195,11 @@
           "type": "boolean",
           "description": "Indicates if the expert is currently available for work."
         },
+        "hiddenUntil": {
+          "type": ["string", "null"],
+          "format": "date-time",
+          "description": "If set, the profile is hidden from public lists until this time."
+        },
         "referralCode": {
           "type": "string",
           "description": "A unique code for this user to refer others."
@@ -210,18 +215,7 @@
         "following": {
             "type": "array",
             "description": "An array of user IDs that this user is following.",
-            "items": {
-              "type": "string",
-              "description": "A reference to another User document."
-            }
-        },
-        "followers": {
-            "type": "array",
-            "description": "An array of user IDs that are following this user.",
-            "items": {
-              "type": "string",
-              "description": "A reference to another User document."
-            }
+            "items": { "type": "string" }
         },
         "groups": {
             "type": "array",
@@ -242,6 +236,26 @@
         "role",
         "createdAt"
       ]
+    },
+    "Notification": {
+      "title": "Notification",
+      "type": "object",
+      "description": "Represents a single notification for a user.",
+      "properties": {
+        "id": { "type": "string" },
+        "type": {
+          "type": "string",
+          "enum": ["comment_reply", "post_like", "new_follower", "group_approval"]
+        },
+        "message": { "type": "string" },
+        "link": { "type": "string", "format": "uri" },
+        "read": { "type": "boolean" },
+        "actorId": { "type": "string", "description": "The ID of the user who performed the action." },
+        "actorName": { "type": "string", "description": "The name of the user who performed the action." },
+        "actorPhotoUrl": { "type": "string", "format": "uri", "description": "The photo URL of the actor." },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "type", "message", "link", "read", "actorId", "createdAt"]
     },
     "Company": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -322,22 +336,22 @@
           "type": "string",
           "description": "Unique identifier for the post."
         },
+        "title": {
+          "type": "string",
+          "description": "The title of the post."
+        },
         "authorId": {
           "type": "string",
           "description": "The ID of the user who created the post."
         },
-        "authorName": {
-          "type": "string",
-          "description": "The name of the author at the time of posting."
-        },
-        "authorPhotoUrl": {
-          "type": "string",
-          "format": "uri",
-          "description": "The URL of the author's profile picture at the time of posting."
-        },
         "content": {
           "type": "string",
           "description": "The text content of the post."
+        },
+        "link": {
+          "type": "string",
+          "format": "uri",
+          "description": "An optional external link, e.g., to a YouTube video or Instagram post."
         },
         "imageUrl": {
           "type": "string",
@@ -355,7 +369,7 @@
           "description": "Timestamp of when the post was created."
         }
       },
-      "required": ["id", "authorId", "authorName", "content", "createdAt"]
+      "required": ["id", "authorId", "content", "createdAt"]
     },
     "Comment": {
         "$schema": "http://json-schema.org/draft-07/schema#",
@@ -402,10 +416,20 @@
         "name": { "type": "string" },
         "description": { "type": "string" },
         "creatorId": { "type": "string" },
+        "privacy": {
+          "type": "string",
+          "description": "The privacy setting of the group.",
+          "enum": ["public", "private"]
+        },
         "members": { "type": "array", "items": { "type": "string" } },
+        "pendingMembers": {
+          "type": "array",
+          "description": "A list of user IDs who have requested to join (for private groups).",
+          "items": { "type": "string" }
+        },
         "createdAt": { "type": "string", "format": "date-time" }
       },
-      "required": ["id", "name", "description", "creatorId", "members", "createdAt"]
+      "required": ["id", "name", "description", "creatorId", "privacy", "members", "createdAt"]
     },
     "GroupPost": {
         "$schema": "http://json-schema.org/draft-07/schema#",
@@ -414,11 +438,18 @@
         "description": "Represents a post within a professional group.",
         "properties": {
             "id": { "type": "string" },
+            "title": {
+                "type": "string",
+                "description": "The title of the post."
+            },
             "groupId": { "type": "string" },
             "authorId": { "type": "string" },
-            "authorName": { "type": "string" },
-            "authorPhotoUrl": { "type": "string", "format": "uri" },
             "content": { "type": "string" },
+            "link": {
+                "type": "string",
+                "format": "uri",
+                "description": "An optional external link, e.g., to a YouTube video or Instagram post."
+            },
             "imageUrl": { "type": "string", "format": "uri" },
             "createdAt": { "type": "string", "format": "date-time" }
         },
@@ -489,18 +520,13 @@
             "description": "The tier of the company posting the vacancy.",
             "enum": ["Standard", "Premier", "Super Premier"]
         },
-        "status": {
-          "type": "string",
-          "description": "The approval status of the vacancy.",
-          "enum": ["Pending", "Approved", "Rejected"]
-        },
         "postedAt": {
           "type": "string",
           "format": "date-time",
           "description": "Timestamp of when the vacancy was posted."
         }
       },
-      "required": ["id", "title", "description", "companyId", "companyName", "companyEmail", "location", "employmentType", "postedAt", "positionsAvailable", "status"]
+      "required": ["id", "title", "description", "companyId", "companyName", "companyEmail", "location", "employmentType", "postedAt", "positionsAvailable"]
     },
      "Payment": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -688,6 +714,18 @@
         }
       },
       {
+        "path": "/users/{userId}/notifications/{notificationId}",
+        "definition": {
+            "entityName": "Notification",
+            "schema": { "$ref": "#/backend/entities/Notification" },
+            "description": "Stores notifications for a specific user. This is a private subcollection.",
+            "params": [
+                { "name": "userId", "description": "The user's ID." },
+                { "name": "notificationId", "description": "The unique ID for the notification." }
+            ]
+        }
+      },
+      {
         "path": "/companies/{companyId}",
         "definition": {
           "entityName": "Company",
@@ -703,7 +741,7 @@
           ]
         }
       },
-       {
+      {
         "path": "/payments/{paymentId}",
         "definition": {
           "entityName": "Payment",
@@ -859,4 +897,3 @@
     "reasoning": "The Firestore structure is designed to support DriveGuru's core features while adhering to the principles of Authorization Independence, Structural Segregation, and Access Modeling. User data, company information, posts, and location data are stored in separate collections to maintain clarity and enforce consistent security rules. Crucially, authorization data is denormalized to avoid `get()` calls in security rules and ensure atomic operations.\\n\\1.  **Authorization Independence:** A separate `/roles_super_admin/{userId}` collection determines super admin privileges based on document existence rather than user document content. This simplifies security rules and avoids hierarchical dependencies.\\n\\2.  **Structural Segregation:**  User data, company data, location data, and posts are stored in separate collections, each with distinct security requirements. This segregation simplifies security rule management and prevents unintended access.\\n\\3.  **Access Modeling:**\\n    *   User-owned location data is structured under `/users/{userId}/location_data/{locationDataId}`. This allows for path-based security rules, ensuring that only the user can access their own location data.\\n    *   Posts are in a top-level `/posts` collection to allow for easy querying for the public feed, while rules ensure only authors can edit or delete their own posts.\\n    *   Companies are stored in a top-level `/companies` collection.\\n    *   The super admin role is managed through the `/roles_super_admin/{userId}` collection, where the existence of a document for a user ID grants super admin privileges."
   }
 }
-    

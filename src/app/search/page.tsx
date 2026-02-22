@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { Suspense, useMemo, useEffect, useState } from 'react';
@@ -127,6 +126,13 @@ function SearchResults() {
         }
         
         let experts = allExperts;
+
+        // Filter out hidden profiles
+        experts = experts.filter(e => {
+            if (!e.hiddenUntil) return true;
+            // hiddenUntil is a Timestamp object from useCollection
+            return (e.hiddenUntil as any).toDate() < new Date();
+        });
 
         // Filter by search query with AND logic for multiple keywords
         if (searchQueryParam) {

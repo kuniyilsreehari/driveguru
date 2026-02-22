@@ -1,15 +1,16 @@
+
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { collection, serverTimestamp, orderBy, query, where, limit, arrayUnion, arrayRemove, doc } from 'firebase/firestore';
+import { collection, serverTimestamp, orderBy, query, where, limit, arrayUnion, arrayRemove, doc, Timestamp } from 'firebase/firestore';
 import { signOut } from 'firebase/auth';
 import { useUser, useAuth, useFirestore, useDoc, useMemoFirebase, useCollection } from '@/firebase';
 import { updateDocumentNonBlocking, addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Button } from '@/components/ui/button';
-import { LogOut, Loader, Edit, UserCheck, User as UserIcon, MessageSquare, Gift, Info, Book, Pen, PlusCircle, MapPin, IndianRupee, Calendar, GraduationCap, School, Building, Home, Share2, Rss, UserPlus, Users, Link as LinkIcon, Search, AlertCircle, Check, CheckCircle, ArrowUpCircle, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Crown, Sparkles } from 'lucide-react';
+import { LogOut, Loader, Edit, UserCheck, User as UserIcon, MessageSquare, Gift, Info, Book, Pen, PlusCircle, MapPin, IndianRupee, Calendar, GraduationCap, School, Building, Home, Share2, Rss, UserPlus, Users, Link as LinkIcon, Search, AlertCircle, Check, CheckCircle, ArrowUpCircle, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Crown, Sparkles, Eye, EyeOff, Clock } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription as UiDialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { EditProfileForm } from '@/components/auth/edit-profile-form';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
@@ -32,6 +33,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import { formatDistanceToNow } from 'date-fns';
 
 type ExpertUserProfile = {
     id: string;
@@ -43,6 +45,7 @@ type ExpertUserProfile = {
     verified?: boolean;
     tier?: 'Standard' | 'Premier' | 'Super Premier';
     isAvailable?: boolean;
+    hiddenUntil?: Timestamp | null;
     referralCode?: string;
     referralPoints?: number;
     following?: string[];
@@ -86,6 +89,7 @@ export default function ExpertDashboardPage() {
   const [showPostForm, setShowPostForm] = useState(false);
   const [suggestionSearch, setSuggestionSearch] = useState('');
   const [isProfileExpanded, setIsProfileExpanded] = useState(true);
+  const [isHideDialogOpen, setIsHideDialogOpen] = useState(false);
 
   const userDocRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
   const { data: userProfile, isLoading: isProfileLoading } = useDoc<ExpertUserProfile>(userDocRef);
@@ -95,6 +99,17 @@ export default function ExpertDashboardPage() {
       router.push('/login');
     }
   }, [user, isUserLoading, router]);
+
+  // Automatic Reshow Logic: If hiddenUntil has passed, clear it in the DB
+  useEffect(() => {
+    if (userProfile?.hiddenUntil && userDocRef) {
+        const hideDate = userProfile.hiddenUntil.toDate();
+        if (hideDate < new Date()) {
+            updateDocumentNonBlocking(userDocRef, { hiddenUntil: null });
+            toast({ title: "Profile Visible", description: "Your temporary hide period has ended." });
+        }
+    }
+  }, [userProfile, userDocRef, toast]);
 
   const postForm = useForm<z.infer<typeof postFormSchema>>({
     resolver: zodResolver(postFormSchema),
@@ -175,6 +190,23 @@ export default function ExpertDashboardPage() {
     toast({ title: isFollowing ? "Unfollowed" : "Following" });
   };
 
+  const handleHideProfile = (hours: number) => {
+    if (!userDocRef) return;
+    const hideUntil = new Date(Date.now() + hours * 60 * 60 * 1000);
+    updateDocumentNonBlocking(userDocRef, { hiddenUntil: Timestamp.fromDate(hideUntil) });
+    toast({ 
+        title: "Profile Hidden", 
+        description: `Your profile will be hidden for ${hours >= 24 ? `${hours/24} day(s)` : `${hours} hour(s)`}.` 
+    });
+    setIsHideDialogOpen(false);
+  }
+
+  const handleUnhideProfile = () => {
+    if (!userDocRef) return;
+    updateDocumentNonBlocking(userDocRef, { hiddenUntil: null });
+    toast({ title: "Profile Visible", description: "Your profile is now visible to everyone." });
+  }
+
   async function onPostSubmit(values: z.infer<typeof postFormSchema>) {
     if (!firestore || !user) return;
     setIsSubmittingPost(true);
@@ -196,6 +228,8 @@ export default function ExpertDashboardPage() {
 
   if (isUserLoading || isProfileLoading) return <div className="flex h-screen items-center justify-center"><Loader className="animate-spin" /></div>;
   if (!user || !userProfile) return null;
+
+  const isHidden = userProfile.hiddenUntil && userProfile.hiddenUntil.toDate() > new Date();
 
   return (
     <div className="min-h-screen bg-background p-4 sm:p-8">
@@ -252,13 +286,43 @@ export default function ExpertDashboardPage() {
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-6 pt-4">
-                  <div className="flex items-center gap-6 py-2">
-                      <Switch 
-                          className="scale-150 origin-left" 
-                          checked={userProfile.isAvailable} 
-                          onCheckedChange={(v) => updateDocumentNonBlocking(userDocRef!, { isAvailable: v })} 
-                      />
-                      <span className="text-lg font-bold">I am currently available.</span>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Availability Toggle */}
+                      <div className="bg-secondary/20 p-4 rounded-xl flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                              <Switch 
+                                  checked={userProfile.isAvailable} 
+                                  onCheckedChange={(v) => updateDocumentNonBlocking(userDocRef!, { isAvailable: v })} 
+                              />
+                              <div>
+                                <p className="font-bold text-sm">Available for Work</p>
+                                <p className="text-[10px] text-muted-foreground">Toggle your active hiring status.</p>
+                              </div>
+                          </div>
+                          {userProfile.isAvailable ? <CheckCircle className="text-green-500 h-5 w-5" /> : <Clock className="text-muted-foreground h-5 w-5" />}
+                      </div>
+
+                      {/* Visibility Control */}
+                      <div className={cn("p-4 rounded-xl flex items-center justify-between transition-colors", isHidden ? "bg-orange-500/10 border border-orange-500/30" : "bg-secondary/20")}>
+                          <div className="flex items-center gap-3">
+                              {isHidden ? <EyeOff className="text-orange-500 h-5 w-5" /> : <Eye className="text-muted-foreground h-5 w-5" />}
+                              <div>
+                                <p className="font-bold text-sm">Profile Visibility</p>
+                                <p className="text-[10px] text-muted-foreground">
+                                    {isHidden 
+                                        ? `Hidden until ${formatDistanceToNow(userProfile.hiddenUntil!.toDate(), { addSuffix: true })}` 
+                                        : "Your profile is public."
+                                    }
+                                </p>
+                              </div>
+                          </div>
+                          {isHidden ? (
+                              <Button size="sm" variant="ghost" onClick={handleUnhideProfile} className="h-8 font-black text-[10px] uppercase text-orange-500 hover:text-orange-600 hover:bg-orange-500/5">Unhide Now</Button>
+                          ) : (
+                              <Button size="sm" variant="outline" onClick={() => setIsHideDialogOpen(true)} className="h-8 font-black text-[10px] uppercase">Temp Hide</Button>
+                          )}
+                      </div>
                   </div>
 
                   <div className="space-y-2">
@@ -675,6 +739,30 @@ export default function ExpertDashboardPage() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Hide Profile Dialog */}
+      <Dialog open={isHideDialogOpen} onOpenChange={setIsHideDialogOpen}>
+          <DialogContent className="max-w-md rounded-2xl border-none bg-[#1a1c23] text-white">
+              <DialogHeader>
+                  <DialogTitle className="text-2xl font-black flex items-center gap-2">
+                      <EyeOff className="text-orange-500" />
+                      Temporary Hide
+                  </DialogTitle>
+                  <UiDialogDescription className="text-muted-foreground">
+                      Hide your profile card from all public search results and the home page for a chosen period. It will automatically reappear once the time is up.
+                  </UiDialogDescription>
+              </DialogHeader>
+              <div className="grid grid-cols-2 gap-3 py-6">
+                  <Button variant="secondary" className="h-12 font-bold" onClick={() => handleHideProfile(1)}>1 Hour</Button>
+                  <Button variant="secondary" className="h-12 font-bold" onClick={() => handleHideProfile(24)}>1 Day</Button>
+                  <Button variant="secondary" className="h-12 font-bold" onClick={() => handleHideProfile(72)}>3 Days</Button>
+                  <Button variant="secondary" className="h-12 font-bold" onClick={() => handleHideProfile(168)}>1 Week</Button>
+              </div>
+              <DialogFooter>
+                  <Button variant="ghost" onClick={() => setIsHideDialogOpen(false)} className="text-white hover:bg-white/5">Cancel</Button>
+              </DialogFooter>
+          </DialogContent>
+      </Dialog>
 
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="max-w-3xl overflow-y-auto max-h-[90vh]">
