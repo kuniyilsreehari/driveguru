@@ -6,7 +6,7 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { doc, arrayUnion, arrayRemove, query, collection, where, serverTimestamp } from 'firebase/firestore';
 import { useFirestore, useDoc, useMemoFirebase, useUser, updateDocumentNonBlocking, addDocumentNonBlocking } from '@/firebase';
-import { Loader2, Star, ChevronLeft, MapPin, IndianRupee, Briefcase, Calendar, Info, Book, GraduationCap, School, User as UserIcon, UserCheck, XCircle, Crown, Sparkles, LogIn, Lock, Building, FileDown, Home, MessageSquare, PenSquare, Factory, Linkedin, Twitter, Github, Globe, UserPlus, UserMinus, Users, List, Phone, Youtube, Share2, Rss, Fingerprint } from 'lucide-react';
+import { Loader2, Star, ChevronLeft, MapPin, IndianRupee, Briefcase, Calendar, Info, Book, GraduationCap, School, User as UserIcon, UserCheck, XCircle, Crown, Sparkles, LogIn, Lock, Building, FileDown, Home, MessageSquare, PenSquare, Factory, Linkedin, Twitter, Github, Globe, UserPlus, UserMinus, Users, List, Phone, Youtube, Share2, Rss, Fingerprint, AlertCircle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardFooter } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -272,7 +272,16 @@ function ExpertProfileContent() {
                     </Button>
                     <div className="flex items-center gap-2">
                         {user && user.uid !== expert.id && (
-                            <Button variant={isFollowing ? 'secondary' : 'default'} onClick={handleToggleFollow} disabled={isFollowLoading}>
+                            <Button 
+                                variant={isFollowing ? 'outline' : 'default'} 
+                                onClick={handleToggleFollow} 
+                                disabled={isFollowLoading}
+                                className={cn(
+                                    "transition-all duration-300 font-black",
+                                    !isFollowing && "bg-orange-500 hover:bg-orange-600 text-white shadow-lg shadow-orange-500/20",
+                                    isFollowing && "border-white/10 hover:bg-white/5"
+                                )}
+                            >
                                 {isFollowLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : isFollowing ? <UserMinus className="mr-2 h-4 w-4" /> : <UserPlus className="mr-2 h-4 w-4" />}
                                 {isFollowing ? 'Unfollow' : 'Follow'}
                             </Button>
@@ -461,20 +470,28 @@ function ExpertProfileContent() {
                                     </Button>
                                 </>
                             ) : (
-                                <TooltipProvider>
-                                    <Tooltip>
-                                        <TooltipTrigger asChild>
-                                            <div className="w-full">
-                                                <Button disabled className="w-full" size="lg">
-                                                    <Lock className="mr-2 h-4 w-4" /> Contact is locked
-                                                </Button>
-                                            </div>
-                                        </TooltipTrigger>
-                                        <TooltipContent>
-                                            <p>Contact is only available for verified experts who have enabled it.</p>
-                                        </TooltipContent>
-                                    </Tooltip>
-                                </TooltipProvider>
+                                <div className="w-full bg-[#3a2a1a] border-2 border-orange-500/20 rounded-2xl p-6 flex flex-col items-center text-center gap-3">
+                                    <div className="bg-orange-500/10 p-3 rounded-full">
+                                        <Lock className="h-6 w-6 text-orange-500" />
+                                    </div>
+                                    <div>
+                                        <h4 className="font-black text-white text-lg tracking-tight">Contact Information Restricted</h4>
+                                        <p className="text-sm text-orange-200/60 font-medium max-w-sm">
+                                            {!user ? (
+                                                <>Please <Link href="/login" className="text-orange-500 underline underline-offset-4 hover:text-orange-400">sign in</Link> to connect with this professional.</>
+                                            ) : !expert.verified ? (
+                                                "This expert is currently completing their safety verification process."
+                                            ) : (
+                                                "Direct contact is currently disabled by the expert."
+                                            )}
+                                        </p>
+                                    </div>
+                                    {!user && (
+                                        <Button asChild className="bg-orange-500 hover:bg-orange-600 text-white font-black rounded-xl px-8 shadow-lg shadow-orange-500/20">
+                                            <Link href="/signup">Join DriveGuru Now</Link>
+                                        </Button>
+                                    )}
+                                </div>
                             )}
                         </div>
                     </CardFooter>
