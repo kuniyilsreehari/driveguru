@@ -42,7 +42,6 @@ const navItems = [
   { label: 'Home', href: '/', icon: Home },
   { label: 'Feed', href: '/feed', icon: Rss },
   { label: 'Groups', href: '/groups', icon: Users },
-  { label: 'Jobs', href: '/jobs', icon: Briefcase },
   { label: 'Featured', href: '/featured-experts', icon: Award },
   { label: 'Guides', href: '/guides', icon: BookOpen },
 ];
@@ -240,8 +239,7 @@ export function Header() {
         <div className="flex items-center justify-end space-x-2 sm:space-x-4">
           <nav className="hidden sm:flex items-center space-x-1">
             {navItems.map((item) => {
-                // usePathname is server-safe, so we use it directly to prevent mismatches
-                const isActive = pathname === item.href;
+                const isActive = mounted && pathname === item.href;
                 return (
                     <Button 
                         key={item.href} 
@@ -306,7 +304,6 @@ export function Header() {
               className="h-9 w-9 rounded-full group"
               onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
             >
-              {/* Using CSS-based visibility instead of JS-based rendering to prevent hydration issues */}
               <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0 dark:hidden" />
               <Moon className="h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100 hidden dark:block" />
               <span className="sr-only">Toggle theme</span>
