@@ -5,12 +5,11 @@ import { Suspense, useState } from 'react';
 import Link from 'next/link';
 import { collection, query, orderBy, Timestamp, where } from 'firebase/firestore';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Loader2, Briefcase, ChevronLeft, MapPin, Building, Calendar, Phone, Share2, UserCheck, Crown, Sparkles, MoreHorizontal, Mail, Copy, FileText } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
+import { Loader2, Briefcase, ChevronLeft, MapPin, Building, Calendar, Share2, Mail, Users, FileText, ChevronDown } from 'lucide-react';
+import { format } from 'date-fns';
 import {
   Dialog,
   DialogContent,
@@ -20,6 +19,12 @@ import {
   DialogFooter,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
@@ -75,29 +80,107 @@ const ApplyDialog = ({ vacancy, children }: { vacancy: Vacancy, children: React.
                         <div className="flex items-center gap-2">
                             <Input id="company-email" value={vacancy.companyEmail} readOnly />
                             <Button variant="outline" size="icon" onClick={() => copyToClipboard(vacancy.companyEmail, 'Email')}>
-                                <Copy className="h-4 w-4" />
-                            </Button>
-                        </div>
-                    </div>
-                     <div className="grid gap-2">
-                        <Label htmlFor="subject">Email Subject</Label>
-                        <div className="flex items-center gap-2">
-                            <Input id="subject" value={subject} readOnly />
-                            <Button variant="outline" size="icon" onClick={() => copyToClipboard(subject, 'Subject')}>
-                                <Copy className="h-4 w-4" />
+                                <Mail className="h-4 w-4" />
                             </Button>
                         </div>
                     </div>
                 </div>
                 <DialogFooter>
                     <a href={`mailto:${vacancy.companyEmail}?subject=${encodeURIComponent(subject)}`} className="w-full">
-                      <Button className="w-full">Open Email Client</Button>
+                      <Button className="w-full bg-orange-500 hover:bg-orange-600">Open Email Client</Button>
                     </a>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
     );
 };
+
+function VacancyCard({ vacancy }: { vacancy: Vacancy }) {
+    return (
+        <Card className="border border-slate-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow bg-white">
+            <CardContent className="p-6 space-y-6">
+                {/* Badges and Share */}
+                <div className="flex items-center justify-between">
+                    <div className="flex flex-wrap gap-2">
+                        {vacancy.isImmediate && (
+                            <Badge variant="outline" className="bg-amber-50 text-amber-600 border-amber-200 text-[10px] font-bold py-1 px-3 rounded-md flex items-center gap-1">
+                                <span className="h-1.5 w-1.5 rounded-full bg-amber-500" /> Immediate
+                            </Badge>
+                        )}
+                        {vacancy.isCompanyVerified && (
+                            <Badge variant="outline" className="bg-emerald-50 text-emerald-600 border-emerald-200 text-[10px] font-bold py-1 px-3 rounded-md flex items-center gap-1">
+                                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> Verified
+                            </Badge>
+                        )}
+                        {vacancy.companyTier === 'Premier' && (
+                            <Badge variant="outline" className="bg-purple-50 text-purple-600 border-purple-200 text-[10px] font-bold py-1 px-3 rounded-md flex items-center gap-1">
+                                <span className="h-1.5 w-1.5 rounded-full bg-purple-500" /> Premier
+                            </Badge>
+                        )}
+                    </div>
+                    <ShareDialog shareDetails={{ type: 'vacancy', vacancyId: vacancy.id, vacancyTitle: vacancy.title, companyName: vacancy.companyName }}>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-slate-600">
+                            <Share2 className="h-4 w-4" />
+                        </Button>
+                    </ShareDialog>
+                </div>
+
+                {/* Job Title */}
+                <h3 className="text-2xl font-black text-[#1a1c23] tracking-tight">{vacancy.title}</h3>
+
+                {/* Expandable Description */}
+                <Accordion type="single" collapsible className="w-full">
+                    <AccordionItem value="description" className="border-none">
+                        <AccordionTrigger className="flex items-center gap-2 hover:no-underline text-slate-500 text-sm font-medium py-0">
+                            <div className="flex items-center gap-2">
+                                <FileText className="h-4 w-4" />
+                                <span>View Job Description</span>
+                            </div>
+                        </AccordionTrigger>
+                        <AccordionContent className="pt-4 text-slate-600 leading-relaxed text-sm whitespace-pre-wrap">
+                            {vacancy.description}
+                            <div className="mt-4 pt-4 border-t border-slate-100">
+                                <p className="font-bold text-slate-900 mb-1">Required Skills:</p>
+                                <p className="text-slate-500">{vacancy.skillsRequired}</p>
+                            </div>
+                        </AccordionContent>
+                    </AccordionItem>
+                </Accordion>
+
+                <div className="space-y-3 pt-2">
+                    <div className="flex items-center gap-3 text-slate-500">
+                        <Building className="h-4 w-4 shrink-0" />
+                        <span className="text-sm font-bold text-slate-700">{vacancy.companyName}</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-slate-500">
+                        <Calendar className="h-4 w-4 shrink-0" />
+                        <span className="text-sm">Posted: {vacancy.postedAt ? format(vacancy.postedAt.toDate(), 'MMM d, yyyy') : 'Recently'}</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-slate-500">
+                        <MapPin className="h-4 w-4 shrink-0" />
+                        <span className="text-sm">{vacancy.location}</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-slate-500">
+                        <Briefcase className="h-4 w-4 shrink-0" />
+                        <Badge variant="secondary" className="bg-slate-100 text-slate-700 hover:bg-slate-100 text-[11px] font-bold px-3 py-0.5 rounded-full">
+                            {vacancy.employmentType}
+                        </Badge>
+                    </div>
+                    <div className="flex items-center gap-3 text-slate-500">
+                        <Users className="h-4 w-4 shrink-0" />
+                        <span className="text-sm">Positions Available: {vacancy.positionsAvailable}</span>
+                    </div>
+                </div>
+
+                <ApplyDialog vacancy={vacancy}>
+                    <Button className="w-full bg-orange-500 hover:bg-orange-600 text-white font-black h-12 rounded-xl shadow-lg shadow-orange-500/20">
+                        <Mail className="mr-2 h-5 w-5" /> Apply Now
+                    </Button>
+                </ApplyDialog>
+            </CardContent>
+        </Card>
+    );
+}
 
 function VacanciesList() {
     const firestore = useFirestore();
@@ -116,118 +199,56 @@ function VacanciesList() {
     if (isLoading) {
         return (
             <div className="flex h-64 w-full items-center justify-center">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                <p className="ml-4 text-muted-foreground">Loading job board...</p>
+                <Loader2 className="h-8 w-8 animate-spin text-orange-500" />
+                <p className="ml-4 text-muted-foreground font-medium">Loading opportunities...</p>
             </div>
         );
     }
 
     if (!vacancies || vacancies.length === 0) {
         return (
-            <div className="text-center py-16">
-                <h2 className="text-2xl font-semibold">No Job Openings Found</h2>
-                <p className="text-muted-foreground mt-2">Check back later for new opportunities.</p>
+            <div className="text-center py-24 bg-white rounded-3xl border-2 border-dashed border-slate-100">
+                <Briefcase className="h-16 w-16 text-slate-200 mx-auto mb-4" />
+                <h2 className="text-2xl font-black text-slate-900">No Job Openings Found</h2>
+                <p className="text-slate-500 mt-2 font-medium">Check back later for new career opportunities.</p>
             </div>
         );
     }
 
     return (
-        <Card className="border-none bg-white rounded-2xl overflow-hidden shadow-sm">
-            <CardHeader className="pb-6 px-8 pt-8 border-b border-slate-100">
-                <div className="flex items-center gap-4">
-                    <div className="bg-white border-2 border-black p-3 rounded-xl shadow-sm">
-                        <Briefcase className="h-6 w-6 text-black" />
-                    </div>
-                    <div>
-                        <CardTitle className="text-3xl font-black text-[#1a1c23] tracking-tight">Active Opportunities</CardTitle>
-                        <CardDescription className="text-muted-foreground text-sm font-medium">Find your next career move with verified companies.</CardDescription>
-                    </div>
-                </div>
-            </CardHeader>
-            <CardContent className="px-0 pb-0">
-                <div className="overflow-x-auto">
-                    <Table>
-                        <TableHeader className="bg-slate-50/50">
-                            <TableRow className="hover:bg-transparent border-b border-slate-100">
-                                <TableHead className="font-bold text-slate-500 text-xs uppercase tracking-wider h-14 pl-8">Title</TableHead>
-                                <TableHead className="font-bold text-slate-500 text-xs uppercase tracking-wider h-14">Company</TableHead>
-                                <TableHead className="font-bold text-slate-500 text-xs uppercase tracking-wider h-14">Location</TableHead>
-                                <TableHead className="font-bold text-slate-500 text-xs uppercase tracking-wider h-14 text-center">Type</TableHead>
-                                <TableHead className="font-bold text-slate-500 text-xs uppercase tracking-wider h-14">Posted</TableHead>
-                                <TableHead className="text-right font-bold text-slate-500 text-xs uppercase tracking-wider h-14 pr-8">Action</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {vacancies.map(vacancy => (
-                                <TableRow key={vacancy.id} className="hover:bg-slate-50/30 transition-colors border-b border-slate-50 h-24">
-                                    <TableCell className="py-4 pl-8">
-                                        <div className="font-bold text-[#1a1c23] text-base">{vacancy.title}</div>
-                                    </TableCell>
-                                    <TableCell className="py-4">
-                                        <div className="space-y-1.5">
-                                            <div className="text-sm font-bold text-[#1a1c23]">{vacancy.companyName}</div>
-                                            <div className="flex items-center gap-2">
-                                                {vacancy.isCompanyVerified && (
-                                                    <Badge variant="outline" className="h-5 px-2 rounded-md border-green-500/30 bg-green-50/50 text-green-600 text-[10px] font-bold flex items-center gap-1">
-                                                        <UserCheck className="h-2.5 w-2.5" /> Verified
-                                                    </Badge>
-                                                )}
-                                                {vacancy.companyTier === 'Premier' && (
-                                                    <Badge variant="outline" className="h-5 px-2 rounded-md border-purple-500/30 bg-purple-50/50 text-purple-600 text-[10px] font-bold flex items-center gap-1">
-                                                        <Crown className="h-2.5 w-2.5" /> Premier
-                                                    </Badge>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </TableCell>
-                                    <TableCell className="py-4 text-slate-600 font-medium">
-                                        {vacancy.location}
-                                    </TableCell>
-                                    <TableCell className="text-center py-4">
-                                        <Badge variant="secondary" className="bg-slate-100 text-slate-700 hover:bg-slate-100 rounded-full px-3 py-0.5 text-[11px] font-bold">
-                                            {vacancy.employmentType}
-                                        </Badge>
-                                    </TableCell>
-                                    <TableCell className="py-4 text-slate-500 text-sm">
-                                        {vacancy.postedAt ? formatDistanceToNow(vacancy.postedAt.toDate(), { addSuffix: true }) : 'just now'}
-                                    </TableCell>
-                                    <TableCell className="text-right py-4 pr-8">
-                                        <div className="flex items-center justify-end gap-2">
-                                            <ShareDialog shareDetails={{ type: 'vacancy', vacancyId: vacancy.id, vacancyTitle: vacancy.title, companyName: vacancy.companyName }}>
-                                                <Button variant="ghost" size="icon" className="h-9 w-9 hover:bg-slate-100 text-slate-400">
-                                                    <Share2 className="h-4 w-4" />
-                                                </Button>
-                                            </ShareDialog>
-                                            <ApplyDialog vacancy={vacancy}>
-                                                <Button variant="outline" size="sm" className="h-9 rounded-xl font-bold border-slate-200 text-[#1a1c23] hover:bg-slate-50">
-                                                    Apply
-                                                </Button>
-                                            </ApplyDialog>
-                                        </div>
-                                    </TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                </div>
-            </CardContent>
-        </Card>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {vacancies.map(vacancy => (
+                <VacancyCard key={vacancy.id} vacancy={vacancy} />
+            ))}
+        </div>
     );
 }
 
 export default function VacanciesPage() {
     return (
-        <div className="min-h-screen bg-[#f8f9fc] p-4 sm:p-8">
-            <div className="mx-auto max-w-6xl">
-                <header className="pb-8">
-                     <Button variant="outline" asChild className="rounded-xl border-slate-200 bg-white shadow-sm">
-                        <Link href="/"><ChevronLeft className="mr-2 h-4 w-4" /> Back to Home</Link>
-                    </Button>
+        <div className="min-h-screen bg-[#f8f9fc] p-4 sm:p-8 pb-20">
+            <div className="mx-auto max-w-7xl">
+                <header className="text-center space-y-4 mb-12">
+                    <div className="flex items-center justify-center gap-4">
+                        <div className="bg-orange-500 p-3 rounded-2xl shadow-xl shadow-orange-500/20">
+                            <Briefcase className="h-10 w-10 text-white" />
+                        </div>
+                        <h1 className="text-5xl font-black text-[#1a1c23] tracking-tighter">Job Vacancies</h1>
+                    </div>
+                    <p className="text-lg text-slate-500 font-medium max-w-2xl mx-auto">
+                        Find your next career opportunity with our trusted companies.
+                    </p>
+                    <div className="pt-4">
+                        <Button variant="outline" asChild className="rounded-xl border-slate-200 bg-white hover:bg-slate-50 shadow-sm">
+                            <Link href="/"><ChevronLeft className="mr-2 h-4 w-4" /> Back to Home</Link>
+                        </Button>
+                    </div>
                 </header>
+
                 <main>
                     <Suspense fallback={
                         <div className="flex h-64 w-full items-center justify-center">
-                            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                            <Loader2 className="h-8 w-8 animate-spin text-orange-500" />
                         </div>
                     }>
                         <VacanciesList />
