@@ -413,33 +413,45 @@ export default function ExpertDashboardPage() {
                 </CardContent>
             </Card>
 
-            <Card className="border-none bg-[#24262d] rounded-2xl overflow-hidden">
+            <Card className="border-none bg-[#24262d] rounded-2xl overflow-hidden shadow-xl">
                 <CardHeader className="bg-white/5 border-b border-white/5 pb-6">
                     <CardTitle className="text-2xl font-black text-white">People You May Know</CardTitle>
                     <CardDescription className="text-muted-foreground font-medium">Expand your network by following other experts.</CardDescription>
                 </CardHeader>
-                <CardContent className="p-6 space-y-6">
-                    <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <CardContent className="p-6 space-y-8">
+                    {/* Branded Search Bar */}
+                    <div className="relative group">
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground group-focus-within:text-orange-500 transition-colors" />
                         <Input 
                             placeholder="Search suggestions..." 
-                            className="pl-10 h-12 bg-[#1a1c23] border-none rounded-xl text-white placeholder:text-muted-foreground" 
+                            className="pl-12 h-14 bg-[#1a1c23] border-2 border-orange-500 rounded-2xl text-white text-lg placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:border-orange-400 transition-all shadow-[0_0_15px_rgba(249,115,22,0.1)]" 
                             value={suggestionSearch} 
                             onChange={(e) => setSuggestionSearch(e.target.value)} 
                         />
                     </div>
-                    <div className="relative group">
-                        <div className="flex gap-4 overflow-x-auto pb-6 scrollbar-hide snap-x">
+
+                    {/* Expert Carousel */}
+                    <div className="relative">
+                        <div className="flex gap-6 overflow-x-auto pb-8 pt-2 scrollbar-hide snap-x px-1">
                             {suggestedExperts.map(expert => (
-                                <Card key={expert.id} className="min-w-[220px] max-w-[220px] bg-[#1a1c23] border-white/5 flex flex-col items-center p-6 text-center rounded-2xl snap-start transition-transform hover:scale-[1.02]">
-                                    <Avatar className="h-20 w-20 mb-4 border-2 border-white/10">
-                                        <AvatarImage src={expert.photoUrl} />
-                                        <AvatarFallback className="bg-primary/10 text-primary text-xl font-bold">{expert.firstName[0]}</AvatarFallback>
-                                    </Avatar>
-                                    <p className="font-black text-white text-base line-clamp-1 mb-1">{expert.firstName} {expert.lastName}</p>
-                                    <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-black mb-6 line-clamp-1 h-4">{expert.profession || expert.role}</p>
+                                <Card key={expert.id} className="min-w-[240px] max-w-[240px] bg-[#1a1c23] border-white/5 flex flex-col items-center p-8 text-center rounded-[2rem] snap-start transition-all hover:scale-[1.05] hover:shadow-2xl hover:shadow-orange-500/10 group">
+                                    <div className="relative mb-6">
+                                        <Avatar className="h-24 w-24 border-4 border-white/10 group-hover:border-orange-500/50 transition-colors duration-500">
+                                            <AvatarImage src={expert.photoUrl} className="object-cover" />
+                                            <AvatarFallback className="bg-orange-500/10 text-orange-500 text-3xl font-black">
+                                                {expert.firstName[0]}
+                                            </AvatarFallback>
+                                        </Avatar>
+                                        {expert.verified && (
+                                            <div className="absolute -bottom-1 -right-1 bg-green-500 p-1.5 rounded-full border-4 border-[#1a1c23]">
+                                                <UserCheck className="h-3 w-3 text-white" />
+                                            </div>
+                                        )}
+                                    </div>
+                                    <p className="font-black text-white text-xl line-clamp-1 mb-1 tracking-tight">{expert.firstName} {expert.lastName}</p>
+                                    <p className="text-[11px] text-[#8a92a6] uppercase tracking-[0.15em] font-black mb-8 line-clamp-1 h-4">{expert.profession || expert.role}</p>
                                     <Button 
-                                        className="w-full bg-orange-500 hover:bg-orange-600 rounded-xl font-black text-sm h-11"
+                                        className="w-full bg-orange-500 hover:bg-orange-600 text-white rounded-2xl font-black text-sm h-12 shadow-lg shadow-orange-500/20 active:scale-95 transition-transform"
                                         onClick={() => handleToggleFollow(expert.id, false)}
                                     >
                                         <UserPlus className="h-4 w-4 mr-2" /> Follow
@@ -447,19 +459,25 @@ export default function ExpertDashboardPage() {
                                 </Card>
                             ))}
                             {suggestedExperts.length === 0 && (
-                                <div className="w-full flex flex-col items-center justify-center py-12 bg-white/5 rounded-2xl border-2 border-dashed border-white/10">
-                                    <Users className="h-12 w-12 text-muted-foreground opacity-20 mb-4" />
-                                    <p className="text-sm text-muted-foreground font-bold">No suggestions at the moment.</p>
+                                <div className="w-full flex flex-col items-center justify-center py-16 bg-white/5 rounded-[2rem] border-4 border-dashed border-white/5">
+                                    <Users className="h-16 w-16 text-muted-foreground opacity-10 mb-4" />
+                                    <p className="text-lg text-muted-foreground font-black opacity-40">No suggestions match your search.</p>
                                 </div>
                             )}
                         </div>
-                        {suggestedExperts.length > 4 && (
-                            <div className="absolute -bottom-2 left-0 right-0 flex items-center justify-center gap-2 pointer-events-none">
-                                <div className="h-1.5 w-12 bg-white/10 rounded-full overflow-hidden">
-                                    <div className="h-full w-1/3 bg-white/30 rounded-full" />
-                                </div>
+
+                        {/* Custom Scroll/Progress Controls */}
+                        <div className="flex items-center justify-between mt-4 px-2">
+                            <Button variant="ghost" size="icon" className="text-muted-foreground/40 hover:text-white hover:bg-white/5 rounded-full h-8 w-8">
+                                <ChevronLeft className="h-6 w-6" />
+                            </Button>
+                            <div className="flex-1 mx-8 h-1.5 bg-white/5 rounded-full overflow-hidden relative">
+                                <div className="absolute left-[30%] top-0 bottom-0 w-[40%] bg-white/30 rounded-full" />
                             </div>
-                        )}
+                            <Button variant="ghost" size="icon" className="text-muted-foreground/40 hover:text-white hover:bg-white/5 rounded-full h-8 w-8">
+                                <ChevronRight className="h-6 w-6" />
+                            </Button>
+                        </div>
                     </div>
                 </CardContent>
             </Card>
