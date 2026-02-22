@@ -1,10 +1,6 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // GLOBAL READ ACCESS: Required for marketplace listing and searching.
-    match /{path=**} {
-      allow read: if true;
-    }
 
     /* =====================================================
      * Helper Functions
@@ -27,21 +23,23 @@ service cloud.firestore {
       return isSignedIn() &&
         exists(/databases/$(database)/documents/roles_manager/$(request.auth.uid));
     }
-    
-    function isExistingDoc() {
-      return resource != null;
-    }
-    
-    function requestData() {
-      return request.resource.data;
-    }
 
     /* =====================================================
-     * Collections
+     * Global Read Access (Marketplace Visibility)
+     * ===================================================== */
+    match /users/{userId} { allow read, list: if true; }
+    match /posts/{postId} { allow read, list: if true; }
+    match /vacancies/{vacancyId} { allow read, list: if true; }
+    match /groups/{groupId} { allow read, list: if true; }
+    match /app_config/{configId} { allow read, list: if true; }
+    match /roles_super_admin/{userId} { allow read: if isSignedIn(); }
+    match /roles_manager/{userId} { allow read: if isSignedIn(); }
+
+    /* =====================================================
+     * Specialized Write Access
      * ===================================================== */
 
     match /users/{userId} {
-      allow read: if true;
       allow create: if isOwner(userId);
       allow update: if isSuperAdmin() || isOwner(userId);
       allow delete: if isSuperAdmin() || isOwner(userId);
@@ -56,22 +54,21 @@ service cloud.firestore {
     }
     
     match /posts/{postId} {
-      allow read: if true;
       allow create: if isSignedIn();
+      // Allow the author to edit everything, and other users to only update 'likes'
       allow update: if isSuperAdmin() || (isSignedIn() && (resource.data.authorId == request.auth.uid || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes'])));
       allow delete: if isSuperAdmin() || (isSignedIn() && resource.data.authorId == request.auth.uid);
       
       match /comments/{commentId} {
-        allow read: if true;
         allow create: if isSignedIn();
         allow update: if isSuperAdmin() || (isSignedIn() && (resource.data.authorId == request.auth.uid || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes'])));
-        allow delete: if isSuperAdmin() || (isSignedIn() && (resource.data.authorId == request.auth.uid || get(/databases/$(database)/documents/posts/$(postId)).data.authorId == request.auth.uid));
+        allow delete: if isSuperAdmin() || (isSignedIn() && (resource.data.authorId == request.authorId || get(/databases/$(database)/documents/posts/$(postId)).data.authorId == request.auth.uid));
       }
     }
     
     match /groups/{groupId} {
-      allow read: if true;
       allow create: if isSignedIn();
+      // Allow updates to membership lists for joining/leaving
       allow update: if isSuperAdmin() || (isSignedIn() && (resource.data.creatorId == request.auth.uid || request.resource.data.diff(resource.data).affectedKeys().hasAny(['members', 'pendingMembers'])));
       allow delete: if isSuperAdmin() || (isSignedIn() && resource.data.creatorId == request.auth.uid);
       
@@ -83,7 +80,6 @@ service cloud.firestore {
     }
     
     match /vacancies/{vacancyId} {
-      allow read: if true;
       allow create: if isSuperAdmin() || isSignedIn();
       allow update, delete: if isSuperAdmin() || (isSignedIn() && resource.data.companyId == request.auth.uid);
     }
@@ -94,19 +90,8 @@ service cloud.firestore {
       allow update, delete: if isSuperAdmin();
     }
 
-    match /roles_super_admin/{userId} {
-      allow read: if isSignedIn();
-      allow write: if isSuperAdmin();
-    }
-    
-    match /roles_manager/{userId} {
-      allow read: if isSignedIn();
-      allow write: if isSuperAdmin();
-    }
-    
-    match /app_config/{configId} {
-      allow read: if true;
-      allow write: if isSuperAdmin();
-    }
+    match /roles_super_admin/{userId} { allow write: if isSuperAdmin(); }
+    match /roles_manager/{userId} { allow write: if isSuperAdmin(); }
+    match /app_config/{configId} { allow write: if isSuperAdmin(); }
   }
 }
