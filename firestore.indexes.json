@@ -47,6 +47,20 @@
       "queryScope": "COLLECTION",
       "fields": [
         {
+          "fieldPath": "status",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "postedAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "vacancies",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
           "fieldPath": "postedAt",
           "order": "DESCENDING"
         }
@@ -59,6 +73,34 @@
         {
           "fieldPath": "createdAt",
           "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "users",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "verified",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "users",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "tier",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "verified",
+          "order": "ASCENDING"
         }
       ]
     }
