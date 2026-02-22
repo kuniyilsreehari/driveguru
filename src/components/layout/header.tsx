@@ -44,7 +44,6 @@ const navItems = [
   { label: 'Feed', href: '/feed', icon: Rss },
   { label: 'Groups', href: '/groups', icon: Users },
   { label: 'Jobs', href: '/jobs', icon: Briefcase },
-  { label: 'Vacancies', href: '/vacancies', icon: Briefcase },
   { label: 'Featured', href: '/featured-experts', icon: Award },
   { label: 'Guides', href: '/guides', icon: BookOpen },
 ];
@@ -301,11 +300,11 @@ export function Header() {
            <Button
               variant="ghost"
               size="icon"
-              className="h-9 w-9 rounded-full"
+              className="h-9 w-9 rounded-full group"
               onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
             >
-              <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-              <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+              <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0 block dark:hidden" />
+              <Moon className="h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100 hidden dark:block" />
               <span className="sr-only">Toggle theme</span>
           </Button>
         </div>

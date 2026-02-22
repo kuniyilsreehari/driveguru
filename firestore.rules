@@ -75,10 +75,10 @@ service cloud.firestore {
       }
     }
     
-    // Job Vacancies (Public read, Admin-only write)
+    // Job Vacancies (Explicit public access for discovery)
     match /vacancies/{vacancyId} {
       allow read, list: if true;
-      allow create, update, delete: if isSuperAdmin();
+      allow write: if isSuperAdmin();
     }
     
     // Payments and Subscriptions
