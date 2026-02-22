@@ -7,7 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { Star, IndianRupee, Briefcase, Calendar, Phone, MessageSquare, UserCheck, Crown, Sparkles, MapPin, Lock, List, Share2 } from 'lucide-react';
+import { Star, IndianRupee, Briefcase, Calendar, Phone, MessageSquare, UserCheck, Crown, Sparkles, MapPin, Lock, List, Share2, Fingerprint } from 'lucide-react';
 import { useUser, useFirestore, updateDocumentNonBlocking } from '@/firebase';
 import { FollowerStats } from './follower-stats';
 import { useToast } from '@/hooks/use-toast';
@@ -15,6 +15,7 @@ import { WhatsAppBookingDialog } from './whatsapp-booking-dialog';
 import { ShareDialog } from './share-dialog';
 import { useRouter } from 'next/navigation';
 import { doc, getDoc, serverTimestamp, runTransaction } from 'firebase/firestore';
+import { cn } from '@/lib/utils';
 
 export type ExpertUser = {
     id: string;
@@ -71,6 +72,7 @@ export function ExpertCard({ expert }: ExpertCardProps) {
         return expert.companyName || `${expert.firstName} ${expert.lastName}`;
     }
 
+    const dgId = `DG-${expert.id.substring(0, 8).toUpperCase()}`;
     const locationString = [expert.city, expert.state, expert.pincode].filter(Boolean).join(', ');
     
     // Determine if contact actions should be shown
@@ -95,6 +97,9 @@ export function ExpertCard({ expert }: ExpertCardProps) {
                                     {expert.isAvailable && (
                                         <Badge className="bg-green-500 text-white">Available</Badge>
                                     )}
+                                    <Badge variant="outline" className="font-mono text-[9px] uppercase border-primary/20 bg-primary/5 text-primary/70 h-4 px-1.5">
+                                        {dgId}
+                                    </Badge>
                                 </div>
                                 {expert.companyName && (
                                     <p className="text-sm text-muted-foreground">{`${expert.firstName} ${expert.lastName}`}</p>
@@ -117,7 +122,14 @@ export function ExpertCard({ expert }: ExpertCardProps) {
                                     )}
                                     {expert.tier === 'Premier' && <Badge variant="outline" className="border-purple-500 text-purple-500"><Crown className="mr-1 h-3 w-3" /> Premier</Badge>}
                                     {expert.tier === 'Super Premier' && <Badge variant="outline" className="border-blue-500 text-blue-500"><Sparkles className="mr-1 h-3 w-3" /> Super Premier</Badge>}
-                                    {expert.category && <Badge variant="secondary"><List className="mr-1 h-3 w-3" />{expert.category}</Badge>}
+                                    <Badge variant="secondary" className={cn(
+                                        "text-white border-none text-[10px]",
+                                        expert.role === 'Freelancer' ? "bg-blue-600" :
+                                        expert.role === 'Company' ? "bg-indigo-600" :
+                                        expert.role === 'Authorized Pro' ? "bg-emerald-600" :
+                                        "bg-secondary"
+                                    )}>{expert.role}</Badge>
+                                    {expert.category && <Badge variant="secondary" className="text-[10px]"><List className="mr-1 h-3 w-3" />{expert.category}</Badge>}
                                 </div>
                             </Link>
                             <ShareDialog shareDetails={{ type: 'expert-profile', expertId: expert.id, expertName: getDisplayName(expert) }}>
@@ -139,7 +151,7 @@ export function ExpertCard({ expert }: ExpertCardProps) {
                                     ) : 'N/A'}
                                 </div>
                                 <div className="flex items-center gap-2"><Briefcase className="h-4 w-4 flex-shrink-0" /> {expert.yearsOfExperience ? `${expert.yearsOfExperience} years` : 'N/A'}</div>
-                                <div className="flex items-center gap-2"><Badge variant="secondary" className="truncate">{expert.role}</Badge></div>
+                                <div className="flex items-center gap-2"><span className="text-[10px] uppercase font-bold opacity-50">Profile Status</span></div>
                             </div>
                         </Link>
                     </div>

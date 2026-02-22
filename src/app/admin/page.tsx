@@ -9,7 +9,7 @@ import { useUser, useFirestore, useDoc, useMemoFirebase, useAuth, useCollection 
 import { updateDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, CheckCircle2, UserCheck, UserX, Crown, Sparkles, User as UserIcon, Settings, Save, Briefcase, Building, MessageSquare, Search, PlusCircle, Mail, Download, ExternalLink, IndianRupee, X, Upload, HardDriveDownload, Megaphone, Phone, MapPinIcon, Key, Gift, Code, List, Grip, ArrowUp, ArrowDown, Rss, UserPlus, Fingerprint, Award, CircleHelp, CheckCircle, FileJson, MapPin, Clock, AlertCircle, CreditCard } from 'lucide-react';
+import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, CheckCircle2, UserCheck, UserX, Crown, Sparkles, User as UserIcon, Settings, Save, Briefcase, Building, MessageSquare, Search, PlusCircle, Mail, Download, ExternalLink, IndianRupee, X, Upload, HardDriveDownload, Megaphone, Phone, MapPinIcon, Key, Gift, Code, List, Grip, ArrowUp, ArrowDown, Rss, UserPlus, Fingerprint, Award, CircleHelp, CheckCircle, FileJson, MapPin, Clock, AlertCircle, CreditCard, Fingerprint as IdIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -213,7 +213,8 @@ export default function AdminDashboardPage() {
         const matchesSearch = 
             `${u.firstName} ${u.lastName}`.toLowerCase().includes(userSearchQuery.toLowerCase()) ||
             u.email?.toLowerCase().includes(userSearchQuery.toLowerCase()) ||
-            u.referralCode?.toLowerCase().includes(userSearchQuery.toLowerCase());
+            u.referralCode?.toLowerCase().includes(userSearchQuery.toLowerCase()) ||
+            u.id.toLowerCase().includes(userSearchQuery.toLowerCase());
         
         const matchesFilter = 
             userFilter === 'all' ? true :
@@ -519,7 +520,7 @@ export default function AdminDashboardPage() {
                                 <div className="relative flex-1 w-full">
                                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                     <Input 
-                                        placeholder="Search by name, email, or referral code..." 
+                                        placeholder="Search by name, email, referral code or UID..." 
                                         className="pl-10 h-12 bg-white/5 border-none rounded-xl text-white placeholder:text-muted-foreground"
                                         value={userSearchQuery}
                                         onChange={(e) => setUserSearchQuery(e.target.value)}
@@ -572,6 +573,9 @@ export default function AdminDashboardPage() {
                                                                             <div className="space-y-1">
                                                                                 <div className="font-black text-sm text-white">{u.firstName} {u.lastName}</div>
                                                                                 <div className="text-[10px] text-muted-foreground font-medium">{u.email}</div>
+                                                                                <div className="text-[9px] font-mono text-muted-foreground/50 uppercase flex items-center gap-1 mt-1">
+                                                                                    <IdIcon className="h-2.5 w-2.5" /> {u.id}
+                                                                                </div>
                                                                                 {u.companyName && (
                                                                                     <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
                                                                                         <Building className="h-3 w-3" /> {u.companyName}
@@ -609,7 +613,13 @@ export default function AdminDashboardPage() {
                                                                         </div>
                                                                     </TableCell>
                                                                     <TableCell>
-                                                                        <Badge variant="secondary" className="rounded-md font-bold text-[10px] uppercase tracking-wider h-6 bg-[#1a1c23] text-white border-none">{u.role}</Badge>
+                                                                        <Badge variant="secondary" className={cn(
+                                                                            "rounded-md font-bold text-[10px] uppercase tracking-wider h-6 text-white border-none",
+                                                                            u.role === 'Freelancer' ? "bg-blue-500/20 text-blue-400" :
+                                                                            u.role === 'Company' ? "bg-indigo-500/20 text-indigo-400" :
+                                                                            u.role === 'Authorized Pro' ? "bg-emerald-500/20 text-emerald-400" :
+                                                                            "bg-[#1a1c23]"
+                                                                        )}>{u.role}</Badge>
                                                                     </TableCell>
                                                                     <TableCell className="text-center">
                                                                         <div className="text-[10px] font-medium opacity-70 text-muted-foreground">

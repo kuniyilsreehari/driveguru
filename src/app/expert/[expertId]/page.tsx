@@ -1,11 +1,12 @@
+
 'use client';
 
-import { Suspense, useState, useRef, useEffect } from 'react';
+import { Suspense, useState, useRef, useEffect, useMemo } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { doc, arrayUnion, arrayRemove, query, collection, where, serverTimestamp } from 'firebase/firestore';
 import { useFirestore, useDoc, useMemoFirebase, useUser, updateDocumentNonBlocking, addDocumentNonBlocking } from '@/firebase';
-import { Loader2, Star, ChevronLeft, MapPin, IndianRupee, Briefcase, Calendar, Info, Book, GraduationCap, School, User as UserIcon, UserCheck, XCircle, Crown, Sparkles, LogIn, Lock, Building, FileDown, Home, MessageSquare, PenSquare, Factory, Linkedin, Twitter, Github, Globe, UserPlus, UserMinus, Users, List, Phone, Youtube, Share2, Rss } from 'lucide-react';
+import { Loader2, Star, ChevronLeft, MapPin, IndianRupee, Briefcase, Calendar, Info, Book, GraduationCap, School, User as UserIcon, UserCheck, XCircle, Crown, Sparkles, LogIn, Lock, Building, FileDown, Home, MessageSquare, PenSquare, Factory, Linkedin, Twitter, Github, Globe, UserPlus, UserMinus, Users, List, Phone, Youtube, Share2, Rss, Fingerprint } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardFooter } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -19,6 +20,7 @@ import { Icons } from '@/components/icons';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription as UiDialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { FollowerStats } from '@/components/follower-stats';
 import { ShareDialog } from '@/components/share-dialog';
+import { cn } from '@/lib/utils';
 
 
 type ExpertUserProfile = {
@@ -165,6 +167,11 @@ function ExpertProfileContent() {
 
     const displayName = getDisplayName(expert);
     
+    const dgId = useMemo(() => {
+        if (!expert?.id) return '';
+        return `DG-${expert.id.substring(0, 8).toUpperCase()}`;
+    }, [expert?.id]);
+
     const handleDownloadPdf = async () => {
         const element = profileCardRef.current;
         if (!element || !expert) {
@@ -311,8 +318,13 @@ function ExpertProfileContent() {
                                 <AvatarFallback>{getInitials(expert.firstName, expert.lastName)}</AvatarFallback>
                             </Avatar>
                             <div className="flex-1">
-                                <div className="flex items-center justify-between">
-                                    <h1 className="text-4xl font-bold">{displayName}</h1>
+                                <div className="flex items-center justify-between mb-1">
+                                    <div className="flex items-center gap-3">
+                                        <h1 className="text-4xl font-bold">{displayName}</h1>
+                                        <Badge variant="outline" className="font-mono text-[10px] uppercase border-primary/30 bg-primary/5 text-primary px-2">
+                                            <Fingerprint className="h-3 w-3 mr-1" /> {dgId}
+                                        </Badge>
+                                    </div>
                                     {expert.isAvailable ? (
                                         <Badge className="bg-green-500 text-white">Available</Badge>
                                     ) : (
@@ -333,7 +345,13 @@ function ExpertProfileContent() {
                                             Not Verified
                                         </Badge>
                                     )}
-                                    <Badge variant="secondary">{expert.role}</Badge>
+                                    <Badge variant="secondary" className={cn(
+                                        "text-white border-none",
+                                        expert.role === 'Freelancer' ? "bg-blue-600" :
+                                        expert.role === 'Company' ? "bg-indigo-600" :
+                                        expert.role === 'Authorized Pro' ? "bg-emerald-600" :
+                                        "bg-secondary"
+                                    )}>{expert.role}</Badge>
                                     {expert.category && <Badge variant="secondary"><List className="mr-1 h-3 w-3" />{expert.category}</Badge>}
                                     {expert.department && <Badge variant="secondary">{expert.department}</Badge>}
                                     {expert.tier === 'Premier' && <Badge variant="outline" className="border-purple-500 text-purple-500"><Crown className="mr-1 h-3 w-3" /> Premier</Badge>}
