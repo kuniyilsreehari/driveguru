@@ -1,4 +1,3 @@
-
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -45,7 +44,8 @@ service cloud.firestore {
       allow delete: if isSuperAdmin() || isOwner(userId);
 
       match /notifications/{notificationId} {
-        allow read, write: if isOwner(userId);
+        allow read, update, delete: if isOwner(userId);
+        allow create: if isSignedIn();
       }
       
       match /location_data/{locId} {
@@ -81,17 +81,13 @@ service cloud.firestore {
     }
     
     match /vacancies/{vacancyId} {
-      // Public reading only for approved vacancies
-      allow read, list: if isSuperAdmin() || resource.data.status == 'Approved' || (isSignedIn() && resource.data.companyId == request.auth.uid);
-      
+      allow read, list: if true;
       allow create: if isSuperAdmin() || (
         isSignedIn() && 
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'Company' &&
         (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.tier == 'Premier' || 
-         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.tier == 'Super Premier') &&
-        request.resource.data.status == 'Pending'
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.tier == 'Super Premier')
       );
-      
       allow update, delete: if isSuperAdmin() || (isSignedIn() && (resource.data.companyId == request.auth.uid || isSuperAdmin()));
     }
     

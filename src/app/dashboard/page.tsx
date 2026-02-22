@@ -1,12 +1,11 @@
-
 'use client';
 
-import React, { useState, useMemo, useEffect } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
+import { collection, serverTimestamp, orderBy, query, where, limit, arrayUnion, arrayRemove, doc, increment } from 'firebase/firestore';
 import { signOut } from 'firebase/auth';
-import { doc, collection, serverTimestamp, orderBy, query, where, limit, arrayUnion, arrayRemove } from 'firebase/firestore';
 import { useUser, useAuth, useFirestore, useDoc, useMemoFirebase, useCollection } from '@/firebase';
-import { updateDocumentNonBlocking, addDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { updateDocumentNonBlocking, addDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Button } from '@/components/ui/button';
 import { LogOut, Loader, Edit, UserCheck, Crown, Sparkles, User as UserIcon, MessageSquare, Gift, Info, Book, Pen, PlusCircle, MapPin, IndianRupee, Calendar, GraduationCap, School, Building, Home, Share2, Rss, UserPlus, Users, Link as LinkIcon, Search, AlertCircle, Briefcase, Check, CheckCircle, ArrowUpCircle, Trash2, MoreHorizontal, Lock, Clock, ChevronLeft, ChevronRight, ChevronDown, ChevronUp } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -185,9 +184,25 @@ export default function ExpertDashboardPage() {
   const { data: myVacancies, isLoading: isVacanciesLoading } = useCollection<Vacancy>(myVacanciesQuery);
 
   const handleToggleFollow = async (targetId: string, isFollowing: boolean) => {
-    if (!userDocRef) return;
+    if (!userDocRef || !userProfile) return;
     const action = isFollowing ? arrayRemove(targetId) : arrayUnion(targetId);
     updateDocumentNonBlocking(userDocRef, { following: action });
+    
+    if (!isFollowing) {
+        // Create notification for the target user
+        const targetNotifRef = collection(firestore, 'users', targetId, 'notifications');
+        addDocumentNonBlocking(targetNotifRef, {
+            type: 'new_follower',
+            message: `${userProfile.firstName} ${userProfile.lastName} started following you.`,
+            link: `/expert/${user?.uid}`,
+            read: false,
+            actorId: user?.uid,
+            actorName: `${userProfile.firstName} ${userProfile.lastName}`,
+            actorPhotoUrl: userProfile.photoUrl || '',
+            createdAt: serverTimestamp(),
+        });
+    }
+    
     toast({ title: isFollowing ? "Unfollowed" : "Following" });
   };
 

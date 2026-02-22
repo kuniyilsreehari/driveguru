@@ -1,8 +1,7 @@
-
 'use client';
 
-import { useFirestore, useUser, useCollection, useMemoFirebase, updateDocumentNonBlocking } from '@/firebase';
-import { collection, query, where, DocumentData, Query } from 'firebase/firestore';
+import { useFirestore, useUser, useCollection, useMemoFirebase, updateDocumentNonBlocking, addDocumentNonBlocking } from '@/firebase';
+import { collection, query, where, DocumentData, Query, serverTimestamp } from 'firebase/firestore';
 import { Loader2, UserMinus, UserPlus } from 'lucide-react';
 import Link from 'next/link';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
@@ -46,6 +45,22 @@ export function UserList({ userIds, userIdsQuery, emptyStateMessage }: UserListP
 
         try {
             await updateDocumentNonBlocking(currentUserDocRef, { following: updateAction });
+            
+            if (!isFollowing) {
+                // Create notification for the target user
+                const targetNotifRef = collection(firestore, 'users', targetUser.id, 'notifications');
+                addDocumentNonBlocking(targetNotifRef, {
+                    type: 'new_follower',
+                    message: `${currentUserProfile.firstName} ${currentUserProfile.lastName} started following you.`,
+                    link: `/expert/${currentUser?.uid}`,
+                    read: false,
+                    actorId: currentUser?.uid,
+                    actorName: `${currentUserProfile.firstName} ${currentUserProfile.lastName}`,
+                    actorPhotoUrl: currentUserProfile.photoUrl || '',
+                    createdAt: serverTimestamp(),
+                });
+            }
+
             toast({
                 title: isFollowing ? 'Unfollowed' : 'Followed',
                 description: `You are now ${isFollowing ? 'no longer following' : 'following'} ${targetUser.firstName} ${targetUser.lastName}.`,

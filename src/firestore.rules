@@ -44,7 +44,8 @@ service cloud.firestore {
       allow delete: if isSuperAdmin() || isOwner(userId);
 
       match /notifications/{notificationId} {
-        allow read, write: if isOwner(userId);
+        allow read, update, delete: if isOwner(userId);
+        allow create: if isSignedIn();
       }
       
       match /location_data/{locId} {

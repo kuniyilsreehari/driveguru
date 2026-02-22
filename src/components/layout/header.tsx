@@ -4,9 +4,9 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Icons } from '@/components/icons';
-import { useUser, useAuth, useFirestore } from '@/firebase';
+import { useUser, useAuth, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { signOut } from 'firebase/auth';
-import { doc, onSnapshot } from 'firebase/firestore';
+import { doc, onSnapshot, collection, query, orderBy, limit, updateDoc } from 'firebase/firestore';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,11 +17,137 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { User as UserIcon, LogOut, LayoutDashboard, Home, Award, Briefcase, Moon, Sun, Menu, Rss, Users, BookOpen } from 'lucide-react';
+import { User as UserIcon, LogOut, LayoutDashboard, Home, Award, Briefcase, Moon, Sun, Menu, Rss, Users, BookOpen, Bell, CheckCircle2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useTheme } from 'next-themes';
 import { cn } from '@/lib/utils';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { formatDistanceToNowStrict } from 'date-fns';
+
+type Notification = {
+    id: string;
+    type: 'comment_reply' | 'post_like' | 'new_follower' | 'group_approval';
+    message: string;
+    link: string;
+    read: boolean;
+    actorId: string;
+    actorName: string;
+    actorPhotoUrl: string;
+    createdAt: any;
+}
+
+function NotificationCenter() {
+    const { user } = useUser();
+    const firestore = useFirestore();
+    const [isOpen, setIsOpen] = useState(false);
+
+    const notifsQuery = useMemoFirebase(() => {
+        if (!firestore || !user) return null;
+        return query(
+            collection(firestore, 'users', user.uid, 'notifications'),
+            orderBy('createdAt', 'desc'),
+            limit(20)
+        );
+    }, [firestore, user]);
+
+    const { data: notifications, isLoading } = useCollection<Notification>(notifsQuery);
+
+    const unreadCount = useMemo(() => {
+        return notifications?.filter(n => !n.read).length || 0;
+    }, [notifications]);
+
+    const markAsRead = async (notifId: string) => {
+        if (!user || !firestore) return;
+        const notifRef = doc(firestore, 'users', user.uid, 'notifications', notifId);
+        await updateDoc(notifRef, { read: true });
+    };
+
+    const markAllAsRead = async () => {
+        if (!user || !firestore || !notifications) return;
+        const unread = notifications.filter(n => !n.read);
+        for (const notif of unread) {
+            const notifRef = doc(firestore, 'users', user.uid, 'notifications', notif.id);
+            updateDoc(notifRef, { read: true });
+        }
+    };
+
+    if (!user) return null;
+
+    return (
+        <Popover open={isOpen} onOpenChange={setIsOpen}>
+            <PopoverTrigger asChild>
+                <Button variant="ghost" size="icon" className="relative h-10 w-10 rounded-full hover:bg-white/10">
+                    <Bell className="h-5 w-5" />
+                    {unreadCount > 0 && (
+                        <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-orange-500 text-[10px] font-black text-white ring-4 ring-background">
+                            {unreadCount > 9 ? '9+' : unreadCount}
+                        </span>
+                    )}
+                </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-80 p-0 bg-[#24262d] border-white/10 rounded-2xl overflow-hidden shadow-2xl" align="end">
+                <div className="flex items-center justify-between p-4 border-b border-white/5 bg-white/5">
+                    <h4 className="font-black text-white text-sm uppercase tracking-wider">Notifications</h4>
+                    {unreadCount > 0 && (
+                        <Button variant="ghost" size="sm" onClick={markAllAsRead} className="h-7 px-2 text-[10px] font-bold text-orange-500 hover:text-orange-400 hover:bg-orange-500/10 rounded-lg">
+                            <CheckCircle2 className="mr-1 h-3 w-3" /> Mark all read
+                        </Button>
+                    )}
+                </div>
+                <ScrollArea className="h-[400px]">
+                    {isLoading ? (
+                        <div className="flex h-32 items-center justify-center"><Loader className="h-5 w-5 animate-spin text-orange-500" /></div>
+                    ) : !notifications || notifications.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center h-64 p-8 text-center opacity-40">
+                            <Bell className="h-12 w-12 mb-4" />
+                            <p className="text-sm font-bold">No notifications yet.</p>
+                        </div>
+                    ) : (
+                        <div className="divide-y divide-white/5">
+                            {notifications.map((notif) => (
+                                <Link 
+                                    key={notif.id} 
+                                    href={notif.link} 
+                                    className={cn(
+                                        "flex items-start gap-3 p-4 transition-colors hover:bg-white/5",
+                                        !notif.read && "bg-orange-500/[0.03]"
+                                    )}
+                                    onClick={() => {
+                                        markAsRead(notif.id);
+                                        setIsOpen(false);
+                                    }}
+                                >
+                                    <Avatar className="h-10 w-10 shrink-0 border-2 border-white/5">
+                                        <AvatarImage src={notif.actorPhotoUrl} />
+                                        <AvatarFallback className="bg-orange-500/10 text-orange-500 font-bold text-xs">
+                                            {notif.actorName?.charAt(0)}
+                                        </AvatarFallback>
+                                    </Avatar>
+                                    <div className="flex-1 space-y-1">
+                                        <p className="text-sm text-white leading-snug">
+                                            <span className="font-black">{notif.actorName}</span>{' '}
+                                            <span className="text-muted-foreground font-medium">{notif.type === 'new_follower' ? 'started following you.' : notif.message}</span>
+                                        </p>
+                                        <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest flex items-center gap-2">
+                                            {notif.createdAt ? formatDistanceToNowStrict(notif.createdAt.toDate(), { addSuffix: true }) : 'Just now'}
+                                            {!notif.read && <span className="h-1.5 w-1.5 rounded-full bg-orange-500" />}
+                                        </p>
+                                    </div>
+                                </Link>
+                            ))}
+                        </div>
+                    )}
+                </ScrollArea>
+            </PopoverContent>
+        </Popover>
+    );
+}
+
+function Loader({ className }: { className?: string }) {
+    return <Icons.logo className={cn("animate-spin", className)} />;
+}
 
 export function Header() {
   const { user, isUserLoading } = useUser();
@@ -111,7 +237,7 @@ export function Header() {
           <span className="hidden font-bold sm:inline-block">DriveGuru</span>
         </Link>
 
-        <div className="flex items-center justify-end space-x-4">
+        <div className="flex items-center justify-end space-x-2 sm:space-x-4">
           <nav className="hidden sm:flex items-center space-x-1">
             {navItems.map((item) => (
                 <Button 
@@ -129,42 +255,46 @@ export function Header() {
           </nav>
             
             {!isUserLoading && user ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage src={user.photoURL || undefined} />
-                      <AvatarFallback>{getInitials(user.email)}</AvatarFallback>
-                    </Avatar>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56" align="end">
-                  <DropdownMenuLabel className="font-normal">
-                    <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-medium leading-none">Account</p>
-                      <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
-                    </div>
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => router.push(dashboardPath)}>
-                    <LayoutDashboard className="mr-2 h-4 w-4" /> Dashboard
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleSignOut}>
-                    <LogOut className="mr-2 h-4 w-4" /> Log out
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <div className="flex items-center gap-1 sm:gap-2">
+                <NotificationCenter />
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                        <Avatar className="h-8 w-8 ring-2 ring-primary/20 ring-offset-2 ring-offset-background">
+                        <AvatarImage src={user.photoURL || undefined} />
+                        <AvatarFallback className="bg-primary/10 text-primary font-black">{getInitials(user.email)}</AvatarFallback>
+                        </Avatar>
+                    </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="w-56" align="end">
+                    <DropdownMenuLabel className="font-normal">
+                        <div className="flex flex-col space-y-1">
+                        <p className="text-sm font-black leading-none">Account</p>
+                        <p className="text-xs leading-none text-muted-foreground font-medium">{user.email}</p>
+                        </div>
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => router.push(dashboardPath)} className="font-bold">
+                        <LayoutDashboard className="mr-2 h-4 w-4" /> Dashboard
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleSignOut} className="text-red-500 font-bold focus:text-red-500 focus:bg-red-500/5">
+                        <LogOut className="mr-2 h-4 w-4" /> Log out
+                    </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             ) : !isUserLoading && (
               <div className="flex items-center gap-2">
-                <Button asChild variant="ghost" size="sm"><Link href="/login">Login</Link></Button>
-                <Button asChild size="sm"><Link href="/signup/role">Join</Link></Button>
+                <Button asChild variant="ghost" size="sm" className="font-bold"><Link href="/login">Login</Link></Button>
+                <Button asChild size="sm" className="font-black px-6"><Link href="/signup/role">Join</Link></Button>
               </div>
             )}
 
            <Button
               variant="ghost"
               size="icon"
+              className="h-9 w-9 rounded-full"
               onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
             >
               <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
