@@ -8,7 +8,7 @@ import { useUser, useFirestore, useDoc, useMemoFirebase, useAuth, useCollection 
 import { updateDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, CheckCircle2, UserCheck, UserX, Crown, Sparkles, User as UserIcon, Settings, Save, Briefcase, Building, MessageSquare, Search, PlusCircle, Mail, Download, ExternalLink, IndianRupee, X, Upload, HardDriveDownload, Megaphone, Phone, MapPinIcon, CreditCard, Key, Gift, Code, List, Grip, ArrowUp, ArrowDown, Rss, UserPlus, Fingerprint, Award, CircleHelp, CheckCircle, FileJson, MapPin, Clock, AlertCircle } from 'lucide-react';
+import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, CheckCircle2, UserCheck, UserX, Crown, Sparkles, User as UserIcon, Settings, Save, Briefcase, Building, MessageSquare, Search, PlusCircle, Mail, Download, ExternalLink, IndianRupee, X, Upload, HardDriveDownload, Megaphone, Phone, MapPinIcon, Key, Gift, Code, List, Grip, ArrowUp, ArrowDown, Rss, UserPlus, Fingerprint, Award, CircleHelp, CheckCircle, FileJson, MapPin, Clock, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -52,7 +52,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { format, formatDistanceToNow } from 'date-fns';
 import { exportAllData } from '@/ai/flows/export-data-flow';
 import { importUsers } from '@/ai/flows/import-users-flow';
-import { Slider } from '@/components/ui/slider';
 import { EditProfileForm } from '@/components/auth/edit-profile-form';
 import { cn } from '@/lib/utils';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -133,6 +132,7 @@ export default function AdminDashboardPage() {
   const [selectedVacancy, setSelectedVacancy] = useState<Vacancy | null>(null);
   const [isVacancyFormOpen, setIsVacancyFormOpen] = useState(false);
   const [isVacancyDeleteDialogOpen, setIsVacancyDeleteDialogOpen] = useState(false);
+  const [vacancySort, setVacancySort] = useState<{ field: keyof Vacancy, direction: 'asc' | 'desc' }>({ field: 'postedAt', direction: 'desc' });
 
   // App Config State
   const [featuredLimit, setFeaturedLimit] = useState(3);
@@ -158,7 +158,7 @@ export default function AdminDashboardPage() {
   const usersQuery = useMemoFirebase(() => isSuperAdmin ? query(collection(firestore, 'users'), orderBy('createdAt', 'desc')) : null, [firestore, isSuperAdmin]);
   const { data: users, isLoading: isUsersLoading } = useCollection<ExpertUser>(usersQuery);
 
-  const vacanciesQuery = useMemoFirebase(() => isSuperAdmin ? query(collection(firestore, 'vacancies'), orderBy('postedAt', 'desc')) : null, [firestore, isSuperAdmin]);
+  const vacanciesQuery = useMemoFirebase(() => isSuperAdmin ? collection(firestore, 'vacancies') : null, [firestore, isSuperAdmin]);
   const { data: vacancies, isLoading: isVacanciesLoading } = useCollection<Vacancy>(vacanciesQuery);
 
   const paymentsQuery = useMemoFirebase(() => isSuperAdmin ? query(collection(firestore, 'payments'), orderBy('createdAt', 'desc')) : null, [firestore, isSuperAdmin]);
@@ -224,6 +224,31 @@ export default function AdminDashboardPage() {
         return matchesSearch && matchesFilter;
     });
   }, [users, userSearchQuery, userFilter]);
+
+  const sortedVacancies = useMemo(() => {
+    if (!vacancies) return [];
+    return [...vacancies].sort((a, b) => {
+        let aVal = a[vacancySort.field];
+        let bVal = b[vacancySort.field];
+        
+        if (aVal instanceof Timestamp) aVal = aVal.toMillis();
+        if (bVal instanceof Timestamp) bVal = bVal.toMillis();
+        
+        if (aVal === undefined) aVal = '';
+        if (bVal === undefined) bVal = '';
+
+        if (aVal < bVal) return vacancySort.direction === 'asc' ? -1 : 1;
+        if (aVal > bVal) return vacancySort.direction === 'asc' ? 1 : -1;
+        return 0;
+    });
+  }, [vacancies, vacancySort]);
+
+  const toggleVacancySort = (field: keyof Vacancy) => {
+    setVacancySort(prev => ({
+        field,
+        direction: prev.field === field && prev.direction === 'desc' ? 'asc' : 'desc'
+    }));
+  };
 
   const handleSaveSettings = async () => {
     setIsSaving(true);
@@ -696,18 +721,34 @@ export default function AdminDashboardPage() {
                                 <Table>
                                     <TableHeader className="bg-white/5">
                                         <TableRow className="border-white/5">
-                                            <TableHead className="font-bold text-white">Title</TableHead>
-                                            <TableHead className="font-bold text-white">Company</TableHead>
-                                            <TableHead className="font-bold text-white">Location</TableHead>
+                                            <TableHead className="font-bold text-white cursor-pointer hover:text-orange-500 transition-colors" onClick={() => toggleVacancySort('title')}>
+                                                <div className="flex items-center gap-1">
+                                                    Title {vacancySort.field === 'title' && (vacancySort.direction === 'asc' ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />)}
+                                                </div>
+                                            </TableHead>
+                                            <TableHead className="font-bold text-white cursor-pointer hover:text-orange-500 transition-colors" onClick={() => toggleVacancySort('companyName')}>
+                                                <div className="flex items-center gap-1">
+                                                    Company {vacancySort.field === 'companyName' && (vacancySort.direction === 'asc' ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />)}
+                                                </div>
+                                            </TableHead>
+                                            <TableHead className="font-bold text-white cursor-pointer hover:text-orange-500 transition-colors" onClick={() => toggleVacancySort('location')}>
+                                                <div className="flex items-center gap-1">
+                                                    Location {vacancySort.field === 'location' && (vacancySort.direction === 'asc' ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />)}
+                                                </div>
+                                            </TableHead>
                                             <TableHead className="font-bold text-white">Type</TableHead>
-                                            <TableHead className="font-bold text-white">Posted</TableHead>
+                                            <TableHead className="font-bold text-white cursor-pointer hover:text-orange-500 transition-colors" onClick={() => toggleVacancySort('postedAt')}>
+                                                <div className="flex items-center gap-1">
+                                                    Posted {vacancySort.field === 'postedAt' && (vacancySort.direction === 'asc' ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />)}
+                                                </div>
+                                            </TableHead>
                                             <TableHead className="text-right font-bold text-white">Actions</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
                                         {isVacanciesLoading ? (
                                             <TableRow><TableCell colSpan={6} className="text-center py-8"><Loader className="animate-spin mx-auto" /></TableCell></TableRow>
-                                        ) : vacancies?.map(v => (
+                                        ) : sortedVacancies.map(v => (
                                             <TableRow key={v.id} className="hover:bg-white/5 transition-colors border-white/5">
                                                 <TableCell className="font-bold text-white">{v.title}</TableCell>
                                                 <TableCell>
