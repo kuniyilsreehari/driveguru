@@ -81,9 +81,7 @@ service cloud.firestore {
     }
     
     match /vacancies/{vacancyId} {
-      // Simplified permissions as requested: Everyone can see, authorized users can post.
-      allow create: if isSignedIn();
-      allow update, delete: if isSuperAdmin() || (isSignedIn() && resource.data.companyId == request.auth.uid);
+      allow create, update, delete: if isSuperAdmin();
     }
     
     match /payments/{paymentId} {
