@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { User as UserIcon, LogOut, LayoutDashboard, Home, Award, Briefcase, Moon, Sun, Menu, Rss, Users, BookOpen, Bell, CheckCircle2, Sparkles, Crown } from 'lucide-react';
+import { User as UserIcon, LogOut, LayoutDashboard, Home, Award, Briefcase, Moon, Sun, Menu, Rss, Users, BookOpen, Bell, CheckCircle2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, useMemo } from 'react';
 import { useTheme } from 'next-themes';
@@ -167,6 +167,9 @@ export function Header() {
 
   useEffect(() => {
     setMounted(true);
+  }, []);
+
+  useEffect(() => {
     if (user && firestore) {
       const superAdminDocRef = doc(firestore, 'roles_super_admin', user.uid);
       const unsub = onSnapshot(superAdminDocRef, (doc) => {
@@ -237,6 +240,7 @@ export function Header() {
         <div className="flex items-center justify-end space-x-2 sm:space-x-4">
           <nav className="hidden sm:flex items-center space-x-1">
             {navItems.map((item) => {
+                // usePathname is server-safe, so we use it directly to prevent mismatches
                 const isActive = pathname === item.href;
                 return (
                     <Button 
@@ -302,8 +306,9 @@ export function Header() {
               className="h-9 w-9 rounded-full group"
               onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
             >
-              <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0 block dark:hidden" />
-              <Moon className="h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100 hidden dark:block" />
+              {/* Using CSS-based visibility instead of JS-based rendering to prevent hydration issues */}
+              <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0 dark:hidden" />
+              <Moon className="h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100 hidden dark:block" />
               <span className="sr-only">Toggle theme</span>
           </Button>
         </div>
