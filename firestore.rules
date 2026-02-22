@@ -74,7 +74,7 @@ service cloud.firestore {
       }
     }
     
-    // Job Vacancies (v1.1: Explicit public list/read permission)
+    // Job Vacancies (v1.2: Stabilized Public Access)
     match /vacancies/{vacancyId} {
       allow read, list: if true;
       allow create, update, delete: if isSuperAdmin();
