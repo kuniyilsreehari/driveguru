@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
@@ -34,7 +33,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 
-type ExpertUserProfile {
+type ExpertUserProfile = {
     id: string;
     firstName: string;
     lastName: string;
