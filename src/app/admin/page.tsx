@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
@@ -54,6 +55,13 @@ import { exportAllData } from '@/ai/flows/export-data-flow';
 import { Slider } from '@/components/ui/slider';
 import { EditProfileForm } from '@/components/auth/edit-profile-form';
 import { cn } from '@/lib/utils';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+
+export type HomepageCategory = {
+    id: string;
+    name: string;
+    icon: string;
+};
 
 type ExpertUser = {
     id: string;
@@ -80,7 +88,10 @@ type AppConfig = {
     announcementSpeed?: number;
     isPaymentsEnabled?: boolean;
     paymentMethod?: 'API' | 'Link';
+    publicApiKey?: string;
     referralRewardPoints?: number;
+    homepageCategories?: HomepageCategory[];
+    departments?: string[];
     premierPlanPrices?: { daily: number; monthly: number; yearly: number };
     superPremierPlanPrices?: { daily: number; monthly: number; yearly: number };
 };
@@ -109,7 +120,15 @@ export default function AdminDashboardPage() {
   const [announcementSpeed, setAnnouncementSpeed] = useState(20);
   const [paymentsEnabled, setPaymentsEnabled] = useState(true);
   const [paymentMethod, setPaymentMethod] = useState<'API' | 'Link'>('API');
+  const [publicApiKey, setPublicApiKey] = useState("");
   const [referralPoints, setReferralPoints] = useState(100);
+  const [homepageCategories, setHomepageCategories] = useState<HomepageCategory[]>([]);
+  const [departments, setDepartments] = useState<string[]>([]);
+
+  // Category and Department form state
+  const [newCatName, setNewCatName] = useState("");
+  const [newCatIcon, setNewCatIcon] = useState("");
+  const [newDepName, setNewDepName] = useState("");
 
   const superAdminDocRef = useMemoFirebase(() => user ? doc(firestore, 'roles_super_admin', user.uid) : null, [firestore, user]);
   const { data: superAdminData, isLoading: isRoleLoading } = useDoc(superAdminDocRef);
@@ -129,7 +148,10 @@ export default function AdminDashboardPage() {
       setAnnouncementSpeed(appConfig.announcementSpeed || 20);
       setPaymentsEnabled(appConfig.isPaymentsEnabled !== false);
       setPaymentMethod(appConfig.paymentMethod || 'API');
+      setPublicApiKey(appConfig.publicApiKey || "");
       setReferralPoints(appConfig.referralRewardPoints || 100);
+      setHomepageCategories(appConfig.homepageCategories || []);
+      setDepartments(appConfig.departments || []);
     }
   }, [appConfig]);
 
@@ -186,7 +208,10 @@ export default function AdminDashboardPage() {
         announcementSpeed,
         isPaymentsEnabled: paymentsEnabled,
         paymentMethod,
+        publicApiKey,
         referralRewardPoints: referralPoints,
+        homepageCategories,
+        departments,
       }, { merge: true });
       toast({ title: "Settings Saved" });
     } finally {
@@ -246,6 +271,40 @@ export default function AdminDashboardPage() {
     } finally {
       setIsExporting(false);
     }
+  };
+
+  // Category & Department helper functions
+  const addCategory = () => {
+    if (!newCatName || !newCatIcon) return;
+    setHomepageCategories([...homepageCategories, { id: Date.now().toString(), name: newCatName, icon: newCatIcon }]);
+    setNewCatName("");
+    setNewCatIcon("");
+  };
+
+  const deleteCategory = (id: string) => {
+    setHomepageCategories(homepageCategories.filter(c => c.id !== id));
+  };
+
+  const moveCategory = (index: number, direction: 'up' | 'down') => {
+    const newCats = [...homepageCategories];
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= newCats.length) return;
+    [newCats[index], newCats[targetIndex]] = [newCats[targetIndex], newCats[index]];
+    setHomepageCategories(newCats);
+  };
+
+  const addDepartment = () => {
+    if (!newDepName) return;
+    if (departments.includes(newDepName)) {
+        toast({ variant: "destructive", title: "Already exists" });
+        return;
+    }
+    setDepartments([...departments, newDepName]);
+    setNewDepName("");
+  };
+
+  const deleteDepartment = (name: string) => {
+    setDepartments(departments.filter(d => d !== name));
   };
 
   if (isUserLoading || isRoleLoading) return <div className="flex h-screen items-center justify-center"><Loader className="animate-spin" /></div>;
@@ -519,43 +578,141 @@ export default function AdminDashboardPage() {
           </TabsContent>
 
           <TabsContent value="settings" className="mt-0 space-y-6">
-            <Card className="border-2 rounded-2xl overflow-hidden">
-              <CardHeader className="bg-secondary/10 border-b">
+            <Card className="border-2 rounded-2xl overflow-hidden bg-secondary/10">
+              <CardHeader className="bg-secondary/20 border-b">
                 <div className="flex items-center gap-3">
-                    <Settings className="h-6 w-6 text-primary" />
-                    <CardTitle className="text-2xl font-black">Global Controls</CardTitle>
+                    <Key className="h-6 w-6 text-primary" />
+                    <CardTitle className="text-2xl font-black">Manage API Keys</CardTitle>
                 </div>
+                <CardDescription>Manage public-facing API keys and view instructions for secret keys.</CardDescription>
+              </CardHeader>
+              <CardContent className="p-6 space-y-4">
+                <div className="space-y-2">
+                    <Label className="font-bold">Public API Key / App ID (e.g., Cashfree)</Label>
+                    <Input value={publicApiKey} onChange={e => setPublicApiKey(e.target.value)} className="rounded-xl h-12 bg-background border-2 font-mono" placeholder="Enter public API key..." />
+                    <p className="text-[10px] text-muted-foreground">This key will be used for client-side operations where needed.</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-2 rounded-2xl overflow-hidden bg-secondary/10">
+              <CardHeader className="bg-secondary/20 border-b">
+                <div className="flex items-center gap-3">
+                    <CreditCard className="h-6 w-6 text-primary" />
+                    <CardTitle className="text-2xl font-black">Manage Payment Method</CardTitle>
+                </div>
+                <CardDescription>Globally enable or disable payments and choose the method for expert activation.</CardDescription>
               </CardHeader>
               <CardContent className="p-6 space-y-6">
-                <div className="flex items-center justify-between p-4 bg-secondary/10 rounded-xl">
+                <div className="flex items-center justify-between p-4 bg-background border-2 rounded-xl">
                     <div>
-                        <Label className="text-base font-bold">Announcement Banner</Label>
-                        <p className="text-xs text-muted-foreground">Toggle the visibility of the scrolling banner.</p>
+                        <Label className="text-base font-bold">Payments Enabled</Label>
+                        <p className="text-xs text-muted-foreground">Turn all payment functionalities on or off.</p>
                     </div>
-                    <Switch checked={announcementEnabled} onCheckedChange={setAnnouncementEnabled} />
+                    <Switch checked={paymentsEnabled} onCheckedChange={setPaymentsEnabled} />
                 </div>
+                <div className="space-y-3">
+                    <Label className="font-bold">Payment Method</Label>
+                    <RadioGroup value={paymentMethod} onValueChange={(v: 'API' | 'Link') => setPaymentMethod(v)} className="flex flex-col gap-2">
+                        <div className="flex items-center space-x-3">
+                            <RadioGroupItem value="API" id="method-api" />
+                            <Label htmlFor="method-api" className="font-bold text-sm text-orange-500">API (Cashfree Popup)</Label>
+                        </div>
+                        <div className="flex items-center space-x-3">
+                            <RadioGroupItem value="Link" id="method-link" />
+                            <Label htmlFor="method-link" className="font-bold text-sm">Payment Link</Label>
+                        </div>
+                    </RadioGroup>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-2 rounded-2xl overflow-hidden bg-secondary/10">
+              <CardHeader className="bg-secondary/20 border-b">
+                <div className="flex items-center gap-3">
+                    <Gift className="h-6 w-6 text-primary" />
+                    <CardTitle className="text-2xl font-black">Referral Settings</CardTitle>
+                </div>
+                <CardDescription>Configure points for successful referrals.</CardDescription>
+              </CardHeader>
+              <CardContent className="p-6 space-y-4">
                 <div className="space-y-2">
-                    <Label className="font-bold">Banner Text</Label>
-                    <Input value={announcementText} onChange={e => setAnnouncementText(e.target.value)} className="rounded-xl h-12 bg-secondary/20 border-none" />
+                    <Label className="font-bold">Points Awarded per Referral</Label>
+                    <Input type="number" value={referralPoints} onChange={e => setReferralPoints(Number(e.target.value))} className="rounded-xl h-12 bg-background border-2 font-bold" />
+                    <p className="text-[10px] text-muted-foreground">Set the number of points awarded to a user for each successful referral.</p>
                 </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-2 rounded-2xl overflow-hidden bg-secondary/10">
+              <CardHeader className="bg-secondary/20 border-b">
+                <div className="flex items-center gap-3">
+                    <Settings className="h-6 w-6 text-primary" />
+                    <CardTitle className="text-2xl font-black">Global Settings</CardTitle>
+                </div>
+                <CardDescription>Control content, pricing, and payment links.</CardDescription>
+              </CardHeader>
+              <CardContent className="p-6 space-y-8">
+                {/* Homepage Categories */}
                 <div className="space-y-4">
-                    <div className="flex justify-between items-end">
-                        <Label className="font-bold">Scroll Speed</Label>
-                        <span className="text-xs font-black text-primary">{announcementSpeed}s</span>
+                    <div className="flex items-center gap-3">
+                        <List className="h-5 w-5 text-primary" />
+                        <h4 className="font-black">Homepage Categories</h4>
                     </div>
-                    <Slider value={[announcementSpeed]} onValueChange={v => setAnnouncementSpeed(v[0])} min={5} max={60} step={1} />
+                    <p className="text-xs text-muted-foreground">Manage and reorder the categories displayed on the homepage.</p>
+                    <div className="space-y-2">
+                        {homepageCategories.map((cat, idx) => (
+                            <div key={cat.id} className="flex items-center gap-2">
+                                <Input value={cat.name} onChange={e => {
+                                    const newCats = [...homepageCategories];
+                                    newCats[idx].name = e.target.value;
+                                    setHomepageCategories(newCats);
+                                }} className="bg-background" />
+                                <Input value={cat.icon} onChange={e => {
+                                    const newCats = [...homepageCategories];
+                                    newCats[idx].icon = e.target.value;
+                                    setHomepageCategories(newCats);
+                                }} className="bg-background w-32" />
+                                <div className="flex gap-1 shrink-0">
+                                    <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => moveCategory(idx, 'up')} disabled={idx === 0}><ArrowUp className="h-3 w-3" /></Button>
+                                    <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => moveCategory(idx, 'down')} disabled={idx === homepageCategories.length - 1}><ArrowDown className="h-3 w-3" /></Button>
+                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => deleteCategory(cat.id)}><Trash2 className="h-3 w-3" /></Button>
+                                </div>
+                            </div>
+                        ))}
+                        <div className="flex flex-col sm:flex-row gap-2 pt-2">
+                            <Input placeholder="New Category Name" value={newCatName} onChange={e => setNewCatName(e.target.value)} className="bg-background border-dashed" />
+                            <Input placeholder="Icon Name" value={newCatIcon} onChange={e => setNewCatIcon(e.target.value)} className="bg-background border-dashed" />
+                            <Button onClick={addCategory} className="bg-orange-500 hover:bg-orange-600"><PlusCircle className="mr-2 h-4 w-4" /> Add</Button>
+                        </div>
+                    </div>
                 </div>
+
                 <Separator />
-                <div className="space-y-2">
-                    <Label className="font-bold">Referral Points Reward</Label>
-                    <div className="relative">
-                        <Gift className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-primary" />
-                        <Input type="number" value={referralPoints} onChange={e => setReferralPoints(Number(e.target.value))} className="pl-10 rounded-xl h-12 bg-secondary/20 border-none font-bold" />
+
+                {/* Department Management */}
+                <div className="space-y-4">
+                    <div className="flex items-center gap-3">
+                        <Building className="h-5 w-5 text-primary" />
+                        <h4 className="font-black">Department Management</h4>
+                    </div>
+                    <p className="text-xs text-muted-foreground">Create and manage company departments.</p>
+                    <div className="space-y-2">
+                        {departments.map((dep, idx) => (
+                            <div key={idx} className="flex items-center justify-between p-2 bg-background border-2 rounded-lg">
+                                <span className="font-bold text-sm px-2">{dep}</span>
+                                <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => deleteDepartment(dep)}><Trash2 className="h-3 w-3" /></Button>
+                            </div>
+                        ))}
+                        <div className="flex gap-2 pt-2">
+                            <Input placeholder="New Department Name" value={newDepName} onChange={e => setNewDepName(e.target.value)} className="bg-background border-dashed" />
+                            <Button onClick={addDepartment} className="bg-orange-500 hover:bg-orange-600"><PlusCircle className="mr-2 h-4 w-4" /> Add</Button>
+                        </div>
                     </div>
                 </div>
               </CardContent>
-              <CardFooter className="bg-secondary/10 p-6 border-t">
-                <Button onClick={handleSaveSettings} disabled={isSaving} className="w-full h-12 rounded-xl font-black text-lg">
+              <CardFooter className="bg-secondary/20 p-6 border-t">
+                <Button onClick={handleSaveSettings} disabled={isSaving} className="w-full h-12 rounded-xl font-black text-lg bg-orange-500 hover:bg-orange-600">
                     {isSaving ? <Loader className="animate-spin h-5 w-5 mr-2" /> : <Save className="mr-2 h-5 w-5" />} 
                     Save All Settings
                 </Button>
