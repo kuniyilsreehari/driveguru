@@ -216,9 +216,13 @@ export default function ExpertDashboardPage() {
                 </div>
               </CardHeader>
               <CardContent className="space-y-6 pt-4">
-                <div className="flex items-center gap-2 text-sm font-medium">
-                    <Switch checked={userProfile.isAvailable} onCheckedChange={(v) => updateDocumentNonBlocking(userDocRef!, { isAvailable: v })} />
-                    <span>I am currently available.</span>
+                <div className="flex items-center gap-6 py-2">
+                    <Switch 
+                        className="scale-150 origin-left" 
+                        checked={userProfile.isAvailable} 
+                        onCheckedChange={(v) => updateDocumentNonBlocking(userDocRef!, { isAvailable: v })} 
+                    />
+                    <span className="text-lg font-bold">I am currently available.</span>
                 </div>
 
                 <div className="space-y-2">
