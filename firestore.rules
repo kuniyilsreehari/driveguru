@@ -81,6 +81,7 @@ service cloud.firestore {
     }
     
     match /vacancies/{vacancyId} {
+      // Public reading allowed above. Writes restricted to Super Admins.
       allow create, update, delete: if isSuperAdmin();
     }
     

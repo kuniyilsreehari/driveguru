@@ -6,7 +6,7 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { doc, arrayUnion, arrayRemove, query, collection, where, serverTimestamp } from 'firebase/firestore';
 import { useFirestore, useDoc, useMemoFirebase, useUser, updateDocumentNonBlocking, addDocumentNonBlocking } from '@/firebase';
-import { Loader2, Star, ChevronLeft, MapPin, IndianRupee, Briefcase, Calendar, Info, Book, GraduationCap, School, User as UserIcon, UserCheck, XCircle, Crown, Sparkles, LogIn, Lock, Building, FileDown, Home, MessageSquare, PenSquare, Factory, Linkedin, Twitter, Github, Globe, UserPlus, UserMinus, Users, List, Phone, Youtube, Share2, Rss, Fingerprint, AlertCircle } from 'lucide-react';
+import { Loader2, Star, ChevronLeft, MapPin, IndianRupee, Briefcase, Calendar, Info, Book, GraduationCap, School, User as UserIcon, UserCheck, XCircle, Crown, Sparkles, LogIn, Lock, Building, FileDown, Home, MessageSquare, PenSquare, Factory, Linkedin, Twitter, Github, Globe, UserPlus, UserMinus, Users, List, Phone, Youtube, Share2, Rss, Fingerprint, AlertCircle, ImageIcon } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardFooter } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -14,7 +14,6 @@ import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { FloatingActions } from '@/components/floating-actions';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { WhatsAppBookingDialog } from '@/components/whatsapp-booking-dialog';
 import { Icons } from '@/components/icons';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription as UiDialogDescription, DialogFooter } from '@/components/ui/dialog';
@@ -305,21 +304,25 @@ function ExpertProfileContent() {
                 </div>
                 
                 {!user && (
-                    <Card className="mb-6 bg-primary/10 border-primary/50">
-                        <CardContent className="p-4 flex items-center justify-between">
-                            <div className="flex items-center gap-4">
-                                <LogIn className="h-8 w-8 text-primary" />
-                                <div>
-                                    <h4 className="font-bold text-lg">Join our community!</h4>
-                                    <p className="text-sm text-muted-foreground">Log in or sign up to contact experts and leave reviews.</p>
-                                </div>
+                    <div className="mb-6 bg-orange-50 dark:bg-orange-950/10 border-2 border-orange-200 dark:border-orange-900/50 rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between gap-6">
+                        <div className="flex items-center gap-4 text-center md:text-left">
+                            <div className="bg-orange-100 dark:bg-orange-900/20 p-3 rounded-xl">
+                                <LogIn className="h-8 w-8 text-orange-500" />
                             </div>
-                            <div className="flex gap-2">
-                                <Button asChild variant="outline"><Link href="/login">Log In</Link></Button>
-                                <Button asChild><Link href="/signup">Sign Up</Link></Button>
+                            <div>
+                                <h4 className="font-black text-xl text-orange-900 dark:text-orange-100 tracking-tight">Join our community!</h4>
+                                <p className="text-sm text-orange-800/60 dark:text-orange-200/60 font-medium">Log in or sign up to contact experts and leave reviews.</p>
                             </div>
-                        </CardContent>
-                    </Card>
+                        </div>
+                        <div className="flex gap-3 w-full md:w-auto">
+                            <Button asChild variant="outline" className="flex-1 md:w-28 h-12 rounded-xl border-orange-200 bg-white dark:bg-transparent text-orange-900 dark:text-orange-100 font-bold hover:bg-orange-50 transition-colors">
+                                <Link href="/login">Log In</Link>
+                            </Button>
+                            <Button asChild className="flex-1 md:w-28 h-12 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-black shadow-lg shadow-orange-500/20 transition-all active:scale-95">
+                                <Link href="/signup">Sign Up</Link>
+                            </Button>
+                        </div>
+                    </div>
                 )}
 
                 <Card ref={profileCardRef}>
@@ -366,9 +369,9 @@ function ExpertProfileContent() {
                                         </Badge>
                                     </div>
                                     {expert.isAvailable ? (
-                                        <Badge className="bg-green-500 text-white">Available</Badge>
+                                        <Badge className="bg-green-500 text-white rounded-full px-4 text-[10px] font-black h-6">Available</Badge>
                                     ) : (
-                                        <Badge variant="secondary">Unavailable</Badge>
+                                        <Badge variant="secondary" className="rounded-full px-4 text-[10px] font-black h-6">Unavailable</Badge>
                                     )}
                                 </div>
                                 {expert.profession && <p className="text-lg font-semibold text-primary">{expert.profession}</p>}
@@ -392,7 +395,7 @@ function ExpertProfileContent() {
                                         expert.role === 'Authorized Pro' ? "bg-emerald-600" :
                                         "bg-secondary"
                                     )}>{expert.role}</Badge>
-                                    {expert.category && <Badge variant="secondary"><List className="mr-1 h-3 w-3" />{expert.category}</Badge>}
+                                    {expert.category && <Badge variant="secondary" className="bg-white/5 border border-white/10 text-muted-foreground"><List className="mr-1 h-3 w-3" />{expert.category}</Badge>}
                                     {expert.department && <Badge variant="secondary">{expert.department}</Badge>}
                                     {expert.tier === 'Premier' && <Badge variant="outline" className="border-purple-500 text-purple-500"><Crown className="mr-1 h-3 w-3" /> Premier</Badge>}
                                     {expert.tier === 'Super Premier' && <Badge variant="outline" className="border-blue-500 text-blue-500"><Sparkles className="mr-1 h-3 w-3" /> Super Premier</Badge>}
