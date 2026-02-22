@@ -8,6 +8,7 @@ import { signOut } from 'firebase/auth';
 import { useUser, useAuth, useFirestore, useDoc, useMemoFirebase, useCollection } from '@/firebase';
 import { updateDocumentNonBlocking, addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { LogOut, Loader, Edit, UserCheck, User as UserIcon, MessageSquare, Gift, Info, Book, Pen, PlusCircle, MapPin, IndianRupee, Calendar, GraduationCap, School, Building, Home, Share2, Rss, UserPlus, Users, Link as LinkIcon, Search, AlertCircle, Check, CheckCircle, ArrowUpCircle, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Crown, Sparkles, Eye, EyeOff, Clock } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription as UiDialogDescription, DialogFooter } from '@/components/ui/dialog';
