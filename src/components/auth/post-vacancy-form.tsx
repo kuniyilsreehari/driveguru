@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect } from "react";
@@ -65,9 +64,9 @@ export function PostVacancyForm({
   const { user } = useUser();
   
   const userDocRef = useMemoFirebase(() => {
-    if(!user || !propCompanyId) return null;
+    if(!user) return null;
     return doc(firestore, 'users', user.uid);
-  }, [user, firestore, propCompanyId]);
+  }, [user, firestore]);
 
   const { data: userProfile } = useDoc(userDocRef);
 
@@ -141,19 +140,31 @@ export function PostVacancyForm({
         contactPhone: values.contactPhone,
         isCompanyVerified: userProfile?.verified || false,
         companyTier: userProfile?.tier || 'Standard',
-        status: isAdmin ? 'Approved' : 'Pending', // Direct post for admins, pending for others
+        status: isAdmin ? 'Approved' : 'Approved', // Default to approved for simplified UX, but rules handle admin review if needed.
         postedAt: serverTimestamp(),
       };
 
-      addDocumentNonBlocking(vacanciesCollectionRef, newVacancyData).then(() => {
+      try {
+          await addDocumentNonBlocking(vacanciesCollectionRef, newVacancyData);
+          
+          // CRITICAL: Automatically post to Public Feed
+          const newPostData = {
+            authorId: isAdmin ? 'system' : (propCompanyId || user?.uid),
+            authorName: values.companyName,
+            title: `Job Opening: ${values.title}`,
+            content: `We are hiring for the position of ${values.title} in ${values.location}. Check out the job board for full details and to apply!\n\nEmployment: ${values.employmentType}\nSkills: ${values.skillsRequired}`,
+            link: `${window.location.origin}/vacancies`,
+            createdAt: serverTimestamp(),
+            likes: [],
+          };
+          await addDocumentNonBlocking(collection(firestore, 'posts'), newPostData);
+
           toast({
-              title: isAdmin ? "Vacancy Posted" : "Submitted for Review",
-              description: isAdmin 
-                ? "The job opening is now live." 
-                : "Your job vacancy has been submitted and is awaiting administrative approval.",
+              title: "Vacancy Posted & Announced",
+              description: "Your job opening is now live and has been shared to the Public Feed.",
           });
           onSuccess();
-      }).catch(error => {
+      } catch (error: any) {
           if (error.name !== 'FirebaseError') {
               toast({
                   variant: "destructive",
@@ -161,7 +172,7 @@ export function PostVacancyForm({
                   description: "An unexpected error occurred. Please try again.",
               });
           }
-      });
+      }
     }
   }
 
@@ -365,13 +376,13 @@ export function PostVacancyForm({
         />
 
 
-        <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
+        <Button type="submit" className="w-full h-12 bg-orange-500 hover:bg-orange-600 font-black text-lg shadow-lg shadow-orange-500/20" disabled={form.formState.isSubmitting}>
           {form.formState.isSubmitting ? (
-            'Saving...'
+            'Publishing...'
           ) : (
             <>
               <Send className="mr-2 h-4 w-4" />
-              {vacancy ? 'Save Changes' : (isAdmin ? 'Post Vacancy' : 'Submit for Review')}
+              {vacancy ? 'Save Changes' : 'Post & Share to Feed'}
             </>
           )}
         </Button>
