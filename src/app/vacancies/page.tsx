@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Suspense, useState } from 'react';
@@ -187,9 +186,9 @@ function VacanciesList() {
 
     const vacanciesQuery = useMemoFirebase(() => {
         if (!firestore) return null;
+        // Show all vacancies as requested, sorted by newest
         return query(
             collection(firestore, 'vacancies'), 
-            where('status', '==', 'Approved'),
             orderBy('postedAt', 'desc')
         );
     }, [firestore]);

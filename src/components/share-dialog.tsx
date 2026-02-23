@@ -26,14 +26,19 @@ interface ShareDialogProps {
 export function ShareDialog({ shareDetails, children }: ShareDialogProps) {
     const { toast } = useToast();
     const [origin, setOrigin] = useState('');
+    const [isMounted, setIsMounted] = useState(false);
 
     useEffect(() => {
         // Safe access to window after hydration
         if (typeof window !== 'undefined') {
             setOrigin(window.location.origin);
+            setIsMounted(true);
         }
     }, []);
     
+    // Don't render until client side to avoid SSR/Hydration issues with origin
+    if (!isMounted) return <>{children}</>;
+
     let shareData: { title: string; text: string; url: string; } = { title: '', text: '', url: '' };
     let dialogTitle: string = '';
     let dialogDescription: string = '';

@@ -28,7 +28,8 @@ service cloud.firestore {
      * Collection Rules
      * ===================================================== */
 
-    // Job Vacancies - Explicit Public Access (v9.0 - Definitive Fix)
+    // Job Vacancies - Explicit Public Access (v10.0 - Definitive Public Access)
+    // No permission needed for listing or reading vacancies.
     match /vacancies/{vacancyId} {
       allow read, list: if true;
       allow create: if isSignedIn();
