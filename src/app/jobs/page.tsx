@@ -7,14 +7,14 @@ export default function JobsPage() {
     const router = useRouter();
     
     useEffect(() => {
-        // Redirect to the Public Feed instead of the discontinued vacancies page
-        router.replace('/feed');
+        // Correctly redirect to the restored vacancies page
+        router.replace('/vacancies');
     }, [router]);
 
     return (
         <div className="flex items-center justify-center min-h-screen bg-background">
             <div className="text-center">
-                <p className="text-muted-foreground">Redirecting to Public Feed...</p>
+                <p className="text-muted-foreground">Redirecting to Vacancies Board...</p>
             </div>
         </div>
     );

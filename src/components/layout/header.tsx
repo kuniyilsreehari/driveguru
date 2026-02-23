@@ -41,6 +41,7 @@ type Notification = {
 const navItems = [
   { label: 'Home', href: '/', icon: Home },
   { label: 'Feed', href: '/feed', icon: Rss },
+  { label: 'Jobs', href: '/vacancies', icon: Briefcase },
   { label: 'Groups', href: '/groups', icon: Users },
   { label: 'Featured', href: '/featured-experts', icon: Award },
   { label: 'Guides', href: '/guides', icon: BookOpen },

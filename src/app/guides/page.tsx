@@ -158,12 +158,11 @@ export default function GuidesPage() {
                             </div>
                         </AccordionTrigger>
                         <AccordionContent className="space-y-4 text-muted-foreground pl-11 pb-8">
-                            <p>Browse active job openings posted by companies and authorized professionals directly in our interactive feed.</p>
+                            <p>Browse active job openings posted by companies and verified professionals directly in our interactive Jobs board.</p>
                              <ol className="list-decimal list-inside space-y-3 font-medium">
-                                <li>Go to the <Link href="/feed" className="text-orange-500 hover:underline">Public Feed</Link>.</li>
-                                <li>Look for posts tagged as "Job Opening".</li>
-                                <li>Review job descriptions, required skills, and location details directly in the post.</li>
-                                <li>Contact the employer using the provided details or through their public profile.</li>
+                                <li>Go to the <Link href="/vacancies" className="text-orange-500 hover:underline">Job Board</Link> from the main menu.</li>
+                                <li>Filter by employment type or search for specific skills.</li>
+                                <li>Review job descriptions and contact the employer directly via email or phone.</li>
                             </ol>
                         </AccordionContent>
                     </AccordionItem>
