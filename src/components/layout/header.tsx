@@ -307,8 +307,14 @@ export function Header() {
               className="h-9 w-9 rounded-full"
               onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
             >
-              <Sun className="h-4 w-4 dark:hidden" />
-              <Moon className="hidden h-4 w-4 dark:block" />
+              {mounted ? (
+                <>
+                  <Sun className="h-4 w-4 dark:hidden" />
+                  <Moon className="hidden h-4 w-4 dark:block" />
+                </>
+              ) : (
+                <div className="h-4 w-4" /> // Placeholder to avoid hydration mismatch
+              )}
               <span className="sr-only">Toggle theme</span>
           </Button>
         </div>

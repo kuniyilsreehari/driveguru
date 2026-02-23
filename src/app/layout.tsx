@@ -6,6 +6,7 @@ import { FirebaseClientProvider } from '@/firebase/client-provider';
 import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
 import { ThemeProvider } from '@/components/theme-provider';
+import { ChatAssistant } from '@/components/chat-assistant';
 
 const ptSans = PT_Sans({
   subsets: ['latin'],
@@ -44,6 +45,7 @@ export default function RootLayout({
             <main className="flex-grow">
               {children}
             </main>
+            <ChatAssistant />
             <Footer />
           </FirebaseClientProvider>
           <Toaster />
