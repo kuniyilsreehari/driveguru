@@ -205,7 +205,7 @@ export function Header() {
                     <Menu className="h-5 w-5" />
                 </Button>
             </SheetTrigger>
-            <SheetContent side="left">
+            <SheetContent side="left" className="bg-background border-r">
                 <SheetHeader className="mb-6">
                     <SheetTitle className="flex items-center gap-2">
                         <Icons.logo className="h-6 w-6" /> DriveGuru
@@ -297,11 +297,9 @@ export function Header() {
               ) : !isUserLoading ? (
                 <div className="flex items-center gap-2">
                   <Button asChild variant="ghost" size="sm" className="font-bold"><Link href="/login">Login</Link></Button>
-                  <Button asChild size="sm" className="font-black px-6"><Link href="/signup/role">Join</Link></Button>
+                  <Button asChild size="sm" className="font-black px-6 bg-orange-500 hover:bg-orange-600"><Link href="/signup/role">Join</Link></Button>
                 </div>
-              ) : (
-                <div className="h-8 w-24" />
-              )}
+              ) : null}
 
               <Button
                   variant="ghost"
@@ -315,7 +313,7 @@ export function Header() {
               </Button>
             </>
           ) : (
-            <div className="h-8 w-64" />
+            <div className="h-8 w-32" />
           )}
         </div>
       </div>

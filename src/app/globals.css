@@ -31,24 +31,24 @@ body {
   }
  
   .dark {
-    --background: 220 17% 15%;
+    --background: 227 15% 12%;
     --foreground: 210 40% 98%;
-    --card: 220 17% 20%;
+    --card: 227 15% 16%;
     --card-foreground: 210 40% 98%;
-    --popover: 220 17% 15%;
+    --popover: 227 15% 12%;
     --popover-foreground: 210 40% 98%;
     --primary: 25 95% 53%;
     --primary-foreground: 210 40% 98%;
-    --secondary: 217.2 32.6% 17.5%;
+    --secondary: 227 12% 18%;
     --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
+    --muted: 227 12% 18%;
     --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
+    --accent: 227 12% 18%;
     --accent-foreground: 210 40% 98%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 25%;
-    --input: 217.2 32.6% 25%;
+    --border: 227 12% 22%;
+    --input: 227 12% 22%;
     --ring: 25 95% 53%;
   }
 }
@@ -60,4 +60,13 @@ body {
   body {
     @apply bg-background text-foreground;
   }
+}
+
+@keyframes marquee {
+  0% { transform: translateX(100%); }
+  100% { transform: translateX(-100%); }
+}
+
+.animate-marquee {
+  animation: marquee var(--animation-duration, 20s) linear infinite;
 }

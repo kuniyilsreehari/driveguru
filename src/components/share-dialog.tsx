@@ -29,14 +29,12 @@ export function ShareDialog({ shareDetails, children }: ShareDialogProps) {
     const [isMounted, setIsMounted] = useState(false);
 
     useEffect(() => {
-        // Safe access to window after hydration
         if (typeof window !== 'undefined') {
             setOrigin(window.location.origin);
             setIsMounted(true);
         }
     }, []);
     
-    // Don't render until client side to avoid SSR/Hydration issues with origin
     if (!isMounted) return <>{children}</>;
 
     let shareData: { title: string; text: string; url: string; } = { title: '', text: '', url: '' };
@@ -91,7 +89,6 @@ export function ShareDialog({ shareDetails, children }: ShareDialogProps) {
                 await handleCopyLink();
             }
         } catch (err: any) {
-            // Gracefully fallback to clipboard if permission denied or error
             console.warn("Native share failed, falling back to clipboard:", err.message);
             await handleCopyLink();
         }
@@ -100,16 +97,16 @@ export function ShareDialog({ shareDetails, children }: ShareDialogProps) {
     return (
         <Dialog>
             <DialogTrigger asChild>{children}</DialogTrigger>
-            <DialogContent className="sm:max-w-md">
+            <DialogContent className="sm:max-w-md bg-background border-none rounded-[2rem]">
                 <DialogHeader>
-                    <DialogTitle>{dialogTitle}</DialogTitle>
-                    <DialogDescription>{dialogDescription}</DialogDescription>
+                    <DialogTitle className="text-white font-black">{dialogTitle}</DialogTitle>
+                    <DialogDescription className="text-muted-foreground">{dialogDescription}</DialogDescription>
                 </DialogHeader>
                 <div className="flex flex-col gap-4 py-4">
-                    <Button onClick={handleNativeShare}>
+                    <Button onClick={handleNativeShare} className="bg-orange-500 hover:bg-orange-600 h-12 rounded-xl font-bold">
                         <Share2 className="mr-2 h-4 w-4" /> Share via System
                     </Button>
-                    <Button variant="outline" onClick={handleCopyLink}>
+                    <Button variant="outline" onClick={handleCopyLink} className="h-12 rounded-xl border-white/10 hover:bg-white/5 font-bold">
                         <Copy className="mr-2 h-4 w-4" /> Copy Link
                     </Button>
                 </div>

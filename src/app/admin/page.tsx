@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
@@ -434,7 +433,7 @@ export default function AdminDashboardPage() {
   if (!isSuperAdmin) return <div className="flex h-screen items-center justify-center">Access Denied.</div>;
 
   return (
-    <div className="min-h-screen bg-[#1a1c23] text-white p-4 sm:p-8">
+    <div className="min-h-screen bg-background text-white p-4 sm:p-8">
       <div className="mx-auto max-w-7xl">
         <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-8 gap-4">
           <div className="flex items-center gap-4">
@@ -450,32 +449,32 @@ export default function AdminDashboardPage() {
         </header>
 
         <Tabs defaultValue="dashboard" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 bg-[#24262d] p-1 h-12 rounded-xl mb-8">
-            <TabsTrigger value="dashboard" className="rounded-lg data-[state=active]:bg-[#1a1c23] data-[state=active]:text-white">Dashboard</TabsTrigger>
-            <TabsTrigger value="settings" className="rounded-lg data-[state=active]:bg-[#1a1c23] data-[state=active]:text-white">Settings</TabsTrigger>
-            <TabsTrigger value="data" className="rounded-lg data-[state=active]:bg-[#1a1c23] data-[state=active]:text-white">Data Management</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-3 bg-secondary p-1 h-12 rounded-xl mb-8">
+            <TabsTrigger value="dashboard" className="rounded-lg data-[state=active]:bg-background data-[state=active]:text-white">Dashboard</TabsTrigger>
+            <TabsTrigger value="settings" className="rounded-lg data-[state=active]:bg-background data-[state=active]:text-white">Settings</TabsTrigger>
+            <TabsTrigger value="data" className="rounded-lg data-[state=active]:bg-background data-[state=active]:text-white">Data Management</TabsTrigger>
           </TabsList>
 
           <TabsContent value="dashboard" className="mt-0 space-y-8">
             {/* Stats Grid */}
             <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-6">
-              <Card className="border-none bg-[#24262d]"><CardHeader className="pb-2"><CardTitle className="text-sm font-bold opacity-70">Total Experts</CardTitle></CardHeader><CardContent><div className="text-3xl font-black">{stats.total}</div><p className="text-[10px] text-muted-foreground mt-1">Total registered users</p></CardContent></Card>
-              <Card className="border-none bg-[#24262d]"><CardHeader className="pb-2"><CardTitle className="text-sm font-bold opacity-70">Verified Experts</CardTitle></CardHeader><CardContent><div className="text-3xl font-black text-green-500">{stats.verified}</div><p className="text-[10px] text-muted-foreground mt-1">Total verified experts</p></CardContent></Card>
-              <Card className="border-none bg-[#24262d]"><CardHeader className="pb-2"><CardTitle className="text-sm font-bold opacity-70">Unverified Experts</CardTitle></CardHeader><CardContent><div className="text-3xl font-black text-red-500">{stats.unverified}</div><p className="text-[10px] text-muted-foreground mt-1">Pending verification</p></CardContent></Card>
-              <Card className="border-none bg-[#24262d]"><CardHeader className="pb-2"><CardTitle className="text-sm font-bold opacity-70">Premier Experts</CardTitle></CardHeader><CardContent><div className="text-3xl font-black text-purple-500">{stats.premier}</div><p className="text-[10px] text-muted-foreground mt-1">Total Premier experts</p></CardContent></Card>
-              <Card className="border-none bg-[#24262d]"><CardHeader className="pb-2"><CardTitle className="text-sm font-bold opacity-70">Super Premier</CardTitle></CardHeader><CardContent><div className="text-3xl font-black text-blue-500">{stats.super}</div><p className="text-[10px] text-muted-foreground mt-1">Total Super Premier</p></CardContent></Card>
-              <Card className="border-none bg-[#24262d]"><CardHeader className="pb-2"><CardTitle className="text-sm font-bold opacity-70">Referrals Used</CardTitle></CardHeader><CardContent><div className="text-3xl font-black text-orange-500">{stats.referrals}</div><p className="text-[10px] text-muted-foreground mt-1">Total signups via referral</p></CardContent></Card>
+              <Card className="border-none bg-card"><CardHeader className="pb-2"><CardTitle className="text-sm font-bold opacity-70">Total Experts</CardTitle></CardHeader><CardContent><div className="text-3xl font-black">{stats.total}</div><p className="text-[10px] text-muted-foreground mt-1">Total registered users</p></CardContent></Card>
+              <Card className="border-none bg-card"><CardHeader className="pb-2"><CardTitle className="text-sm font-bold opacity-70">Verified Experts</CardTitle></CardHeader><CardContent><div className="text-3xl font-black text-green-500">{stats.verified}</div><p className="text-[10px] text-muted-foreground mt-1">Total verified experts</p></CardContent></Card>
+              <Card className="border-none bg-card"><CardHeader className="pb-2"><CardTitle className="text-sm font-bold opacity-70">Unverified Experts</CardTitle></CardHeader><CardContent><div className="text-3xl font-black text-red-500">{stats.unverified}</div><p className="text-[10px] text-muted-foreground mt-1">Pending verification</p></CardContent></Card>
+              <Card className="border-none bg-card"><CardHeader className="pb-2"><CardTitle className="text-sm font-bold opacity-70">Premier Experts</CardTitle></CardHeader><CardContent><div className="text-3xl font-black text-purple-500">{stats.premier}</div><p className="text-[10px] text-muted-foreground mt-1">Total Premier experts</p></CardContent></Card>
+              <Card className="border-none bg-card"><CardHeader className="pb-2"><CardTitle className="text-sm font-bold opacity-70">Super Premier</CardTitle></CardHeader><CardContent><div className="text-3xl font-black text-blue-500">{stats.super}</div><p className="text-[10px] text-muted-foreground mt-1">Total Super Premier</p></CardContent></Card>
+              <Card className="border-none bg-card"><CardHeader className="pb-2"><CardTitle className="text-sm font-bold opacity-70">Referrals Used</CardTitle></CardHeader><CardContent><div className="text-3xl font-black text-orange-500">{stats.referrals}</div><p className="text-[10px] text-muted-foreground mt-1">Total signups via referral</p></CardContent></Card>
             </div>
 
             <Tabs defaultValue="users" className="w-full">
-                <TabsList className="flex w-full bg-[#24262d] p-1 rounded-xl mb-6">
+                <TabsList className="flex w-full bg-secondary p-1 rounded-xl mb-6">
                     <TabsTrigger value="users" className="flex-1 rounded-lg font-bold">User Management</TabsTrigger>
                     <TabsTrigger value="vacancies" className="flex-1 rounded-lg font-bold">Vacancy Management</TabsTrigger>
                     <TabsTrigger value="payments" className="flex-1 rounded-lg font-bold">Payment Management</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="users">
-                    <Card className="border-none bg-[#24262d] rounded-2xl overflow-hidden">
+                    <Card className="border-none bg-card rounded-2xl overflow-hidden">
                         <CardHeader className="bg-white/5 pb-6 border-b border-white/5">
                             <div className="flex items-center gap-3">
                                 <Users className="h-6 w-6 text-orange-500" />
@@ -498,15 +497,15 @@ export default function AdminDashboardPage() {
                                     />
                                 </div>
                                 <div className="flex items-center gap-2 w-full lg:w-auto overflow-x-auto pb-2 lg:pb-0">
-                                    <Button variant={userFilter === 'verified' ? 'default' : 'secondary'} size="sm" className="rounded-lg font-bold bg-[#1a1c23] hover:bg-[#24262d]" onClick={() => setUserFilter(userFilter === 'verified' ? 'all' : 'verified')}>Verified</Button>
-                                    <Button variant={userFilter === 'unverified' ? 'default' : 'secondary'} size="sm" className="rounded-lg font-bold bg-[#1a1c23] hover:bg-[#24262d]" onClick={() => setUserFilter(userFilter === 'unverified' ? 'all' : 'unverified')}>Unverified</Button>
-                                    <Button variant={userFilter === 'premier' ? 'default' : 'secondary'} size="sm" className="rounded-lg font-bold bg-[#1a1c23] hover:bg-[#24262d]" onClick={() => setUserFilter(userFilter === 'premier' ? 'all' : 'premier')}>Premier</Button>
-                                    <Button variant={userFilter === 'super' ? 'default' : 'secondary'} size="sm" className="rounded-lg font-bold bg-[#1a1c23] hover:bg-[#24262d]" onClick={() => setUserFilter(userFilter === 'super' ? 'all' : 'super')}>Super Premier</Button>
+                                    <Button variant={userFilter === 'verified' ? 'default' : 'secondary'} size="sm" className="rounded-lg font-bold bg-background hover:bg-secondary" onClick={() => setUserFilter(userFilter === 'verified' ? 'all' : 'verified')}>Verified</Button>
+                                    <Button variant={userFilter === 'unverified' ? 'default' : 'secondary'} size="sm" className="rounded-lg font-bold bg-background hover:bg-secondary" onClick={() => setUserFilter(userFilter === 'unverified' ? 'all' : 'unverified')}>Unverified</Button>
+                                    <Button variant={userFilter === 'premier' ? 'default' : 'secondary'} size="sm" className="rounded-lg font-bold bg-background hover:bg-secondary" onClick={() => setUserFilter(userFilter === 'premier' ? 'all' : 'premier')}>Premier</Button>
+                                    <Button variant={userFilter === 'super' ? 'default' : 'secondary'} size="sm" className="rounded-lg font-bold bg-background hover:bg-secondary" onClick={() => setUserFilter(userFilter === 'super' ? 'all' : 'super')}>Super Premier</Button>
                                 </div>
                             </div>
 
                             <Tabs defaultValue="all" className="w-full">
-                                <TabsList className="grid grid-cols-4 bg-[#1a1c23] p-1 rounded-xl mb-4">
+                                <TabsList className="grid grid-cols-4 bg-background p-1 rounded-xl mb-4">
                                     <TabsTrigger value="all" className="rounded-lg font-bold">All Users</TabsTrigger>
                                     <TabsTrigger value="freelancer" className="rounded-lg font-bold">Freelancers</TabsTrigger>
                                     <TabsTrigger value="company" className="rounded-lg font-bold">Companies</TabsTrigger>
@@ -589,7 +588,7 @@ export default function AdminDashboardPage() {
                                                                             u.role === 'Freelancer' ? "bg-blue-500/20 text-blue-400" :
                                                                             u.role === 'Company' ? "bg-indigo-500/20 text-indigo-400" :
                                                                             u.role === 'Authorized Pro' ? "bg-emerald-500/20 text-emerald-400" :
-                                                                            "bg-[#1a1c23]"
+                                                                            "bg-secondary"
                                                                         )}>{u.role}</Badge>
                                                                     </TableCell>
                                                                     <TableCell className="text-center">
@@ -631,13 +630,13 @@ export default function AdminDashboardPage() {
                                                                     <TableCell className="text-right">
                                                                         <DropdownMenu>
                                                                             <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="rounded-xl hover:bg-white/5 text-muted-foreground"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
-                                                                            <DropdownMenuContent align="end" className="rounded-xl border-2 border-white/10 bg-[#1a1c23] text-white">
+                                                                            <DropdownMenuContent align="end" className="rounded-xl border-2 border-white/10 bg-background text-white">
                                                                                 <DropdownMenuSub>
                                                                                     <DropdownMenuSubTrigger className="rounded-lg focus:bg-white/5 focus:text-white">
                                                                                         <Sparkles className="mr-2 h-4 w-4" /> Change Tier
                                                                                     </DropdownMenuSubTrigger>
                                                                                     <DropdownMenuPortal>
-                                                                                        <DropdownMenuSubContent className="rounded-xl border-2 border-white/10 bg-[#1a1c23] text-white">
+                                                                                        <DropdownMenuSubContent className="rounded-xl border-2 border-white/10 bg-background text-white">
                                                                                             <DropdownMenuItem className="focus:bg-white/5 focus:text-white" onClick={() => handleUpdateUserTier(u.id, 'Standard')}>
                                                                                                 <UserIcon className="mr-2 h-4 w-4" /> Standard
                                                                                             </DropdownMenuItem>
@@ -656,7 +655,7 @@ export default function AdminDashboardPage() {
                                                                                         <Briefcase className="mr-2 h-4 w-4" /> Change Role
                                                                                     </DropdownMenuSubTrigger>
                                                                                     <DropdownMenuPortal>
-                                                                                        <DropdownMenuSubContent className="rounded-xl border-2 border-white/10 bg-[#1a1c23] text-white">
+                                                                                        <DropdownMenuSubContent className="rounded-xl border-2 border-white/10 bg-background text-white">
                                                                                             <DropdownMenuItem className="focus:bg-white/5 focus:text-white" onClick={() => handleUpdateUserRole(u.id, 'Super Admin')}>Super Admin</DropdownMenuItem>
                                                                                             <DropdownMenuItem className="focus:bg-white/5 focus:text-white" onClick={() => handleUpdateUserRole(u.id, 'Manager')}>Manager</DropdownMenuItem>
                                                                                             <DropdownMenuItem className="focus:bg-white/5 focus:text-white" onClick={() => handleUpdateUserRole(u.id, 'Freelancer')}>Freelancer</DropdownMenuItem>
@@ -692,7 +691,7 @@ export default function AdminDashboardPage() {
                 </TabsContent>
 
                 <TabsContent value="vacancies">
-                    <Card className="border-none bg-white rounded-2xl overflow-hidden shadow-sm">
+                    <Card className="border-none bg-card rounded-2xl overflow-hidden shadow-sm">
                         <CardHeader className="pb-6 px-8 pt-8">
                             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                                 <div className="flex items-center gap-4">
@@ -700,7 +699,7 @@ export default function AdminDashboardPage() {
                                         <Briefcase className="h-6 w-6 text-black" />
                                     </div>
                                     <div>
-                                        <CardTitle className="text-3xl font-black text-[#1a1c23] tracking-tight">Vacancy Management</CardTitle>
+                                        <CardTitle className="text-3xl font-black text-white tracking-tight">Vacancy Management</CardTitle>
                                         <CardDescription className="text-muted-foreground text-sm font-medium">Manage all job vacancies in the system.</CardDescription>
                                     </div>
                                 </div>
@@ -710,9 +709,9 @@ export default function AdminDashboardPage() {
                             </div>
                         </CardHeader>
                         <CardContent className="px-8 pb-8">
-                            <div className="rounded-xl border border-border/50 overflow-hidden bg-white">
+                            <div className="rounded-xl border border-border/50 overflow-hidden bg-white/5">
                                 <Table>
-                                    <TableHeader className="bg-slate-50/50">
+                                    <TableHeader className="bg-slate-50/5">
                                         <TableRow className="hover:bg-transparent border-b border-border/50">
                                             <TableHead className="font-bold text-slate-500 text-xs uppercase tracking-wider h-14 pl-6">Title</TableHead>
                                             <TableHead className="font-bold text-slate-500 text-xs uppercase tracking-wider h-14">Company</TableHead>
@@ -729,32 +728,32 @@ export default function AdminDashboardPage() {
                                             <TableRow className="border-none hover:bg-transparent"><TableCell colSpan={6} className="text-center py-20 text-muted-foreground font-medium">No job vacancies found.</TableCell></TableRow>
                                         ) : (
                                             vacancies.map(v => (
-                                                <TableRow key={v.id} className="hover:bg-slate-50/30 transition-colors border-b border-border/30 h-24">
+                                                <TableRow key={v.id} className="hover:bg-slate-50/10 transition-colors border-b border-border/30 h-24">
                                                     <TableCell className="py-4 pl-6">
-                                                        <div className="font-bold text-[#1a1c23] text-base">{v.title}</div>
+                                                        <div className="font-bold text-white text-base">{v.title}</div>
                                                     </TableCell>
                                                     <TableCell className="py-4">
                                                         <div className="space-y-1.5">
-                                                            <div className="text-sm font-bold text-[#1a1c23]">{v.companyName}</div>
+                                                            <div className="text-sm font-bold text-white">{v.companyName}</div>
                                                             <div className="flex items-center gap-2">
                                                                 {v.isCompanyVerified && (
-                                                                    <Badge variant="outline" className="h-5 px-2 rounded-md border-green-500/30 bg-green-50/50 text-green-600 text-[10px] font-bold flex items-center gap-1">
+                                                                    <Badge variant="outline" className="h-5 px-2 rounded-md border-green-500/30 bg-green-50/5 text-green-600 text-[10px] font-bold flex items-center gap-1">
                                                                         <UserCheck className="h-2.5 w-2.5" /> Verified
                                                                     </Badge>
                                                                 )}
                                                                 {v.companyTier === 'Premier' && (
-                                                                    <Badge variant="outline" className="h-5 px-2 rounded-md border-purple-500/30 bg-purple-50/50 text-purple-600 text-[10px] font-bold flex items-center gap-1">
+                                                                    <Badge variant="outline" className="h-5 px-2 rounded-md border-purple-500/30 bg-purple-50/5 text-purple-600 text-[10px] font-bold flex items-center gap-1">
                                                                         <Crown className="h-2.5 w-2.5" /> Premier
                                                                     </Badge>
                                                                 )}
                                                             </div>
                                                         </div>
                                                     </TableCell>
-                                                    <TableCell className="py-4 text-slate-600 font-medium">
+                                                    <TableCell className="py-4 text-slate-400 font-medium">
                                                         {v.location}
                                                     </TableCell>
                                                     <TableCell className="text-center py-4">
-                                                        <Badge variant="secondary" className="bg-slate-100 text-slate-700 hover:bg-slate-100 rounded-full px-3 py-0.5 text-[11px] font-bold">
+                                                        <Badge variant="secondary" className="bg-slate-800 text-slate-200 hover:bg-slate-700 rounded-full px-3 py-0.5 text-[11px] font-bold">
                                                             {v.employmentType}
                                                         </Badge>
                                                     </TableCell>
@@ -764,22 +763,22 @@ export default function AdminDashboardPage() {
                                                     <TableCell className="text-right py-4 pr-6">
                                                         <DropdownMenu>
                                                             <DropdownMenuTrigger asChild>
-                                                                <Button variant="ghost" size="icon" className="h-10 w-10 hover:bg-slate-100 text-slate-400">
+                                                                <Button variant="ghost" size="icon" className="h-10 w-10 hover:bg-white/5 text-slate-400">
                                                                     <MoreHorizontal className="h-5 w-5" />
                                                                 </Button>
                                                             </DropdownMenuTrigger>
-                                                            <DropdownMenuContent align="end" className="bg-white border-border/50 text-[#1a1c23] rounded-xl shadow-2xl w-48 p-1">
-                                                                <DropdownMenuItem onClick={() => { setSelectedVacancy(v); setIsVacancyDialogOpen(true); }} className="font-bold text-xs h-10 px-3 rounded-lg focus:bg-slate-50">
+                                                            <DropdownMenuContent align="end" className="bg-card border-border/50 text-white rounded-xl shadow-2xl w-48 p-1">
+                                                                <DropdownMenuItem onClick={() => { setSelectedVacancy(v); setIsVacancyDialogOpen(true); }} className="font-bold text-xs h-10 px-3 rounded-lg focus:bg-white/5">
                                                                     <Edit className="mr-2 h-4 w-4 text-slate-500" /> Edit
                                                                 </DropdownMenuItem>
-                                                                <DropdownMenuItem onClick={() => handleToggleVacancyVerified(v.id, v.isCompanyVerified || false)} className="font-bold text-xs h-10 px-3 rounded-lg focus:bg-slate-50">
+                                                                <DropdownMenuItem onClick={() => handleToggleVacancyVerified(v.id, v.isCompanyVerified || false)} className="font-bold text-xs h-10 px-3 rounded-lg focus:bg-white/5">
                                                                     <UserCheck className="mr-2 h-4 w-4 text-slate-500" /> Toggle Verified
                                                                 </DropdownMenuItem>
-                                                                <DropdownMenuItem onClick={() => handleToggleVacancyTier(v.id, v.companyTier)} className="font-bold text-xs h-10 px-3 rounded-lg focus:bg-slate-50">
+                                                                <DropdownMenuItem onClick={() => handleToggleVacancyTier(v.id, v.companyTier)} className="font-bold text-xs h-10 px-3 rounded-lg focus:bg-white/5">
                                                                     <Crown className="mr-2 h-4 w-4 text-slate-500" /> Toggle Premier
                                                                 </DropdownMenuItem>
-                                                                <DropdownMenuSeparator className="bg-slate-100" />
-                                                                <DropdownMenuItem onClick={() => handleDeleteVacancy(v.id)} className="text-red-500 focus:text-red-500 focus:bg-red-50 rounded-lg font-bold text-xs h-10 px-3">
+                                                                <DropdownMenuSeparator className="bg-white/5" />
+                                                                <DropdownMenuItem onClick={() => handleDeleteVacancy(v.id)} className="text-red-500 focus:text-red-500 focus:bg-red-500/5 rounded-lg font-bold text-xs h-10 px-3">
                                                                     <Trash2 className="mr-2 h-4 w-4" /> Delete
                                                                 </DropdownMenuItem>
                                                             </DropdownMenuContent>
@@ -796,7 +795,7 @@ export default function AdminDashboardPage() {
                 </TabsContent>
 
                 <TabsContent value="payments">
-                    <Card className="border-none bg-[#24262d] rounded-2xl overflow-hidden">
+                    <Card className="border-none bg-card rounded-2xl overflow-hidden">
                         <CardHeader className="bg-white/5 pb-6 border-b border-white/5">
                             <div className="flex items-center gap-3">
                                 <CreditCard className="h-6 w-6 text-orange-500" />
@@ -873,7 +872,7 @@ export default function AdminDashboardPage() {
           </TabsContent>
 
           <TabsContent value="settings" className="mt-0 space-y-6">
-            <Card className="border-none rounded-2xl overflow-hidden bg-[#24262d]">
+            <Card className="border-none rounded-2xl overflow-hidden bg-card">
               <CardHeader className="bg-white/5 border-b border-white/5">
                 <div className="flex items-center gap-3">
                     <Video className="h-6 w-6 text-orange-500" />
@@ -886,14 +885,14 @@ export default function AdminDashboardPage() {
                     <Label className="font-bold text-white/70 text-xs uppercase tracking-widest">Introduction Video URL (YouTube)</Label>
                     <div className="relative">
                         <Youtube className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-orange-500" />
-                        <Input value={introVideoUrl} onChange={e => setIntroVideoUrl(e.target.value)} className="rounded-xl h-12 bg-[#1a1c23] border-none pl-10 text-white placeholder:text-muted-foreground" placeholder="https://www.youtube.com/watch?v=..." />
+                        <Input value={introVideoUrl} onChange={e => setIntroVideoUrl(e.target.value)} className="rounded-xl h-12 bg-background border-none pl-10 text-white placeholder:text-muted-foreground" placeholder="https://www.youtube.com/watch?v=..." />
                     </div>
                     <p className="text-[10px] text-muted-foreground">This video will be featured at the top of the Guides page.</p>
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="border-none rounded-2xl overflow-hidden bg-[#24262d]">
+            <Card className="border-none rounded-2xl overflow-hidden bg-card">
               <CardHeader className="bg-white/5 border-b border-white/5">
                 <div className="flex items-center gap-3">
                     <Key className="h-6 w-6 text-orange-500" />
@@ -904,13 +903,13 @@ export default function AdminDashboardPage() {
               <CardContent className="p-6 space-y-4">
                 <div className="space-y-2">
                     <Label className="font-bold text-white/70 text-xs uppercase tracking-widest">Public API Key / App ID (e.g., Cashfree)</Label>
-                    <Input value={publicApiKey} onChange={e => setPublicApiKey(e.target.value)} className="rounded-xl h-12 bg-[#1a1c23] border-none font-mono text-orange-500" placeholder="Enter public API key..." />
+                    <Input value={publicApiKey} onChange={e => setPublicApiKey(e.target.value)} className="rounded-xl h-12 bg-background border-none font-mono text-orange-500" placeholder="Enter public API key..." />
                     <p className="text-[10px] text-muted-foreground">This key will be used for client-side operations where needed.</p>
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="border-none rounded-2xl overflow-hidden bg-[#24262d]">
+            <Card className="border-none rounded-2xl overflow-hidden bg-card">
               <CardHeader className="bg-white/5 border-b border-white/5">
                 <div className="flex items-center gap-3">
                     <CreditCard className="h-6 w-6 text-orange-500" />
@@ -919,7 +918,7 @@ export default function AdminDashboardPage() {
                 <CardDescription className="text-muted-foreground">Globally enable or disable payments and choose the method for expert activation.</CardDescription>
               </CardHeader>
               <CardContent className="p-6 space-y-6">
-                <div className="flex items-center justify-between p-4 bg-[#1a1c23] rounded-xl border border-white/5">
+                <div className="flex items-center justify-between p-4 bg-background rounded-xl border border-white/5">
                     <div>
                         <Label className="text-base font-bold text-white">Payments Enabled</Label>
                         <p className="text-xs text-muted-foreground">Turn all payment functionalities on or off.</p>
@@ -942,7 +941,7 @@ export default function AdminDashboardPage() {
               </CardContent>
             </Card>
 
-            <Card className="border-none rounded-2xl overflow-hidden bg-[#24262d]">
+            <Card className="border-none rounded-2xl overflow-hidden bg-card">
               <CardHeader className="bg-white/5 border-b border-white/5">
                 <div className="flex items-center gap-3">
                     <Gift className="h-6 w-6 text-orange-500" />
@@ -953,13 +952,13 @@ export default function AdminDashboardPage() {
               <CardContent className="p-6 space-y-4">
                 <div className="space-y-2">
                     <Label className="font-bold text-white/70 text-xs uppercase tracking-widest">Points Awarded per Referral</Label>
-                    <Input type="number" value={referralPoints} onChange={e => setReferralPoints(Number(e.target.value))} className="rounded-xl h-12 bg-[#1a1c23] border-none font-black text-orange-500 text-xl" />
+                    <Input type="number" value={referralPoints} onChange={e => setReferralPoints(Number(e.target.value))} className="rounded-xl h-12 bg-background border-none font-black text-orange-500 text-xl" />
                     <p className="text-[10px] text-muted-foreground">Set the number of points awarded to a user for each successful referral.</p>
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="border-none rounded-2xl overflow-hidden bg-[#24262d]">
+            <Card className="border-none rounded-2xl overflow-hidden bg-card">
               <CardHeader className="bg-white/5 border-b border-white/5">
                 <div className="flex items-center gap-3">
                     <Settings className="h-6 w-6 text-orange-500" />
@@ -982,12 +981,12 @@ export default function AdminDashboardPage() {
                                     const newCats = [...homepageCategories];
                                     newCats[idx].name = e.target.value;
                                     setHomepageCategories(newCats);
-                                }} className="bg-[#1a1c23] border-none text-white h-10" />
+                                }} className="bg-background border-none text-white h-10" />
                                 <Input value={cat.icon} onChange={e => {
                                     const newCats = [...homepageCategories];
                                     newCats[idx].icon = e.target.value;
                                     setHomepageCategories(newCats);
-                                }} className="bg-[#1a1c23] border-none text-white h-10 w-32" />
+                                }} className="bg-background border-none text-white h-10 w-32" />
                                 <div className="flex gap-1 shrink-0">
                                     <Button variant="outline" size="icon" className="h-8 w-8 border-white/10 hover:bg-white/5" onClick={() => moveCategory(idx, 'up')} disabled={idx === 0}><ArrowUp className="h-3 w-3" /></Button>
                                     <Button variant="outline" size="icon" className="h-8 w-8 border-white/10 hover:bg-white/5" onClick={() => moveCategory(idx, 'down')} disabled={idx === homepageCategories.length - 1}><ArrowDown className="h-3 w-3" /></Button>
@@ -996,8 +995,8 @@ export default function AdminDashboardPage() {
                             </div>
                         ))}
                         <div className="flex flex-col sm:flex-row gap-2 pt-2">
-                            <Input placeholder="New Category Name" value={newCatName} onChange={e => setNewCatName(e.target.value)} className="bg-[#1a1c23] border-dashed border-white/20 h-10 text-white" />
-                            <Input placeholder="Icon Name" value={newCatIcon} onChange={e => setNewCatIcon(e.target.value)} className="bg-[#1a1c23] border-dashed border-white/20 h-10 text-white" />
+                            <Input placeholder="New Category Name" value={newCatName} onChange={e => setNewCatName(e.target.value)} className="bg-background border-dashed border-white/20 h-10 text-white" />
+                            <Input placeholder="Icon Name" value={newCatIcon} onChange={e => setNewCatIcon(e.target.value)} className="bg-background border-dashed border-white/20 h-10 text-white" />
                             <Button onClick={addCategory} className="bg-orange-500 hover:bg-orange-600 h-10 font-bold"><PlusCircle className="mr-2 h-4 w-4" /> Add</Button>
                         </div>
                     </div>
@@ -1014,13 +1013,13 @@ export default function AdminDashboardPage() {
                     <p className="text-xs text-muted-foreground">Create and manage company departments.</p>
                     <div className="space-y-2">
                         {departments.map((dep, idx) => (
-                            <div key={idx} className="flex items-center justify-between p-2 bg-[#1a1c23] border border-white/5 rounded-lg">
+                            <div key={idx} className="flex items-center justify-between p-2 bg-background border border-white/5 rounded-lg">
                                 <span className="font-bold text-sm px-2 text-white/80">{dep}</span>
                                 <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:bg-red-500/10 hover:text-red-500" onClick={() => deleteDepartment(dep)}><Trash2 className="h-3 w-3" /></Button>
                             </div>
                         ))}
                         <div className="flex gap-2 pt-2">
-                            <Input placeholder="New Department Name" value={newDepName} onChange={e => setNewDepName(e.target.value)} className="bg-[#1a1c23] border-dashed border-white/20 h-10 text-white" />
+                            <Input placeholder="New Department Name" value={newDepName} onChange={e => setNewDepName(e.target.value)} className="bg-background border-dashed border-white/20 h-10 text-white" />
                             <Button onClick={addDepartment} className="bg-orange-500 hover:bg-orange-600 h-10 font-bold"><PlusCircle className="mr-2 h-4 w-4" /> Add</Button>
                         </div>
                     </div>
@@ -1036,7 +1035,7 @@ export default function AdminDashboardPage() {
           </TabsContent>
 
           <TabsContent value="data" className="mt-0 space-y-6">
-            <Card className="border-none bg-[#24262d] rounded-2xl overflow-hidden">
+            <Card className="border-none bg-card rounded-2xl overflow-hidden">
               <CardHeader className="bg-white/5 border-b border-white/5">
                 <div className="flex items-center gap-3">
                     <Users className="h-6 w-6 text-orange-500" />
@@ -1090,7 +1089,7 @@ export default function AdminDashboardPage() {
               </CardContent>
             </Card>
 
-            <Card className="border-none bg-[#24262d] rounded-2xl overflow-hidden">
+            <Card className="border-none bg-card rounded-2xl overflow-hidden">
               <CardHeader className="bg-white/5 border-b border-white/5">
                 <div className="flex items-center gap-3">
                     <HardDriveDownload className="h-6 w-6 text-orange-500" />
@@ -1112,7 +1111,7 @@ export default function AdminDashboardPage() {
               </CardContent>
             </Card>
 
-            <Card className="border-none bg-[#24262d] rounded-2xl overflow-hidden">
+            <Card className="border-none bg-card rounded-2xl overflow-hidden">
               <CardHeader className="bg-white/5 border-b border-white/5">
                 <div className="flex items-center gap-3">
                     <UserPlus className="h-6 w-6 text-orange-500" />
@@ -1128,21 +1127,21 @@ export default function AdminDashboardPage() {
       </div>
 
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-3xl overflow-y-auto max-h-[90vh] rounded-2xl border-none bg-[#1a1c23] text-white">
+        <DialogContent className="max-w-3xl overflow-y-auto max-h-[90vh] rounded-2xl border-none bg-background text-white">
           <DialogHeader><DialogTitle className="text-2xl font-black">Edit Expert Profile</DialogTitle></DialogHeader>
           {selectedUser && <EditProfileForm userProfile={selectedUser as any} isAdmin onSuccess={() => setIsEditDialogOpen(false)} />}
         </DialogContent>
       </Dialog>
 
       <Dialog open={isVacancyDialogOpen} onOpenChange={setIsVacancyDialogOpen}>
-        <DialogContent className="max-w-3xl overflow-y-auto max-h-[90vh] rounded-2xl border-none bg-[#1a1c23] text-white">
+        <DialogContent className="max-w-3xl overflow-y-auto max-h-[90vh] rounded-2xl border-none bg-background text-white">
           <DialogHeader><DialogTitle className="text-2xl font-black">{selectedVacancy ? 'Edit Job Opening' : 'Post New Job'}</DialogTitle></DialogHeader>
           <PostVacancyForm isAdmin vacancy={selectedVacancy || undefined} onSuccess={() => setIsVacancyDialogOpen(false)} />
         </DialogContent>
       </Dialog>
 
       <Dialog open={isAwardDialogOpen} onOpenChange={setIsAwardDialogOpen}>
-        <DialogContent className="rounded-2xl border-none bg-[#1a1c23] text-white">
+        <DialogContent className="rounded-2xl border-none bg-background text-white">
           <DialogHeader>
             <DialogTitle className="text-2xl font-black">Award Referral Points</DialogTitle>
             <DialogDescription className="text-muted-foreground">
@@ -1168,7 +1167,7 @@ export default function AdminDashboardPage() {
       </Dialog>
 
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <AlertDialogContent className="rounded-2xl border-none bg-[#1a1c23] text-white">
+        <AlertDialogContent className="rounded-2xl border-none bg-background text-white">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-2xl font-black text-white">Confirm Deletion</AlertDialogTitle>
             <AlertDialogDescription className="text-muted-foreground">
