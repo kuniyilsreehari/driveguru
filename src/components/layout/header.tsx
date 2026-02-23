@@ -213,7 +213,7 @@ export function Header() {
                 </SheetHeader>
                 <div className="flex flex-col space-y-2">
                     {navItems.map((item) => {
-                        const isActive = mounted && pathname === item.href;
+                        const isActive = pathname === item.href;
                         return (
                             <Button 
                                 key={item.href} 
@@ -240,7 +240,7 @@ export function Header() {
         <div className="flex items-center justify-end space-x-2 sm:space-x-4">
           <nav className="hidden sm:flex items-center space-x-1">
             {navItems.map((item) => {
-                const isActive = mounted && pathname === item.href;
+                const isActive = pathname === item.href;
                 return (
                     <Button 
                         key={item.href} 
@@ -307,8 +307,8 @@ export function Header() {
               className="h-9 w-9 rounded-full"
               onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
             >
-              <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-              <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+              <Sun className="h-4 w-4 dark:hidden" />
+              <Moon className="hidden h-4 w-4 dark:block" />
               <span className="sr-only">Toggle theme</span>
           </Button>
         </div>
