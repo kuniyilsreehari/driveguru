@@ -238,29 +238,31 @@ export function Header() {
         </Link>
 
         <div className="flex items-center justify-end space-x-2 sm:space-x-4">
-          <nav className="hidden sm:flex items-center space-x-1">
-            {navItems.map((item) => {
-                const isActive = pathname === item.href;
-                return (
-                    <Button 
-                        key={item.href} 
-                        asChild 
-                        variant="ghost"
-                        size="sm"
-                        className={cn(
-                            "rounded-lg px-4 transition-all duration-300",
-                            isActive 
-                                ? "bg-orange-500 text-white font-black hover:bg-orange-600 shadow-md shadow-orange-500/20" 
-                                : "text-muted-foreground hover:bg-white/5 hover:text-white"
-                        )}
-                    >
-                        <Link href={item.href}>
-                            <item.icon className={cn("mr-2 h-4 w-4", isActive && "stroke-[2px]")} /> {item.label}
-                        </Link>
-                    </Button>
-                )
-            })}
-          </nav>
+          {mounted && (
+            <nav className="hidden sm:flex items-center space-x-1">
+              {navItems.map((item) => {
+                  const isActive = pathname === item.href;
+                  return (
+                      <Button 
+                          key={item.href} 
+                          asChild 
+                          variant="ghost"
+                          size="sm"
+                          className={cn(
+                              "rounded-lg px-4 transition-all duration-300",
+                              isActive 
+                                  ? "bg-orange-500 text-white font-black hover:bg-orange-600 shadow-md shadow-orange-500/20" 
+                                  : "text-muted-foreground hover:bg-white/5 hover:text-white"
+                          )}
+                      >
+                          <Link href={item.href}>
+                              <item.icon className={cn("mr-2 h-4 w-4", isActive && "stroke-[2px]")} /> {item.label}
+                          </Link>
+                      </Button>
+                  )
+              })}
+            </nav>
+          )}
             
             {mounted && !isUserLoading && user ? (
               <div className="flex items-center gap-1 sm:gap-2">
@@ -301,16 +303,18 @@ export function Header() {
               <div className="h-8 w-24" /> // Loading placeholder
             )}
 
-           <Button
-              variant="ghost"
-              size="icon"
-              className="h-9 w-9 rounded-full"
-              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-            >
-              <Sun className="h-4 w-4 dark:hidden" />
-              <Moon className="hidden h-4 w-4 dark:block" />
-              <span className="sr-only">Toggle theme</span>
-          </Button>
+           {mounted && (
+             <Button
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9 rounded-full"
+                onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+              >
+                <Sun className="h-4 w-4 dark:hidden" />
+                <Moon className="hidden h-4 w-4 dark:block" />
+                <span className="sr-only">Toggle theme</span>
+            </Button>
+           )}
         </div>
       </div>
     </header>

@@ -28,11 +28,11 @@ service cloud.firestore {
      * Collection Rules
      * ===================================================== */
 
-    // Job Vacancies - Explicitly allow public list and read (v4.0 - Global Public Access)
+    // Job Vacancies - Public access for browsing (v5.0 - Permissive Management)
     match /vacancies/{vacancyId} {
       allow read, list: if true;
       allow create: if isSignedIn();
-      allow update, delete: if isSuperAdmin() || (isSignedIn() && resource.data.companyId == request.auth.uid);
+      allow update, delete: if isSuperAdmin() || (isSignedIn() && (resource.data.companyId == request.auth.uid || request.auth.uid == vacancyId));
     }
 
     // User Profiles and related data
