@@ -213,7 +213,7 @@ export function Header() {
                 </SheetHeader>
                 <div className="flex flex-col space-y-2">
                     {navItems.map((item) => {
-                        const isActive = pathname === item.href;
+                        const isActive = mounted && pathname === item.href;
                         return (
                             <Button 
                                 key={item.href} 
