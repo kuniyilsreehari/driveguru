@@ -28,8 +28,8 @@ service cloud.firestore {
      * Collection Rules
      * ===================================================== */
 
-    // Job Vacancies - Explicit Public Access (v11.0 - Full Public Access)
-    match /vacancies/{vacancyId} {
+    // Job Vacancies - Explicit Public Access (v12.0 - Definitive Recursive Access)
+    match /vacancies/{allPaths=**} {
       allow read, list: if true;
       allow create: if isSignedIn();
       allow update, delete: if isSuperAdmin() || (isSignedIn() && resource.data.companyId == request.auth.uid);
