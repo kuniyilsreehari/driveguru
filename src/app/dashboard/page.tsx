@@ -8,7 +8,7 @@ import { useUser, useAuth, useFirestore, useDoc, useMemoFirebase, useCollection 
 import { updateDocumentNonBlocking, addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { LogOut, Loader, Edit, UserCheck, User as UserIcon, MessageSquare, Gift, Info, Book, Pen, PlusCircle, MapPin, IndianRupee, Calendar, GraduationCap, School, Building, Home, Share2, Rss, UserPlus, Users, Link as LinkIcon, Search, AlertCircle, Check, CheckCircle, ArrowUpCircle, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Crown, Sparkles, Eye, EyeOff, Clock, Briefcase, Trash2, MoreHorizontal } from 'lucide-react';
+import { LogOut, Loader, Edit, UserCheck, User as UserIcon, MessageSquare, Gift, Info, Book, Pen, PlusCircle, MapPin, IndianRupee, Calendar, GraduationCap, School, Building, Home, Share2, Rss, UserPlus, Users, Link as LinkIcon, Search, AlertCircle, Check, CheckCircle, ArrowUpCircle, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Crown, Sparkles, Eye, EyeOff, Clock, Briefcase, Trash2, MoreHorizontal, AlertTriangle } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription as UiDialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { EditProfileForm } from '@/components/auth/edit-profile-form';
@@ -83,6 +83,8 @@ const postFormSchema = z.object({
   content: z.string().min(2).max(1000),
   link: z.string().url().optional().or(z.literal('')),
 });
+
+const VACANCY_LIMIT = 2;
 
 export default function ExpertDashboardPage() {
   const { user, isUserLoading } = useUser();
@@ -181,6 +183,8 @@ export default function ExpertDashboardPage() {
     return query(collection(firestore, 'vacancies'), where('companyId', '==', user.uid), orderBy('postedAt', 'desc'));
   }, [firestore, user]);
   const { data: myVacancies, isLoading: isMyVacanciesLoading } = useCollection<Vacancy>(myVacanciesQuery);
+
+  const vacancyLimitReached = useMemo(() => (myVacancies?.length || 0) >= VACANCY_LIMIT, [myVacancies]);
 
   const handleToggleFollow = async (targetId: string, isFollowing: boolean) => {
     if (!userDocRef || !userProfile) return;
@@ -655,16 +659,33 @@ export default function ExpertDashboardPage() {
           {canPostVacancies && (
             <TabsContent value="vacancies" className="mt-6">
                 <Card>
-                    <CardHeader className="flex flex-row items-center justify-between">
+                    <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                         <div>
-                            <CardTitle>Job Vacancies</CardTitle>
-                            <CardDescription>Manage and post new job opportunities for your company.</CardDescription>
+                            <CardTitle className="flex items-center gap-2">
+                                Job Vacancies
+                                <Badge variant="secondary" className="ml-2 font-bold">{myVacancies?.length || 0} / {VACANCY_LIMIT}</Badge>
+                            </CardTitle>
+                            <CardDescription>Manage and post job opportunities for your company.</CardDescription>
                         </div>
-                        <Button onClick={() => { setSelectedVacancy(null); setIsVacancyDialogOpen(true); }}>
-                            <PlusCircle className="mr-2 h-4 w-4" /> Post New Job
+                        <Button 
+                            onClick={() => { setSelectedVacancy(null); setIsVacancyDialogOpen(true); }} 
+                            disabled={vacancyLimitReached}
+                            className={cn(vacancyLimitReached && "bg-muted text-muted-foreground")}
+                        >
+                            <PlusCircle className="mr-2 h-4 w-4" /> 
+                            {vacancyLimitReached ? 'Limit Reached' : 'Post New Job'}
                         </Button>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="space-y-6">
+                        {vacancyLimitReached && (
+                            <div className="bg-orange-500/10 border border-orange-500/30 rounded-xl p-4 flex items-center gap-3">
+                                <AlertTriangle className="h-5 w-5 text-orange-500 shrink-0" />
+                                <p className="text-sm font-medium text-orange-200">
+                                    You have reached the free limit of <strong>{VACANCY_LIMIT} vacancies</strong>. Delete an existing post to create a new one.
+                                </p>
+                            </div>
+                        )}
+
                         {isMyVacanciesLoading ? (
                             <div className="flex justify-center p-8"><Loader className="animate-spin h-8 w-8 text-primary" /></div>
                         ) : myVacancies && myVacancies.length > 0 ? (

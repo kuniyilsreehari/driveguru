@@ -28,11 +28,15 @@ service cloud.firestore {
      * Collection Rules
      * ===================================================== */
 
-    // Job Vacancies - Explicit Public Access (v12.0 - Definitive Recursive Access)
+    // Job Vacancies - Explicit Public Access (v13.0 - Recursive + Collection Access)
+    match /vacancies/{vacancyId} {
+      allow read, list: if true;
+      allow create: if isSignedIn() && (request.resource.data.companyId == request.auth.uid || isSuperAdmin());
+      allow update, delete: if isSuperAdmin() || (isSignedIn() && resource.data.companyId == request.auth.uid);
+    }
+    
     match /vacancies/{allPaths=**} {
       allow read, list: if true;
-      allow create: if isSignedIn();
-      allow update, delete: if isSuperAdmin() || (isSignedIn() && resource.data.companyId == request.auth.uid);
     }
 
     // User Profiles and related data
