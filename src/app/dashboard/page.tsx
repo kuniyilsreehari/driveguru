@@ -2,13 +2,13 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { collection, serverTimestamp, orderBy, query, where, limit, arrayUnion, arrayRemove, doc, Timestamp, deleteDoc } from 'firebase/firestore';
+import { collection, serverTimestamp, orderBy, query, where, limit, arrayUnion, arrayRemove, doc, Timestamp } from 'firebase/firestore';
 import { signOut } from 'firebase/auth';
 import { useUser, useAuth, useFirestore, useDoc, useMemoFirebase, useCollection } from '@/firebase';
 import { updateDocumentNonBlocking, addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { LogOut, Loader, Edit, UserCheck, User as UserIcon, MessageSquare, Gift, Info, Book, Pen, PlusCircle, MapPin, IndianRupee, Calendar, GraduationCap, School, Building, Home, Share2, Rss, UserPlus, Users, Link as LinkIcon, Search, AlertCircle, Check, CheckCircle, ArrowUpCircle, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Crown, Sparkles, Eye, EyeOff, Clock, Briefcase, Trash2, MoreHorizontal, AlertTriangle } from 'lucide-react';
+import { LogOut, Loader, Edit, UserCheck, User as UserIcon, MessageSquare, Gift, Info, Book, Pen, PlusCircle, MapPin, IndianRupee, Calendar, GraduationCap, School, Building, Home, Share2, Rss, UserPlus, Users, Link as LinkIcon, Search, AlertCircle, Check, CheckCircle, ArrowUpCircle, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Crown, Sparkles, Eye, EyeOff, Clock } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription as UiDialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { EditProfileForm } from '@/components/auth/edit-profile-form';
@@ -33,14 +33,6 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { formatDistanceToNow } from 'date-fns';
-import { PostVacancyForm } from '@/components/auth/post-vacancy-form';
-import type { Vacancy } from '@/app/vacancies/page';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 
 type ExpertUserProfile = {
     id: string;
@@ -84,8 +76,6 @@ const postFormSchema = z.object({
   link: z.string().url().optional().or(z.literal('')),
 });
 
-const VACANCY_LIMIT = 2;
-
 export default function ExpertDashboardPage() {
   const { user, isUserLoading } = useUser();
   const auth = useAuth();
@@ -99,8 +89,6 @@ export default function ExpertDashboardPage() {
   const [suggestionSearch, setSuggestionSearch] = useState('');
   const [isProfileExpanded, setIsProfileExpanded] = useState(true);
   const [isHideDialogOpen, setIsHideDialogOpen] = useState(false);
-  const [isVacancyDialogOpen, setIsVacancyDialogOpen] = useState(false);
-  const [selectedVacancy, setSelectedVacancy] = useState<Vacancy | null>(null);
 
   const userDocRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
   const { data: userProfile, isLoading: isProfileLoading } = useDoc<ExpertUserProfile>(userDocRef);
@@ -178,14 +166,6 @@ export default function ExpertDashboardPage() {
   }, [firestore, userProfile?.groups]);
   const { data: myGroups, isLoading: isMyGroupsLoading } = useCollection(myGroupsQuery);
 
-  const myVacanciesQuery = useMemoFirebase(() => {
-    if (!firestore || !user) return null;
-    return query(collection(firestore, 'vacancies'), where('companyId', '==', user.uid), orderBy('postedAt', 'desc'));
-  }, [firestore, user]);
-  const { data: myVacancies, isLoading: isMyVacanciesLoading } = useCollection<Vacancy>(myVacanciesQuery);
-
-  const vacancyLimitReached = useMemo(() => (myVacancies?.length || 0) >= VACANCY_LIMIT, [myVacancies]);
-
   const handleToggleFollow = async (targetId: string, isFollowing: boolean) => {
     if (!userDocRef || !userProfile) return;
     const action = isFollowing ? arrayRemove(targetId) : arrayUnion(targetId);
@@ -225,15 +205,6 @@ export default function ExpertDashboardPage() {
     toast({ title: "Profile Visible", description: "Your profile is now visible to everyone." });
   }
 
-  const handleDeleteVacancy = async (id: string) => {
-    try {
-        await deleteDoc(doc(firestore, 'vacancies', id));
-        toast({ title: "Vacancy Deleted" });
-    } catch (e) {
-        toast({ variant: "destructive", title: "Action Failed" });
-    }
-  }
-
   async function onPostSubmit(values: z.infer<typeof postFormSchema>) {
     if (!firestore || !user) return;
     setIsSubmittingPost(true);
@@ -257,7 +228,6 @@ export default function ExpertDashboardPage() {
   if (!user || !userProfile) return null;
 
   const isHidden = userProfile.hiddenUntil && userProfile.hiddenUntil.toDate() > new Date();
-  const canPostVacancies = ['Company', 'Authorized Pro'].includes(userProfile.role);
 
   return (
     <div className="min-h-screen bg-background p-4 sm:p-8">
@@ -268,11 +238,10 @@ export default function ExpertDashboardPage() {
         </header>
 
         <Tabs defaultValue="overview" className="w-full">
-          <TabsList className={cn("grid w-full bg-secondary/50", canPostVacancies ? "grid-cols-5" : "grid-cols-4")}>
+          <TabsList className="grid w-full bg-secondary/50 grid-cols-4">
             <TabsTrigger value="overview">Dashboard</TabsTrigger>
             <TabsTrigger value="network">My Network</TabsTrigger>
             <TabsTrigger value="feed">Feed</TabsTrigger>
-            {canPostVacancies && <TabsTrigger value="vacancies">My Jobs</TabsTrigger>}
             <TabsTrigger value="plans">My Plan</TabsTrigger>
           </TabsList>
 
@@ -656,90 +625,6 @@ export default function ExpertDashboardPage() {
             )}
           </TabsContent>
 
-          {canPostVacancies && (
-            <TabsContent value="vacancies" className="mt-6">
-                <Card>
-                    <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                        <div>
-                            <CardTitle className="flex items-center gap-2">
-                                Job Vacancies
-                                <Badge variant="secondary" className="ml-2 font-bold">{myVacancies?.length || 0} / {VACANCY_LIMIT}</Badge>
-                            </CardTitle>
-                            <CardDescription>Manage and post job opportunities for your company.</CardDescription>
-                        </div>
-                        <Button 
-                            onClick={() => { setSelectedVacancy(null); setIsVacancyDialogOpen(true); }} 
-                            disabled={vacancyLimitReached}
-                            className={cn(vacancyLimitReached && "bg-muted text-muted-foreground")}
-                        >
-                            <PlusCircle className="mr-2 h-4 w-4" /> 
-                            {vacancyLimitReached ? 'Limit Reached' : 'Post New Job'}
-                        </Button>
-                    </CardHeader>
-                    <CardContent className="space-y-6">
-                        {vacancyLimitReached && (
-                            <div className="bg-orange-500/10 border border-orange-500/30 rounded-xl p-4 flex items-center gap-3">
-                                <AlertTriangle className="h-5 w-5 text-orange-500 shrink-0" />
-                                <p className="text-sm font-medium text-orange-200">
-                                    You have reached the free limit of <strong>{VACANCY_LIMIT} vacancies</strong>. Delete an existing post to create a new one.
-                                </p>
-                            </div>
-                        )}
-
-                        {isMyVacanciesLoading ? (
-                            <div className="flex justify-center p-8"><Loader className="animate-spin h-8 w-8 text-primary" /></div>
-                        ) : myVacancies && myVacancies.length > 0 ? (
-                            <div className="rounded-xl border overflow-hidden">
-                                <table className="w-full text-sm">
-                                    <thead className="bg-secondary/50">
-                                        <tr className="text-left border-b">
-                                            <th className="p-4 font-bold">Title</th>
-                                            <th className="p-4 font-bold">Type</th>
-                                            <th className="p-4 font-bold">Status</th>
-                                            <th className="p-4 font-bold text-right">Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {myVacancies.map(v => (
-                                            <tr key={v.id} className="border-b hover:bg-secondary/20 transition-colors">
-                                                <td className="p-4 font-medium">{v.title}</td>
-                                                <td className="p-4">{v.employmentType}</td>
-                                                <td className="p-4">
-                                                    <Badge variant={v.status === 'Approved' ? 'default' : v.status === 'Rejected' ? 'destructive' : 'secondary'} className="text-[10px] uppercase font-bold">
-                                                        {v.status}
-                                                    </Badge>
-                                                </td>
-                                                <td className="p-4 text-right">
-                                                    <DropdownMenu>
-                                                        <DropdownMenuTrigger asChild>
-                                                            <Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button>
-                                                        </DropdownMenuTrigger>
-                                                        <DropdownMenuContent align="end">
-                                                            <DropdownMenuItem onClick={() => { setSelectedVacancy(v); setIsVacancyDialogOpen(true); }}>
-                                                                <Edit className="mr-2 h-4 w-4" /> Edit
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuItem className="text-red-500 focus:text-red-500" onClick={() => handleDeleteVacancy(v.id)}>
-                                                                <Trash2 className="mr-2 h-4 w-4" /> Delete
-                                                            </DropdownMenuItem>
-                                                        </DropdownMenuContent>
-                                                    </DropdownMenu>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        ) : (
-                            <div className="text-center py-12 bg-secondary/10 rounded-lg border-2 border-dashed">
-                                <Briefcase className="h-12 w-12 mx-auto text-muted-foreground mb-4 opacity-20" />
-                                <p className="text-muted-foreground">You haven't posted any job vacancies yet.</p>
-                            </div>
-                        )}
-                    </CardContent>
-                </Card>
-            </TabsContent>
-          )}
-
           <TabsContent value="plans" className="mt-6">
             <Card className="border-none bg-[#24262d]">
               <CardHeader>
@@ -888,23 +773,6 @@ export default function ExpertDashboardPage() {
         <DialogContent className="max-w-3xl overflow-y-auto max-h-[90vh]">
           <DialogHeader><DialogTitle>Edit Your Professional Profile</DialogTitle></DialogHeader>
           {userProfile && <EditProfileForm userProfile={userProfile as any} onSuccess={() => setIsEditDialogOpen(false)} />}
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={isVacancyDialogOpen} onOpenChange={setIsVacancyDialogOpen}>
-        <DialogContent className="max-w-3xl overflow-y-auto max-h-[90vh] bg-background border-none rounded-2xl">
-          <DialogHeader>
-            <DialogTitle className="text-2xl font-black">{selectedVacancy ? 'Edit Job Opening' : 'Post a New Job'}</DialogTitle>
-            <DialogDescription>Your job will be listed on the Vacancies page and announced in the Public Feed.</DialogDescription>
-          </DialogHeader>
-          <PostVacancyForm 
-            onSuccess={() => setIsVacancyDialogOpen(false)} 
-            vacancy={selectedVacancy || undefined}
-            companyId={userProfile.id}
-            companyName={userProfile.companyName || `${userProfile.firstName} ${userProfile.lastName}`}
-            companyEmail={userProfile.email || ''}
-            contactPhone={userProfile.phoneNumber || ''}
-          />
         </DialogContent>
       </Dialog>
 
