@@ -1,13 +1,12 @@
 'use client';
 
-import { useFirestore, useUser, useCollection, useMemoFirebase, updateDocumentNonBlocking, addDocumentNonBlocking } from '@/firebase';
-import { collection, query, where, DocumentData, Query, serverTimestamp } from 'firebase/firestore';
+import { useFirestore, useUser, useCollection, useMemoFirebase, updateDocumentNonBlocking, addDocumentNonBlocking, useDoc } from '@/firebase';
+import { collection, query, where, DocumentData, Query, serverTimestamp, arrayRemove, arrayUnion, doc } from 'firebase/firestore';
 import { Loader2, UserMinus, UserPlus } from 'lucide-react';
 import Link from 'next/link';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { Button } from './ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { arrayRemove, arrayUnion, doc } from 'firebase/firestore';
 import { ExpertUser } from './expert-card';
 
 interface UserListProps {
@@ -34,17 +33,22 @@ export function UserList({ userIds, userIdsQuery, emptyStateMessage }: UserListP
     }, [firestore, userIds, userIdsQuery]);
 
     const { data: users, isLoading } = useCollection<ExpertUser>(usersQuery);
-    const { data: currentUserProfile } = useDoc<ExpertUser>(currentUser ? doc(firestore, 'users', currentUser.uid) : null);
+    
+    const userProfileRef = useMemoFirebase(() => {
+        if (!firestore || !currentUser) return null;
+        return doc(firestore, 'users', currentUser.uid);
+    }, [firestore, currentUser]);
+    
+    const { data: currentUserProfile } = useDoc<ExpertUser>(userProfileRef);
 
     const handleToggleFollow = async (targetUser: ExpertUser) => {
-        if (!firestore || !currentUserProfile) return;
+        if (!firestore || !currentUserProfile || !userProfileRef) return;
 
-        const currentUserDocRef = doc(firestore, 'users', currentUserProfile.id);
         const isFollowing = currentUserProfile.following?.includes(targetUser.id);
         const updateAction = isFollowing ? arrayRemove(targetUser.id) : arrayUnion(targetUser.id);
 
         try {
-            await updateDocumentNonBlocking(currentUserDocRef, { following: updateAction });
+            await updateDocumentNonBlocking(userProfileRef, { following: updateAction });
             
             if (!isFollowing) {
                 // Create notification for the target user
@@ -112,41 +116,4 @@ export function UserList({ userIds, userIdsQuery, emptyStateMessage }: UserListP
             })}
         </div>
     );
-}
-
-// Add a helper hook for useDoc as it's not exported from the main index, but it is needed here.
-import {
-  DocumentReference,
-  onSnapshot,
-  DocumentSnapshot,
-} from 'firebase/firestore';
-import { useState, useEffect } from 'react';
-
-export function useDoc<T = any>(
-  memoizedDocRef: DocumentReference<DocumentData> | null | undefined,
-) {
-  const [data, setData] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-   useEffect(() => {
-        if (!memoizedDocRef) {
-            setData(null);
-            setIsLoading(false);
-            return;
-        }
-        const unsubscribe = onSnapshot(memoizedDocRef, (snapshot: DocumentSnapshot) => {
-            if (snapshot.exists()) {
-                setData({ ...snapshot.data(), id: snapshot.id });
-            } else {
-                setData(null);
-            }
-            setIsLoading(false);
-        }, (error) => {
-            console.error(error);
-            setIsLoading(false);
-        });
-        return () => unsubscribe();
-    }, [memoizedDocRef]);
-
-  return { data, isLoading };
 }

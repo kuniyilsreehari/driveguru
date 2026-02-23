@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -14,6 +15,7 @@ import { Share2, Copy } from 'lucide-react';
 
 type ShareDetails = 
     | { type: 'expert-profile'; expertId: string; expertName: string; }
+    | { type: 'vacancy'; vacancyId: string; vacancyTitle: string; companyName: string; }
     | { type: 'group-post'; title: string; text: string; url: string; };
 
 interface ShareDialogProps {
@@ -23,13 +25,19 @@ interface ShareDialogProps {
 
 export function ShareDialog({ shareDetails, children }: ShareDialogProps) {
     const { toast } = useToast();
+    const [origin, setOrigin] = useState('');
+
+    useEffect(() => {
+        // Safe access to window after hydration
+        setOrigin(window.location.origin);
+    }, []);
     
-    let shareData: { title: string; text: string; url: string; };
-    let dialogTitle: string;
-    let dialogDescription: string;
+    let shareData: { title: string; text: string; url: string; } = { title: '', text: '', url: '' };
+    let dialogTitle: string = '';
+    let dialogDescription: string = '';
 
     if (shareDetails.type === 'expert-profile') {
-        const profileUrl = `${window.location.origin}/expert/${shareDetails.expertId}`;
+        const profileUrl = `${origin}/expert/${shareDetails.expertId}`;
         shareData = {
             title: `Check out ${shareDetails.expertName} on DriveGuru`,
             text: `I found this expert, ${shareDetails.expertName}, on DriveGuru. Here's their profile:`,
@@ -37,7 +45,16 @@ export function ShareDialog({ shareDetails, children }: ShareDialogProps) {
         };
         dialogTitle = 'Share Profile';
         dialogDescription = `Share ${shareDetails.expertName}'s profile with others.`;
-    } else { // group-post
+    } else if (shareDetails.type === 'vacancy') {
+        const vacancyUrl = `${origin}/vacancies#${shareDetails.vacancyId}`;
+        shareData = {
+            title: `Job Opening: ${shareDetails.vacancyTitle} at ${shareDetails.companyName}`,
+            text: `Check out this job opening on DriveGuru: ${shareDetails.vacancyTitle} at ${shareDetails.companyName}`,
+            url: vacancyUrl
+        };
+        dialogTitle = 'Share Job Opening';
+        dialogDescription = `Share the position for ${shareDetails.vacancyTitle} with your network.`;
+    } else if (shareDetails.type === 'group-post') {
         shareData = {
             title: shareDetails.title,
             text: shareDetails.text,
