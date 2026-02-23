@@ -172,8 +172,8 @@ export function Header() {
   useEffect(() => {
     if (user && firestore) {
       const superAdminDocRef = doc(firestore, 'roles_super_admin', user.uid);
-      const unsub = onSnapshot(superAdminDocRef, (doc) => {
-        setIsSuperAdmin(doc.exists());
+      const unsub = onSnapshot(superAdminDocRef, (docSnapshot) => {
+        setIsSuperAdmin(docSnapshot.exists());
       });
       return () => unsub();
     } else if (!isUserLoading) {
