@@ -120,10 +120,9 @@ function VacanciesContent() {
 
     const vacanciesQuery = useMemoFirebase(() => {
         if (!firestore) return null;
-        // Publicly fetch all approved vacancies
+        // Publicly fetch all vacancies without status restriction for a fully open experience
         return query(
             collection(firestore, 'vacancies'),
-            where('status', '==', 'Approved'),
             orderBy('postedAt', 'desc')
         );
     }, [firestore]);
@@ -221,7 +220,7 @@ export default function VacanciesPage() {
                 <main>
                     <Suspense fallback={
                         <div className="flex h-64 w-full items-center justify-center">
-                            <Loader2 className="h-12 w-12 animate-spin text-orange-500" />
+                            <Loader2 className="h-8 w-8 animate-spin text-orange-500" />
                         </div>
                     }>
                         <VacanciesContent />
