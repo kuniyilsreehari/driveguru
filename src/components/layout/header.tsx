@@ -238,83 +238,85 @@ export function Header() {
         </Link>
 
         <div className="flex items-center justify-end space-x-2 sm:space-x-4">
-          {mounted && (
-            <nav className="hidden sm:flex items-center space-x-1">
-              {navItems.map((item) => {
-                  const isActive = pathname === item.href;
-                  return (
-                      <Button 
-                          key={item.href} 
-                          asChild 
-                          variant="ghost"
-                          size="sm"
-                          className={cn(
-                              "rounded-lg px-4 transition-all duration-300",
-                              isActive 
-                                  ? "bg-orange-500 text-white font-black hover:bg-orange-600 shadow-md shadow-orange-500/20" 
-                                  : "text-muted-foreground hover:bg-white/5 hover:text-white"
-                          )}
-                      >
-                          <Link href={item.href}>
-                              <item.icon className={cn("mr-2 h-4 w-4", isActive && "stroke-[2px]")} /> {item.label}
-                          </Link>
-                      </Button>
-                  )
-              })}
-            </nav>
-          )}
-            
-            {mounted && !isUserLoading && user ? (
-              <div className="flex items-center gap-1 sm:gap-2">
-                <NotificationCenter />
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                        <Avatar className="h-8 w-8 ring-2 ring-primary/20 ring-offset-2 ring-offset-background">
-                        <AvatarImage src={user.photoURL || undefined} />
-                        <AvatarFallback className="bg-primary/10 text-primary font-black">{getInitials(user.email)}</AvatarFallback>
-                        </Avatar>
-                    </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent className="w-56" align="end">
-                    <DropdownMenuLabel className="font-normal">
-                        <div className="flex flex-col space-y-1">
-                        <p className="text-sm font-black leading-none">Account</p>
-                        <p className="text-xs leading-none text-muted-foreground font-medium">{user.email}</p>
-                        </div>
-                    </DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => router.push(dashboardPath)} className="font-bold">
-                        <LayoutDashboard className="mr-2 h-4 w-4" /> Dashboard
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={handleSignOut} className="text-red-500 font-bold focus:text-red-500 focus:bg-red-500/5">
-                        <LogOut className="mr-2 h-4 w-4" /> Log out
-                    </DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            ) : mounted && !isUserLoading ? (
-              <div className="flex items-center gap-2">
-                <Button asChild variant="ghost" size="sm" className="font-bold"><Link href="/login">Login</Link></Button>
-                <Button asChild size="sm" className="font-black px-6"><Link href="/signup/role">Join</Link></Button>
-              </div>
-            ) : (
-              <div className="h-8 w-24" /> // Loading placeholder
-            )}
+          {mounted ? (
+            <>
+              <nav className="hidden sm:flex items-center space-x-1">
+                {navItems.map((item) => {
+                    const isActive = pathname === item.href;
+                    return (
+                        <Button 
+                            key={item.href} 
+                            asChild 
+                            variant="ghost"
+                            size="sm"
+                            className={cn(
+                                "rounded-lg px-4 transition-all duration-300",
+                                isActive 
+                                    ? "bg-orange-500 text-white font-black hover:bg-orange-600 shadow-md shadow-orange-500/20" 
+                                    : "text-muted-foreground hover:bg-white/5 hover:text-white"
+                            )}
+                        >
+                            <Link href={item.href}>
+                                <item.icon className={cn("mr-2 h-4 w-4", isActive && "stroke-[2px]")} /> {item.label}
+                            </Link>
+                        </Button>
+                    )
+                })}
+              </nav>
 
-           {mounted && (
-             <Button
-                variant="ghost"
-                size="icon"
-                className="h-9 w-9 rounded-full"
-                onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-              >
-                <Sun className="h-4 w-4 dark:hidden" />
-                <Moon className="hidden h-4 w-4 dark:block" />
-                <span className="sr-only">Toggle theme</span>
-            </Button>
-           )}
+              {!isUserLoading && user ? (
+                <div className="flex items-center gap-1 sm:gap-2">
+                  <NotificationCenter />
+                  <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                          <Avatar className="h-8 w-8 ring-2 ring-primary/20 ring-offset-2 ring-offset-background">
+                          <AvatarImage src={user.photoURL || undefined} />
+                          <AvatarFallback className="bg-primary/10 text-primary font-black">{getInitials(user.email)}</AvatarFallback>
+                          </Avatar>
+                      </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent className="w-56" align="end">
+                      <DropdownMenuLabel className="font-normal">
+                          <div className="flex flex-col space-y-1">
+                          <p className="text-sm font-black leading-none">Account</p>
+                          <p className="text-xs leading-none text-muted-foreground font-medium">{user.email}</p>
+                          </div>
+                      </DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => router.push(dashboardPath)} className="font-bold">
+                          <LayoutDashboard className="mr-2 h-4 w-4" /> Dashboard
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={handleSignOut} className="text-red-500 font-bold focus:text-red-500 focus:bg-red-500/5">
+                          <LogOut className="mr-2 h-4 w-4" /> Log out
+                      </DropdownMenuItem>
+                      </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              ) : !isUserLoading ? (
+                <div className="flex items-center gap-2">
+                  <Button asChild variant="ghost" size="sm" className="font-bold"><Link href="/login">Login</Link></Button>
+                  <Button asChild size="sm" className="font-black px-6"><Link href="/signup/role">Join</Link></Button>
+                </div>
+              ) : (
+                <div className="h-8 w-24" />
+              )}
+
+              <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-9 w-9 rounded-full"
+                  onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                >
+                  <Sun className="h-4 w-4 dark:hidden" />
+                  <Moon className="hidden h-4 w-4 dark:block" />
+                  <span className="sr-only">Toggle theme</span>
+              </Button>
+            </>
+          ) : (
+            <div className="h-8 w-64" />
+          )}
         </div>
       </div>
     </header>
