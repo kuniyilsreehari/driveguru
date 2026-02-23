@@ -28,7 +28,7 @@ service cloud.firestore {
      * Collection Rules
      * ===================================================== */
 
-    // Job Vacancies - Definitive Public Access (v2.6 - Permission Fix)
+    // Job Vacancies - Explicitly allow public list and read (v2.8 - Definitive Permission Fix)
     match /vacancies/{vacancyId} {
       allow read, list: if true;
       allow create, update, delete: if isSuperAdmin();
