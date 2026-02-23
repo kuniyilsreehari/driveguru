@@ -225,7 +225,7 @@ function VacanciesList() {
 
 export default function VacanciesPage() {
     return (
-        <div className="min-h-screen bg-[#1a1c23] p-4 sm:p-8 pb-32">
+        <div className="min-h-screen bg-background p-4 sm:p-8 pb-32">
             <div className="mx-auto max-w-7xl">
                 <header className="text-center space-y-6 mb-20 pt-8">
                     <div className="flex items-center justify-center gap-4">

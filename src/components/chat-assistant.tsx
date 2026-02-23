@@ -60,7 +60,7 @@ export function ChatAssistant() {
   };
 
   return (
-    <div className="fixed bottom-6 right-6 z-[60] flex flex-col items-end gap-4">
+    <div className="fixed bottom-6 left-6 z-[60] flex flex-col items-start gap-4">
       {isOpen && (
         <Card className="w-[350px] sm:w-[400px] h-[500px] shadow-2xl flex flex-col overflow-hidden border-2 border-primary/20 animate-in slide-in-from-bottom-4 duration-300">
           <CardHeader className="bg-primary p-4 flex flex-row items-center justify-between">

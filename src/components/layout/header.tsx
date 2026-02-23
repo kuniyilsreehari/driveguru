@@ -107,7 +107,7 @@ function NotificationCenter() {
                 </div>
                 <ScrollArea className="h-[400px]">
                     {isLoading ? (
-                        <div className="flex h-32 items-center justify-center"><Icons.logo className="h-5 w-5 animate-spin text-orange-500" /></div>
+                        <div className="flex h-32 items-center justify-center"><Loader2 className="h-5 w-5 animate-spin text-orange-500" /></div>
                     ) : !notifications || notifications.length === 0 ? (
                         <div className="flex flex-col items-center justify-center h-64 p-8 text-center opacity-40">
                             <Bell className="h-12 w-12 mb-4" />
