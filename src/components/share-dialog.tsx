@@ -97,17 +97,20 @@ export function ShareDialog({ shareDetails, children }: ShareDialogProps) {
     return (
         <Dialog>
             <DialogTrigger asChild>{children}</DialogTrigger>
-            <DialogContent className="sm:max-w-md bg-background border-none rounded-[2rem]">
-                <DialogHeader>
-                    <DialogTitle className="text-white font-black">{dialogTitle}</DialogTitle>
-                    <DialogDescription className="text-muted-foreground">{dialogDescription}</DialogDescription>
+            <DialogContent className="sm:max-w-md bg-[#1a1c23] border-none rounded-[2.5rem] shadow-2xl p-8">
+                <DialogHeader className="items-center text-center">
+                    <div className="p-4 bg-orange-500/10 rounded-full w-fit mb-4">
+                        <Share2 className="h-10 w-10 text-orange-500" />
+                    </div>
+                    <DialogTitle className="text-3xl font-black text-white">{dialogTitle}</DialogTitle>
+                    <DialogDescription className="text-muted-foreground font-medium pt-2">{dialogDescription}</DialogDescription>
                 </DialogHeader>
-                <div className="flex flex-col gap-4 py-4">
-                    <Button onClick={handleNativeShare} className="bg-orange-500 hover:bg-orange-600 h-12 rounded-xl font-bold">
-                        <Share2 className="mr-2 h-4 w-4" /> Share via System
+                <div className="flex flex-col gap-4 py-6">
+                    <Button onClick={handleNativeShare} className="bg-orange-500 hover:bg-orange-600 h-14 rounded-2xl font-black text-lg shadow-xl shadow-orange-500/20">
+                        <Share2 className="mr-2 h-5 w-5" /> Share via System
                     </Button>
-                    <Button variant="outline" onClick={handleCopyLink} className="h-12 rounded-xl border-white/10 hover:bg-white/5 font-bold">
-                        <Copy className="mr-2 h-4 w-4" /> Copy Link
+                    <Button variant="outline" onClick={handleCopyLink} className="h-14 rounded-2xl border-white/10 bg-white/5 hover:bg-white/10 font-bold text-white">
+                        <Copy className="mr-2 h-5 w-5" /> Copy Secure Link
                     </Button>
                 </div>
             </DialogContent>

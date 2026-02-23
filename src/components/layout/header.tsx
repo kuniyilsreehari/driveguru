@@ -205,7 +205,7 @@ export function Header() {
                     <Menu className="h-5 w-5" />
                 </Button>
             </SheetTrigger>
-            <SheetContent side="left" className="bg-background border-r">
+            <SheetContent side="left" className="bg-background border-r border-white/5">
                 <SheetHeader className="mb-6">
                     <SheetTitle className="flex items-center gap-2">
                         <Icons.logo className="h-6 w-6" /> DriveGuru
@@ -219,11 +219,11 @@ export function Header() {
                                 key={item.href} 
                                 asChild 
                                 variant={isActive ? "secondary" : "ghost"} 
-                                className="justify-start" 
+                                className="justify-start h-12 rounded-xl" 
                                 onClick={() => setIsMobileMenuOpen(false)}
                             >
                                 <Link href={item.href}>
-                                    <item.icon className={cn("mr-2 h-4 w-4", isActive && "stroke-[2px]")} /> {item.label}
+                                    <item.icon className={cn("mr-2 h-4 w-4", isActive && "stroke-[2px] text-orange-500")} /> {item.label}
                                 </Link>
                             </Button>
                         );
@@ -233,14 +233,14 @@ export function Header() {
         </Sheet>
         
         <Link href="/" className="mr-auto flex items-center space-x-2">
-          <Icons.logo className="h-6 w-6" />
-          <span className="hidden font-bold sm:inline-block">DriveGuru</span>
+          <Icons.logo className="h-6 w-6 text-orange-500" />
+          <span className="hidden font-black sm:inline-block tracking-tighter text-lg">DriveGuru</span>
         </Link>
 
         <div className="flex items-center justify-end space-x-2 sm:space-x-4">
           {mounted ? (
             <>
-              <nav className="hidden sm:flex items-center space-x-1">
+              <nav className="hidden lg:flex items-center space-x-1">
                 {navItems.map((item) => {
                     const isActive = pathname === item.href;
                     return (
@@ -257,63 +257,67 @@ export function Header() {
                             )}
                         >
                             <Link href={item.href}>
-                                <item.icon className={cn("mr-2 h-4 w-4", isActive && "stroke-[2px]")} /> {item.label}
+                                <item.icon className={cn("mr-2 h-4 w-4", isActive && "stroke-[2.5px]")} /> {item.label}
                             </Link>
                         </Button>
                     )
                 })}
               </nav>
 
-              {!isUserLoading && user ? (
-                <div className="flex items-center gap-1 sm:gap-2">
-                  <NotificationCenter />
-                  <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                          <Avatar className="h-8 w-8 ring-2 ring-primary/20 ring-offset-2 ring-offset-background">
-                          <AvatarImage src={user.photoURL || undefined} />
-                          <AvatarFallback className="bg-primary/10 text-primary font-black">{getInitials(user.email)}</AvatarFallback>
-                          </Avatar>
-                      </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent className="w-56" align="end">
-                      <DropdownMenuLabel className="font-normal">
-                          <div className="flex flex-col space-y-1">
-                          <p className="text-sm font-black leading-none">Account</p>
-                          <p className="text-xs leading-none text-muted-foreground font-medium">{user.email}</p>
-                          </div>
-                      </DropdownMenuLabel>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem onClick={() => router.push(dashboardPath)} className="font-bold">
-                          <LayoutDashboard className="mr-2 h-4 w-4" /> Dashboard
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem onClick={handleSignOut} className="text-red-500 font-bold focus:text-red-500 focus:bg-red-500/5">
-                          <LogOut className="mr-2 h-4 w-4" /> Log out
-                      </DropdownMenuItem>
-                      </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-              ) : !isUserLoading ? (
-                <div className="flex items-center gap-2">
-                  <Button asChild variant="ghost" size="sm" className="font-bold"><Link href="/login">Login</Link></Button>
-                  <Button asChild size="sm" className="font-black px-6 bg-orange-500 hover:bg-orange-600"><Link href="/signup/role">Join</Link></Button>
-                </div>
-              ) : null}
+              <div className="flex items-center gap-1 sm:gap-2">
+                {!isUserLoading && user ? (
+                  <>
+                    <NotificationCenter />
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" className="relative h-9 w-9 rounded-full group">
+                            <Avatar className="h-9 w-9 ring-2 ring-primary/20 ring-offset-2 ring-offset-background group-hover:ring-primary/50 transition-all">
+                            <AvatarImage src={user.photoURL || undefined} className="object-cover" />
+                            <AvatarFallback className="bg-primary/10 text-primary font-black text-xs">{getInitials(user.email)}</AvatarFallback>
+                            </Avatar>
+                        </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent className="w-64 p-2 bg-[#24262d] border-white/10 rounded-2xl shadow-2xl" align="end">
+                        <DropdownMenuLabel className="font-normal px-4 py-3">
+                            <div className="flex flex-col space-y-1">
+                            <p className="text-sm font-black text-white leading-none">Account Settings</p>
+                            <p className="text-xs leading-none text-muted-foreground font-medium">{user.email}</p>
+                            </div>
+                        </DropdownMenuLabel>
+                        <DropdownMenuSeparator className="bg-white/5" />
+                        <DropdownMenuItem onClick={() => router.push(dashboardPath)} className="font-bold h-11 rounded-xl focus:bg-white/5 cursor-pointer">
+                            <LayoutDashboard className="mr-2 h-4 w-4 text-orange-500" /> Dashboard
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator className="bg-white/5" />
+                        <DropdownMenuItem onClick={handleSignOut} className="text-red-500 font-bold h-11 rounded-xl focus:text-red-500 focus:bg-red-500/5 cursor-pointer">
+                            <LogOut className="mr-2 h-4 w-4" /> Log out
+                        </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                  </>
+                ) : !isUserLoading ? (
+                  <div className="flex items-center gap-2">
+                    <Button asChild variant="ghost" size="sm" className="font-bold rounded-xl px-4 hover:bg-white/5"><Link href="/login">Login</Link></Button>
+                    <Button asChild size="sm" className="font-black px-6 bg-orange-500 hover:bg-orange-600 rounded-xl shadow-lg shadow-orange-500/20"><Link href="/signup/role">Join</Link></Button>
+                  </div>
+                ) : (
+                  <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                )}
 
-              <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-9 w-9 rounded-full"
-                  onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-                >
-                  <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-                  <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-                  <span className="sr-only">Toggle theme</span>
-              </Button>
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-9 w-9 rounded-full hover:bg-white/5"
+                    onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                  >
+                    <Sun className="h-4 w-4 dark:hidden" />
+                    <Moon className="hidden h-4 w-4 dark:block" />
+                    <span className="sr-only">Toggle theme</span>
+                </Button>
+              </div>
             </>
           ) : (
-            <div className="h-8 w-32" />
+            <div className="h-9 w-32 bg-white/5 rounded-xl animate-pulse" />
           )}
         </div>
       </div>
