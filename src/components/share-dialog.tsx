@@ -29,7 +29,9 @@ export function ShareDialog({ shareDetails, children }: ShareDialogProps) {
 
     useEffect(() => {
         // Safe access to window after hydration
-        setOrigin(window.location.origin);
+        if (typeof window !== 'undefined') {
+            setOrigin(window.location.origin);
+        }
     }, []);
     
     let shareData: { title: string; text: string; url: string; } = { title: '', text: '', url: '' };
