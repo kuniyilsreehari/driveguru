@@ -7,14 +7,14 @@ export default function JobsPage() {
     const router = useRouter();
     
     useEffect(() => {
-        // Automatically redirect to the vacancies page to maintain clean navigation
-        router.replace('/vacancies');
+        // Redirect to the Public Feed instead of the discontinued vacancies page
+        router.replace('/feed');
     }, [router]);
 
     return (
         <div className="flex items-center justify-center min-h-screen bg-background">
             <div className="text-center">
-                <p className="text-muted-foreground">Redirecting to Vacancies...</p>
+                <p className="text-muted-foreground">Redirecting to Public Feed...</p>
             </div>
         </div>
     );

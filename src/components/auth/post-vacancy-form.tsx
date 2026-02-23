@@ -140,20 +140,20 @@ export function PostVacancyForm({
         contactPhone: values.contactPhone,
         isCompanyVerified: userProfile?.verified || false,
         companyTier: userProfile?.tier || 'Standard',
-        status: isAdmin ? 'Approved' : 'Approved', // Default to approved for simplified UX, but rules handle admin review if needed.
+        status: 'Approved',
         postedAt: serverTimestamp(),
       };
 
       try {
           await addDocumentNonBlocking(vacanciesCollectionRef, newVacancyData);
           
-          // CRITICAL: Automatically post to Public Feed
+          // Automatically post to Public Feed
           const newPostData = {
             authorId: isAdmin ? 'system' : (propCompanyId || user?.uid),
             authorName: values.companyName,
             title: `Job Opening: ${values.title}`,
-            content: `We are hiring for the position of ${values.title} in ${values.location}. Check out the job board for full details and to apply!\n\nEmployment: ${values.employmentType}\nSkills: ${values.skillsRequired}`,
-            link: `${window.location.origin}/vacancies`,
+            content: `We are hiring for the position of ${values.title} in ${values.location}. Check out the details and apply!\n\nEmployment: ${values.employmentType}\nSkills: ${values.skillsRequired}\nContact: ${values.companyEmail}`,
+            link: `${window.location.origin}/feed`,
             createdAt: serverTimestamp(),
             likes: [],
           };

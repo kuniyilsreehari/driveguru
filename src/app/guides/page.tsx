@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useMemo } from 'react';
@@ -155,15 +154,16 @@ export default function GuidesPage() {
                                 <div className="p-2 bg-orange-500/10 rounded-lg">
                                     <Briefcase className="h-5 w-5 text-orange-500" />
                                 </div>
-                                <span>Applying for Job Vacancies</span>
+                                <span>Discovering Job Vacancies</span>
                             </div>
                         </AccordionTrigger>
                         <AccordionContent className="space-y-4 text-muted-foreground pl-11 pb-8">
-                            <p>Browse active job openings posted by companies and authorized professionals on the platform.</p>
+                            <p>Browse active job openings posted by companies and authorized professionals directly in our interactive feed.</p>
                              <ol className="list-decimal list-inside space-y-3 font-medium">
-                                <li>Go to the <Link href="/vacancies" className="text-orange-500 hover:underline">Vacancies</Link> page.</li>
-                                <li>Review job descriptions, required skills, and location details.</li>
-                                <li>Click <strong>Apply Now</strong> to see the company's contact email or <strong>Call</strong> to speak directly with the hiring manager (for premium listings).</li>
+                                <li>Go to the <Link href="/feed" className="text-orange-500 hover:underline">Public Feed</Link>.</li>
+                                <li>Look for posts tagged as "Job Opening".</li>
+                                <li>Review job descriptions, required skills, and location details directly in the post.</li>
+                                <li>Contact the employer using the provided details or through their public profile.</li>
                             </ol>
                         </AccordionContent>
                     </AccordionItem>

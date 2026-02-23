@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Suspense, useState, useEffect, useMemo } from 'react';
@@ -295,7 +294,7 @@ function HomePageContent() {
         { value: 'Freelancer', label: 'Freelancers', icon: User },
         { value: 'Company', label: 'Companies', icon: Building },
         { value: 'Authorized Pro', label: 'Authorized Pros', icon: Briefcase },
-        { value: 'Fresher', label: 'Freshers (Find Jobs)', icon: GraduationCap, href: '/vacancies' },
+        { value: 'Fresher', label: 'Freshers (Find Jobs)', icon: GraduationCap, href: '/feed' },
     ];
 
     return (
