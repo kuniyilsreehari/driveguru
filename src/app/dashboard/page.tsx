@@ -231,48 +231,77 @@ export default function ExpertDashboardPage() {
 
   return (
     <div className="min-h-screen bg-background p-4 sm:p-8">
-      <div className="mx-auto max-w-5xl space-y-8">
-        <header className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold">Expert Dashboard</h1>
-          <Button variant="outline" onClick={() => signOut(auth!).then(() => router.push('/'))}><LogOut className="mr-2 h-4 w-4" /> Log Out</Button>
+      <div className="mx-auto max-w-5xl">
+        <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-8 gap-4 border-b border-white/5 mb-8">
+          <div>
+            <h1 className="text-4xl font-black tracking-tight text-white">Expert Dashboard</h1>
+            <p className="text-muted-foreground text-sm font-medium">Manage your professional presence and network.</p>
+          </div>
+          <Button 
+            variant="outline" 
+            className="rounded-xl border-2 border-white/10 bg-transparent text-white hover:bg-white/5 font-bold" 
+            onClick={() => signOut(auth!).then(() => router.push('/'))}
+          >
+            <LogOut className="mr-2 h-4 w-4" /> Log Out
+          </Button>
         </header>
 
         <Tabs defaultValue="overview" className="w-full">
-          <TabsList className="grid w-full bg-secondary/50 grid-cols-4">
-            <TabsTrigger value="overview">Dashboard</TabsTrigger>
-            <TabsTrigger value="network">My Network</TabsTrigger>
-            <TabsTrigger value="feed">Feed</TabsTrigger>
-            <TabsTrigger value="plans">My Plan</TabsTrigger>
+          <TabsList className="flex w-full bg-secondary/30 p-1 h-12 rounded-2xl mb-8">
+            <TabsTrigger 
+                value="overview" 
+                className="flex-1 rounded-xl data-[state=active]:bg-orange-500 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-orange-500/20 font-black text-xs uppercase tracking-wider transition-all"
+            >
+                Overview
+            </TabsTrigger>
+            <TabsTrigger 
+                value="network" 
+                className="flex-1 rounded-xl data-[state=active]:bg-orange-500 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-orange-500/20 font-black text-xs uppercase tracking-wider transition-all"
+            >
+                My Network
+            </TabsTrigger>
+            <TabsTrigger 
+                value="feed" 
+                className="flex-1 rounded-xl data-[state=active]:bg-orange-500 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-orange-500/20 font-black text-xs uppercase tracking-wider transition-all"
+            >
+                Feed
+            </TabsTrigger>
+            <TabsTrigger 
+                value="plans" 
+                className="flex-1 rounded-xl data-[state=active]:bg-orange-500 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-orange-500/20 font-black text-xs uppercase tracking-wider transition-all"
+            >
+                My Plan
+            </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="overview" className="mt-6 space-y-8">
-            <Card className="border-2 overflow-hidden">
+          <TabsContent value="overview" className="mt-0 space-y-8">
+            <Card className="border-none bg-[#24262d] rounded-3xl overflow-hidden shadow-xl">
               <Collapsible open={isProfileExpanded} onOpenChange={setIsProfileExpanded}>
-                <CardHeader className="flex flex-col md:flex-row items-start md:items-center gap-6 pb-2">
-                  <Avatar className="h-24 w-24 border-4 border-primary/20 cursor-pointer" onClick={() => setIsEditDialogOpen(true)}>
-                    <AvatarImage src={userProfile.photoUrl} />
-                    <AvatarFallback className="text-[10px] text-center px-2 font-bold leading-tight">click here to change image</AvatarFallback>
+                <CardHeader className="flex flex-col md:flex-row items-start md:items-center gap-6 pb-6 bg-white/5 border-b border-white/5">
+                  <Avatar className="h-24 w-24 border-4 border-primary/20 cursor-pointer hover:border-primary/50 transition-all" onClick={() => setIsEditDialogOpen(true)}>
+                    <AvatarImage src={userProfile.photoUrl} className="object-cover" />
+                    <AvatarFallback className="text-[10px] text-center px-2 font-bold leading-tight bg-orange-500/10 text-orange-500">change image</AvatarFallback>
                   </Avatar>
                   <div className="flex-1 space-y-1">
                     <div className="flex items-center gap-3">
-                      <h2 className="text-3xl font-bold">Welcome, {userProfile.companyName || userProfile.firstName}!</h2>
+                      <h2 className="text-3xl font-black text-white tracking-tight">{userProfile.companyName || userProfile.firstName}!</h2>
                       <div className="flex gap-1">
-                        <Button variant="ghost" size="icon" onClick={() => setIsEditDialogOpen(true)} className="h-8 w-8">
+                        <Button variant="ghost" size="icon" onClick={() => setIsEditDialogOpen(true)} className="h-8 w-8 text-muted-foreground hover:text-white">
                             <Edit className="h-4 w-4" />
                         </Button>
                         <CollapsibleTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-white">
                             {isProfileExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                           </Button>
                         </CollapsibleTrigger>
                       </div>
                     </div>
-                    <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
-                      <span className="flex items-center gap-1"><Users className="h-4 w-4" /> {myFollowers?.length || 0} Followers</span>
-                      <span className="flex items-center gap-1"><Users className="h-4 w-4" /> {userProfile.following?.length || 0} Following</span>
+                    <div className="flex flex-wrap items-center gap-4 text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                      <span className="flex items-center gap-1.5"><Users className="h-3.5 w-3.5 text-orange-500" /> {myFollowers?.length || 0} Followers</span>
+                      <span className="flex items-center gap-1.5"><Users className="h-3.5 w-3.5 text-orange-500" /> {userProfile.following?.length || 0} Following</span>
                     </div>
-                    <div className="flex flex-wrap gap-2 mt-2">
-                      {userProfile.verified && <Badge className="bg-green-600 text-white border-none font-bold"><UserCheck className="h-3 w-3 mr-1" /> Verified</Badge>}
+                    <div className="flex flex-wrap gap-2 mt-3">
+                      {userProfile.verified && <Badge className="bg-green-500 text-white border-none font-black text-[10px] uppercase h-6 px-3"><UserCheck className="h-3 w-3 mr-1" /> Verified</Badge>}
                       {userProfile.tier === 'Super Premier' && (
                         <Badge className="bg-blue-600 text-white border-none font-black text-[10px] uppercase h-6 px-3 flex items-center gap-1 shadow-lg shadow-blue-500/20">
                           <Sparkles className="h-3 w-3" /> Super Premier
@@ -283,41 +312,41 @@ export default function ExpertDashboardPage() {
                           <Crown className="h-3 w-3" /> Premier
                         </Badge>
                       )}
-                      <Badge variant="secondary" className="font-bold">{userProfile.role}</Badge>
-                      {userProfile.companyName && <Badge variant="outline" className="font-bold">{userProfile.companyName}</Badge>}
+                      <Badge variant="secondary" className="font-bold bg-white/10 text-white border-none text-[10px] uppercase">{userProfile.role}</Badge>
                     </div>
                   </div>
                   <div className="flex flex-col gap-2 w-full md:w-auto">
-                      <Button variant="outline" onClick={() => setIsEditDialogOpen(true)} className="w-full">
+                      <Button onClick={() => setIsEditDialogOpen(true)} className="w-full bg-orange-500 hover:bg-orange-600 text-white font-black rounded-xl h-12 shadow-lg shadow-orange-500/20">
                           <Edit className="mr-2 h-4 w-4" /> Edit Profile
                       </Button>
                   </div>
                 </CardHeader>
-                <CardContent className="space-y-6 pt-4">
+                <CardContent className="space-y-6 pt-6">
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {/* Availability Toggle */}
-                      <div className="bg-secondary/20 p-4 rounded-xl flex items-center justify-between">
+                      <div className="bg-white/5 p-5 rounded-2xl flex items-center justify-between border border-white/5">
                           <div className="flex items-center gap-3">
                               <Switch 
                                   checked={userProfile.isAvailable} 
                                   onCheckedChange={(v) => updateDocumentNonBlocking(userDocRef!, { isAvailable: v })} 
+                                  className="data-[state=checked]:bg-green-500"
                               />
                               <div>
-                                <p className="font-bold text-sm">Available for Work</p>
-                                <p className="text-[10px] text-muted-foreground">Toggle your active hiring status.</p>
+                                <p className="font-black text-sm text-white">Available for Work</p>
+                                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Toggle your hiring status.</p>
                               </div>
                           </div>
-                          {userProfile.isAvailable ? <CheckCircle className="text-green-500 h-5 w-5" /> : <Clock className="text-muted-foreground h-5 w-5" />}
+                          {userProfile.isAvailable ? <CheckCircle className="text-green-500 h-5 w-5" /> : <Clock className="text-muted-foreground h-5 w-5 opacity-30" />}
                       </div>
 
                       {/* Visibility Control */}
-                      <div className={cn("p-4 rounded-xl flex items-center justify-between transition-colors", isHidden ? "bg-orange-500/10 border border-orange-500/30" : "bg-secondary/20")}>
+                      <div className={cn("p-5 rounded-2xl flex items-center justify-between transition-colors border", isHidden ? "bg-orange-500/10 border-orange-500/30" : "bg-white/5 border-white/5")}>
                           <div className="flex items-center gap-3">
                               {isHidden ? <EyeOff className="text-orange-500 h-5 w-5" /> : <Eye className="text-muted-foreground h-5 w-5" />}
                               <div>
-                                <p className="font-bold text-sm">Profile Visibility</p>
-                                <p className="text-[10px] text-muted-foreground">
+                                <p className="font-black text-sm text-white">Profile Visibility</p>
+                                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                                     {isHidden 
                                         ? `Hidden until ${formatDistanceToNow(userProfile.hiddenUntil!.toDate(), { addSuffix: true })}` 
                                         : "Your profile is public."
@@ -326,107 +355,109 @@ export default function ExpertDashboardPage() {
                               </div>
                           </div>
                           {isHidden ? (
-                              <Button size="sm" variant="ghost" onClick={handleUnhideProfile} className="h-8 font-black text-[10px] uppercase text-orange-500 hover:text-orange-600 hover:bg-orange-500/5">Unhide Now</Button>
+                              <Button size="sm" variant="ghost" onClick={handleUnhideProfile} className="h-8 font-black text-[10px] uppercase text-orange-500 hover:text-orange-400 hover:bg-orange-500/5">Unhide Now</Button>
                           ) : (
-                              <Button size="sm" variant="outline" onClick={() => setIsHideDialogOpen(true)} className="h-8 font-black text-[10px] uppercase">Temp Hide</Button>
+                              <Button size="sm" variant="outline" onClick={() => setIsHideDialogOpen(true)} className="h-8 font-black text-[10px] uppercase border-white/10 hover:bg-white/5 text-muted-foreground hover:text-white">Temp Hide</Button>
                           )}
                       </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm font-bold text-primary">
-                      <span>Profile Completion</span>
-                      <span>{profileCompletion}%</span>
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-end">
+                      <span className="text-xs font-black uppercase tracking-widest text-primary">Profile Completion</span>
+                      <span className="text-xl font-black text-white">{profileCompletion}%</span>
                     </div>
-                    <Progress value={profileCompletion} className="h-3 bg-secondary" />
+                    <Progress value={profileCompletion} className="h-3 bg-white/5" />
                   </div>
 
                   {profileCompletion < 100 && (
-                      <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-                          <div className="flex items-center gap-3">
-                              <AlertCircle className="h-5 w-5 text-primary" />
+                      <div className="bg-orange-500/5 border-2 border-dashed border-orange-500/20 rounded-2xl p-6 flex flex-col sm:flex-row items-center justify-between gap-6">
+                          <div className="flex items-center gap-4 text-center sm:text-left">
+                              <div className="bg-orange-500/10 p-3 rounded-xl">
+                                <AlertCircle className="h-6 w-6 text-orange-500" />
+                              </div>
                               <div>
-                                  <p className="font-bold">Complete Your Profile!</p>
-                                  <p className="text-sm text-muted-foreground">A complete profile helps you stand out and attract more clients. Click the button below to add your missing details.</p>
+                                  <p className="font-black text-white">Complete Your Profile!</p>
+                                  <p className="text-xs text-muted-foreground font-medium mt-1">A complete profile receives 5x more clicks from clients.</p>
                               </div>
                           </div>
-                          <Button onClick={() => setIsWizardOpen(true)} className="w-full sm:w-auto">
-                            <Edit className="mr-2 h-4 w-4" /> Update Profile
+                          <Button onClick={() => setIsWizardOpen(true)} className="w-full sm:w-auto bg-white text-black hover:bg-white/90 font-black rounded-xl h-11 px-6">
+                            Fix Missing Details
                           </Button>
                       </div>
                   )}
 
-                  <CollapsibleContent className="space-y-6 transition-all duration-300">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-4 pt-4">
+                  <CollapsibleContent className="space-y-6 pt-6 border-t border-white/5 transition-all duration-300">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-5">
                         <div className="flex items-center gap-3 text-sm">
-                            <UserIcon className="h-4 w-4 text-muted-foreground" />
-                            <span className="font-semibold w-24">Gender:</span>
-                            <span className={cn(!userProfile.gender && "text-destructive")}>{userProfile.gender || 'Not specified'}</span>
+                            <UserIcon className="h-4 w-4 text-orange-500" />
+                            <span className="font-black text-muted-foreground uppercase tracking-widest text-[10px] w-24">Gender</span>
+                            <span className={cn("text-white font-bold", !userProfile.gender && "text-red-500/50")}>{userProfile.gender || 'Not specified'}</span>
                         </div>
                         <div className="flex items-center gap-3 text-sm">
-                            <IndianRupee className="h-4 w-4 text-muted-foreground" />
-                            <span className="font-semibold w-24">Rate:</span>
-                            <span className={cn(!userProfile.pricingValue && "text-destructive")}>{userProfile.pricingValue ? `₹${userProfile.pricingValue} / ${userProfile.pricingModel || 'hr'}` : 'Not specified'}</span>
+                            <IndianRupee className="h-4 w-4 text-orange-500" />
+                            <span className="font-black text-muted-foreground uppercase tracking-widest text-[10px] w-24">Rate</span>
+                            <span className={cn("text-white font-bold", !userProfile.pricingValue && "text-red-500/50")}>{userProfile.pricingValue ? `₹${userProfile.pricingValue} / ${userProfile.pricingModel || 'hr'}` : 'Not specified'}</span>
                         </div>
                         <div className="flex items-center gap-3 text-sm">
-                            <Calendar className="h-4 w-4 text-muted-foreground" />
-                            <span className="font-semibold w-24">Experience:</span>
-                            <span className={cn(!userProfile.experienceYears && "text-destructive")}>{userProfile.experienceYears ? `${userProfile.experienceYears} years` : 'Not specified'}</span>
+                            <Calendar className="h-4 w-4 text-orange-500" />
+                            <span className="font-black text-muted-foreground uppercase tracking-widest text-[10px] w-24">Experience</span>
+                            <span className={cn("text-white font-bold", !userProfile.experienceYears && "text-red-500/50")}>{userProfile.experienceYears ? `${userProfile.experienceYears} years` : 'Not specified'}</span>
                         </div>
                         <div className="flex items-center gap-3 text-sm">
-                            <MapPin className="h-4 w-4 text-muted-foreground" />
-                            <span className="font-semibold w-24">Location:</span>
-                            <span className={cn(!userProfile.city && !userProfile.state && !userProfile.pincode && "text-destructive")}>{[userProfile.city, userProfile.state, userProfile.pincode].filter(Boolean).join(', ') || 'Not specified'}</span>
+                            <MapPin className="h-4 w-4 text-orange-500" />
+                            <span className="font-black text-muted-foreground uppercase tracking-widest text-[10px] w-24">Location</span>
+                            <span className={cn("text-white font-bold", !userProfile.city && !userProfile.state && !userProfile.pincode && "text-red-500/50")}>{[userProfile.city, userProfile.state, userProfile.pincode].filter(Boolean).join(', ') || 'Not specified'}</span>
                         </div>
                         <div className="flex items-center gap-3 text-sm">
-                            <GraduationCap className="h-4 w-4 text-muted-foreground" />
-                            <span className="font-semibold w-24">Qualification:</span>
-                            <span className={cn(!userProfile.qualification && "text-destructive")}>{userProfile.qualification || 'Not specified'}</span>
+                            <GraduationCap className="h-4 w-4 text-orange-500" />
+                            <span className="font-black text-muted-foreground uppercase tracking-widest text-[10px] w-24">Qualification</span>
+                            <span className={cn("text-white font-bold", !userProfile.qualification && "text-red-500/50")}>{userProfile.qualification || 'Not specified'}</span>
                         </div>
                         <div className="flex items-center gap-3 text-sm">
-                            <School className="h-4 w-4 text-muted-foreground" />
-                            <span className="font-semibold w-24">College:</span>
-                            <span className={cn(!userProfile.collegeName && "text-destructive")}>{userProfile.collegeName || 'Not specified'}</span>
+                            <School className="h-4 w-4 text-orange-500" />
+                            <span className="font-black text-muted-foreground uppercase tracking-widest text-[10px] w-24">College</span>
+                            <span className={cn("text-white font-bold", !userProfile.collegeName && "text-red-500/50")}>{userProfile.collegeName || 'Not specified'}</span>
                         </div>
                         <div className="flex items-center gap-3 text-sm">
-                            <Building className="h-4 w-4 text-muted-foreground" />
-                            <span className="font-semibold w-24">Business:</span>
-                            <span className={cn(!userProfile.companyName && "text-destructive")}>{userProfile.companyName || 'Not specified'}</span>
+                            <Building className="h-4 w-4 text-orange-500" />
+                            <span className="font-black text-muted-foreground uppercase tracking-widest text-[10px] w-24">Business</span>
+                            <span className={cn("text-white font-bold", !userProfile.companyName && "text-red-500/50")}>{userProfile.companyName || 'Not specified'}</span>
                         </div>
                         <div className="flex items-center gap-3 text-sm">
-                            <Home className="h-4 w-4 text-muted-foreground" />
-                            <span className="font-semibold w-24">Address:</span>
-                            <span className={cn("truncate", !userProfile.address && "text-destructive")}>{userProfile.address || 'Not specified'}</span>
+                            <Home className="h-4 w-4 text-orange-500" />
+                            <span className="font-black text-muted-foreground uppercase tracking-widest text-[10px] w-24">Address</span>
+                            <span className={cn("text-white font-bold truncate", !userProfile.address && "text-red-500/50")}>{userProfile.address || 'Not specified'}</span>
                         </div>
                     </div>
 
-                    <Separator />
+                    <Separator className="bg-white/5" />
 
-                    <div className="space-y-6">
+                    <div className="space-y-8">
                         <div>
-                            <h4 className="font-bold flex items-center gap-2 mb-2"><Info className="h-4 w-4" /> About Me</h4>
-                            <p className={cn("text-sm", !userProfile.aboutMe ? "text-destructive" : "text-muted-foreground")}>
+                            <h4 className="font-black uppercase tracking-widest text-xs text-primary flex items-center gap-2 mb-3"><Info className="h-4 w-4" /> About Me</h4>
+                            <p className={cn("text-sm font-medium leading-relaxed", !userProfile.aboutMe ? "text-red-500/50" : "text-white/70")}>
                               {userProfile.aboutMe || 'No information provided.'}
                             </p>
                         </div>
                         <div>
-                            <h4 className="font-bold flex items-center gap-2 mb-2"><Pen className="h-4 w-4" /> About My Dream</h4>
-                            <p className={cn("text-sm", !userProfile.aboutYourDream ? "text-destructive" : "text-muted-foreground")}>
+                            <h4 className="font-black uppercase tracking-widest text-xs text-primary flex items-center gap-2 mb-3"><Pen className="h-4 w-4" /> About My Dream</h4>
+                            <p className={cn("text-sm font-medium leading-relaxed", !userProfile.aboutYourDream ? "text-red-500/50" : "text-white/70")}>
                               {userProfile.aboutYourDream || 'No information provided.'}
                             </p>
                         </div>
                         <div>
-                            <h4 className="font-bold flex items-center gap-2 mb-2"><Building className="h-4 w-4" /> Associated Projects</h4>
-                            <p className={cn("text-sm", !userProfile.associatedProjectsName ? "text-destructive" : "text-muted-foreground")}>
+                            <h4 className="font-black uppercase tracking-widest text-xs text-primary flex items-center gap-2 mb-3"><Building className="h-4 w-4" /> Associated Projects</h4>
+                            <p className={cn("text-sm font-medium leading-relaxed", !userProfile.associatedProjectsName ? "text-red-500/50" : "text-white/70")}>
                               {userProfile.associatedProjectsName || 'No projects listed.'}
                             </p>
                         </div>
                         <div>
-                            <h4 className="font-bold flex items-center gap-2 mb-2"><Book className="h-4 w-4" /> Skills</h4>
+                            <h4 className="font-black uppercase tracking-widest text-xs text-primary flex items-center gap-2 mb-3"><Book className="h-4 w-4" /> Skills</h4>
                             <div className="flex flex-wrap gap-2">
                                 {userProfile.skills ? userProfile.skills.split(',').map((s, i) => (
-                                    <Badge key={i} variant="secondary">{s.trim()}</Badge>
-                                )) : <span className="text-sm text-destructive">No skills listed.</span>}
+                                    <Badge key={i} variant="secondary" className="bg-white/10 text-white border-none font-bold text-xs px-3 py-1 rounded-lg">{s.trim()}</Badge>
+                                )) : <span className="text-xs text-red-500/50 font-bold">No skills listed.</span>}
                             </div>
                         </div>
                     </div>
@@ -435,110 +466,109 @@ export default function ExpertDashboardPage() {
               </Collapsible>
             </Card>
 
-            <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                        <Gift className="h-5 w-5 text-primary" /> Referral Rewards
+            <Card className="border-none bg-[#24262d] rounded-3xl overflow-hidden shadow-xl">
+                <CardHeader className="bg-white/5 border-b border-white/5 pb-6">
+                    <CardTitle className="flex items-center gap-3 text-2xl font-black text-white">
+                        <Gift className="h-6 w-6 text-orange-500" /> Referral Rewards
                     </CardTitle>
-                    <CardDescription>Invite others and earn rewards.</CardDescription>
+                    <CardDescription className="text-muted-foreground font-medium">Invite colleagues and earn premium points.</CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-6">
-                    <div className="bg-secondary/30 rounded-lg p-4 flex flex-col md:flex-row items-center justify-between gap-4">
-                        <div>
-                            <p className="text-xs text-muted-foreground mb-1 uppercase font-bold">Your Referral Code</p>
-                            <p className="text-2xl font-mono font-bold tracking-widest">{userProfile.referralCode || 'N/A'}</p>
+                <CardContent className="space-y-6 pt-6">
+                    <div className="bg-white/5 border border-white/5 rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between gap-6">
+                        <div className="text-center md:text-left">
+                            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground mb-2">Your Professional Code</p>
+                            <p className="text-3xl font-black font-mono tracking-[0.2em] text-orange-500">{userProfile.referralCode || 'N/A'}</p>
                         </div>
-                        <div className="flex gap-2 w-full md:w-auto">
-                            <Button variant="outline" size="sm" onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/signup?ref=${userProfile.referralCode}`); toast({ title: "Copied!" }); }} className="flex-1">
+                        <div className="flex gap-3 w-full md:w-auto">
+                            <Button variant="outline" size="lg" onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/signup?ref=${userProfile.referralCode}`); toast({ title: "Copied!" }); }} className="flex-1 rounded-xl border-white/10 bg-white/5 hover:bg-white/10 font-bold">
                                 <LinkIcon className="h-4 w-4 mr-2" /> Copy Link
                             </Button>
-                            <Button variant="outline" size="sm" className="bg-green-600/10 text-green-600 border-green-600/20 hover:bg-green-600 hover:text-white flex-1" onClick={() => window.open(`https://wa.me/?text=Join me on DriveGuru using my referral code: ${userProfile.referralCode}`, '_blank')}>
+                            <Button variant="outline" size="lg" className="bg-green-600/10 text-green-500 border-green-600/20 hover:bg-green-600 hover:text-white flex-1 rounded-xl font-bold" onClick={() => window.open(`https://wa.me/?text=Join me on DriveGuru using my referral code: ${userProfile.referralCode}`, '_blank')}>
                                 <MessageSquare className="h-4 w-4 mr-2" /> WhatsApp
                             </Button>
                         </div>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
-                        <div className="bg-secondary/20 rounded-lg p-4 text-center">
-                            <p className="text-2xl font-bold text-primary">{userProfile.referralPoints || 0}</p>
-                            <p className="text-xs text-muted-foreground uppercase font-bold">Total Points Earned</p>
+                        <div className="bg-white/5 border border-white/5 rounded-2xl p-6 text-center shadow-inner">
+                            <p className="text-4xl font-black text-orange-500 mb-1">{userProfile.referralPoints || 0}</p>
+                            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Premium Points</p>
                         </div>
-                        <div className="bg-secondary/20 rounded-lg p-4 text-center">
-                            <p className="text-2xl font-bold">{myReferrals?.length || 0}</p>
-                            <p className="text-xs text-muted-foreground uppercase font-bold">Referrals Used</p>
+                        <div className="bg-white/5 border border-white/5 rounded-2xl p-6 text-center shadow-inner">
+                            <p className="text-4xl font-black text-white mb-1">{myReferrals?.length || 0}</p>
+                            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Network Referrals</p>
                         </div>
                     </div>
                 </CardContent>
             </Card>
 
-            <Card className="border-none bg-[#24262d] rounded-2xl overflow-hidden shadow-xl">
-                <CardHeader className="bg-white/5 border-b border-white/5 pb-6">
-                    <CardTitle className="text-2xl font-black text-white">People You May Know</CardTitle>
-                    <CardDescription className="text-muted-foreground font-medium">Expand your network by following other verified experts.</CardDescription>
-                </CardHeader>
-                <CardContent className="p-6 space-y-8">
-                    <div className="relative group">
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground group-focus-within:text-orange-500 transition-colors" />
-                        <Input 
-                            placeholder="Search suggestions..." 
-                            className="pl-12 h-14 bg-[#1a1c23] border-2 border-orange-500 rounded-2xl text-white text-lg placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:border-orange-400 transition-all shadow-[0_0_15px_rgba(249,115,22,0.1)]" 
-                            value={suggestionSearch} 
-                            onChange={(e) => setSuggestionSearch(e.target.value)} 
-                        />
-                    </div>
+            <Card className="border-none bg-[#24262d] rounded-[2.5rem] p-6 sm:p-8 shadow-xl overflow-hidden">
+                <div className="mb-8">
+                    <h2 className="text-2xl font-black text-white">Experts Near You</h2>
+                    <p className="text-sm text-muted-foreground font-medium">Follow local experts to grow your professional circle.</p>
+                </div>
 
-                    <div className="relative">
-                        <div className="flex gap-6 overflow-x-auto pb-8 pt-2 scrollbar-hide snap-x px-1">
-                            {suggestedExperts.map(expert => (
-                                <Card key={expert.id} className="min-w-[240px] max-w-[240px] bg-[#1a1c23] border-white/5 flex flex-col items-center p-8 text-center rounded-[2rem] snap-start transition-all hover:scale-[1.05] hover:shadow-2xl hover:shadow-orange-500/10 group">
-                                    <div className="relative mb-6">
-                                        <Avatar className="h-24 w-24 border-4 border-white/10 group-hover:border-orange-500/50 transition-colors duration-500">
-                                            <AvatarImage src={expert.photoUrl} className="object-cover" />
-                                            <AvatarFallback className="bg-orange-500/10 text-orange-500 text-3xl font-black">
-                                                {expert.firstName[0]}
-                                            </AvatarFallback>
-                                        </Avatar>
-                                        {expert.verified && (
-                                            <div className="absolute -bottom-1 -right-1 bg-green-500 p-1.5 rounded-full border-4 border-[#1a1c23]">
-                                                <UserCheck className="h-3 w-3 text-white" />
-                                            </div>
-                                        )}
-                                    </div>
-                                    <p className="font-black text-white text-xl line-clamp-1 mb-1 tracking-tight">{expert.firstName} {expert.lastName}</p>
-                                    <p className="text-[11px] text-[#8a92a6] uppercase tracking-[0.15em] font-black mb-8 line-clamp-1 h-4">{expert.profession || expert.role}</p>
-                                    <Button 
-                                        className="w-full bg-orange-500 hover:bg-orange-600 text-white rounded-2xl font-black text-sm h-12 shadow-lg shadow-orange-500/20 active:scale-95 transition-transform"
-                                        onClick={() => handleToggleFollow(expert.id, false)}
-                                    >
-                                        <UserPlus className="h-4 w-4 mr-2" /> Follow
-                                    </Button>
-                                </Card>
-                            ))}
-                            {suggestedExperts.length === 0 && (
-                                <div className="w-full flex flex-col items-center justify-center py-16 bg-white/5 rounded-[2rem] border-4 border-dashed border-white/5">
-                                    <Users className="h-16 w-16 text-muted-foreground opacity-10 mb-4" />
-                                    <p className="text-lg text-muted-foreground font-black opacity-40">No verified suggestions match your search.</p>
+                <div className="relative group mb-8">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground group-focus-within:text-orange-500 transition-colors" />
+                    <Input 
+                        placeholder="Search for experts to follow..." 
+                        className="pl-12 h-14 bg-[#1a1c23] border-2 border-orange-500 rounded-2xl text-white text-lg placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:border-orange-400 transition-all shadow-[0_0_15px_rgba(249,115,22,0.1)]" 
+                        value={suggestionSearch} 
+                        onChange={(e) => setSuggestionSearch(e.target.value)} 
+                    />
+                </div>
+
+                <div className="relative">
+                    <div className="flex gap-6 overflow-x-auto pb-8 pt-2 scrollbar-hide snap-x px-1">
+                        {suggestedExperts.map(expert => (
+                            <Card key={expert.id} className="min-w-[240px] max-w-[240px] bg-[#1a1c23] border-white/5 flex flex-col items-center p-8 text-center rounded-[2rem] snap-start transition-all hover:scale-[1.05] group">
+                                <div className="relative mb-6">
+                                    <Avatar className="h-24 w-24 border-4 border-white/10 group-hover:border-orange-500/50 transition-colors duration-500">
+                                        <AvatarImage src={expert.photoUrl} className="object-cover" />
+                                        <AvatarFallback className="bg-orange-500/10 text-orange-500 text-3xl font-black">
+                                            {expert.firstName[0]}
+                                        </AvatarFallback>
+                                    </Avatar>
+                                    {expert.verified && (
+                                        <div className="absolute -bottom-1 -right-1 bg-green-500 p-1.5 rounded-full border-4 border-[#1a1c23]">
+                                            <UserCheck className="h-3 w-3 text-white" />
+                                        </div>
+                                    )}
                                 </div>
-                            )}
-                        </div>
-
-                        <div className="flex items-center justify-between mt-4 px-2">
-                            <Button variant="ghost" size="icon" className="text-muted-foreground/40 hover:text-white hover:bg-white/5 rounded-full h-8 w-8">
-                                <ChevronLeft className="h-6 w-6" />
-                            </Button>
-                            <div className="flex-1 mx-8 h-1.5 bg-white/5 rounded-full overflow-hidden relative">
-                                <div className="absolute left-[30%] top-0 bottom-0 w-[40%] bg-white/30 rounded-full" />
+                                <p className="font-black text-white text-xl line-clamp-1 mb-1 tracking-tight">{expert.firstName} {expert.lastName}</p>
+                                <p className="text-[11px] text-[#8a92a6] uppercase tracking-[0.15em] font-black mb-8 line-clamp-1 h-4">{expert.profession || expert.role}</p>
+                                <Button 
+                                    className="w-full bg-orange-500 hover:bg-orange-600 text-white rounded-2xl font-black text-sm h-12 shadow-lg shadow-orange-500/20 active:scale-95 transition-transform"
+                                    onClick={() => handleToggleFollow(expert.id, false)}
+                                >
+                                    <UserPlus className="h-4 w-4 mr-2" /> Follow
+                                </Button>
+                            </Card>
+                        ))}
+                        {suggestedExperts.length === 0 && (
+                            <div className="w-full flex flex-col items-center justify-center py-16 bg-white/5 rounded-[2rem] border-4 border-dashed border-white/5">
+                                <Users className="h-16 w-16 text-muted-foreground opacity-10 mb-4" />
+                                <p className="text-lg text-muted-foreground font-black opacity-40">No suggestions match your search.</p>
                             </div>
-                            <Button variant="ghost" size="icon" className="text-muted-foreground/40 hover:text-white hover:bg-white/5 rounded-full h-8 w-8">
-                                <ChevronRight className="h-6 w-6" />
-                            </Button>
-                        </div>
+                        )}
                     </div>
-                </CardContent>
+
+                    <div className="flex items-center justify-between mt-4 px-2">
+                        <Button variant="ghost" size="icon" className="text-muted-foreground/40 hover:text-white hover:bg-white/5 rounded-full h-8 w-8">
+                            <ChevronLeft className="h-6 w-6" />
+                        </Button>
+                        <div className="flex-1 mx-8 h-1.5 bg-white/5 rounded-full overflow-hidden relative">
+                            <div className="absolute left-[30%] top-0 bottom-0 w-[40%] bg-white/30 rounded-full" />
+                        </div>
+                        <Button variant="ghost" size="icon" className="text-muted-foreground/40 hover:text-white hover:bg-white/5 rounded-full h-8 w-8">
+                            <ChevronRight className="h-6 w-6" />
+                        </Button>
+                    </div>
+                </div>
             </Card>
           </TabsContent>
 
-          <TabsContent value="network" className="mt-6">
-            <Card className="border-none bg-[#24262d] rounded-2xl overflow-hidden shadow-xl">
+          <TabsContent value="network" className="mt-0">
+            <Card className="border-none bg-[#24262d] rounded-3xl overflow-hidden shadow-xl">
                 <CardHeader className="bg-white/5 border-b border-white/5 pb-6">
                     <CardTitle className="text-2xl font-black text-white">My Network</CardTitle>
                     <CardDescription className="text-muted-foreground font-medium">Manage your groups and connections.</CardDescription>
@@ -559,7 +589,7 @@ export default function ExpertDashboardPage() {
                             </TabsTrigger>
                         </TabsList>
                         
-                        <TabsContent value="my-groups" className="space-y-4">
+                        <TabsContent value="my-groups" className="space-y-4 mt-0">
                             {isMyGroupsLoading ? (
                                 <div className="flex justify-center p-8"><Loader className="animate-spin h-8 w-8 text-orange-500" /></div>
                             ) : myGroups && myGroups.length > 0 ? (
@@ -591,11 +621,11 @@ export default function ExpertDashboardPage() {
                             )}
                         </TabsContent>
 
-                        <TabsContent value="followers">
+                        <TabsContent value="followers" className="mt-0">
                             <UserList userIdsQuery={followersQuery} emptyStateMessage="No one is following you yet. Try sharing some posts to increase your visibility!" />
                         </TabsContent>
 
-                        <TabsContent value="following">
+                        <TabsContent value="following" className="mt-0">
                             <UserList userIds={userProfile?.following || []} emptyStateMessage="You aren't following any experts yet. Start following people from the 'Suggestions' section!" />
                         </TabsContent>
                     </Tabs>
@@ -603,153 +633,155 @@ export default function ExpertDashboardPage() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="feed" className="mt-6 space-y-6">
+          <TabsContent value="feed" className="mt-0 space-y-6">
             {!showPostForm ? (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Rss className="h-5 w-5 text-primary" />
-                    Engage with the Community
+              <Card className="border-none bg-[#24262d] rounded-3xl overflow-hidden shadow-xl">
+                <CardHeader className="bg-white/5 border-b border-white/5 pb-6">
+                  <CardTitle className="flex items-center gap-3 text-2xl font-black text-white">
+                    <Rss className="h-6 w-6 text-orange-500" /> Engage with the Community
                   </CardTitle>
-                  <CardDescription>
+                  <CardDescription className="text-muted-foreground font-medium">
                     Share updates, ask questions, and connect with other professionals.
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="flex flex-col sm:flex-row gap-4">
-                  <Button asChild className="flex-1" size="lg">
+                <CardContent className="p-8 flex flex-col sm:flex-row gap-4">
+                  <Button asChild className="flex-1 bg-white text-black hover:bg-white/90 font-black rounded-2xl h-14 text-lg" size="lg">
                     <Link href="/feed">View Public Feed</Link>
                   </Button>
-                  <Button variant="secondary" className="flex-1" size="lg" onClick={() => setShowPostForm(true)}>
-                    <PlusCircle className="mr-2 h-4 w-4" /> Create New Post
+                  <Button variant="secondary" className="flex-1 bg-orange-500 hover:bg-orange-600 text-white font-black rounded-2xl h-14 text-lg border-none" size="lg" onClick={() => setShowPostForm(true)}>
+                    <PlusCircle className="mr-2 h-5 w-5" /> Create New Post
                   </Button>
                 </CardContent>
               </Card>
             ) : (
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between">
+              <Card className="border-none bg-[#24262d] rounded-3xl overflow-hidden shadow-xl animate-in fade-in zoom-in-95 duration-300">
+                <CardHeader className="flex flex-row items-center justify-between bg-white/5 border-b border-white/5 p-6">
                   <div>
-                    <CardTitle>Publish Update</CardTitle>
-                    <CardDescription>Share your recent work or news with the community.</CardDescription>
+                    <CardTitle className="text-2xl font-black text-white">Publish Update</CardTitle>
+                    <CardDescription className="text-muted-foreground font-medium">Share your recent work or news with the community.</CardDescription>
                   </div>
-                  <Button variant="ghost" size="sm" onClick={() => setShowPostForm(false)}>Cancel</Button>
+                  <Button variant="ghost" size="sm" onClick={() => setShowPostForm(false)} className="rounded-xl hover:bg-white/10">Cancel</Button>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="p-8">
                   <PostForm form={postForm} onSubmit={onPostSubmit} isSubmitting={isSubmittingPost} />
                 </CardContent>
               </Card>
             )}
           </TabsContent>
 
-          <TabsContent value="plans" className="mt-6">
-            <Card className="border-none bg-[#24262d]">
-              <CardHeader>
-                <CardTitle className="text-2xl font-black">Manage Your Plan</CardTitle>
-                <CardDescription className="text-muted-foreground">
-                  Upgrade your plan to unlock powerful new features and increase your visibility.
+          <TabsContent value="plans" className="mt-0">
+            <Card className="border-none bg-[#24262d] rounded-3xl overflow-hidden shadow-xl">
+              <CardHeader className="bg-white/5 border-b border-white/5 pb-6">
+                <CardTitle className="text-2xl font-black text-white">Upgrade Your Presence</CardTitle>
+                <CardDescription className="text-muted-foreground font-medium">
+                  Unlock powerful tools and increase your visibility to clients.
                 </CardDescription>
               </CardHeader>
-              <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6 p-6">
+              <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6 p-8">
                 <div className={cn(
-                  "relative flex flex-col items-center p-8 rounded-2xl border-2 transition-all",
+                  "relative flex flex-col items-center p-8 rounded-3xl border-2 transition-all duration-500",
                   (userProfile.tier === 'Standard' || !userProfile.tier) 
-                    ? "border-orange-500 bg-orange-500/5" 
-                    : "border-white/5 bg-[#1a1c23]"
+                    ? "border-orange-500 bg-orange-500/5 shadow-2xl shadow-orange-500/10 scale-105 z-10" 
+                    : "border-white/5 bg-[#1a1c23] opacity-60"
                 )}>
                   <div className="bg-white/5 p-4 rounded-full mb-4">
                     <UserIcon className="h-8 w-8 text-muted-foreground" />
                   </div>
-                  <h3 className="text-2xl font-black mb-1">Standard</h3>
-                  <p className="text-xs text-muted-foreground mb-6">Your current free plan.</p>
+                  <h3 className="text-2xl font-black text-white mb-1">Standard</h3>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-8">Basic Profile</p>
                   
-                  <ul className="w-full space-y-3 mb-8">
-                    <li className="flex items-center gap-2 text-xs font-medium">
+                  <ul className="w-full space-y-4 mb-10">
+                    <li className="flex items-center gap-2 text-xs font-bold text-white/70">
                       <Check className="h-4 w-4 text-green-500" /> Public profile listing
                     </li>
-                    <li className="flex items-center gap-2 text-xs font-medium">
+                    <li className="flex items-center gap-2 text-xs font-bold text-white/70">
                       <Check className="h-4 w-4 text-green-500" /> Appear in search results
                     </li>
-                    <li className="flex items-center gap-2 text-xs font-medium">
+                    <li className="flex items-center gap-2 text-xs font-bold text-white/70">
                       <Check className="h-4 w-4 text-green-500" /> Earn referral points
                     </li>
                   </ul>
 
                   {(userProfile.tier === 'Standard' || !userProfile.tier) ? (
-                    <Button disabled className="w-full h-12 rounded-xl bg-white/5 text-muted-foreground border-none">
-                      <CheckCircle className="mr-2 h-4 w-4" /> Current Plan
+                    <Button disabled className="w-full h-12 rounded-xl bg-white/5 text-muted-foreground border-none font-black uppercase tracking-widest text-[10px]">
+                      <CheckCircle className="mr-2 h-4 w-4" /> Your Active Plan
                     </Button>
                   ) : (
-                    <Button variant="outline" className="w-full h-12 rounded-xl border-white/10 bg-transparent text-white hover:bg-white/5" asChild>
-                      <Link href="/dashboard">Switch to Standard</Link>
+                    <Button variant="outline" className="w-full h-12 rounded-xl border-white/10 bg-transparent text-white hover:bg-white/5 font-black uppercase tracking-widest text-[10px]" asChild>
+                      <Link href="/dashboard">Current Active</Link>
                     </Button>
                   )}
                 </div>
 
                 <div className={cn(
-                  "relative flex flex-col items-center p-8 rounded-2xl border-2 transition-all",
+                  "relative flex flex-col items-center p-8 rounded-3xl border-2 transition-all duration-500",
                   userProfile.tier === 'Premier' 
-                    ? "border-orange-500 bg-orange-500/5" 
+                    ? "border-orange-500 bg-orange-500/5 shadow-2xl shadow-orange-500/10 scale-105 z-10" 
                     : "border-white/5 bg-[#1a1c23]"
                 )}>
-                  <div className="bg-white/5 p-4 rounded-full mb-4">
+                  <div className="bg-orange-500/10 p-4 rounded-full mb-4">
                     <Crown className="h-8 w-8 text-orange-500" />
                   </div>
-                  <h3 className="text-2xl font-black mb-1">Premier</h3>
-                  <p className="text-xs text-muted-foreground mb-6">Enhanced visibility and features.</p>
+                  <h3 className="text-2xl font-black text-white mb-1">Premier</h3>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-orange-500 mb-8">Power User</p>
                   
-                  <ul className="w-full space-y-3 mb-8">
-                    <li className="flex items-center gap-2 text-xs font-medium">
+                  <ul className="w-full space-y-4 mb-10">
+                    <li className="flex items-center gap-2 text-xs font-bold text-white/70">
                       <Check className="h-4 w-4 text-green-500" /> Higher search ranking
                     </li>
-                    <li className="flex items-center gap-2 text-xs font-medium">
-                      <Check className="h-4 w-4 text-green-500" /> AI-powered bio & skill suggestions
+                    <li className="flex items-center gap-2 text-xs font-bold text-white/70">
+                      <Check className="h-4 w-4 text-green-500" /> AI-powered bio creation
+                    </li>
+                    <li className="flex items-center gap-2 text-xs font-bold text-white/70">
+                      <Check className="h-4 w-4 text-green-500" /> Advanced skill tagging
                     </li>
                   </ul>
 
                   {userProfile.tier === 'Premier' ? (
-                    <Button disabled className="w-full h-12 rounded-xl bg-white/5 text-muted-foreground border-none">
-                      <CheckCircle className="mr-2 h-4 w-4" /> Current Plan
+                    <Button disabled className="w-full h-12 rounded-xl bg-white/5 text-muted-foreground border-none font-black uppercase tracking-widest text-[10px]">
+                      <CheckCircle className="mr-2 h-4 w-4" /> Active Plan
                     </Button>
                   ) : (
-                    <Button className="w-full h-12 rounded-xl bg-orange-500 hover:bg-orange-600 font-bold" asChild>
+                    <Button className="w-full h-12 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-black uppercase tracking-widest text-[10px] shadow-lg shadow-orange-500/20" asChild>
                       <Link href="/payment/premier">
-                        <ArrowUpCircle className="mr-2 h-4 w-4" /> Upgrade to Premier
+                        <ArrowUpCircle className="mr-2 h-4 w-4" /> Upgrade Now
                       </Link>
                     </Button>
                   )}
                 </div>
 
                 <div className={cn(
-                  "relative flex flex-col items-center p-8 rounded-2xl border-2 transition-all",
+                  "relative flex flex-col items-center p-8 rounded-3xl border-2 transition-all duration-500",
                   userProfile.tier === 'Super Premier' 
-                    ? "border-orange-500 bg-orange-500/5" 
+                    ? "border-orange-500 bg-orange-500/5 shadow-2xl shadow-orange-500/10 scale-105 z-10" 
                     : "border-white/5 bg-[#1a1c23]"
                 )}>
-                  <div className="bg-white/5 p-4 rounded-full mb-4">
-                    <Sparkles className="h-8 w-8 text-orange-500" />
+                  <div className="bg-blue-500/10 p-4 rounded-full mb-4">
+                    <Sparkles className="h-8 w-8 text-blue-500" />
                   </div>
-                  <h3 className="text-2xl font-black mb-1">Super Premier</h3>
-                  <p className="text-xs text-muted-foreground mb-6">Maximum visibility and tools.</p>
+                  <h3 className="text-2xl font-black text-white mb-1">Super</h3>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-blue-500 mb-8">Ultimate Access</p>
                   
-                  <ul className="w-full space-y-3 mb-8">
-                    <li className="flex items-center gap-2 text-xs font-medium">
+                  <ul className="w-full space-y-4 mb-10">
+                    <li className="flex items-center gap-2 text-xs font-bold text-white/70">
                       <Check className="h-4 w-4 text-green-500" /> All Premier features
                     </li>
-                    <li className="flex items-center gap-2 text-xs font-medium">
-                      <Check className="h-4 w-4 text-green-500" /> Top placement in search results
+                    <li className="flex items-center gap-2 text-xs font-bold text-white/70">
+                      <Check className="h-4 w-4 text-green-500" /> Exclusive AI Search access
                     </li>
-                    <li className="flex items-center gap-2 text-xs font-medium">
-                      <Check className="h-4 w-4 text-green-500" /> AI-powered search access
+                    <li className="flex items-center gap-2 text-xs font-bold text-white/70">
+                      <Check className="h-4 w-4 text-green-500" /> Verified blue badge
                     </li>
                   </ul>
 
                   {userProfile.tier === 'Super Premier' ? (
-                    <Button disabled className="w-full h-12 rounded-xl bg-white/5 text-muted-foreground border-none">
-                      <CheckCircle className="mr-2 h-4 w-4" /> Current Plan
+                    <Button disabled className="w-full h-12 rounded-xl bg-white/5 text-muted-foreground border-none font-black uppercase tracking-widest text-[10px]">
+                      <CheckCircle className="mr-2 h-4 w-4" /> Active Plan
                     </Button>
                   ) : (
-                    <Button className="w-full h-12 rounded-xl bg-orange-500 hover:bg-orange-600 font-bold" asChild>
+                    <Button className="w-full h-12 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-black uppercase tracking-widest text-[10px] shadow-lg shadow-blue-500/20" asChild>
                       <Link href="/payment/super-premier">
-                        <ArrowUpCircle className="mr-2 h-4 w-4" /> Upgrade to Super Premier
+                        <ArrowUpCircle className="mr-2 h-4 w-4" /> Go Super
                       </Link>
                     </Button>
                   )}
@@ -762,32 +794,34 @@ export default function ExpertDashboardPage() {
 
       {/* Hide Profile Dialog */}
       <Dialog open={isHideDialogOpen} onOpenChange={setIsHideDialogOpen}>
-          <DialogContent className="max-w-md rounded-2xl border-none bg-[#1a1c23] text-white">
-              <DialogHeader>
-                  <DialogTitle className="text-2xl font-black flex items-center gap-2">
-                      <EyeOff className="text-orange-500" />
-                      Temporary Hide
-                  </DialogTitle>
-                  <UiDialogDescription className="text-muted-foreground">
-                      Hide your profile card from all public search results and the home page for a chosen period. It will automatically reappear once the time is up.
+          <DialogContent className="max-w-md rounded-[2rem] border-none bg-[#1a1c23] text-white p-8">
+              <DialogHeader className="items-center text-center">
+                  <div className="p-4 bg-orange-500/10 rounded-full w-fit mb-4">
+                    <EyeOff className="text-orange-500 h-10 w-10" />
+                  </div>
+                  <DialogTitle className="text-3xl font-black">Temporary Hide</DialogTitle>
+                  <UiDialogDescription className="text-muted-foreground font-medium pt-2">
+                      Hide your profile card from all public search results instantly.
                   </UiDialogDescription>
               </DialogHeader>
-              <div className="grid grid-cols-2 gap-3 py-6">
-                  <Button variant="secondary" className="h-12 font-bold" onClick={() => handleHideProfile(1)}>1 Hour</Button>
-                  <Button variant="secondary" className="h-12 font-bold" onClick={() => handleHideProfile(24)}>1 Day</Button>
-                  <Button variant="secondary" className="h-12 font-bold" onClick={() => handleHideProfile(72)}>3 Days</Button>
-                  <Button variant="secondary" className="h-12 font-bold" onClick={() => handleHideProfile(168)}>1 Week</Button>
+              <div className="grid grid-cols-2 gap-3 py-8">
+                  <Button variant="secondary" className="h-14 font-black rounded-xl border border-white/5 bg-white/5 hover:bg-white/10" onClick={() => handleHideProfile(1)}>1 Hour</Button>
+                  <Button variant="secondary" className="h-14 font-black rounded-xl border border-white/5 bg-white/5 hover:bg-white/10" onClick={() => handleHideProfile(24)}>1 Day</Button>
+                  <Button variant="secondary" className="h-14 font-black rounded-xl border border-white/5 bg-white/5 hover:bg-white/10" onClick={() => handleHideProfile(72)}>3 Days</Button>
+                  <Button variant="secondary" className="h-14 font-black rounded-xl border border-white/5 bg-white/5 hover:bg-white/10" onClick={() => handleHideProfile(168)}>1 Week</Button>
               </div>
               <DialogFooter>
-                  <Button variant="ghost" onClick={() => setIsHideDialogOpen(false)} className="text-white hover:bg-white/5">Cancel</Button>
+                  <Button variant="ghost" onClick={() => setIsHideDialogOpen(false)} className="w-full h-12 rounded-xl text-muted-foreground hover:text-white font-bold">Nevermind</Button>
               </DialogFooter>
           </DialogContent>
       </Dialog>
 
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-3xl overflow-y-auto max-h-[90vh]">
-          <DialogHeader><DialogTitle>Edit Your Professional Profile</DialogTitle></DialogHeader>
-          {userProfile && <EditProfileForm userProfile={userProfile as any} onSuccess={() => setIsEditDialogOpen(false)} />}
+        <DialogContent className="max-w-3xl overflow-y-auto max-h-[90vh] rounded-[2rem] border-none bg-[#1a1c23]">
+          <DialogHeader><DialogTitle className="text-2xl font-black text-white">Edit Your Professional Profile</DialogTitle></DialogHeader>
+          <div className="p-4">
+            {userProfile && <EditProfileForm userProfile={userProfile as any} onSuccess={() => setIsEditDialogOpen(false)} />}
+          </div>
         </DialogContent>
       </Dialog>
 
