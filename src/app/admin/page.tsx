@@ -628,10 +628,20 @@ export default function AdminDashboardPage() {
                                                         <TableCell className="text-right">
                                                             <DropdownMenu>
                                                                 <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
-                                                                <DropdownMenuContent align="end" className="bg-card text-white border-white/10 rounded-xl shadow-2xl">
-                                                                    <DropdownMenuItem onClick={() => { setSelectedUser(u); setIsEditDialogOpen(true); }} className="rounded-lg"><Edit className="mr-2 h-4 w-4" /> Edit Profile</DropdownMenuItem>
+                                                                <DropdownMenuContent align="end" className="bg-[#24262d] text-white border-white/10 rounded-xl shadow-2xl p-1">
+                                                                    <DropdownMenuItem onClick={() => { setSelectedUser(u); setIsEditDialogOpen(true); }} className="rounded-lg h-10"><Edit className="mr-2 h-4 w-4" /> Edit Profile</DropdownMenuItem>
+                                                                    <DropdownMenuSub>
+                                                                        <DropdownMenuSubTrigger className="rounded-lg h-10"><Crown className="mr-2 h-4 w-4" /> Change Tier</DropdownMenuSubTrigger>
+                                                                        <DropdownMenuPortal>
+                                                                            <DropdownMenuSubContent className="bg-[#24262d] text-white border-white/10 rounded-xl shadow-2xl p-1 min-w-[180px]">
+                                                                                <DropdownMenuItem onClick={() => handleUpdateUserTier(u.id, 'Standard')} className="rounded-lg h-10">Standard (Base)</DropdownMenuItem>
+                                                                                <DropdownMenuItem onClick={() => handleUpdateUserTier(u.id, 'Premier')} className="text-purple-500 font-bold rounded-lg h-10"><Crown className="mr-2 h-3 w-3" /> Premier</DropdownMenuItem>
+                                                                                <DropdownMenuItem onClick={() => handleUpdateUserTier(u.id, 'Super Premier')} className="text-blue-500 font-bold rounded-lg h-10"><Sparkles className="mr-2 h-3 w-3" /> Super Premier</DropdownMenuItem>
+                                                                            </DropdownMenuSubContent>
+                                                                        </DropdownMenuPortal>
+                                                                    </DropdownMenuSub>
                                                                     <DropdownMenuSeparator className="bg-white/5" />
-                                                                    <DropdownMenuItem className="text-red-500 focus:text-red-500 rounded-lg" onClick={() => { setSelectedUser(u); setIsDeleteDialogOpen(true); }}><Trash2 className="mr-2 h-4 w-4" /> Delete Expert</DropdownMenuItem>
+                                                                    <DropdownMenuItem className="text-red-500 focus:text-red-500 rounded-lg h-10" onClick={() => { setSelectedUser(u); setIsDeleteDialogOpen(true); }}><Trash2 className="mr-2 h-4 w-4" /> Delete Expert</DropdownMenuItem>
                                                                 </DropdownMenuContent>
                                                             </DropdownMenu>
                                                         </TableCell>
