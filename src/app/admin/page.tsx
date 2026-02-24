@@ -8,7 +8,7 @@ import { useUser, useFirestore, useDoc, useMemoFirebase, useAuth, useCollection 
 import { updateDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, CheckCircle2, UserCheck, UserX, Crown, Sparkles, User as UserIcon, Settings, Save, Briefcase, Building, MessageSquare, Search, PlusCircle, Mail, Download, ExternalLink, IndianRupee, X, Upload, HardDriveDownload, Megaphone, Phone, MapPinIcon, Key, Gift, Code, List, Grip, ArrowUp, ArrowDown, Rss, UserPlus, Fingerprint, Award, CircleHelp, CheckCircle, FileJson, MapPin, Clock, AlertCircle, CreditCard, Fingerprint as IdIcon, Check, XCircle, Youtube, Video } from 'lucide-react';
+import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, CheckCircle2, UserCheck, UserX, Crown, Sparkles, User as UserIcon, Settings, Save, Briefcase, Building, MessageSquare, Search, PlusCircle, Mail, Download, ExternalLink, IndianRupee, X, Upload, HardDriveDownload, Megaphone, Phone, MapPinIcon, Key, Gift, Code, List, Grip, ArrowUp, ArrowDown, Rss, UserPlus, Fingerprint, Award, CircleHelp, CheckCircle, FileJson, MapPin, Clock, AlertCircle, CreditCard, Fingerprint as IdIcon, Check, XCircle, Youtube, Video, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -131,6 +131,10 @@ export default function AdminDashboardPage() {
   const [userSearchQuery, setUserSearchQuery] = useState('');
   const [userFilter, setUserFilter] = useState<'all' | 'verified' | 'unverified' | 'premier' | 'super'>('all');
 
+  // Pagination State
+  const ITEMS_PER_PAGE = 10;
+  const [currentPage, setCurrentPage] = useState(1);
+
   // App Config State
   const [introVideoUrl, setIntroVideoUrl] = useState("");
   const [featuredLimit, setFeaturedLimit] = useState(3);
@@ -180,6 +184,11 @@ export default function AdminDashboardPage() {
       setDepartments(appConfig.departments || []);
     }
   }, [appConfig]);
+
+  // Reset page when search or filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [userSearchQuery, userFilter]);
 
   const stats = useMemo(() => {
     if (!users) return { total: 0, verified: 0, unverified: 0, premier: 0, super: 0, referrals: 0 };
@@ -468,7 +477,7 @@ export default function AdminDashboardPage() {
 
             <Tabs defaultValue="users" className="w-full">
                 <TabsList className="flex w-full bg-secondary p-1 rounded-xl mb-6">
-                    <TabsTrigger value="users" className="flex-1 rounded-lg font-bold">User Management</TabsTrigger>
+                    <TabsTrigger value="users" className="flex-1 rounded-lg font-bold" onClick={() => setCurrentPage(1)}>User Management</TabsTrigger>
                     <TabsTrigger value="vacancies" className="flex-1 rounded-lg font-bold">Vacancy Management</TabsTrigger>
                     <TabsTrigger value="payments" className="flex-1 rounded-lg font-bold">Payment Management</TabsTrigger>
                 </TabsList>
@@ -506,10 +515,10 @@ export default function AdminDashboardPage() {
 
                             <Tabs defaultValue="all" className="w-full">
                                 <TabsList className="grid grid-cols-4 bg-background p-1 rounded-xl mb-4">
-                                    <TabsTrigger value="all" className="rounded-lg font-bold">All Users</TabsTrigger>
-                                    <TabsTrigger value="freelancer" className="rounded-lg font-bold">Freelancers</TabsTrigger>
-                                    <TabsTrigger value="company" className="rounded-lg font-bold">Companies</TabsTrigger>
-                                    <TabsTrigger value="pro" className="rounded-lg font-bold">Authorized Pros</TabsTrigger>
+                                    <TabsTrigger value="all" className="rounded-lg font-bold" onClick={() => setCurrentPage(1)}>All Users</TabsTrigger>
+                                    <TabsTrigger value="freelancer" className="rounded-lg font-bold" onClick={() => setCurrentPage(1)}>Freelancers</TabsTrigger>
+                                    <TabsTrigger value="company" className="rounded-lg font-bold" onClick={() => setCurrentPage(1)}>Companies</TabsTrigger>
+                                    <TabsTrigger value="pro" className="rounded-lg font-bold" onClick={() => setCurrentPage(1)}>Authorized Pros</TabsTrigger>
                                 </TabsList>
 
                                 {['all', 'freelancer', 'company', 'pro'].map((roleTab) => (
@@ -529,14 +538,27 @@ export default function AdminDashboardPage() {
                                                     </TableRow>
                                                 </TableHeader>
                                                 <TableBody>
-                                                    {filteredUsers
-                                                        .filter(u => roleTab === 'all' || u.role.toLowerCase().includes(roleTab))
-                                                        .map((u, index) => {
+                                                    {(() => {
+                                                        const tabUsers = filteredUsers.filter(u => roleTab === 'all' || u.role.toLowerCase().includes(roleTab));
+                                                        const totalItems = tabUsers.length;
+                                                        const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
+                                                        const paginated = tabUsers.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+                                                        
+                                                        if (paginated.length === 0 && !isUsersLoading) {
+                                                            return (
+                                                                <TableRow>
+                                                                    <TableCell colSpan={8} className="text-center py-12 text-muted-foreground font-medium">No experts found in this category.</TableCell>
+                                                                </TableRow>
+                                                            );
+                                                        }
+
+                                                        return paginated.map((u, index) => {
+                                                            const globalIndex = (currentPage - 1) * ITEMS_PER_PAGE + index + 1;
                                                             const usedCount = referralUsageMap[u.referralCode || ''] || 0;
                                                             return (
                                                                 <TableRow key={u.id} className="hover:bg-white/5 transition-colors border-white/5">
                                                                     <TableCell className="text-center font-bold text-muted-foreground text-xs">
-                                                                        {index + 1}
+                                                                        {globalIndex}
                                                                     </TableCell>
                                                                     <TableCell>
                                                                         <div className="flex items-start gap-3">
@@ -683,9 +705,45 @@ export default function AdminDashboardPage() {
                                                                     </TableCell>
                                                                 </TableRow>
                                                             );
-                                                        })}
+                                                        });
+                                                    })()}
                                                 </TableBody>
                                             </Table>
+                                        </div>
+
+                                        {/* Pagination Controls */}
+                                        <div className="flex flex-col sm:flex-row items-center justify-between pt-6 gap-4">
+                                            <p className="text-xs text-muted-foreground font-medium">
+                                                {(() => {
+                                                    const tabCount = filteredUsers.filter(u => roleTab === 'all' || u.role.toLowerCase().includes(roleTab)).length;
+                                                    const start = (currentPage - 1) * ITEMS_PER_PAGE + 1;
+                                                    const end = Math.min(currentPage * ITEMS_PER_PAGE, tabCount);
+                                                    return tabCount > 0 ? `Showing ${start} to ${end} of ${tabCount} entries` : 'No entries to show';
+                                                })()}
+                                            </p>
+                                            <div className="flex items-center gap-2">
+                                                <Button 
+                                                    variant="outline" 
+                                                    size="sm" 
+                                                    className="rounded-xl h-9 border-white/10 bg-white/5 hover:bg-white/10 text-white font-bold"
+                                                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                                                    disabled={currentPage === 1}
+                                                >
+                                                    <ChevronLeft className="mr-1 h-4 w-4" /> Previous
+                                                </Button>
+                                                <div className="flex items-center justify-center min-w-[80px]">
+                                                    <span className="text-xs font-black text-orange-500">Page {currentPage}</span>
+                                                </div>
+                                                <Button 
+                                                    variant="outline" 
+                                                    size="sm" 
+                                                    className="rounded-xl h-9 border-white/10 bg-white/5 hover:bg-white/10 text-white font-bold"
+                                                    onClick={() => setCurrentPage(prev => prev + 1)}
+                                                    disabled={currentPage >= Math.ceil(filteredUsers.filter(u => roleTab === 'all' || u.role.toLowerCase().includes(roleTab)).length / ITEMS_PER_PAGE)}
+                                                >
+                                                    Next <ChevronRight className="ml-1 h-4 w-4" />
+                                                </Button>
+                                            </div>
                                         </div>
                                     </TabsContent>
                                 ))}
