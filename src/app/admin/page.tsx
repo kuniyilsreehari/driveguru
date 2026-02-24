@@ -518,6 +518,7 @@ export default function AdminDashboardPage() {
                                             <Table>
                                                 <TableHeader className="bg-white/5">
                                                     <TableRow className="border-white/5">
+                                                        <TableHead className="w-[60px] font-bold text-white text-center">S.No</TableHead>
                                                         <TableHead className="font-bold text-white">Expert Details</TableHead>
                                                         <TableHead className="font-bold text-white">Rewards</TableHead>
                                                         <TableHead className="font-bold text-white">Role</TableHead>
@@ -530,10 +531,13 @@ export default function AdminDashboardPage() {
                                                 <TableBody>
                                                     {filteredUsers
                                                         .filter(u => roleTab === 'all' || u.role.toLowerCase().includes(roleTab))
-                                                        .map(u => {
+                                                        .map((u, index) => {
                                                             const usedCount = referralUsageMap[u.referralCode || ''] || 0;
                                                             return (
                                                                 <TableRow key={u.id} className="hover:bg-white/5 transition-colors border-white/5">
+                                                                    <TableCell className="text-center font-bold text-muted-foreground text-xs">
+                                                                        {index + 1}
+                                                                    </TableCell>
                                                                     <TableCell>
                                                                         <div className="flex items-start gap-3">
                                                                             <Avatar className="h-12 w-12 border-2 border-white/10 shrink-0 mt-1">
