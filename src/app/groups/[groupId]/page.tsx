@@ -1,18 +1,18 @@
 
 'use client';
 
-import { Suspense, useMemo, useState } from 'react';
+import { Suspense, useMemo, useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useParams, useRouter } from 'next/navigation';
 import { collection, query, orderBy, Timestamp, doc, updateDoc, arrayUnion, arrayRemove, serverTimestamp, getDocs, limit, startAfter, QueryDocumentSnapshot, DocumentData, addDoc, where } from 'firebase/firestore';
-import { getStorage, ref as storageRef, uploadString, getDownloadURL } from "firebase/storage";
-import { useFirestore, useDoc, useCollection, useMemoFirebase, useUser, deleteDocumentNonBlocking, addDocumentNonBlocking, updateDocumentNonBlocking, setDocumentNonBlocking } from '@/firebase';
+import { getStorage, ref as storageRef, uploadString, getDownloadURL, ref } from "firebase/storage";
+import { useFirestore, useDoc, useCollection, useMemoFirebase, useUser, deleteDocumentNonBlocking, addDocumentNonBlocking, updateDocumentNonBlocking, setDocumentNonBlocking, useFirebaseApp } from '@/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, ChevronLeft, Users, Rss, UserPlus, UserMinus, Hash, Edit, Send, MoreHorizontal, Trash2, Pen, Heart, Share2, LogIn, MessageSquareReply, MessageSquare, Upload, Image as ImageIcon, X, Search, Check, Ban, Crown, Sparkles, UserCheck } from 'lucide-react';
+import { Loader2, ChevronLeft, Users, Rss, UserPlus, UserMinus, Hash, Edit, Send, MoreHorizontal, Trash2, Pen, Heart, Share2, LogIn, MessageSquareReply, MessageSquare, Upload, Image as ImageIcon, X, Search, Check, Ban, Crown, Sparkles, UserCheck, PlayCircle } from 'lucide-react';
 import { formatDistanceToNowStrict } from 'date-fns';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
@@ -120,10 +120,46 @@ function getInitials(name?: string) {
     return 'U';
 }
 
+function VideoEmbed({ url }: { url: string }) {
+    const firebaseApp = useFirebaseApp();
+    const [resolvedUrl, setResolvedUrl] = useState<string | null>(null);
+    const [isLoading, setIsLoading] = useState(false);
+
+    useEffect(() => {
+        if (url.startsWith('gs://')) {
+            setIsLoading(true);
+            const storage = getStorage(firebaseApp);
+            const storageRef = ref(storage, url);
+            getDownloadURL(storageRef)
+                .then(setResolvedUrl)
+                .catch(console.error)
+                .finally(() => setIsLoading(false));
+        } else {
+            setResolvedUrl(url);
+        }
+    }, [url, firebaseApp]);
+
+    if (isLoading) return <div className="aspect-video bg-white/5 rounded-lg flex items-center justify-center"><Loader2 className="animate-spin h-6 w-6" /></div>;
+    if (!resolvedUrl) return null;
+
+    return (
+        <div className="aspect-video rounded-lg overflow-hidden border bg-black shadow-xl">
+            <video 
+                src={resolvedUrl} 
+                className="w-full h-full" 
+                controls 
+                controlsList="nodownload"
+                onContextMenu={(e) => e.preventDefault()}
+            />
+        </div>
+    );
+}
 
 const PostContentRenderer = ({ content }: { content: string }) => {
     const youtubeRegex = /(https?:\/\/(?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/|live\/)|youtu\.be\/)([a-zA-Z0-9_-]+))/;
     const instagramRegex = /(https?:\/\/(?:www\.)?instagram\.com\/p\/([a-zA-Z0-9_-]+)\/?)/;
+    const gsRegex = /(gs:\/\/[^\s]+)/;
+    const videoFileRegex = /(https?:\/\/[^\s]+\.(mp4|webm|ogg|mov))/i;
     
     let currentContent = content;
 
@@ -162,12 +198,10 @@ const PostContentRenderer = ({ content }: { content: string }) => {
                  <div className="my-4 flex justify-center">
                     <iframe 
                         className="instagram-media instagram-media-rendered" 
-                        id="instagram-embed-0" 
                         src={`${postUrl}embed/captioned`} 
                         allowFullScreen={true} 
                         frameBorder="0" 
                         height="550" 
-                        data-instgrm-payload-id="instagram-media-payload-0" 
                         scrolling="no" 
                         style={{ background: 'white', border: '1px solid rgb(219, 219, 219)', borderRadius: '3px', display: 'block', margin: '0px auto', maxWidth: '540px', minWidth: '326px', padding: '0px', width: 'calc(100% - 2px)' }}>
                     </iframe>
@@ -175,6 +209,32 @@ const PostContentRenderer = ({ content }: { content: string }) => {
                  {parts[1] && <p className="text-sm whitespace-pre-wrap">{parts[1]}</p>}
             </div>
         )
+    }
+
+    const gsMatch = currentContent.match(gsRegex);
+    if (gsMatch) {
+        const url = gsMatch[0];
+        const parts = currentContent.split(url);
+        return (
+            <div className="space-y-4">
+                {parts[0] && <p className="text-sm whitespace-pre-wrap">{parts[0]}</p>}
+                <VideoEmbed url={url} />
+                {parts[1] && <p className="text-sm whitespace-pre-wrap">{parts[1]}</p>}
+            </div>
+        );
+    }
+
+    const videoMatch = currentContent.match(videoFileRegex);
+    if (videoMatch) {
+        const url = videoMatch[0];
+        const parts = currentContent.split(url);
+        return (
+            <div className="space-y-4">
+                {parts[0] && <p className="text-sm whitespace-pre-wrap">{parts[0]}</p>}
+                <VideoEmbed url={url} />
+                {parts[1] && <p className="text-sm whitespace-pre-wrap">{parts[1]}</p>}
+            </div>
+        );
     }
 
     return <p className="text-sm whitespace-pre-wrap">{content}</p>;
@@ -447,7 +507,7 @@ function CommentThread({ comment, postId, allComments, onDelete, postAuthorId }:
                  {replies.length > 0 && (
                     <div className="pt-2 space-y-4">
                         {replies.map(reply => (
-                            <CommentThread key={reply.id} comment={reply} postId={postId} allComments={allComments || []} onDelete={onDelete} postAuthorId={postAuthorId} />
+                            <CommentThread key={reply.id} comment={reply} postId={postId} allComments={allComments || []} onDelete={openDeleteDialog} postAuthorId={postAuthorId} />
                         ))}
                     </div>
                 )}

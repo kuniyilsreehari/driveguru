@@ -5,8 +5,8 @@ import { Suspense, useMemo, useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { collection, query, orderBy, Timestamp, doc, updateDoc, arrayUnion, arrayRemove, serverTimestamp, limit, getDocs, startAfter, QueryDocumentSnapshot, DocumentData, addDoc, where, onSnapshot } from 'firebase/firestore';
-import { getStorage, ref as storageRef, uploadString, getDownloadURL } from "firebase/storage";
-import { useFirestore, useCollection, useMemoFirebase, useUser, useDoc, deleteDocumentNonBlocking, addDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase';
+import { getStorage, ref as storageRef, uploadString, getDownloadURL, ref } from "firebase/storage";
+import { useFirestore, useCollection, useMemoFirebase, useUser, useDoc, deleteDocumentNonBlocking, addDocumentNonBlocking, updateDocumentNonBlocking, useFirebaseApp } from '@/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,7 +15,7 @@ import { Form, FormControl, FormField, FormItem } from '@/components/ui/form';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Loader2, ChevronLeft, Rss, Search, Heart, Share2, MoreHorizontal, Trash2, Send, LogIn, MessageSquareReply, MessageSquare, Pen, Upload, Image as ImageIcon, X, Linkedin, Twitter, Github, Globe, Youtube, UserPlus, UserMinus, Crown, Sparkles, UserCheck } from 'lucide-react';
+import { Loader2, ChevronLeft, Rss, Search, Heart, Share2, MoreHorizontal, Trash2, Send, LogIn, MessageSquareReply, MessageSquare, Pen, Upload, Image as ImageIcon, X, Linkedin, Twitter, Github, Globe, Youtube, UserPlus, UserMinus, Crown, Sparkles, UserCheck, PlayCircle } from 'lucide-react';
 import { formatDistanceToNowStrict } from 'date-fns';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
@@ -510,22 +510,59 @@ function CommentsSection({ postId, postAuthorId }: { postId: string, postAuthorI
 
 const POSTS_PER_PAGE = 5;
 
+function VideoEmbed({ url }: { url: string }) {
+    const firebaseApp = useFirebaseApp();
+    const [resolvedUrl, setResolvedUrl] = useState<string | null>(null);
+    const [isLoading, setIsLoading] = useState(false);
+
+    useEffect(() => {
+        if (url.startsWith('gs://')) {
+            setIsLoading(true);
+            const storage = getStorage(firebaseApp);
+            const storageRef = ref(storage, url);
+            getDownloadURL(storageRef)
+                .then(setResolvedUrl)
+                .catch(console.error)
+                .finally(() => setIsLoading(false));
+        } else {
+            setResolvedUrl(url);
+        }
+    }, [url, firebaseApp]);
+
+    if (isLoading) return <div className="aspect-video bg-white/5 rounded-lg flex items-center justify-center"><Loader2 className="animate-spin h-6 w-6" /></div>;
+    if (!resolvedUrl) return null;
+
+    return (
+        <div className="aspect-video rounded-lg overflow-hidden border bg-black shadow-xl">
+            <video 
+                src={resolvedUrl} 
+                className="w-full h-full" 
+                controls 
+                controlsList="nodownload"
+                onContextMenu={(e) => e.preventDefault()}
+            />
+        </div>
+    );
+}
+
 const PostContentRenderer = ({ content }: { content: string }) => {
     const youtubeRegex = /(https?:\/\/(?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/|live\/)|youtu\.be\/)([a-zA-Z0-9_-]+))/;
     const instagramRegex = /(https?:\/\/(?:www\.)?instagram\.com\/p\/([a-zA-Z0-9_-]+)\/?)/;
+    const gsRegex = /(gs:\/\/[^\s]+)/;
+    const videoFileRegex = /(https?:\/\/[^\s]+\.(mp4|webm|ogg|mov))/i;
     
-    const combinedContent = content;
+    let currentContent = content;
 
-    const youtubeMatch = combinedContent.match(youtubeRegex);
+    const youtubeMatch = currentContent.match(youtubeRegex);
     if (youtubeMatch) {
         const videoId = youtubeMatch[2];
         const isLive = youtubeMatch[0].includes('/live/');
         const embedUrl = isLive ? `https://www.youtube.com/embed/live_stream?channel=${videoId}` : `https://www.youtube.com/embed/${videoId}`;
-        const textContent = combinedContent.replace(youtubeRegex, '').trim();
+        const parts = currentContent.split(youtubeMatch[0]);
 
         return (
             <div className="space-y-4">
-                {textContent && <p className="text-sm whitespace-pre-wrap">{textContent}</p>}
+                {parts[0] && <p className="text-sm whitespace-pre-wrap">{parts[0]}</p>}
                 <div className="aspect-video rounded-lg overflow-hidden border">
                     <iframe
                         width="100%"
@@ -537,32 +574,58 @@ const PostContentRenderer = ({ content }: { content: string }) => {
                         allowFullScreen
                     ></iframe>
                 </div>
+                {parts[1] && <p className="text-sm whitespace-pre-wrap">{parts[1]}</p>}
             </div>
         );
     }
 
-    const instagramMatch = combinedContent.match(instagramRegex);
+    const instagramMatch = currentContent.match(instagramRegex);
     if (instagramMatch) {
         const postUrl = instagramMatch[0];
-        const textContent = combinedContent.replace(instagramRegex, '').trim();
+        const parts = currentContent.split(instagramMatch[0]);
         return (
              <div className="space-y-4">
-                {textContent && <p className="text-sm whitespace-pre-wrap">{textContent}</p>}
+                {parts[0] && <p className="text-sm whitespace-pre-wrap">{parts[0]}</p>}
                  <div className="my-4 flex justify-center">
                     <iframe 
                         className="instagram-media instagram-media-rendered" 
-                        id="instagram-embed-0" 
                         src={`${postUrl}embed/captioned`} 
                         allowFullScreen={true} 
                         frameBorder="0" 
                         height="550" 
-                        data-instgrm-payload-id="instagram-media-payload-0" 
                         scrolling="no" 
                         style={{ background: 'white', border: '1px solid rgb(219, 219, 219)', borderRadius: '3px', display: 'block', margin: '0px auto', maxWidth: '540px', minWidth: '326px', padding: '0px', width: 'calc(100% - 2px)' }}>
                     </iframe>
                 </div>
+                {parts[1] && <p className="text-sm whitespace-pre-wrap">{parts[1]}</p>}
             </div>
         )
+    }
+
+    const gsMatch = currentContent.match(gsRegex);
+    if (gsMatch) {
+        const url = gsMatch[0];
+        const parts = currentContent.split(url);
+        return (
+            <div className="space-y-4">
+                {parts[0] && <p className="text-sm whitespace-pre-wrap">{parts[0]}</p>}
+                <VideoEmbed url={url} />
+                {parts[1] && <p className="text-sm whitespace-pre-wrap">{parts[1]}</p>}
+            </div>
+        );
+    }
+
+    const videoMatch = currentContent.match(videoFileRegex);
+    if (videoMatch) {
+        const url = videoMatch[0];
+        const parts = currentContent.split(url);
+        return (
+            <div className="space-y-4">
+                {parts[0] && <p className="text-sm whitespace-pre-wrap">{parts[0]}</p>}
+                <VideoEmbed url={url} />
+                {parts[1] && <p className="text-sm whitespace-pre-wrap">{parts[1]}</p>}
+            </div>
+        );
     }
 
     return <p className="text-sm whitespace-pre-wrap">{content}</p>;
@@ -664,7 +727,7 @@ function PostCard({ post }: { post: Post }) {
         }).catch(error => {
             if ((error as any).name !== 'FirebaseError') {
                 toast({
-                    variant: 'destructive',
+                    variant: "destructive",
                     title: "Deletion Failed",
                     description: "Could not delete the post. Please try again.",
                 });
