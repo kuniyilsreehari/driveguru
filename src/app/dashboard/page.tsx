@@ -538,50 +538,65 @@ export default function ExpertDashboardPage() {
           </TabsContent>
 
           <TabsContent value="network" className="mt-6">
-            <Card>
-                <CardHeader>
-                    <CardTitle>My Network</CardTitle>
-                    <CardDescription>Manage your groups and connections.</CardDescription>
+            <Card className="border-none bg-[#24262d] rounded-2xl overflow-hidden shadow-xl">
+                <CardHeader className="bg-white/5 border-b border-white/5 pb-6">
+                    <CardTitle className="text-2xl font-black text-white">My Network</CardTitle>
+                    <CardDescription className="text-muted-foreground font-medium">Manage your groups and connections.</CardDescription>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="p-6">
                     <Tabs defaultValue="my-groups" className="w-full">
-                        <TabsList className="grid w-full grid-cols-3 bg-secondary/50 mb-6">
-                            <TabsTrigger value="my-groups">My Groups</TabsTrigger>
-                            <TabsTrigger value="followers">Followers</TabsTrigger>
-                            <TabsTrigger value="following">Following</TabsTrigger>
+                        <TabsList className="grid w-full grid-cols-3 bg-white/5 p-1 h-12 rounded-xl mb-8">
+                            <TabsTrigger value="my-groups" className="rounded-lg data-[state=active]:bg-orange-500 data-[state=active]:text-white font-black text-xs uppercase tracking-wider">
+                                My Groups
+                            </TabsTrigger>
+                            <TabsTrigger value="followers" className="rounded-lg data-[state=active]:bg-orange-500 data-[state=active]:text-white font-black text-xs uppercase tracking-wider">
+                                Followers
+                                <Badge variant="secondary" className="ml-2 bg-white/10 text-white border-none font-bold text-[10px]">{myFollowers?.length || 0}</Badge>
+                            </TabsTrigger>
+                            <TabsTrigger value="following" className="rounded-lg data-[state=active]:bg-orange-500 data-[state=active]:text-white font-black text-xs uppercase tracking-wider">
+                                Following
+                                <Badge variant="secondary" className="ml-2 bg-white/10 text-white border-none font-bold text-[10px]">{userProfile?.following?.length || 0}</Badge>
+                            </TabsTrigger>
                         </TabsList>
                         
                         <TabsContent value="my-groups" className="space-y-4">
                             {isMyGroupsLoading ? (
-                                <div className="flex justify-center p-8"><Loader className="animate-spin h-8 w-8 text-primary" /></div>
+                                <div className="flex justify-center p-8"><Loader className="animate-spin h-8 w-8 text-orange-500" /></div>
                             ) : myGroups && myGroups.length > 0 ? (
-                                <div className="space-y-3">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     {myGroups.map(group => (
                                         <Link key={group.id} href={`/groups/${group.id}`}>
-                                            <div className="p-4 border rounded-lg hover:bg-accent/50 transition-colors">
-                                                <h4 className="font-bold text-base">{group.name}</h4>
-                                                <p className="text-xs text-muted-foreground">{group.members?.length || 0} member{group.members?.length !== 1 ? 's' : ''}</p>
+                                            <div className="p-5 bg-white/5 border border-white/5 rounded-2xl hover:bg-white/10 transition-all group shadow-sm">
+                                                <div className="flex items-center justify-between">
+                                                    <div>
+                                                        <h4 className="font-black text-white text-lg group-hover:text-orange-500 transition-colors">{group.name}</h4>
+                                                        <p className="text-xs text-muted-foreground font-bold uppercase tracking-widest mt-1">
+                                                            {group.members?.length || 0} Professional{group.members?.length !== 1 ? 's' : ''}
+                                                        </p>
+                                                    </div>
+                                                    <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-orange-500 transition-all" />
+                                                </div>
                                             </div>
                                         </Link>
                                     ))}
                                 </div>
                             ) : (
-                                <div className="text-center py-12 bg-secondary/10 rounded-lg border-2 border-dashed">
-                                    <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4 opacity-20" />
-                                    <p className="text-muted-foreground">You haven't joined any groups yet.</p>
-                                    <Button variant="link" asChild className="mt-2">
-                                        <Link href="/groups">Explore Groups</Link>
+                                <div className="text-center py-16 bg-white/5 rounded-3xl border-4 border-dashed border-white/5">
+                                    <Users className="h-16 w-16 mx-auto text-muted-foreground mb-4 opacity-10" />
+                                    <p className="text-muted-foreground font-bold">You haven't joined any groups yet.</p>
+                                    <Button variant="link" asChild className="mt-2 text-orange-500 font-black uppercase tracking-wider text-xs">
+                                        <Link href="/groups">Explore Groups Now</Link>
                                     </Button>
                                 </div>
                             )}
                         </TabsContent>
 
                         <TabsContent value="followers">
-                            <UserList userIdsQuery={followersQuery} emptyStateMessage="No one is following you yet." />
+                            <UserList userIdsQuery={followersQuery} emptyStateMessage="No one is following you yet. Try sharing some posts to increase your visibility!" />
                         </TabsContent>
 
                         <TabsContent value="following">
-                            <UserList userIds={userProfile?.following || []} emptyStateMessage="You aren't following any experts yet." />
+                            <UserList userIds={userProfile?.following || []} emptyStateMessage="You aren't following any experts yet. Start following people from the 'Suggestions' section!" />
                         </TabsContent>
                     </Tabs>
                 </CardContent>
