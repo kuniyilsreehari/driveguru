@@ -8,7 +8,7 @@ import { useFirestore, useDoc, useMemoFirebase, useFirebaseApp } from '@/firebas
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { ChevronLeft, BookOpen, Video, Rss, Users, Briefcase, PlayCircle, Info, Loader2, Share2 } from 'lucide-react';
+import { ChevronLeft, BookOpen, Video, Rss, Users, Briefcase, PlayCircle, Info, Loader2, Share2, AlertCircle } from 'lucide-react';
 import {
   Accordion,
   AccordionContent,
@@ -28,7 +28,7 @@ export default function GuidesPage() {
   const { data: appConfig } = useDoc<AppConfig>(appConfigDocRef);
 
   const [resolvedUrl, setResolvedUrl] = useState<string | null>(null);
-  const [videoType, setVideoType] = useState<'youtube' | 'direct' | 'none'>('none');
+  const [videoType, setVideoType] = useState<'youtube' | 'direct' | 'none' | 'error'>('none');
   const [isResolving, setIsFetching] = useState(false);
 
   useEffect(() => {
@@ -48,11 +48,12 @@ export default function GuidesPage() {
         return;
     }
 
-    // 2. Check for Firebase Storage (gs://)
-    if (url.startsWith('gs://')) {
+    // 2. Check for Firebase Storage (gs:// or common paths)
+    if (url.startsWith('gs://') || (!url.startsWith('http') && url.includes('_DRIVE'))) {
         setIsFetching(true);
         const storage = getStorage(firebaseApp);
-        const storageRef = ref(storage, url);
+        const path = url.startsWith('gs://') ? url : `gs://${firebaseApp.options.storageBucket}/${url}`;
+        const storageRef = ref(storage, path);
         getDownloadURL(storageRef)
             .then((downloadUrl) => {
                 setVideoType('direct');
@@ -60,7 +61,7 @@ export default function GuidesPage() {
             })
             .catch((err) => {
                 console.error("Failed to resolve storage URL", err);
-                setVideoType('none');
+                setVideoType('error');
             })
             .finally(() => setIsFetching(false));
         return;
@@ -97,7 +98,15 @@ export default function GuidesPage() {
         {isResolving ? (
             <Card className="rounded-[2rem] border-none bg-[#24262d] p-12 flex flex-col items-center justify-center gap-4">
                 <Loader2 className="h-8 w-8 animate-spin text-orange-500" />
-                <p className="text-sm font-bold text-muted-foreground uppercase tracking-widest">Loading Guide Content...</p>
+                <p className="text-sm font-bold text-muted-foreground uppercase tracking-widest">Resolving Video Link...</p>
+            </Card>
+        ) : videoType === 'error' ? (
+            <Card className="rounded-[2rem] border-none bg-[#24262d] p-12 flex flex-col items-center justify-center gap-4 text-center">
+                <div className="bg-red-500/10 p-4 rounded-full">
+                    <AlertCircle className="h-10 w-10 text-red-500" />
+                </div>
+                <h3 className="text-xl font-black text-white uppercase italic">Video Link Expired or Not Found</h3>
+                <p className="text-sm text-muted-foreground max-w-sm">The provided Storage path could not be resolved. Please contact the administrator to update the introduction video.</p>
             </Card>
         ) : videoType !== 'none' && resolvedUrl ? (
             <Card className="overflow-hidden border-2 border-primary/20 rounded-[2rem] shadow-2xl shadow-primary/5 bg-[#24262d]">

@@ -5,7 +5,7 @@ import { Suspense, useMemo, useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { collection, query, orderBy, Timestamp, doc, updateDoc, arrayUnion, arrayRemove, serverTimestamp, limit, getDocs, startAfter, QueryDocumentSnapshot, DocumentData, addDoc, where, onSnapshot } from 'firebase/firestore';
-import { getStorage, ref as storageRef, uploadString, getDownloadURL, ref } from "firebase/storage";
+import { getStorage, ref as storageRef, getDownloadURL, ref } from "firebase/storage";
 import { useFirestore, useCollection, useMemoFirebase, useUser, useDoc, deleteDocumentNonBlocking, addDocumentNonBlocking, updateDocumentNonBlocking, useFirebaseApp } from '@/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -15,7 +15,7 @@ import { Form, FormControl, FormField, FormItem } from '@/components/ui/form';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Loader2, ChevronLeft, Rss, Search, Heart, Share2, MoreHorizontal, Trash2, Send, LogIn, MessageSquareReply, MessageSquare, Pen, Upload, Image as ImageIcon, X, Linkedin, Twitter, Github, Globe, Youtube, UserPlus, UserMinus, Crown, Sparkles, UserCheck, PlayCircle } from 'lucide-react';
+import { Loader2, ChevronLeft, Rss, Search, Heart, Share2, MoreHorizontal, Trash2, Send, LogIn, MessageSquareReply, MessageSquare, Pen, Upload, Image as ImageIcon, X, Linkedin, Twitter, Github, Globe, Youtube, UserPlus, UserMinus, Crown, Sparkles, UserCheck, PlayCircle, AlertCircle } from 'lucide-react';
 import { formatDistanceToNowStrict } from 'date-fns';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
@@ -514,15 +514,20 @@ function VideoEmbed({ url }: { url: string }) {
     const firebaseApp = useFirebaseApp();
     const [resolvedUrl, setResolvedUrl] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState(false);
 
     useEffect(() => {
-        if (url.startsWith('gs://')) {
+        if (url.startsWith('gs://') || (!url.startsWith('http') && url.includes('_DRIVE'))) {
             setIsLoading(true);
             const storage = getStorage(firebaseApp);
-            const storageRef = ref(storage, url);
+            const path = url.startsWith('gs://') ? url : `gs://${firebaseApp.options.storageBucket}/${url}`;
+            const storageRef = ref(storage, path);
             getDownloadURL(storageRef)
                 .then(setResolvedUrl)
-                .catch(console.error)
+                .catch((err) => {
+                    console.warn("Storage resolution failed", err);
+                    setError(true);
+                })
                 .finally(() => setIsLoading(false));
         } else {
             setResolvedUrl(url);
@@ -530,6 +535,17 @@ function VideoEmbed({ url }: { url: string }) {
     }, [url, firebaseApp]);
 
     if (isLoading) return <div className="aspect-video bg-white/5 rounded-lg flex items-center justify-center"><Loader2 className="animate-spin h-6 w-6" /></div>;
+    
+    if (error) {
+        return (
+            <div className="aspect-video bg-white/5 rounded-lg border-2 border-dashed border-white/10 flex flex-col items-center justify-center gap-2 text-muted-foreground p-4 text-center">
+                <AlertCircle className="h-8 w-8 opacity-20" />
+                <p className="text-xs font-bold uppercase tracking-widest">Video Unavailable</p>
+                <p className="text-[10px] opacity-50">Storage link could not be resolved.</p>
+            </div>
+        );
+    }
+
     if (!resolvedUrl) return null;
 
     return (
@@ -549,6 +565,7 @@ const PostContentRenderer = ({ content }: { content: string }) => {
     const youtubeRegex = /(https?:\/\/(?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/|live\/)|youtu\.be\/)([a-zA-Z0-9_-]+))/;
     const instagramRegex = /(https?:\/\/(?:www\.)?instagram\.com\/p\/([a-zA-Z0-9_-]+)\/?)/;
     const gsRegex = /(gs:\/\/[^\s]+)/;
+    const storagePathRegex = /((?:tutorial_videos|post_images)\/[^\s]+)/;
     const videoFileRegex = /(https?:\/\/[^\s]+\.(mp4|webm|ogg|mov))/i;
     
     let currentContent = content;
@@ -602,10 +619,10 @@ const PostContentRenderer = ({ content }: { content: string }) => {
         )
     }
 
-    const gsMatch = currentContent.match(gsRegex);
+    const gsMatch = currentContent.match(gsRegex) || currentContent.match(storagePathRegex);
     if (gsMatch) {
         const url = gsMatch[0];
-        const parts = currentContent.split(url);
+        const parts = currentContent.split(gsMatch[0]);
         return (
             <div className="space-y-4">
                 {parts[0] && <p className="text-sm whitespace-pre-wrap">{parts[0]}</p>}
@@ -989,8 +1006,6 @@ function FeedContent() {
 
     const filteredPosts = useMemo(() => {
         if (!posts) return [];
-        // This filtering is now client-side on the fetched posts, so we can't filter by author name directly unless we fetch it for all posts.
-        // For simplicity, we will only filter by content here.
         if (!searchQuery) return posts;
 
         const lowercasedQuery = searchQuery.toLowerCase();
