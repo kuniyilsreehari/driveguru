@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
@@ -612,7 +613,6 @@ export default function AdminDashboardPage() {
                                                 <TableBody>
                                                     {(() => {
                                                         const tabUsers = filteredUsers.filter(u => roleTab === 'all' || u.role.toLowerCase().includes(roleTab));
-                                                        const totalItems = tabUsers.length;
                                                         const paginated = tabUsers.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
                                                         
                                                         if (paginated.length === 0 && !isUsersLoading) {
