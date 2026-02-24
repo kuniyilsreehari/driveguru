@@ -8,7 +8,7 @@ import { useUser, useFirestore, useDoc, useMemoFirebase, useAuth, useCollection 
 import { updateDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, CheckCircle2, UserCheck, UserX, Crown, Sparkles, User as UserIcon, Settings, Save, Briefcase, Building, MessageSquare, Search, PlusCircle, Mail, Download, ExternalLink, IndianRupee, X, Upload, HardDriveDownload, Megaphone, Phone, MapPinIcon, Key, Gift, Code, List, Grip, ArrowUp, ArrowDown, Rss, UserPlus, Fingerprint, Award, CircleHelp, CheckCircle, FileJson, MapPin, Clock, AlertCircle, CreditCard, Fingerprint as IdIcon, Check, XCircle, Youtube, Video, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, CheckCircle2, UserCheck, UserX, Crown, Sparkles, User as UserIcon, Settings, Save, Briefcase, Building, MessageSquare, Search, PlusCircle, Mail, Download, ExternalLink, IndianRupee, X, Upload, HardDriveDownload, Megaphone, Phone, MapPinIcon, Key, Gift, Code, List, Grip, ArrowUp, ArrowDown, Rss, UserPlus, Fingerprint, Award, CircleHelp, CheckCircle, FileJson, MapPin, Clock, AlertCircle, CreditCard, Fingerprint as IdIcon, Check, XCircle, Youtube, Video, ChevronLeft, ChevronRight, BarChart3, TrendingUp, PieChart, Activity } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -49,7 +49,7 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
-import { format, formatDistanceToNow } from 'date-fns';
+import { format, formatDistanceToNow, startOfMonth, endOfMonth, eachMonthOfInterval, subMonths, isSameMonth } from 'date-fns';
 import { exportAllData } from '@/ai/flows/export-data-flow';
 import { importUsers } from '@/ai/flows/import-users-flow';
 import { EditProfileForm } from '@/components/auth/edit-profile-form';
@@ -57,6 +57,20 @@ import { cn } from '@/lib/utils';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import type { Vacancy } from '@/app/vacancies/page';
 import { PostVacancyForm } from '@/components/auth/post-vacancy-form';
+import { 
+  BarChart, 
+  Bar, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  ResponsiveContainer, 
+  PieChart as RePieChart, 
+  Pie, 
+  Cell,
+  LineChart,
+  Line
+} from 'recharts';
 
 export type HomepageCategory = {
     id: string;
@@ -80,6 +94,7 @@ type ExpertUser = {
     profession?: string;
     phoneNumber?: string;
     companyName?: string;
+    following?: string[];
 };
 
 type Payment = {
@@ -148,11 +163,6 @@ export default function AdminDashboardPage() {
   const [homepageCategories, setHomepageCategories] = useState<HomepageCategory[]>([]);
   const [departments, setDepartments] = useState<string[]>([]);
 
-  // Category and Department form state
-  const [newCatName, setNewCatName] = useState("");
-  const [newCatIcon, setNewCatIcon] = useState("");
-  const [newDepName, setNewDepName] = useState("");
-
   const superAdminDocRef = useMemoFirebase(() => user ? doc(firestore, 'roles_super_admin', user.uid) : null, [firestore, user]);
   const { data: superAdminData, isLoading: isRoleLoading } = useDoc(superAdminDocRef);
   const isSuperAdmin = !!superAdminData;
@@ -165,6 +175,9 @@ export default function AdminDashboardPage() {
 
   const vacanciesQuery = useMemoFirebase(() => isSuperAdmin ? query(collection(firestore, 'vacancies'), orderBy('postedAt', 'desc')) : null, [firestore, isSuperAdmin]);
   const { data: vacancies, isLoading: isVacanciesLoading } = useCollection<Vacancy>(vacanciesQuery);
+
+  const postsQuery = useMemoFirebase(() => isSuperAdmin ? collection(firestore, 'posts') : null, [firestore, isSuperAdmin]);
+  const { data: posts } = useCollection(postsQuery);
 
   const appConfigDocRef = useMemoFirebase(() => doc(firestore, 'app_config', 'homepage'), [firestore]);
   const { data: appConfig } = useDoc<AppConfig>(appConfigDocRef);
@@ -201,6 +214,64 @@ export default function AdminDashboardPage() {
         referrals: users.filter(u => u.referredByCode).length,
     };
   }, [users]);
+
+  // Report Calculations
+  const reportData = useMemo(() => {
+    if (!users || !payments || !posts) return null;
+
+    // 1. Revenue Metrics
+    const successfulPayments = payments.filter(p => p.status === 'successful');
+    const totalRevenue = successfulPayments.reduce((sum, p) => sum + p.amount, 0);
+    
+    const revenueByPlan = [
+        { name: 'Premier', value: successfulPayments.filter(p => p.plan === 'Premier').reduce((sum, p) => sum + p.amount, 0), color: '#9333ea' },
+        { name: 'Super Premier', value: successfulPayments.filter(p => p.plan === 'Super Premier').reduce((sum, p) => sum + p.amount, 0), color: '#2563eb' },
+        { name: 'Verification', value: successfulPayments.filter(p => p.plan === 'Verification').reduce((sum, p) => sum + p.amount, 0), color: '#16a34a' },
+    ];
+
+    // 2. User Growth (Last 6 Months)
+    const months = eachMonthOfInterval({
+        start: subMonths(new Date(), 5),
+        end: new Date()
+    });
+
+    const userGrowth = months.map(month => {
+        const count = users.filter(u => {
+            const date = u.createdAt?.toDate();
+            return date && isSameMonth(date, month);
+        }).length;
+        return {
+            name: format(month, 'MMM'),
+            users: count
+        };
+    });
+
+    // 3. Expert Distribution
+    const roleDistribution = [
+        { name: 'Freelancer', count: users.filter(u => u.role === 'Freelancer').length },
+        { name: 'Company', count: users.filter(u => u.role === 'Company').length },
+        { name: 'Auth Pro', count: users.filter(u => u.role === 'Authorized Pro').length },
+    ];
+
+    // 4. Referrals Leaderboard
+    const referrers = users
+        .filter(u => u.referralPoints && u.referralPoints > 0)
+        .sort((a, b) => (b.referralPoints || 0) - (a.referralPoints || 0))
+        .slice(0, 5);
+
+    // 5. Community Activity
+    const totalLikes = posts.reduce((sum, p) => sum + (p.likes?.length || 0), 0);
+
+    return {
+        totalRevenue,
+        revenueByPlan,
+        userGrowth,
+        roleDistribution,
+        referrers,
+        totalPosts: posts.length,
+        totalLikes
+    };
+  }, [users, payments, posts]);
 
   const referralUsageMap = useMemo(() => {
     const map: Record<string, number> = {};
@@ -404,7 +475,10 @@ export default function AdminDashboardPage() {
     reader.readAsText(file);
   };
 
-  // Category & Department helper functions
+  const [newCatName, setNewCatName] = useState("");
+  const [newCatIcon, setNewCatIcon] = useState("");
+  const [newDepName, setNewDepName] = useState("");
+
   const addCategory = () => {
     if (!newCatName || !newCatIcon) return;
     setHomepageCategories([...homepageCategories, { id: Date.now().toString(), name: newCatName, icon: newCatIcon }]);
@@ -458,21 +532,21 @@ export default function AdminDashboardPage() {
         </header>
 
         <Tabs defaultValue="dashboard" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 bg-secondary p-1 h-12 rounded-xl mb-8">
-            <TabsTrigger value="dashboard" className="rounded-lg data-[state=active]:bg-background data-[state=active]:text-white">Dashboard</TabsTrigger>
-            <TabsTrigger value="settings" className="rounded-lg data-[state=active]:bg-background data-[state=active]:text-white">Settings</TabsTrigger>
-            <TabsTrigger value="data" className="rounded-lg data-[state=active]:bg-background data-[state=active]:text-white">Data Management</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-4 bg-secondary p-1 h-12 rounded-xl mb-8">
+            <TabsTrigger value="dashboard" className="rounded-lg data-[state=active]:bg-background data-[state=active]:text-white font-bold">Management</TabsTrigger>
+            <TabsTrigger value="reports" className="rounded-lg data-[state=active]:bg-background data-[state=active]:text-white font-bold">Analytics & Reports</TabsTrigger>
+            <TabsTrigger value="settings" className="rounded-lg data-[state=active]:bg-background data-[state=active]:text-white font-bold">Platform Settings</TabsTrigger>
+            <TabsTrigger value="data" className="rounded-lg data-[state=active]:bg-background data-[state=active]:text-white font-bold">Data Control</TabsTrigger>
           </TabsList>
 
           <TabsContent value="dashboard" className="mt-0 space-y-8">
-            {/* Stats Grid */}
             <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-6">
-              <Card className="border-none bg-card"><CardHeader className="pb-2"><CardTitle className="text-sm font-bold opacity-70">Total Experts</CardTitle></CardHeader><CardContent><div className="text-3xl font-black">{stats.total}</div><p className="text-[10px] text-muted-foreground mt-1">Total registered users</p></CardContent></Card>
-              <Card className="border-none bg-card"><CardHeader className="pb-2"><CardTitle className="text-sm font-bold opacity-70">Verified Experts</CardTitle></CardHeader><CardContent><div className="text-3xl font-black text-green-500">{stats.verified}</div><p className="text-[10px] text-muted-foreground mt-1">Total verified experts</p></CardContent></Card>
-              <Card className="border-none bg-card"><CardHeader className="pb-2"><CardTitle className="text-sm font-bold opacity-70">Unverified Experts</CardTitle></CardHeader><CardContent><div className="text-3xl font-black text-red-500">{stats.unverified}</div><p className="text-[10px] text-muted-foreground mt-1">Pending verification</p></CardContent></Card>
-              <Card className="border-none bg-card"><CardHeader className="pb-2"><CardTitle className="text-sm font-bold opacity-70">Premier Experts</CardTitle></CardHeader><CardContent><div className="text-3xl font-black text-purple-500">{stats.premier}</div><p className="text-[10px] text-muted-foreground mt-1">Total Premier experts</p></CardContent></Card>
-              <Card className="border-none bg-card"><CardHeader className="pb-2"><CardTitle className="text-sm font-bold opacity-70">Super Premier</CardTitle></CardHeader><CardContent><div className="text-3xl font-black text-blue-500">{stats.super}</div><p className="text-[10px] text-muted-foreground mt-1">Total Super Premier</p></CardContent></Card>
-              <Card className="border-none bg-card"><CardHeader className="pb-2"><CardTitle className="text-sm font-bold opacity-70">Referrals Used</CardTitle></CardHeader><CardContent><div className="text-3xl font-black text-orange-500">{stats.referrals}</div><p className="text-[10px] text-muted-foreground mt-1">Total signups via referral</p></CardContent></Card>
+              <Card className="border-none bg-card"><CardHeader className="pb-2"><CardTitle className="text-sm font-bold opacity-70">Total Experts</CardTitle></CardHeader><CardContent><div className="text-3xl font-black">{stats.total}</div></CardContent></Card>
+              <Card className="border-none bg-card"><CardHeader className="pb-2"><CardTitle className="text-sm font-bold opacity-70">Verified</CardTitle></CardHeader><CardContent><div className="text-3xl font-black text-green-500">{stats.verified}</div></CardContent></Card>
+              <Card className="border-none bg-card"><CardHeader className="pb-2"><CardTitle className="text-sm font-bold opacity-70">Unverified</CardTitle></CardHeader><CardContent><div className="text-3xl font-black text-red-500">{stats.unverified}</div></CardContent></Card>
+              <Card className="border-none bg-card"><CardHeader className="pb-2"><CardTitle className="text-sm font-bold opacity-70">Premier</CardTitle></CardHeader><CardContent><div className="text-3xl font-black text-purple-500">{stats.premier}</div></CardContent></Card>
+              <Card className="border-none bg-card"><CardHeader className="pb-2"><CardTitle className="text-sm font-bold opacity-70">Super</CardTitle></CardHeader><CardContent><div className="text-3xl font-black text-blue-500">{stats.super}</div></CardContent></Card>
+              <Card className="border-none bg-card"><CardHeader className="pb-2"><CardTitle className="text-sm font-bold opacity-70">Referrals</CardTitle></CardHeader><CardContent><div className="text-3xl font-black text-orange-500">{stats.referrals}</div></CardContent></Card>
             </div>
 
             <Tabs defaultValue="users" className="w-full">
@@ -494,28 +568,27 @@ export default function AdminDashboardPage() {
                             </div>
                         </CardHeader>
                         <CardContent className="p-6 space-y-6">
-                            {/* Search and Quick Filters */}
                             <div className="flex flex-col lg:flex-row items-center gap-4">
                                 <div className="relative flex-1 w-full">
                                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                     <Input 
-                                        placeholder="Search by name, email, referral code or UID..." 
+                                        placeholder="Search experts..." 
                                         className="pl-10 h-12 bg-white/5 border-none rounded-xl text-white placeholder:text-muted-foreground"
                                         value={userSearchQuery}
                                         onChange={(e) => setUserSearchQuery(e.target.value)}
                                     />
                                 </div>
-                                <div className="flex items-center gap-2 w-full lg:w-auto overflow-x-auto pb-2 lg:pb-0">
-                                    <Button variant={userFilter === 'verified' ? 'default' : 'secondary'} size="sm" className="rounded-lg font-bold bg-background hover:bg-secondary" onClick={() => setUserFilter(userFilter === 'verified' ? 'all' : 'verified')}>Verified</Button>
-                                    <Button variant={userFilter === 'unverified' ? 'default' : 'secondary'} size="sm" className="rounded-lg font-bold bg-background hover:bg-secondary" onClick={() => setUserFilter(userFilter === 'unverified' ? 'all' : 'unverified')}>Unverified</Button>
-                                    <Button variant={userFilter === 'premier' ? 'default' : 'secondary'} size="sm" className="rounded-lg font-bold bg-background hover:bg-secondary" onClick={() => setUserFilter(userFilter === 'premier' ? 'all' : 'premier')}>Premier</Button>
-                                    <Button variant={userFilter === 'super' ? 'default' : 'secondary'} size="sm" className="rounded-lg font-bold bg-background hover:bg-secondary" onClick={() => setUserFilter(userFilter === 'super' ? 'all' : 'super')}>Super Premier</Button>
+                                <div className="flex items-center gap-2 w-full lg:w-auto overflow-x-auto">
+                                    <Button variant={userFilter === 'verified' ? 'default' : 'secondary'} size="sm" className="rounded-lg font-bold" onClick={() => setUserFilter(userFilter === 'verified' ? 'all' : 'verified')}>Verified</Button>
+                                    <Button variant={userFilter === 'unverified' ? 'default' : 'secondary'} size="sm" className="rounded-lg font-bold" onClick={() => setUserFilter(userFilter === 'unverified' ? 'all' : 'unverified')}>Unverified</Button>
+                                    <Button variant={userFilter === 'premier' ? 'default' : 'secondary'} size="sm" className="rounded-lg font-bold" onClick={() => setUserFilter(userFilter === 'premier' ? 'all' : 'premier')}>Premier</Button>
+                                    <Button variant={userFilter === 'super' ? 'default' : 'secondary'} size="sm" className="rounded-lg font-bold" onClick={() => setUserFilter(userFilter === 'super' ? 'all' : 'super')}>Super Premier</Button>
                                 </div>
                             </div>
 
                             <Tabs defaultValue="all" className="w-full">
                                 <TabsList className="grid grid-cols-4 bg-background p-1 rounded-xl mb-4">
-                                    <TabsTrigger value="all" className="rounded-lg font-bold" onClick={() => setCurrentPage(1)}>All Users</TabsTrigger>
+                                    <TabsTrigger value="all" className="rounded-lg font-bold" onClick={() => setCurrentPage(1)}>All</TabsTrigger>
                                     <TabsTrigger value="freelancer" className="rounded-lg font-bold" onClick={() => setCurrentPage(1)}>Freelancers</TabsTrigger>
                                     <TabsTrigger value="company" className="rounded-lg font-bold" onClick={() => setCurrentPage(1)}>Companies</TabsTrigger>
                                     <TabsTrigger value="pro" className="rounded-lg font-bold" onClick={() => setCurrentPage(1)}>Authorized Pros</TabsTrigger>
@@ -528,10 +601,9 @@ export default function AdminDashboardPage() {
                                                 <TableHeader className="bg-white/5">
                                                     <TableRow className="border-white/5">
                                                         <TableHead className="w-[60px] font-bold text-white text-center">S.No</TableHead>
-                                                        <TableHead className="font-bold text-white">Expert Details</TableHead>
+                                                        <TableHead className="font-bold text-white">Expert</TableHead>
                                                         <TableHead className="font-bold text-white">Rewards</TableHead>
                                                         <TableHead className="font-bold text-white">Role</TableHead>
-                                                        <TableHead className="font-bold text-center text-white">Joined</TableHead>
                                                         <TableHead className="font-bold text-center text-white">Tier</TableHead>
                                                         <TableHead className="font-bold text-center text-white">Verification</TableHead>
                                                         <TableHead className="text-right font-bold text-white"></TableHead>
@@ -541,165 +613,57 @@ export default function AdminDashboardPage() {
                                                     {(() => {
                                                         const tabUsers = filteredUsers.filter(u => roleTab === 'all' || u.role.toLowerCase().includes(roleTab));
                                                         const totalItems = tabUsers.length;
-                                                        const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
                                                         const paginated = tabUsers.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
                                                         
                                                         if (paginated.length === 0 && !isUsersLoading) {
                                                             return (
                                                                 <TableRow>
-                                                                    <TableCell colSpan={8} className="text-center py-12 text-muted-foreground font-medium">No experts found in this category.</TableCell>
+                                                                    <TableCell colSpan={7} className="text-center py-12 text-muted-foreground">No experts found.</TableCell>
                                                                 </TableRow>
                                                             );
                                                         }
 
                                                         return paginated.map((u, index) => {
                                                             const globalIndex = (currentPage - 1) * ITEMS_PER_PAGE + index + 1;
-                                                            const usedCount = referralUsageMap[u.referralCode || ''] || 0;
                                                             return (
-                                                                <TableRow key={u.id} className="hover:bg-white/5 transition-colors border-white/5">
-                                                                    <TableCell className="text-center font-bold text-muted-foreground text-xs">
-                                                                        {globalIndex}
-                                                                    </TableCell>
+                                                                <TableRow key={u.id} className="hover:bg-white/5 border-white/5 h-20">
+                                                                    <TableCell className="text-center font-bold text-muted-foreground text-xs">{globalIndex}</TableCell>
                                                                     <TableCell>
-                                                                        <div className="flex items-start gap-3">
-                                                                            <Avatar className="h-12 w-12 border-2 border-white/10 shrink-0 mt-1">
+                                                                        <div className="flex items-center gap-3">
+                                                                            <Avatar className="h-10 w-10 border border-white/10 shrink-0">
                                                                                 <AvatarImage src={u.photoUrl} />
-                                                                                <AvatarFallback className="bg-orange-500/10 text-orange-500 font-bold">{u.firstName[0]}{u.lastName[0]}</AvatarFallback>
+                                                                                <AvatarFallback className="bg-orange-500/10 text-orange-500 font-bold">{u.firstName[0]}</AvatarFallback>
                                                                             </Avatar>
-                                                                            <div className="space-y-1">
-                                                                                <div className="font-black text-sm text-white">{u.firstName} {u.lastName}</div>
-                                                                                <div className="text-[10px] text-muted-foreground font-medium">{u.email}</div>
-                                                                                <div className="text-[9px] font-mono text-muted-foreground/50 uppercase flex items-center gap-1 mt-1">
-                                                                                    <IdIcon className="h-2.5 w-2.5" /> {u.id}
-                                                                                </div>
-                                                                                {u.companyName && (
-                                                                                    <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
-                                                                                        <Building className="h-3 w-3" /> {u.companyName}
-                                                                                    </div>
-                                                                                )}
-                                                                                <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
-                                                                                    <Phone className="h-3 w-3" /> +91 {u.phoneNumber || 'N/A'}
-                                                                                </div>
-                                                                                <div className="flex flex-wrap items-center gap-2 mt-1">
-                                                                                    <div className="flex items-center gap-1 text-[10px] font-mono font-bold bg-white/5 px-1.5 py-0.5 rounded text-orange-500">
-                                                                                        <Key className="h-2.5 w-2.5" /> {u.referralCode || '-'}
-                                                                                    </div>
-                                                                                    {u.referredByCode && (
-                                                                                        <Badge variant="outline" className="text-[9px] px-1.5 py-0 rounded h-4 border-orange-500/20 bg-orange-500/5 text-orange-500">{u.referredByCode}</Badge>
-                                                                                    )}
-                                                                                    <Badge className={cn("text-[9px] px-1.5 py-0 rounded h-4 border-none", usedCount > 0 ? "bg-orange-500 text-white" : "bg-white/10 text-muted-foreground")}>Used: {usedCount}</Badge>
-                                                                                </div>
+                                                                            <div className="space-y-0.5">
+                                                                                <div className="font-bold text-sm text-white">{u.firstName} {u.lastName}</div>
+                                                                                <div className="text-[10px] text-muted-foreground">{u.email}</div>
                                                                             </div>
                                                                         </div>
                                                                     </TableCell>
                                                                     <TableCell>
-                                                                        <div className="flex flex-col gap-2">
-                                                                            <div className="flex items-center gap-2">
-                                                                                <div className="text-xs font-bold text-orange-500">{u.referralPoints || 0}</div>
-                                                                                <div className="text-[10px] font-medium opacity-70">Points</div>
-                                                                            </div>
-                                                                            <Button 
-                                                                                variant="outline" 
-                                                                                size="sm" 
-                                                                                className="h-7 px-2 rounded-lg text-[10px] font-bold border-2 border-white/10 bg-transparent text-white hover:bg-white/5"
-                                                                                onClick={() => { setSelectedUser(u); setIsAwardDialogOpen(true); }}
-                                                                            >
-                                                                                <Award className="mr-1 h-3 w-3" /> Award
-                                                                            </Button>
+                                                                        <div className="flex items-center gap-2">
+                                                                            <span className="text-xs font-bold text-orange-500">{u.referralPoints || 0} pts</span>
+                                                                            <Button variant="ghost" size="icon" className="h-6 w-6 rounded-full" onClick={() => { setSelectedUser(u); setIsAwardDialogOpen(true); }}><Award className="h-3 w-3" /></Button>
                                                                         </div>
                                                                     </TableCell>
                                                                     <TableCell>
-                                                                        <Badge variant="secondary" className={cn(
-                                                                            "rounded-md font-bold text-[10px] uppercase tracking-wider h-6 text-white border-none",
-                                                                            u.role === 'Freelancer' ? "bg-blue-500/20 text-blue-400" :
-                                                                            u.role === 'Company' ? "bg-indigo-500/20 text-indigo-400" :
-                                                                            u.role === 'Authorized Pro' ? "bg-emerald-500/20 text-emerald-400" :
-                                                                            "bg-secondary"
-                                                                        )}>{u.role}</Badge>
+                                                                        <Badge variant="secondary" className="text-[10px] uppercase font-bold">{u.role}</Badge>
                                                                     </TableCell>
                                                                     <TableCell className="text-center">
-                                                                        <div className="text-[10px] font-medium opacity-70 text-muted-foreground">
-                                                                            {u.createdAt ? formatDistanceToNow(u.createdAt.toDate(), { addSuffix: true }) : '-'}
-                                                                        </div>
-                                                                    </TableCell>
-                                                                    <TableCell className="text-center">
-                                                                        <div className="flex justify-center">
-                                                                            {u.tier === 'Super Premier' ? (
-                                                                                <Badge className="bg-blue-500/10 text-blue-500 border-blue-500/20 rounded-full font-black text-[10px] uppercase h-6 px-3 flex gap-1">
-                                                                                    <Sparkles className="h-3 w-3" /> Super
-                                                                                </Badge>
-                                                                            ) : u.tier === 'Premier' ? (
-                                                                                <Badge className="bg-purple-500/10 text-purple-500 border-purple-500/20 rounded-full font-black text-[10px] uppercase h-6 px-3 flex gap-1">
-                                                                                    <Crown className="h-3 w-3" /> Premier
-                                                                                </Badge>
-                                                                            ) : (
-                                                                                <Badge variant="outline" className="opacity-50 rounded-full font-bold text-[10px] uppercase h-6 px-3 flex gap-1 border-white/20 text-muted-foreground">
-                                                                                    <UserIcon className="h-3 w-3" /> Standard
-                                                                                </Badge>
-                                                                            )}
-                                                                        </div>
+                                                                        {u.tier === 'Super Premier' ? <Sparkles className="h-4 w-4 text-blue-500 mx-auto" /> : u.tier === 'Premier' ? <Crown className="h-4 w-4 text-purple-500 mx-auto" /> : <UserIcon className="h-4 w-4 text-muted-foreground mx-auto" />}
                                                                     </TableCell>
                                                                     <TableCell>
-                                                                        <div className="flex items-center justify-center gap-3">
-                                                                            <Switch 
-                                                                                checked={u.verified} 
-                                                                                onCheckedChange={(v) => updateDocumentNonBlocking(doc(firestore, 'users', u.id), { verified: v })} 
-                                                                                className="scale-90 data-[state=checked]:bg-green-500"
-                                                                            />
-                                                                            {u.verified ? (
-                                                                                <CheckCircle2 className="h-5 w-5 text-green-500" />
-                                                                            ) : (
-                                                                                <UserX className="h-5 w-5 text-muted-foreground opacity-30" />
-                                                                            )}
+                                                                        <div className="flex items-center justify-center">
+                                                                            <Switch checked={u.verified} onCheckedChange={(v) => updateDocumentNonBlocking(doc(firestore, 'users', u.id), { verified: v })} className="scale-75" />
                                                                         </div>
                                                                     </TableCell>
                                                                     <TableCell className="text-right">
                                                                         <DropdownMenu>
-                                                                            <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="rounded-xl hover:bg-white/5 text-muted-foreground"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
-                                                                            <DropdownMenuContent align="end" className="rounded-xl border-2 border-white/10 bg-background text-white">
-                                                                                <DropdownMenuSub>
-                                                                                    <DropdownMenuSubTrigger className="rounded-lg focus:bg-white/5 focus:text-white">
-                                                                                        <Sparkles className="mr-2 h-4 w-4" /> Change Tier
-                                                                                    </DropdownMenuSubTrigger>
-                                                                                    <DropdownMenuPortal>
-                                                                                        <DropdownMenuSubContent className="rounded-xl border-2 border-white/10 bg-background text-white">
-                                                                                            <DropdownMenuItem className="focus:bg-white/5 focus:text-white" onClick={() => handleUpdateUserTier(u.id, 'Standard')}>
-                                                                                                <UserIcon className="mr-2 h-4 w-4" /> Standard
-                                                                                            </DropdownMenuItem>
-                                                                                            <DropdownMenuItem className="focus:bg-white/5 focus:text-white" onClick={() => handleUpdateUserTier(u.id, 'Premier')}>
-                                                                                                <Crown className="mr-2 h-4 w-4" /> Premier
-                                                                                            </DropdownMenuItem>
-                                                                                            <DropdownMenuItem className="focus:bg-white/5 focus:text-white" onClick={() => handleUpdateUserTier(u.id, 'Super Premier')}>
-                                                                                                <Sparkles className="mr-2 h-4 w-4" /> Super Premier
-                                                                                            </DropdownMenuItem>
-                                                                                        </DropdownMenuSubContent>
-                                                                                    </DropdownMenuPortal>
-                                                                                </DropdownMenuSub>
-                                                                                
-                                                                                <DropdownMenuSub>
-                                                                                    <DropdownMenuSubTrigger className="rounded-lg focus:bg-white/5 focus:text-white">
-                                                                                        <Briefcase className="mr-2 h-4 w-4" /> Change Role
-                                                                                    </DropdownMenuSubTrigger>
-                                                                                    <DropdownMenuPortal>
-                                                                                        <DropdownMenuSubContent className="rounded-xl border-2 border-white/10 bg-background text-white">
-                                                                                            <DropdownMenuItem className="focus:bg-white/5 focus:text-white" onClick={() => handleUpdateUserRole(u.id, 'Super Admin')}>Super Admin</DropdownMenuItem>
-                                                                                            <DropdownMenuItem className="focus:bg-white/5 focus:text-white" onClick={() => handleUpdateUserRole(u.id, 'Manager')}>Manager</DropdownMenuItem>
-                                                                                            <DropdownMenuItem className="focus:bg-white/5 focus:text-white" onClick={() => handleUpdateUserRole(u.id, 'Freelancer')}>Freelancer</DropdownMenuItem>
-                                                                                            <DropdownMenuItem className="focus:bg-white/5 focus:text-white" onClick={() => handleUpdateUserRole(u.id, 'Company')}>Company</DropdownMenuItem>
-                                                                                            <DropdownMenuItem className="focus:bg-white/5 focus:text-white" onClick={() => handleUpdateUserRole(u.id, 'Authorized Pro')}>Authorized Pro</DropdownMenuItem>
-                                                                                        </DropdownMenuSubContent>
-                                                                                    </DropdownMenuPortal>
-                                                                                </DropdownMenuSub>
-
-                                                                                <DropdownMenuItem onClick={() => { setSelectedUser(u); setIsEditDialogOpen(true); }} className="rounded-lg focus:bg-white/5 focus:text-white">
-                                                                                    <Edit className="mr-2 h-4 w-4" /> Edit Profile
-                                                                                </DropdownMenuItem>
-                                                                                
+                                                                            <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
+                                                                            <DropdownMenuContent align="end" className="bg-card text-white border-white/10">
+                                                                                <DropdownMenuItem onClick={() => { setSelectedUser(u); setIsEditDialogOpen(true); }}><Edit className="mr-2 h-4 w-4" /> Edit Profile</DropdownMenuItem>
                                                                                 <DropdownMenuSeparator className="bg-white/5" />
-                                                                                
-                                                                                <DropdownMenuItem className="text-red-500 focus:text-red-500 rounded-lg focus:bg-red-500/5" onClick={() => { setSelectedUser(u); setIsDeleteDialogOpen(true); }}>
-                                                                                    <Trash2 className="mr-2 h-4 w-4" /> Delete Account
-                                                                                </DropdownMenuItem>
+                                                                                <DropdownMenuItem className="text-red-500" onClick={() => { setSelectedUser(u); setIsDeleteDialogOpen(true); }}><Trash2 className="mr-2 h-4 w-4" /> Delete</DropdownMenuItem>
                                                                             </DropdownMenuContent>
                                                                         </DropdownMenu>
                                                                     </TableCell>
@@ -711,38 +675,11 @@ export default function AdminDashboardPage() {
                                             </Table>
                                         </div>
 
-                                        {/* Pagination Controls */}
-                                        <div className="flex flex-col sm:flex-row items-center justify-between pt-6 gap-4">
-                                            <p className="text-xs text-muted-foreground font-medium">
-                                                {(() => {
-                                                    const tabCount = filteredUsers.filter(u => roleTab === 'all' || u.role.toLowerCase().includes(roleTab)).length;
-                                                    const start = (currentPage - 1) * ITEMS_PER_PAGE + 1;
-                                                    const end = Math.min(currentPage * ITEMS_PER_PAGE, tabCount);
-                                                    return tabCount > 0 ? `Showing ${start} to ${end} of ${tabCount} entries` : 'No entries to show';
-                                                })()}
-                                            </p>
+                                        <div className="flex items-center justify-between pt-6">
+                                            <p className="text-xs text-muted-foreground">Page {currentPage}</p>
                                             <div className="flex items-center gap-2">
-                                                <Button 
-                                                    variant="outline" 
-                                                    size="sm" 
-                                                    className="rounded-xl h-9 border-white/10 bg-white/5 hover:bg-white/10 text-white font-bold"
-                                                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                                                    disabled={currentPage === 1}
-                                                >
-                                                    <ChevronLeft className="mr-1 h-4 w-4" /> Previous
-                                                </Button>
-                                                <div className="flex items-center justify-center min-w-[80px]">
-                                                    <span className="text-xs font-black text-orange-500">Page {currentPage}</span>
-                                                </div>
-                                                <Button 
-                                                    variant="outline" 
-                                                    size="sm" 
-                                                    className="rounded-xl h-9 border-white/10 bg-white/5 hover:bg-white/10 text-white font-bold"
-                                                    onClick={() => setCurrentPage(prev => prev + 1)}
-                                                    disabled={currentPage >= Math.ceil(filteredUsers.filter(u => roleTab === 'all' || u.role.toLowerCase().includes(roleTab)).length / ITEMS_PER_PAGE)}
-                                                >
-                                                    Next <ChevronRight className="ml-1 h-4 w-4" />
-                                                </Button>
+                                                <Button variant="outline" size="sm" onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} disabled={currentPage === 1} className="rounded-xl"><ChevronLeft className="mr-1 h-4 w-4" /> Previous</Button>
+                                                <Button variant="outline" size="sm" onClick={() => setCurrentPage(prev => prev + 1)} disabled={currentPage >= Math.ceil(filteredUsers.filter(u => roleTab === 'all' || u.role.toLowerCase().includes(roleTab)).length / ITEMS_PER_PAGE)} className="rounded-xl">Next <ChevronRight className="ml-1 h-4 w-4" /></Button>
                                             </div>
                                         </div>
                                     </TabsContent>
@@ -753,102 +690,46 @@ export default function AdminDashboardPage() {
                 </TabsContent>
 
                 <TabsContent value="vacancies">
-                    <Card className="border-none bg-card rounded-2xl overflow-hidden shadow-sm">
-                        <CardHeader className="pb-6 px-8 pt-8">
-                            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                                <div className="flex items-center gap-4">
-                                    <div className="bg-white border-2 border-black p-3 rounded-xl shadow-sm">
-                                        <Briefcase className="h-6 w-6 text-black" />
-                                    </div>
+                    <Card className="border-none bg-card rounded-2xl overflow-hidden">
+                        <CardHeader className="bg-white/5 pb-6 border-b border-white/5">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <Briefcase className="h-6 w-6 text-orange-500" />
                                     <div>
-                                        <CardTitle className="text-3xl font-black text-white tracking-tight">Vacancy Management</CardTitle>
-                                        <CardDescription className="text-muted-foreground text-sm font-medium">Manage all job vacancies in the system.</CardDescription>
+                                        <CardTitle className="text-2xl font-black">Vacancy Management</CardTitle>
+                                        <CardDescription className="text-muted-foreground">Curation of job listings across the platform.</CardDescription>
                                     </div>
                                 </div>
-                                <Button onClick={() => { setSelectedVacancy(null); setIsVacancyDialogOpen(true); }} className="rounded-xl font-black bg-orange-500 hover:bg-orange-600 h-12 px-6 shadow-lg shadow-orange-500/20">
-                                    <PlusCircle className="mr-2 h-5 w-5" /> Post New Vacancy
-                                </Button>
+                                <Button onClick={() => { setSelectedVacancy(null); setIsVacancyDialogOpen(true); }} className="rounded-xl font-bold bg-orange-500 hover:bg-orange-600"><PlusCircle className="mr-2 h-4 w-4" /> New Vacancy</Button>
                             </div>
                         </CardHeader>
-                        <CardContent className="px-8 pb-8">
-                            <div className="rounded-xl border border-border/50 overflow-hidden bg-white/5">
+                        <CardContent className="p-6">
+                            <div className="rounded-xl border border-white/5 overflow-hidden">
                                 <Table>
-                                    <TableHeader className="bg-slate-50/5">
-                                        <TableRow className="hover:bg-transparent border-b border-border/50">
-                                            <TableHead className="font-bold text-slate-500 text-xs uppercase tracking-wider h-14 pl-6">Title</TableHead>
-                                            <TableHead className="font-bold text-slate-500 text-xs uppercase tracking-wider h-14">Company</TableHead>
-                                            <TableHead className="font-bold text-slate-500 text-xs uppercase tracking-wider h-14">Location</TableHead>
-                                            <TableHead className="font-bold text-slate-500 text-xs uppercase tracking-wider h-14 text-center">Type</TableHead>
-                                            <TableHead className="font-bold text-slate-500 text-xs uppercase tracking-wider h-14">Posted</TableHead>
-                                            <TableHead className="text-right font-bold text-slate-500 text-xs uppercase tracking-wider h-14 pr-6">Actions</TableHead>
+                                    <TableHeader className="bg-white/5">
+                                        <TableRow className="border-white/5">
+                                            <TableHead className="font-bold text-white">Role</TableHead>
+                                            <TableHead className="font-bold text-white">Company</TableHead>
+                                            <TableHead className="font-bold text-white">Location</TableHead>
+                                            <TableHead className="font-bold text-center text-white">Type</TableHead>
+                                            <TableHead className="text-right font-bold text-white"></TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
                                         {isVacanciesLoading ? (
-                                            <TableRow className="border-none hover:bg-transparent"><TableCell colSpan={6} className="text-center py-12"><Loader className="animate-spin mx-auto text-orange-500" /></TableCell></TableRow>
-                                        ) : !vacancies || vacancies.length === 0 ? (
-                                            <TableRow className="border-none hover:bg-transparent"><TableCell colSpan={6} className="text-center py-20 text-muted-foreground font-medium">No job vacancies found.</TableCell></TableRow>
-                                        ) : (
-                                            vacancies.map(v => (
-                                                <TableRow key={v.id} className="hover:bg-slate-50/10 transition-colors border-b border-border/30 h-24">
-                                                    <TableCell className="py-4 pl-6">
-                                                        <div className="font-bold text-white text-base">{v.title}</div>
-                                                    </TableCell>
-                                                    <TableCell className="py-4">
-                                                        <div className="space-y-1.5">
-                                                            <div className="text-sm font-bold text-white">{v.companyName}</div>
-                                                            <div className="flex items-center gap-2">
-                                                                {v.isCompanyVerified && (
-                                                                    <Badge variant="outline" className="h-5 px-2 rounded-md border-green-500/30 bg-green-50/5 text-green-600 text-[10px] font-bold flex items-center gap-1">
-                                                                        <UserCheck className="h-2.5 w-2.5" /> Verified
-                                                                    </Badge>
-                                                                )}
-                                                                {v.companyTier === 'Premier' && (
-                                                                    <Badge variant="outline" className="h-5 px-2 rounded-md border-purple-500/30 bg-purple-50/5 text-purple-600 text-[10px] font-bold flex items-center gap-1">
-                                                                        <Crown className="h-2.5 w-2.5" /> Premier
-                                                                    </Badge>
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                    </TableCell>
-                                                    <TableCell className="py-4 text-slate-400 font-medium">
-                                                        {v.location}
-                                                    </TableCell>
-                                                    <TableCell className="text-center py-4">
-                                                        <Badge variant="secondary" className="bg-slate-800 text-slate-200 hover:bg-slate-700 rounded-full px-3 py-0.5 text-[11px] font-bold">
-                                                            {v.employmentType}
-                                                        </Badge>
-                                                    </TableCell>
-                                                    <TableCell className="py-4 text-slate-500 text-sm">
-                                                        {v.postedAt ? formatDistanceToNow(v.postedAt.toDate(), { addSuffix: true }) : '-'}
-                                                    </TableCell>
-                                                    <TableCell className="text-right py-4 pr-6">
-                                                        <DropdownMenu>
-                                                            <DropdownMenuTrigger asChild>
-                                                                <Button variant="ghost" size="icon" className="h-10 w-10 hover:bg-white/5 text-slate-400">
-                                                                    <MoreHorizontal className="h-5 w-5" />
-                                                                </Button>
-                                                            </DropdownMenuTrigger>
-                                                            <DropdownMenuContent align="end" className="bg-card border-border/50 text-white rounded-xl shadow-2xl w-48 p-1">
-                                                                <DropdownMenuItem onClick={() => { setSelectedVacancy(v); setIsVacancyDialogOpen(true); }} className="font-bold text-xs h-10 px-3 rounded-lg focus:bg-white/5">
-                                                                    <Edit className="mr-2 h-4 w-4 text-slate-500" /> Edit
-                                                                </DropdownMenuItem>
-                                                                <DropdownMenuItem onClick={() => handleToggleVacancyVerified(v.id, v.isCompanyVerified || false)} className="font-bold text-xs h-10 px-3 rounded-lg focus:bg-white/5">
-                                                                    <UserCheck className="mr-2 h-4 w-4 text-slate-500" /> Toggle Verified
-                                                                </DropdownMenuItem>
-                                                                <DropdownMenuItem onClick={() => handleToggleVacancyTier(v.id, v.companyTier)} className="font-bold text-xs h-10 px-3 rounded-lg focus:bg-white/5">
-                                                                    <Crown className="mr-2 h-4 w-4 text-slate-500" /> Toggle Premier
-                                                                </DropdownMenuItem>
-                                                                <DropdownMenuSeparator className="bg-white/5" />
-                                                                <DropdownMenuItem onClick={() => handleDeleteVacancy(v.id)} className="text-red-500 focus:text-red-500 focus:bg-red-500/5 rounded-lg font-bold text-xs h-10 px-3">
-                                                                    <Trash2 className="mr-2 h-4 w-4" /> Delete
-                                                                </DropdownMenuItem>
-                                                            </DropdownMenuContent>
-                                                        </DropdownMenu>
-                                                    </TableCell>
-                                                </TableRow>
-                                            ))
-                                        )}
+                                            <TableRow><TableCell colSpan={5} className="text-center py-8"><Loader className="animate-spin mx-auto" /></TableCell></TableRow>
+                                        ) : vacancies?.map(v => (
+                                            <TableRow key={v.id} className="hover:bg-white/5 border-white/5 h-16">
+                                                <TableCell className="font-bold text-white">{v.title}</TableCell>
+                                                <TableCell className="text-muted-foreground text-sm">{v.companyName}</TableCell>
+                                                <TableCell className="text-muted-foreground text-sm">{v.location}</TableCell>
+                                                <TableCell className="text-center"><Badge variant="outline" className="text-[10px]">{v.employmentType}</Badge></TableCell>
+                                                <TableCell className="text-right">
+                                                    <Button variant="ghost" size="icon" onClick={() => { setSelectedVacancy(v); setIsVacancyDialogOpen(true); }}><Edit className="h-4 w-4" /></Button>
+                                                    <Button variant="ghost" size="icon" className="text-red-500" onClick={() => handleDeleteVacancy(v.id)}><Trash2 className="h-4 w-4" /></Button>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
                                     </TableBody>
                                 </Table>
                             </div>
@@ -862,8 +743,8 @@ export default function AdminDashboardPage() {
                             <div className="flex items-center gap-3">
                                 <CreditCard className="h-6 w-6 text-orange-500" />
                                 <div>
-                                    <CardTitle className="text-2xl font-black">Payment Management</CardTitle>
-                                    <CardDescription className="text-muted-foreground">View and manage all transactions.</CardDescription>
+                                    <CardTitle className="text-2xl font-black">Transaction Logs</CardTitle>
+                                    <CardDescription className="text-muted-foreground">Monitor revenue and payment statuses.</CardDescription>
                                 </div>
                             </div>
                         </CardHeader>
@@ -872,58 +753,27 @@ export default function AdminDashboardPage() {
                                 <Table>
                                     <TableHeader className="bg-white/5">
                                         <TableRow className="border-white/5">
-                                            <TableHead className="font-bold text-white">User</TableHead>
+                                            <TableHead className="font-bold text-white">Expert ID</TableHead>
                                             <TableHead className="font-bold text-white">Plan</TableHead>
-                                            <TableHead className="font-bold text-white text-center">Amount</TableHead>
-                                            <TableHead className="font-bold text-white">Order ID</TableHead>
-                                            <TableHead className="font-bold text-white text-center">Status</TableHead>
+                                            <TableHead className="font-bold text-center text-white">Amount</TableHead>
+                                            <TableHead className="font-bold text-center text-white">Status</TableHead>
                                             <TableHead className="font-bold text-white">Date</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
                                         {isPaymentsLoading ? (
-                                            <TableRow><TableCell colSpan={6} className="text-center py-8"><Loader className="animate-spin mx-auto" /></TableCell></TableRow>
-                                        ) : !payments || payments.length === 0 ? (
-                                            <TableRow>
-                                                <TableCell colSpan={6} className="text-center py-12 text-muted-foreground font-medium">
-                                                    No payments found.
+                                            <TableRow><TableCell colSpan={5} className="text-center py-8"><Loader className="animate-spin mx-auto" /></TableCell></TableRow>
+                                        ) : payments?.map(p => (
+                                            <TableRow key={p.id} className="hover:bg-white/5 border-white/5 h-16">
+                                                <TableCell className="font-mono text-[10px] opacity-50">{p.userId}</TableCell>
+                                                <TableCell><Badge variant="outline" className="text-[10px]">{p.plan}</Badge></TableCell>
+                                                <TableCell className="text-center font-bold text-orange-500">₹{p.amount}</TableCell>
+                                                <TableCell className="text-center">
+                                                    <Badge className={cn("text-[9px] font-black uppercase", p.status === 'successful' ? "bg-green-500" : "bg-red-500")}>{p.status}</Badge>
                                                 </TableCell>
+                                                <TableCell className="text-[10px] text-muted-foreground">{p.createdAt ? format(p.createdAt.toDate(), 'PP p') : '-'}</TableCell>
                                             </TableRow>
-                                        ) : (
-                                            payments.map(p => (
-                                                <TableRow key={p.id} className="hover:bg-white/5 transition-colors border-white/5">
-                                                    <TableCell className="font-mono text-[10px] text-muted-foreground">{p.userId}</TableCell>
-                                                    <TableCell>
-                                                        <div className="flex items-center gap-2">
-                                                            <span className="text-xs font-bold text-white">{p.plan}</span>
-                                                            <Badge variant="outline" className="text-[8px] h-4 uppercase border-white/10 bg-white/5 text-muted-foreground">{p.billingCycle}</Badge>
-                                                        </div>
-                                                    </TableCell>
-                                                    <TableCell className="text-center">
-                                                        <div className="flex items-center justify-center gap-1 text-xs font-black text-orange-500">
-                                                            <IndianRupee className="h-3 w-3" /> {p.amount}
-                                                        </div>
-                                                    </TableCell>
-                                                    <TableCell className="font-mono text-[10px] opacity-70">{p.orderId}</TableCell>
-                                                    <TableCell className="text-center">
-                                                        <Badge className={cn(
-                                                            "text-[9px] font-black uppercase h-5 px-2 rounded-full border-none",
-                                                            p.status === 'successful' ? "bg-green-500 text-white" : 
-                                                            p.status === 'failed' ? "bg-red-500 text-white" : 
-                                                            "bg-yellow-500 text-white"
-                                                        )}>
-                                                            {p.status}
-                                                        </Badge>
-                                                    </TableCell>
-                                                    <TableCell className="text-[10px] text-muted-foreground">
-                                                        <div className="flex items-center gap-1">
-                                                            <Clock className="h-3 w-3" />
-                                                            {p.createdAt ? format(p.createdAt.toDate(), 'PP p') : '-'}
-                                                        </div>
-                                                    </TableCell>
-                                                </TableRow>
-                                            ))
-                                        )}
+                                        ))}
                                     </TableBody>
                                 </Table>
                             </div>
@@ -931,6 +781,178 @@ export default function AdminDashboardPage() {
                     </Card>
                 </TabsContent>
             </Tabs>
+          </TabsContent>
+
+          <TabsContent value="reports" className="mt-0 space-y-8">
+            {/* KPI Section */}
+            <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
+                <Card className="border-none bg-card shadow-lg">
+                    <CardHeader className="pb-2">
+                        <CardDescription className="text-xs font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                            <TrendingUp className="h-3 w-3 text-green-500" /> Total Revenue
+                        </CardDescription>
+                        <CardTitle className="text-3xl font-black text-orange-500">₹{reportData?.totalRevenue.toLocaleString()}</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <p className="text-[10px] text-muted-foreground font-medium">All-time earnings from subscriptions.</p>
+                    </CardContent>
+                </Card>
+                <Card className="border-none bg-card shadow-lg">
+                    <CardHeader className="pb-2">
+                        <CardDescription className="text-xs font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                            <Activity className="h-3 w-3 text-blue-500" /> Verification Rate
+                        </CardDescription>
+                        <CardTitle className="text-3xl font-black text-white">
+                            {stats.total > 0 ? Math.round((stats.verified / stats.total) * 100) : 0}%
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <p className="text-[10px] text-muted-foreground font-medium">Percentage of safely audited experts.</p>
+                    </CardContent>
+                </Card>
+                <Card className="border-none bg-card shadow-lg">
+                    <CardHeader className="pb-2">
+                        <CardDescription className="text-xs font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                            <BarChart3 className="h-3 w-3 text-purple-500" /> Premium Adoption
+                        </CardDescription>
+                        <CardTitle className="text-3xl font-black text-white">
+                            {stats.total > 0 ? Math.round(((stats.premier + stats.super) / stats.total) * 100) : 0}%
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <p className="text-[10px] text-muted-foreground font-medium">Users opted for high-visibility plans.</p>
+                    </CardContent>
+                </Card>
+                <Card className="border-none bg-card shadow-lg">
+                    <CardHeader className="pb-2">
+                        <CardDescription className="text-xs font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                            <MessageSquare className="h-3 w-3 text-orange-500" /> Community Score
+                        </CardDescription>
+                        <CardTitle className="text-3xl font-black text-white">{reportData?.totalLikes || 0}</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <p className="text-[10px] text-muted-foreground font-medium">Total hearts given across the feed.</p>
+                    </CardContent>
+                </Card>
+            </div>
+
+            {/* Visual Analytics */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <Card className="border-none bg-card rounded-2xl overflow-hidden shadow-2xl">
+                    <CardHeader className="bg-white/5 border-b border-white/5">
+                        <CardTitle className="text-xl font-black flex items-center gap-2">
+                            <TrendingUp className="h-5 w-5 text-orange-500" /> Expert Growth Trend
+                        </CardTitle>
+                        <CardDescription className="text-[10px] uppercase font-bold tracking-widest">New experts joined in last 6 months</CardDescription>
+                    </CardHeader>
+                    <CardContent className="pt-8 h-[300px]">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={reportData?.userGrowth}>
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#ffffff10" />
+                                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#8a92a6', fontSize: 12}} />
+                                <YAxis axisLine={false} tickLine={false} tick={{fill: '#8a92a6', fontSize: 12}} />
+                                <Tooltip contentStyle={{backgroundColor: '#24262d', border: 'none', borderRadius: '12px', fontSize: '12px', color: '#fff'}} cursor={{fill: '#ffffff05'}} />
+                                <Bar dataKey="users" fill="#f97316" radius={[4, 4, 0, 0]} barSize={30} />
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </CardContent>
+                </Card>
+
+                <Card className="border-none bg-card rounded-2xl overflow-hidden shadow-2xl">
+                    <CardHeader className="bg-white/5 border-b border-white/5">
+                        <CardTitle className="text-xl font-black flex items-center gap-2">
+                            <PieChart className="h-5 w-5 text-orange-500" /> Revenue Distribution
+                        </CardTitle>
+                        <CardDescription className="text-[10px] uppercase font-bold tracking-widest">Income split by subscription plan</CardDescription>
+                    </CardHeader>
+                    <CardContent className="pt-8 h-[300px] flex items-center">
+                        <div className="w-1/2 h-full">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <RePieChart>
+                                    <Pie data={reportData?.revenueByPlan} innerRadius={60} outerRadius={100} paddingAngle={5} dataKey="value">
+                                        {reportData?.revenueByPlan.map((entry, index) => (
+                                            <Cell key={`cell-${index}`} fill={entry.color} />
+                                        ))}
+                                    </Pie>
+                                    <Tooltip contentStyle={{backgroundColor: '#24262d', border: 'none', borderRadius: '12px', fontSize: '12px'}} />
+                                </RePieChart>
+                            </ResponsiveContainer>
+                        </div>
+                        <div className="w-1/2 space-y-4">
+                            {reportData?.revenueByPlan.map((item, i) => (
+                                <div key={i} className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <div className="h-3 w-3 rounded-full" style={{backgroundColor: item.color}} />
+                                        <span className="text-xs font-bold text-muted-foreground">{item.name}</span>
+                                    </div>
+                                    <span className="text-sm font-black text-white">₹{item.value.toLocaleString()}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                {/* Role Distribution */}
+                <Card className="lg:col-span-1 border-none bg-card rounded-2xl overflow-hidden shadow-2xl">
+                    <CardHeader className="bg-white/5 border-b border-white/5">
+                        <CardTitle className="text-xl font-black">Expert Types</CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-6 space-y-6">
+                        {reportData?.roleDistribution.map((item, i) => (
+                            <div key={i} className="space-y-2">
+                                <div className="flex justify-between items-center text-xs font-black uppercase tracking-wider">
+                                    <span className="text-muted-foreground">{item.name}</span>
+                                    <span className="text-white">{item.count}</span>
+                                </div>
+                                <div className="h-2 bg-white/5 rounded-full overflow-hidden">
+                                    <div className="h-full bg-orange-500 rounded-full" style={{width: `${(item.count / stats.total) * 100}%`}} />
+                                </div>
+                            </div>
+                        ))}
+                    </CardContent>
+                </Card>
+
+                {/* Referral Leaderboard */}
+                <Card className="lg:col-span-2 border-none bg-card rounded-2xl overflow-hidden shadow-2xl">
+                    <CardHeader className="bg-white/5 border-b border-white/5">
+                        <CardTitle className="text-xl font-black flex items-center gap-2">
+                            <Award className="h-5 w-5 text-orange-500" /> Referral Leaderboard
+                        </CardTitle>
+                        <CardDescription className="text-[10px] uppercase font-bold tracking-widest">Top members driving new signups</CardDescription>
+                    </CardHeader>
+                    <CardContent className="p-0">
+                        <Table>
+                            <TableHeader>
+                                <TableRow className="border-white/5 hover:bg-transparent">
+                                    <TableHead className="font-black text-[10px] uppercase text-muted-foreground">Expert</TableHead>
+                                    <TableHead className="font-black text-[10px] uppercase text-muted-foreground text-center">Referral ID</TableHead>
+                                    <TableHead className="font-black text-[10px] uppercase text-muted-foreground text-center">Referrals</TableHead>
+                                    <TableHead className="font-black text-[10px] uppercase text-muted-foreground text-right">Points Earned</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {reportData?.referrers.map((ref, idx) => (
+                                    <TableRow key={ref.id} className="border-white/5 hover:bg-white/5">
+                                        <TableCell>
+                                            <div className="flex items-center gap-3">
+                                                <div className="text-xs font-black opacity-30 w-4">{idx + 1}</div>
+                                                <div className="font-bold text-sm">{ref.firstName} {ref.lastName}</div>
+                                            </div>
+                                        </TableCell>
+                                        <TableCell className="text-center font-mono text-xs text-orange-500">{ref.referralCode}</TableCell>
+                                        <TableCell className="text-center font-bold">{referralUsageMap[ref.referralCode || ''] || 0}</TableCell>
+                                        <TableCell className="text-right">
+                                            <Badge className="bg-orange-500/10 text-orange-500 border-none font-black">{ref.referralPoints || 0} PTS</Badge>
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </CardContent>
+                </Card>
+            </div>
           </TabsContent>
 
           <TabsContent value="settings" className="mt-0 space-y-6">
@@ -1029,7 +1051,6 @@ export default function AdminDashboardPage() {
                 <CardDescription className="text-muted-foreground">Control content, pricing, and payment links.</CardDescription>
               </CardHeader>
               <CardContent className="p-6 space-y-8">
-                {/* Homepage Categories */}
                 <div className="space-y-4">
                     <div className="flex items-center gap-3">
                         <List className="h-5 w-5 text-orange-500" />
@@ -1066,7 +1087,6 @@ export default function AdminDashboardPage() {
 
                 <Separator className="bg-white/5" />
 
-                {/* Department Management */}
                 <div className="space-y-4">
                     <div className="flex items-center gap-3">
                         <Building className="h-5 w-5 text-orange-500" />
