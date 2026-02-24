@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Suspense, useMemo, useState, useEffect } from 'react';
@@ -794,7 +795,7 @@ function PostCard({ post }: { post: Post }) {
                 )}
 
                 {post.imageUrl && !isEditingThisPost && (
-                    <ImageLightbox imageUrl={post.imageUrl} altText={`Post image from ${author?.firstName}`}>
+                    <ImageLightbox images={[post.imageUrl]} altText={`Post image from ${author?.firstName}`}>
                         <div className="relative rounded-lg overflow-hidden border aspect-video cursor-pointer">
                             <Image
                                 src={post.imageUrl}

@@ -264,6 +264,8 @@ function ExpertProfileContent() {
     }
     const formattedPhoneNumber = cleanPhoneNumber(expert.phoneNumber);
     const canContact = expert.verified && expert.showPhoneNumberOnProfile && formattedPhoneNumber;
+
+    const allPhotos = [expert.photoUrl, expert.photoUrl2, expert.photoUrl3].filter(Boolean) as string[];
     
     return (
         <div className="min-h-screen bg-background p-4 sm:p-8">
@@ -329,7 +331,7 @@ function ExpertProfileContent() {
                     <CardHeader>
                         <div className="flex flex-col sm:flex-row items-start gap-8">
                             <div className="flex flex-col gap-4">
-                                <ImageLightbox imageUrl={expert.photoUrl || ''} altText={displayName}>
+                                <ImageLightbox images={allPhotos} initialIndex={0} altText={displayName}>
                                     <Avatar className="h-40 w-40 text-5xl transition-all hover:scale-105 hover:opacity-90 active:scale-95 shadow-xl border-4 border-primary/20">
                                         <AvatarImage 
                                             src={expert.photoUrl} 
@@ -343,7 +345,7 @@ function ExpertProfileContent() {
                                 </ImageLightbox>
                                 <div className="flex gap-2 justify-center">
                                     {expert.photoUrl2 && (
-                                        <ImageLightbox imageUrl={expert.photoUrl2} altText={`${displayName} Secondary 1`}>
+                                        <ImageLightbox images={allPhotos} initialIndex={allPhotos.indexOf(expert.photoUrl2)} altText={`${displayName} Secondary 1`}>
                                             <Avatar className="h-16 w-16 transition-all hover:scale-110 active:scale-95 shadow-md border-2 border-white/10">
                                                 <AvatarImage src={expert.photoUrl2} className="object-cover" onContextMenu={(e) => e.preventDefault()} draggable={false} />
                                                 <AvatarFallback><ImageIcon className="h-4 w-4 opacity-30" /></AvatarFallback>
@@ -351,7 +353,7 @@ function ExpertProfileContent() {
                                         </ImageLightbox>
                                     )}
                                     {expert.photoUrl3 && (
-                                        <ImageLightbox imageUrl={expert.photoUrl3} altText={`${displayName} Secondary 2`}>
+                                        <ImageLightbox images={allPhotos} initialIndex={allPhotos.indexOf(expert.photoUrl3)} altText={`${displayName} Secondary 2`}>
                                             <Avatar className="h-16 w-16 transition-all hover:scale-110 active:scale-95 shadow-md border-2 border-white/10">
                                                 <AvatarImage src={expert.photoUrl3} className="object-cover" onContextMenu={(e) => e.preventDefault()} draggable={false} />
                                                 <AvatarFallback><ImageIcon className="h-4 w-4 opacity-30" /></AvatarFallback>

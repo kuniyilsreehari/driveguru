@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Suspense, useMemo, useState } from 'react';
@@ -940,7 +941,7 @@ function GroupFeed({ group }: { group: Group }) {
         }).catch(error => {
             if ((error as any).name !== 'FirebaseError') {
                 toast({
-                    variant: 'destructive',
+                    variant: "destructive",
                     title: "Deletion Failed",
                     description: "Could not delete the post. Please try again.",
                 });
@@ -1026,24 +1027,6 @@ function GroupFeed({ group }: { group: Group }) {
         } finally {
             setIsManagingRequest(null);
         }
-    }
-
-    if (isLoading || isUserLoading || isCurrentUserProfileLoading) {
-        return (
-            <div className="flex h-64 w-full items-center justify-center">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                <p className="ml-4 text-muted-foreground">Loading group content...</p>
-            </div>
-        );
-    }
-    
-    if (!isMember) {
-        return (
-            <Card className="text-center p-8">
-                <CardTitle>This is a private group.</CardTitle>
-                <CardDescription className="mt-2">Join the group to view and participate in discussions.</CardDescription>
-            </Card>
-        )
     }
 
     return (
@@ -1134,7 +1117,7 @@ function GroupFeed({ group }: { group: Group }) {
                                             )}
 
                                             {post.imageUrl && !isEditingThisPost && (
-                                                <ImageLightbox imageUrl={post.imageUrl} altText={`Post image from ${currentUserProfile?.firstName}`}>
+                                                <ImageLightbox images={[post.imageUrl]} altText={`Post image from ${currentUserProfile?.firstName}`}>
                                                     <div className="relative rounded-lg overflow-hidden border aspect-video cursor-pointer">
                                                         <Image
                                                             src={post.imageUrl}
