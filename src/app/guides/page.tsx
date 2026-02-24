@@ -1,12 +1,13 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { doc } from 'firebase/firestore';
-import { useFirestore, useDoc, useMemoFirebase } from '@/firebase';
+import { getStorage, ref, getDownloadURL } from 'firebase/storage';
+import { useFirestore, useDoc, useMemoFirebase, useFirebaseApp } from '@/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { ChevronLeft, BookOpen, Video, Rss, Users, Briefcase, PlayCircle, Info } from 'lucide-react';
+import { ChevronLeft, BookOpen, Video, Rss, Users, Briefcase, PlayCircle, Info, Loader2 } from 'lucide-react';
 import {
   Accordion,
   AccordionContent,
@@ -20,21 +21,59 @@ type AppConfig = {
 
 export default function GuidesPage() {
   const firestore = useFirestore();
+  const firebaseApp = useFirebaseApp();
   const appConfigDocRef = useMemoFirebase(() => doc(firestore, 'app_config', 'homepage'), [firestore]);
   const { data: appConfig } = useDoc<AppConfig>(appConfigDocRef);
 
-  const youtubeEmbedUrl = useMemo(() => {
+  const [resolvedUrl, setResolvedUrl] = useState<string | null>(null);
+  const [videoType, setVideoType] = useState<'youtube' | 'direct' | 'none'>('none');
+  const [isResolving, setIsFetching] = useState(false);
+
+  useEffect(() => {
     const url = appConfig?.introVideoUrl;
-    if (!url) return null;
-    
-    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-    const match = url.match(regExp);
-    
-    if (match && match[2].length === 11) {
-        return `https://www.youtube.com/embed/${match[2]}`;
+    if (!url) {
+        setVideoType('none');
+        setResolvedUrl(null);
+        return;
     }
-    return null;
-  }, [appConfig?.introVideoUrl]);
+
+    // 1. Check for YouTube
+    const ytRegExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+    const ytMatch = url.match(ytRegExp);
+    if (ytMatch && ytMatch[2].length === 11) {
+        setVideoType('youtube');
+        setResolvedUrl(`https://www.youtube.com/embed/${ytMatch[2]}`);
+        return;
+    }
+
+    // 2. Check for Firebase Storage (gs://)
+    if (url.startsWith('gs://')) {
+        setIsFetching(true);
+        const storage = getStorage(firebaseApp);
+        const storageRef = ref(storage, url);
+        getDownloadURL(storageRef)
+            .then((downloadUrl) => {
+                setVideoType('direct');
+                setResolvedUrl(downloadUrl);
+            })
+            .catch((err) => {
+                console.error("Failed to resolve storage URL", err);
+                setVideoType('none');
+            })
+            .finally(() => setIsFetching(false));
+        return;
+    }
+
+    // 3. Assume direct video link if it ends in common extensions
+    const directExtensions = ['.mp4', '.webm', '.ogg', '.mov'];
+    if (directExtensions.some(ext => url.toLowerCase().includes(ext)) || url.includes('firebasestorage.googleapis.com')) {
+        setVideoType('direct');
+        setResolvedUrl(url);
+        return;
+    }
+
+    setVideoType('none');
+  }, [appConfig?.introVideoUrl, firebaseApp]);
 
   return (
     <div className="min-h-screen bg-background p-4 sm:p-8">
@@ -53,31 +92,46 @@ export default function GuidesPage() {
             </Button>
         </div>
 
-        {youtubeEmbedUrl && (
+        {isResolving ? (
+            <Card className="rounded-[2rem] border-none bg-[#24262d] p-12 flex flex-col items-center justify-center gap-4">
+                <Loader2 className="h-8 w-8 animate-spin text-orange-500" />
+                <p className="text-sm font-bold text-muted-foreground uppercase tracking-widest">Loading Guide Content...</p>
+            </Card>
+        ) : videoType !== 'none' && resolvedUrl ? (
             <Card className="overflow-hidden border-2 border-primary/20 rounded-[2rem] shadow-2xl shadow-primary/5 bg-[#24262d]">
                 <CardHeader className="bg-white/5 border-b border-white/5 p-6">
                     <CardTitle className="flex items-center gap-3 text-2xl font-black text-white">
                         <PlayCircle className="h-6 w-6 text-orange-500" />
                         Platform Introduction
                     </CardTitle>
-                    <CardDescription className="text-muted-foreground font-medium">Watch this short video to learn how to make the most of DriveGuru.</CardDescription>
+                    <CardDescription className="text-muted-foreground font-medium">Watch this guide to learn how to make the most of DriveGuru.</CardDescription>
                 </CardHeader>
                 <CardContent className="p-0">
                     <div className="aspect-video w-full bg-black">
-                        <iframe
-                            width="100%"
-                            height="100%"
-                            src={youtubeEmbedUrl}
-                            title="DriveGuru Platform Introduction"
-                            frameBorder="0"
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                            allowFullScreen
-                            className="block"
-                        ></iframe>
+                        {videoType === 'youtube' ? (
+                            <iframe
+                                width="100%"
+                                height="100%"
+                                src={resolvedUrl}
+                                title="DriveGuru Platform Introduction"
+                                frameBorder="0"
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                allowFullScreen
+                                className="block"
+                            ></iframe>
+                        ) : (
+                            <video 
+                                controls 
+                                className="w-full h-full"
+                                src={resolvedUrl}
+                            >
+                                Your browser does not support the video tag.
+                            </video>
+                        )}
                     </div>
                 </CardContent>
             </Card>
-        )}
+        ) : null}
 
         <Card className="rounded-[2rem] border-none bg-[#24262d] shadow-xl overflow-hidden">
             <CardHeader className="bg-white/5 border-b border-white/5 p-8">

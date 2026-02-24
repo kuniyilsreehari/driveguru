@@ -966,12 +966,12 @@ export default function AdminDashboardPage() {
               </CardHeader>
               <CardContent className="p-6 space-y-4">
                 <div className="space-y-2">
-                    <Label className="font-bold text-white/70 text-xs uppercase tracking-widest">Introduction Video URL (YouTube)</Label>
+                    <Label className="font-bold text-white/70 text-xs uppercase tracking-widest">Introduction Video URL</Label>
                     <div className="relative">
-                        <Youtube className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-orange-500" />
-                        <Input value={introVideoUrl} onChange={e => setIntroVideoUrl(e.target.value)} className="rounded-xl h-12 bg-background border-none pl-10 text-white placeholder:text-muted-foreground" placeholder="https://www.youtube.com/watch?v=..." />
+                        <Video className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-orange-500" />
+                        <Input value={introVideoUrl} onChange={e => setIntroVideoUrl(e.target.value)} className="rounded-xl h-12 bg-background border-none pl-10 text-white placeholder:text-muted-foreground" placeholder="YouTube link or direct MP4/Storage URL..." />
                     </div>
-                    <p className="text-[10px] text-muted-foreground">This video will be featured at the top of the Guides page.</p>
+                    <p className="text-[10px] text-muted-foreground">This video will be featured at the top of the Guides page. Supports YouTube, gs:// paths, and direct MP4 links.</p>
                 </div>
               </CardContent>
             </Card>
