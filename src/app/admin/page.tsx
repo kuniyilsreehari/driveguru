@@ -567,13 +567,14 @@ export default function AdminDashboardPage() {
                                 <Table>
                                     <TableHeader className="bg-white/5">
                                         <TableRow className="border-white/5">
-                                            <TableHead className="w-[60px] font-bold text-white text-center">S.No</TableHead>
-                                            <TableHead className="font-bold text-white">Expert Profile</TableHead>
-                                            <TableHead className="font-bold text-white text-center">Contact</TableHead>
-                                            <TableHead className="font-bold text-white text-center">Code</TableHead>
-                                            <TableHead className="font-bold text-white text-center">Tier</TableHead>
-                                            <TableHead className="font-bold text-white text-center">Points</TableHead>
-                                            <TableHead className="font-bold text-center text-white">Verification</TableHead>
+                                            <TableHead className="w-[60px] font-bold text-white text-center text-[10px] uppercase tracking-widest">S.No</TableHead>
+                                            <TableHead className="font-bold text-white text-[10px] uppercase tracking-widest">Expert Profile</TableHead>
+                                            <TableHead className="font-bold text-white text-center text-[10px] uppercase tracking-widest">Contact</TableHead>
+                                            <TableHead className="font-bold text-white text-center text-[10px] uppercase tracking-widest">Code</TableHead>
+                                            <TableHead className="font-bold text-white text-center text-[10px] uppercase tracking-widest">Tier</TableHead>
+                                            <TableHead className="font-bold text-white text-center text-[10px] uppercase tracking-widest">Points</TableHead>
+                                            <TableHead className="font-bold text-blue-500 text-center text-[10px] uppercase tracking-widest">Joins</TableHead>
+                                            <TableHead className="font-bold text-center text-white text-[10px] uppercase tracking-widest">Verification</TableHead>
                                             <TableHead className="text-right font-bold text-white"></TableHead>
                                         </TableRow>
                                     </TableHeader>
@@ -581,7 +582,7 @@ export default function AdminDashboardPage() {
                                         {(() => {
                                             const paginated = filteredUsers.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
                                             if (paginated.length === 0 && !isUsersLoading) {
-                                                return <TableRow><TableCell colSpan={8} className="text-center py-12 text-muted-foreground italic">No experts found matching your criteria.</TableCell></TableRow>;
+                                                return <TableRow><TableCell colSpan={9} className="text-center py-12 text-muted-foreground italic">No experts found matching your criteria.</TableCell></TableRow>;
                                             }
                                             return paginated.map((u, index) => {
                                                 const globalIndex = (currentPage - 1) * ITEMS_PER_PAGE + index + 1;
@@ -615,6 +616,9 @@ export default function AdminDashboardPage() {
                                                                 <span className="text-xs font-black text-orange-500">{u.referralPoints || 0}</span>
                                                                 <Button variant="ghost" size="icon" className="h-6 w-6 rounded-full hover:bg-orange-500/10" onClick={() => { setSelectedUser(u); setIsAwardDialogOpen(true); }}><Gift className="h-3 w-3 text-orange-500" /></Button>
                                                             </div>
+                                                        </TableCell>
+                                                        <TableCell className="text-center font-black text-sm text-blue-500">
+                                                            {referralUsageMap[u.referralCode || ''] || 0}
                                                         </TableCell>
                                                         <TableCell>
                                                             <div className="flex items-center justify-center">
