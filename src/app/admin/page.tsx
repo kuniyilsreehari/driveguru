@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
@@ -9,7 +8,7 @@ import { useUser, useFirestore, useDoc, useMemoFirebase, useAuth, useCollection 
 import { updateDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, CheckCircle2, UserCheck, UserX, Crown, Sparkles, User as UserIcon, Settings, Save, Briefcase, Building, MessageSquare, Search, PlusCircle, Mail, Download, ExternalLink, IndianRupee, X, Upload, HardDriveDownload, Megaphone, Phone, MapPinIcon, Key, Gift, Code, List, Grip, ArrowUp, ArrowDown, Rss, UserPlus, Fingerprint, Award, CircleHelp, CheckCircle, FileJson, MapPin, Clock, AlertCircle, CreditCard, Fingerprint as IdIcon, Check, XCircle, Youtube, Video, ChevronLeft, ChevronRight, BarChart3, TrendingUp, PieChart, Activity } from 'lucide-react';
+import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, CheckCircle2, UserCheck, UserX, Crown, Sparkles, User as UserIcon, Settings, Save, Briefcase, Building, MessageSquare, Search, PlusCircle, Mail, Download, ExternalLink, IndianRupee, X, Upload, HardDriveDownload, Megaphone, Phone, MapPinIcon, Key, Gift, Code, List, Grip, ArrowUp, ArrowDown, Rss, UserPlus, Fingerprint, Award, CircleHelp, CheckCircle, FileJson, MapPin, Clock, AlertCircle, CreditCard, Fingerprint as IdIcon, Check, XCircle, Youtube, Video, ChevronLeft, ChevronRight, BarChart3, TrendingUp, PieChart, Activity, Trash } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -111,6 +110,15 @@ type Payment = {
     updatedAt: Timestamp;
 };
 
+type Post = {
+    id: string;
+    authorId: string;
+    authorName?: string;
+    title?: string;
+    content: string;
+    createdAt: Timestamp;
+};
+
 type AppConfig = {
     introVideoUrl?: string;
     featuredExpertsLimit?: number;
@@ -125,6 +133,10 @@ type AppConfig = {
     departments?: string[];
     premierPlanPrices?: { daily: number; monthly: number; yearly: number };
     superPremierPlanPrices?: { daily: number; monthly: number; yearly: number };
+    premierPaymentLink?: string;
+    superPremierPaymentLink?: string;
+    verificationPaymentLink?: string;
+    verificationFee?: number;
 };
 
 export default function AdminDashboardPage() {
@@ -139,9 +151,11 @@ export default function AdminDashboardPage() {
   const [isImporting, setIsImporting] = useState(false);
   const [selectedUser, setSelectedUser] = useState<ExpertUser | null>(null);
   const [selectedVacancy, setSelectedVacancy] = useState<Vacancy | null>(null);
+  const [selectedPost, setSelectedPost] = useState<Post | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isVacancyDialogOpen, setIsVacancyDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isPostDeleteDialogOpen, setIsPostDeleteDialogOpen] = useState(false);
   const [isAwardDialogOpen, setIsAwardDialogOpen] = useState(false);
   const [awardPoints, setAwardPoints] = useState(100);
   const [userSearchQuery, setUserSearchQuery] = useState('');
@@ -150,6 +164,7 @@ export default function AdminDashboardPage() {
   // Pagination State
   const ITEMS_PER_PAGE = 10;
   const [currentPage, setCurrentPage] = useState(1);
+  const [feedPage, setFeedPage] = useState(1);
 
   // App Config State
   const [introVideoUrl, setIntroVideoUrl] = useState("");
@@ -163,6 +178,10 @@ export default function AdminDashboardPage() {
   const [referralPoints, setReferralPoints] = useState(100);
   const [homepageCategories, setHomepageCategories] = useState<HomepageCategory[]>([]);
   const [departments, setDepartments] = useState<string[]>([]);
+  const [premierPaymentLink, setPremierPaymentLink] = useState("");
+  const [superPremierPaymentLink, setSuperPremierPaymentLink] = useState("");
+  const [verificationPaymentLink, setVerificationPaymentLink] = useState("");
+  const [verificationFee, setVerificationFee] = useState(500);
 
   const superAdminDocRef = useMemoFirebase(() => user ? doc(firestore, 'roles_super_admin', user.uid) : null, [firestore, user]);
   const { data: superAdminData, isLoading: isRoleLoading } = useDoc(superAdminDocRef);
@@ -177,8 +196,8 @@ export default function AdminDashboardPage() {
   const vacanciesQuery = useMemoFirebase(() => isSuperAdmin ? query(collection(firestore, 'vacancies'), orderBy('postedAt', 'desc')) : null, [firestore, isSuperAdmin]);
   const { data: vacancies, isLoading: isVacanciesLoading } = useCollection<Vacancy>(vacanciesQuery);
 
-  const postsQuery = useMemoFirebase(() => isSuperAdmin ? collection(firestore, 'posts') : null, [firestore, isSuperAdmin]);
-  const { data: posts } = useCollection(postsQuery);
+  const postsQuery = useMemoFirebase(() => isSuperAdmin ? query(collection(firestore, 'posts'), orderBy('createdAt', 'desc')) : null, [firestore, isSuperAdmin]);
+  const { data: posts, isLoading: isPostsLoading } = useCollection<Post>(postsQuery);
 
   const appConfigDocRef = useMemoFirebase(() => doc(firestore, 'app_config', 'homepage'), [firestore]);
   const { data: appConfig } = useDoc<AppConfig>(appConfigDocRef);
@@ -196,6 +215,10 @@ export default function AdminDashboardPage() {
       setReferralPoints(appConfig.referralRewardPoints || 100);
       setHomepageCategories(appConfig.homepageCategories || []);
       setDepartments(appConfig.departments || []);
+      setPremierPaymentLink(appConfig.premierPaymentLink || "");
+      setSuperPremierPaymentLink(appConfig.superPremierPaymentLink || "");
+      setVerificationPaymentLink(appConfig.verificationPaymentLink || "");
+      setVerificationFee(appConfig.verificationFee || 500);
     }
   }, [appConfig]);
 
@@ -216,11 +239,9 @@ export default function AdminDashboardPage() {
     };
   }, [users]);
 
-  // Report Calculations
   const reportData = useMemo(() => {
     if (!users || !payments || !posts) return null;
 
-    // 1. Revenue Metrics
     const successfulPayments = payments.filter(p => p.status === 'successful');
     const totalRevenue = successfulPayments.reduce((sum, p) => sum + p.amount, 0);
     
@@ -230,7 +251,6 @@ export default function AdminDashboardPage() {
         { name: 'Verification', value: successfulPayments.filter(p => p.plan === 'Verification').reduce((sum, p) => sum + p.amount, 0), color: '#16a34a' },
     ];
 
-    // 2. User Growth (Last 6 Months)
     const months = eachMonthOfInterval({
         start: subMonths(new Date(), 5),
         end: new Date()
@@ -247,21 +267,18 @@ export default function AdminDashboardPage() {
         };
     });
 
-    // 3. Expert Distribution
     const roleDistribution = [
         { name: 'Freelancer', count: users.filter(u => u.role === 'Freelancer').length },
         { name: 'Company', count: users.filter(u => u.role === 'Company').length },
         { name: 'Auth Pro', count: users.filter(u => u.role === 'Authorized Pro').length },
     ];
 
-    // 4. Referrals Leaderboard
     const referrers = users
         .filter(u => u.referralPoints && u.referralPoints > 0)
         .sort((a, b) => (b.referralPoints || 0) - (a.referralPoints || 0))
         .slice(0, 5);
 
-    // 5. Community Activity
-    const totalLikes = posts.reduce((sum, p) => sum + (p.likes?.length || 0), 0);
+    const totalLikes = (posts as any).reduce((sum: number, p: any) => sum + (p.likes?.length || 0), 0);
 
     return {
         totalRevenue,
@@ -321,6 +338,10 @@ export default function AdminDashboardPage() {
         referralRewardPoints: referralPoints,
         homepageCategories,
         departments,
+        premierPaymentLink,
+        superPremierPaymentLink,
+        verificationPaymentLink,
+        verificationFee,
       }, { merge: true });
       toast({ title: "Settings Saved" });
     } finally {
@@ -366,46 +387,17 @@ export default function AdminDashboardPage() {
     }
   };
 
-  const handleToggleVacancyVerified = async (vacancyId: string, currentStatus: boolean) => {
-    const vacancyRef = doc(firestore, 'vacancies', vacancyId);
+  const handleDeletePost = async () => {
+    if (!selectedPost) return;
     try {
-        await updateDocumentNonBlocking(vacancyRef, { isCompanyVerified: !currentStatus });
-        toast({ title: "Verification Toggled" });
+        await deleteDoc(doc(firestore, 'posts', selectedPost.id));
+        toast({ title: "Post Removed" });
     } catch (e) {
-        toast({ variant: "destructive", title: "Update Failed" });
+        toast({ variant: "destructive", title: "Action Failed" });
+    } finally {
+        setIsPostDeleteDialogOpen(false);
     }
-  };
-
-  const handleToggleVacancyTier = async (vacancyId: string, currentTier?: string) => {
-    const vacancyRef = doc(firestore, 'vacancies', vacancyId);
-    try {
-        const nextTier = currentTier === 'Premier' ? 'Standard' : 'Premier';
-        await updateDocumentNonBlocking(vacancyRef, { companyTier: nextTier });
-        toast({ title: "Tier Toggled" });
-    } catch (e) {
-        toast({ variant: "destructive", title: "Update Failed" });
-    }
-  };
-
-  const handleUpdateVacancyStatus = async (vacancyId: string, newStatus: 'Pending' | 'Approved' | 'Rejected') => {
-    const vacancyRef = doc(firestore, 'vacancies', vacancyId);
-    try {
-        await updateDocumentNonBlocking(vacancyRef, { status: newStatus });
-        toast({ title: "Status Updated", description: `Vacancy is now ${newStatus}` });
-    } catch (e) {
-        toast({ variant: "destructive", title: "Update Failed" });
-    }
-  };
-
-  const handleDeleteVacancy = async (vacancyId: string) => {
-    const vacancyRef = doc(firestore, 'vacancies', vacancyId);
-    try {
-        await deleteDocumentNonBlocking(vacancyRef);
-        toast({ title: "Vacancy Deleted" });
-    } catch (e) {
-        toast({ variant: "destructive", title: "Delete Failed" });
-    }
-  };
+  }
 
   const handleExportJSON = async () => {
     setIsExporting(true);
@@ -462,12 +454,8 @@ export default function AdminDashboardPage() {
                 title: "Import Finished",
                 description: `Processed: ${result.processedCount}, Created: ${result.createdCount}, Updated: ${result.updatedCount}`,
             });
-            if (result.errors.length > 0) {
-                console.error("Import Errors:", result.errors);
-                toast({ variant: "destructive", title: "Errors during import", description: "Check console for details." });
-            }
         } catch (err) {
-            toast({ variant: "destructive", title: "Import Failed", description: "Invalid CSV format or network error." });
+            toast({ variant: "destructive", title: "Import Failed" });
         } finally {
             setIsImporting(false);
             if (event.target) event.target.value = '';
@@ -501,16 +489,9 @@ export default function AdminDashboardPage() {
 
   const addDepartment = () => {
     if (!newDepName) return;
-    if (departments.includes(newDepName)) {
-        toast({ variant: "destructive", title: "Already exists" });
-        return;
-    }
+    if (departments.includes(newDepName)) return;
     setDepartments([...departments, newDepName]);
     setNewDepName("");
-  };
-
-  const deleteDepartment = (name: string) => {
-    setDepartments(departments.filter(d => d !== name));
   };
 
   if (isUserLoading || isRoleLoading) return <div className="flex h-screen items-center justify-center"><Loader className="animate-spin" /></div>;
@@ -525,7 +506,7 @@ export default function AdminDashboardPage() {
                 <Shield className="h-10 w-10 text-orange-500" />
             </div>
             <div>
-              <h1 className="text-4xl font-black tracking-tight">Super Admin</h1>
+              <h1 className="text-4xl font-black tracking-tight uppercase italic">Super Admin</h1>
               <p className="text-muted-foreground text-sm font-medium">Welcome, {user?.email}</p>
             </div>
           </div>
@@ -534,173 +515,144 @@ export default function AdminDashboardPage() {
 
         <Tabs defaultValue="dashboard" className="w-full">
           <TabsList className="grid w-full grid-cols-4 bg-secondary p-1 h-12 rounded-xl mb-8">
-            <TabsTrigger value="dashboard" className="rounded-lg data-[state=active]:bg-background data-[state=active]:text-white font-bold">Management</TabsTrigger>
-            <TabsTrigger value="reports" className="rounded-lg data-[state=active]:bg-background data-[state=active]:text-white font-bold">Analytics & Reports</TabsTrigger>
-            <TabsTrigger value="settings" className="rounded-lg data-[state=active]:bg-background data-[state=active]:text-white font-bold">Platform Settings</TabsTrigger>
-            <TabsTrigger value="data" className="rounded-lg data-[state=active]:bg-background data-[state=active]:text-white font-bold">Data Control</TabsTrigger>
+            <TabsTrigger value="dashboard" className="rounded-lg font-bold">Management</TabsTrigger>
+            <TabsTrigger value="reports" className="rounded-lg font-bold">Analytics</TabsTrigger>
+            <TabsTrigger value="settings" className="rounded-lg font-bold">Platform Settings</TabsTrigger>
+            <TabsTrigger value="data" className="rounded-lg font-bold">Data Control</TabsTrigger>
           </TabsList>
 
           <TabsContent value="dashboard" className="mt-0 space-y-8">
             <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-6">
-              <Card className="border-none bg-card"><CardHeader className="pb-2"><CardTitle className="text-sm font-bold opacity-70">Total Experts</CardTitle></CardHeader><CardContent><div className="text-3xl font-black">{stats.total}</div></CardContent></Card>
-              <Card className="border-none bg-card"><CardHeader className="pb-2"><CardTitle className="text-sm font-bold opacity-70">Verified</CardTitle></CardHeader><CardContent><div className="text-3xl font-black text-green-500">{stats.verified}</div></CardContent></Card>
-              <Card className="border-none bg-card"><CardHeader className="pb-2"><CardTitle className="text-sm font-bold opacity-70">Unverified</CardTitle></CardHeader><CardContent><div className="text-3xl font-black text-red-500">{stats.unverified}</div></CardContent></Card>
-              <Card className="border-none bg-card"><CardHeader className="pb-2"><CardTitle className="text-sm font-bold opacity-70">Premier</CardTitle></CardHeader><CardContent><div className="text-3xl font-black text-purple-500">{stats.premier}</div></CardContent></Card>
-              <Card className="border-none bg-card"><CardHeader className="pb-2"><CardTitle className="text-sm font-bold opacity-70">Super</CardTitle></CardHeader><CardContent><div className="text-3xl font-black text-blue-500">{stats.super}</div></CardContent></Card>
-              <Card className="border-none bg-card"><CardHeader className="pb-2"><CardTitle className="text-sm font-bold opacity-70">Referrals</CardTitle></CardHeader><CardContent><div className="text-3xl font-black text-orange-500">{stats.referrals}</div></CardContent></Card>
+              <Card className="border-none bg-card"><CardHeader className="pb-2"><CardTitle className="text-xs font-black opacity-70 uppercase tracking-widest">Total Experts</CardTitle></CardHeader><CardContent><div className="text-3xl font-black">{stats.total}</div></CardContent></Card>
+              <Card className="border-none bg-card"><CardHeader className="pb-2"><CardTitle className="text-xs font-black opacity-70 uppercase tracking-widest text-green-500">Verified</CardTitle></CardHeader><CardContent><div className="text-3xl font-black text-green-500">{stats.verified}</div></CardContent></Card>
+              <Card className="border-none bg-card"><CardHeader className="pb-2"><CardTitle className="text-xs font-black opacity-70 uppercase tracking-widest text-red-500">Unverified</CardTitle></CardHeader><CardContent><div className="text-3xl font-black text-red-500">{stats.unverified}</div></CardContent></Card>
+              <Card className="border-none bg-card"><CardHeader className="pb-2"><CardTitle className="text-xs font-black opacity-70 uppercase tracking-widest text-purple-500">Premier</CardTitle></CardHeader><CardContent><div className="text-3xl font-black text-purple-500">{stats.premier}</div></CardContent></Card>
+              <Card className="border-none bg-card"><CardHeader className="pb-2"><CardTitle className="text-xs font-black opacity-70 uppercase tracking-widest text-blue-500">Super</CardTitle></CardHeader><CardContent><div className="text-3xl font-black text-blue-500">{stats.super}</div></CardContent></Card>
+              <Card className="border-none bg-card"><CardHeader className="pb-2"><CardTitle className="text-xs font-black opacity-70 uppercase tracking-widest text-orange-500">Referrals</CardTitle></CardHeader><CardContent><div className="text-3xl font-black text-orange-500">{stats.referrals}</div></CardContent></Card>
             </div>
 
             <Tabs defaultValue="users" className="w-full">
-                <TabsList className="flex w-full bg-secondary p-1 rounded-xl mb-6">
-                    <TabsTrigger value="users" className="flex-1 rounded-lg font-bold" onClick={() => setCurrentPage(1)}>User Management</TabsTrigger>
-                    <TabsTrigger value="vacancies" className="flex-1 rounded-lg font-bold">Vacancy Management</TabsTrigger>
-                    <TabsTrigger value="payments" className="flex-1 rounded-lg font-bold">Payment Management</TabsTrigger>
+                <TabsList className="flex w-full bg-secondary p-1 rounded-xl mb-6 overflow-x-auto h-auto sm:h-12">
+                    <TabsTrigger value="users" className="flex-1 rounded-lg font-bold">Experts</TabsTrigger>
+                    <TabsTrigger value="vacancies" className="flex-1 rounded-lg font-bold">Vacancies</TabsTrigger>
+                    <TabsTrigger value="payments" className="flex-1 rounded-lg font-bold">Payments</TabsTrigger>
+                    <TabsTrigger value="feed" className="flex-1 rounded-lg font-bold">Feed Removal</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="users">
-                    <Card className="border-none bg-card rounded-2xl overflow-hidden">
+                    <Card className="border-none bg-card rounded-2xl overflow-hidden shadow-2xl">
                         <CardHeader className="bg-white/5 pb-6 border-b border-white/5">
                             <div className="flex items-center gap-3">
                                 <Users className="h-6 w-6 text-orange-500" />
                                 <div>
-                                    <CardTitle className="text-2xl font-black">Expert Users</CardTitle>
-                                    <CardDescription className="text-muted-foreground">Manage all registered users in the system.</CardDescription>
+                                    <CardTitle className="text-2xl font-black uppercase italic">Expert Registry</CardTitle>
+                                    <CardDescription className="text-muted-foreground">Manage all registered professionals.</CardDescription>
                                 </div>
                             </div>
                         </CardHeader>
                         <CardContent className="p-6 space-y-6">
-                            <div className="flex flex-col lg:flex-row items-center gap-4">
-                                <div className="relative flex-1 w-full">
-                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                    <Input 
-                                        placeholder="Search experts..." 
-                                        className="pl-10 h-12 bg-white/5 border-none rounded-xl text-white placeholder:text-muted-foreground"
-                                        value={userSearchQuery}
-                                        onChange={(e) => setUserSearchQuery(e.target.value)}
-                                    />
-                                </div>
-                                <div className="flex items-center gap-2 w-full lg:w-auto overflow-x-auto">
-                                    <Button variant={userFilter === 'verified' ? 'default' : 'secondary'} size="sm" className="rounded-lg font-bold" onClick={() => setUserFilter(userFilter === 'verified' ? 'all' : 'verified')}>Verified</Button>
-                                    <Button variant={userFilter === 'unverified' ? 'default' : 'secondary'} size="sm" className="rounded-lg font-bold" onClick={() => setUserFilter(userFilter === 'unverified' ? 'all' : 'unverified')}>Unverified</Button>
-                                    <Button variant={userFilter === 'premier' ? 'default' : 'secondary'} size="sm" className="rounded-lg font-bold" onClick={() => setUserFilter(userFilter === 'premier' ? 'all' : 'premier')}>Premier</Button>
-                                    <Button variant={userFilter === 'super' ? 'default' : 'secondary'} size="sm" className="rounded-lg font-bold" onClick={() => setUserFilter(userFilter === 'super' ? 'all' : 'super')}>Super Premier</Button>
-                                </div>
+                            <div className="relative group">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-orange-500 transition-colors" />
+                                <Input 
+                                    placeholder="Search experts by name, email or code..." 
+                                    className="pl-10 h-12 bg-white/5 border-none rounded-xl text-white placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-orange-500"
+                                    value={userSearchQuery}
+                                    onChange={(e) => setUserSearchQuery(e.target.value)}
+                                />
                             </div>
 
-                            <Tabs defaultValue="all" className="w-full">
-                                <TabsList className="grid grid-cols-4 bg-background p-1 rounded-xl mb-4">
-                                    <TabsTrigger value="all" className="rounded-lg font-bold" onClick={() => setCurrentPage(1)}>All</TabsTrigger>
-                                    <TabsTrigger value="freelancer" className="rounded-lg font-bold" onClick={() => setCurrentPage(1)}>Freelancers</TabsTrigger>
-                                    <TabsTrigger value="company" className="rounded-lg font-bold" onClick={() => setCurrentPage(1)}>Companies</TabsTrigger>
-                                    <TabsTrigger value="pro" className="rounded-lg font-bold" onClick={() => setCurrentPage(1)}>Authorized Pros</TabsTrigger>
-                                </TabsList>
-
-                                {['all', 'freelancer', 'company', 'pro'].map((roleTab) => (
-                                    <TabsContent key={roleTab} value={roleTab}>
-                                        <div className="rounded-xl border border-white/5 overflow-hidden">
-                                            <Table>
-                                                <TableHeader className="bg-white/5">
-                                                    <TableRow className="border-white/5">
-                                                        <TableHead className="w-[60px] font-bold text-white text-center">S.No</TableHead>
-                                                        <TableHead className="font-bold text-white">Expert</TableHead>
-                                                        <TableHead className="font-bold text-white">Rewards</TableHead>
-                                                        <TableHead className="font-bold text-white">Role</TableHead>
-                                                        <TableHead className="font-bold text-center text-white">Tier</TableHead>
-                                                        <TableHead className="font-bold text-center text-white">Verification</TableHead>
-                                                        <TableHead className="text-right font-bold text-white"></TableHead>
+                            <div className="rounded-xl border border-white/5 overflow-hidden">
+                                <Table>
+                                    <TableHeader className="bg-white/5">
+                                        <TableRow className="border-white/5">
+                                            <TableHead className="w-[60px] font-bold text-white text-center">S.No</TableHead>
+                                            <TableHead className="font-bold text-white">Expert Profile</TableHead>
+                                            <TableHead className="font-bold text-white text-center">Code</TableHead>
+                                            <TableHead className="font-bold text-white text-center">Tier</TableHead>
+                                            <TableHead className="font-bold text-white text-center">Points</TableHead>
+                                            <TableHead className="font-bold text-center text-white">Verification</TableHead>
+                                            <TableHead className="text-right font-bold text-white"></TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {(() => {
+                                            const paginated = filteredUsers.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+                                            if (paginated.length === 0 && !isUsersLoading) {
+                                                return <TableRow><TableCell colSpan={7} className="text-center py-12 text-muted-foreground italic">No experts found matching your criteria.</TableCell></TableRow>;
+                                            }
+                                            return paginated.map((u, index) => {
+                                                const globalIndex = (currentPage - 1) * ITEMS_PER_PAGE + index + 1;
+                                                return (
+                                                    <TableRow key={u.id} className="hover:bg-white/5 border-white/5 h-20">
+                                                        <TableCell className="text-center font-bold text-muted-foreground text-xs">{globalIndex}</TableCell>
+                                                        <TableCell>
+                                                            <div className="flex items-center gap-3">
+                                                                <Avatar className="h-10 w-10 border border-white/10 shadow-lg">
+                                                                    <AvatarImage src={u.photoUrl} className="object-cover" />
+                                                                    <AvatarFallback className="bg-orange-500/10 text-orange-500 font-black">{u.firstName[0]}</AvatarFallback>
+                                                                </Avatar>
+                                                                <div className="space-y-0.5">
+                                                                    <div className="font-black text-sm text-white">{u.firstName} {u.lastName}</div>
+                                                                    <div className="text-[10px] text-muted-foreground uppercase tracking-widest">{u.role}</div>
+                                                                </div>
+                                                            </div>
+                                                        </TableCell>
+                                                        <TableCell className="text-center font-mono text-xs text-orange-500 font-bold">{u.referralCode || '---'}</TableCell>
+                                                        <TableCell className="text-center">
+                                                            {u.tier === 'Super Premier' ? <Sparkles className="h-4 w-4 text-blue-500 mx-auto" /> : u.tier === 'Premier' ? <Crown className="h-4 w-4 text-purple-500 mx-auto" /> : <UserIcon className="h-4 w-4 text-muted-foreground/30 mx-auto" />}
+                                                        </TableCell>
+                                                        <TableCell className="text-center">
+                                                            <div className="flex items-center justify-center gap-2">
+                                                                <span className="text-xs font-black text-orange-500">{u.referralPoints || 0}</span>
+                                                                <Button variant="ghost" size="icon" className="h-6 w-6 rounded-full hover:bg-orange-500/10" onClick={() => { setSelectedUser(u); setIsAwardDialogOpen(true); }}><Gift className="h-3 w-3 text-orange-500" /></Button>
+                                                            </div>
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            <div className="flex items-center justify-center">
+                                                                <Switch checked={u.verified} onCheckedChange={(v) => updateDocumentNonBlocking(doc(firestore, 'users', u.id), { verified: v })} className="scale-75 data-[state=checked]:bg-green-500" />
+                                                            </div>
+                                                        </TableCell>
+                                                        <TableCell className="text-right">
+                                                            <DropdownMenu>
+                                                                <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
+                                                                <DropdownMenuContent align="end" className="bg-card text-white border-white/10 rounded-xl shadow-2xl">
+                                                                    <DropdownMenuItem onClick={() => { setSelectedUser(u); setIsEditDialogOpen(true); }} className="rounded-lg"><Edit className="mr-2 h-4 w-4" /> Edit Profile</DropdownMenuItem>
+                                                                    <DropdownMenuSeparator className="bg-white/5" />
+                                                                    <DropdownMenuItem className="text-red-500 focus:text-red-500 rounded-lg" onClick={() => { setSelectedUser(u); setIsDeleteDialogOpen(true); }}><Trash2 className="mr-2 h-4 w-4" /> Delete Expert</DropdownMenuItem>
+                                                                </DropdownMenuContent>
+                                                            </DropdownMenu>
+                                                        </TableCell>
                                                     </TableRow>
-                                                </TableHeader>
-                                                <TableBody>
-                                                    {(() => {
-                                                        const tabUsers = filteredUsers.filter(u => roleTab === 'all' || u.role.toLowerCase().includes(roleTab));
-                                                        const paginated = tabUsers.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
-                                                        
-                                                        if (paginated.length === 0 && !isUsersLoading) {
-                                                            return (
-                                                                <TableRow>
-                                                                    <TableCell colSpan={7} className="text-center py-12 text-muted-foreground">No experts found.</TableCell>
-                                                                </TableRow>
-                                                            );
-                                                        }
+                                                );
+                                            });
+                                        })()}
+                                    </TableBody>
+                                </Table>
+                            </div>
 
-                                                        return paginated.map((u, index) => {
-                                                            const globalIndex = (currentPage - 1) * ITEMS_PER_PAGE + index + 1;
-                                                            return (
-                                                                <TableRow key={u.id} className="hover:bg-white/5 border-white/5 h-20">
-                                                                    <TableCell className="text-center font-bold text-muted-foreground text-xs">{globalIndex}</TableCell>
-                                                                    <TableCell>
-                                                                        <div className="flex items-center gap-3">
-                                                                            <Avatar className="h-10 w-10 border border-white/10 shrink-0">
-                                                                                <AvatarImage src={u.photoUrl} />
-                                                                                <AvatarFallback className="bg-orange-500/10 text-orange-500 font-bold">{u.firstName[0]}</AvatarFallback>
-                                                                            </Avatar>
-                                                                            <div className="space-y-0.5">
-                                                                                <div className="font-bold text-sm text-white">{u.firstName} {u.lastName}</div>
-                                                                                <div className="text-[10px] text-muted-foreground">{u.email}</div>
-                                                                            </div>
-                                                                        </div>
-                                                                    </TableCell>
-                                                                    <TableCell>
-                                                                        <div className="flex items-center gap-2">
-                                                                            <span className="text-xs font-bold text-orange-500">{u.referralPoints || 0} pts</span>
-                                                                            <Button variant="ghost" size="icon" className="h-6 w-6 rounded-full" onClick={() => { setSelectedUser(u); setIsAwardDialogOpen(true); }}><Award className="h-3 w-3" /></Button>
-                                                                        </div>
-                                                                    </TableCell>
-                                                                    <TableCell>
-                                                                        <Badge variant="secondary" className="text-[10px] uppercase font-bold">{u.role}</Badge>
-                                                                    </TableCell>
-                                                                    <TableCell className="text-center">
-                                                                        {u.tier === 'Super Premier' ? <Sparkles className="h-4 w-4 text-blue-500 mx-auto" /> : u.tier === 'Premier' ? <Crown className="h-4 w-4 text-purple-500 mx-auto" /> : <UserIcon className="h-4 w-4 text-muted-foreground mx-auto" />}
-                                                                    </TableCell>
-                                                                    <TableCell>
-                                                                        <div className="flex items-center justify-center">
-                                                                            <Switch checked={u.verified} onCheckedChange={(v) => updateDocumentNonBlocking(doc(firestore, 'users', u.id), { verified: v })} className="scale-75" />
-                                                                        </div>
-                                                                    </TableCell>
-                                                                    <TableCell className="text-right">
-                                                                        <DropdownMenu>
-                                                                            <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
-                                                                            <DropdownMenuContent align="end" className="bg-card text-white border-white/10">
-                                                                                <DropdownMenuItem onClick={() => { setSelectedUser(u); setIsEditDialogOpen(true); }}><Edit className="mr-2 h-4 w-4" /> Edit Profile</DropdownMenuItem>
-                                                                                <DropdownMenuSeparator className="bg-white/5" />
-                                                                                <DropdownMenuItem className="text-red-500" onClick={() => { setSelectedUser(u); setIsDeleteDialogOpen(true); }}><Trash2 className="mr-2 h-4 w-4" /> Delete</DropdownMenuItem>
-                                                                            </DropdownMenuContent>
-                                                                        </DropdownMenu>
-                                                                    </TableCell>
-                                                                </TableRow>
-                                                            );
-                                                        });
-                                                    })()}
-                                                </TableBody>
-                                            </Table>
-                                        </div>
-
-                                        <div className="flex items-center justify-between pt-6">
-                                            <p className="text-xs text-muted-foreground">Page {currentPage}</p>
-                                            <div className="flex items-center gap-2">
-                                                <Button variant="outline" size="sm" onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} disabled={currentPage === 1} className="rounded-xl"><ChevronLeft className="mr-1 h-4 w-4" /> Previous</Button>
-                                                <Button variant="outline" size="sm" onClick={() => setCurrentPage(prev => prev + 1)} disabled={currentPage >= Math.ceil(filteredUsers.filter(u => roleTab === 'all' || u.role.toLowerCase().includes(roleTab)).length / ITEMS_PER_PAGE)} className="rounded-xl">Next <ChevronRight className="ml-1 h-4 w-4" /></Button>
-                                            </div>
-                                        </div>
-                                    </TabsContent>
-                                ))}
-                            </Tabs>
+                            <div className="flex items-center justify-between pt-4">
+                                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Page {currentPage}</p>
+                                <div className="flex items-center gap-2">
+                                    <Button variant="outline" size="sm" onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} disabled={currentPage === 1} className="rounded-xl h-9 border-white/10 bg-transparent text-white font-bold"><ChevronLeft className="h-4 w-4" /></Button>
+                                    <Button variant="outline" size="sm" onClick={() => setCurrentPage(prev => prev + 1)} disabled={currentPage >= Math.ceil(filteredUsers.length / ITEMS_PER_PAGE)} className="rounded-xl h-9 border-white/10 bg-transparent text-white font-bold"><ChevronRight className="h-4 w-4" /></Button>
+                                </div>
+                            </div>
                         </CardContent>
                     </Card>
                 </TabsContent>
 
                 <TabsContent value="vacancies">
-                    <Card className="border-none bg-card rounded-2xl overflow-hidden">
+                    <Card className="border-none bg-card rounded-2xl overflow-hidden shadow-2xl">
                         <CardHeader className="bg-white/5 pb-6 border-b border-white/5">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-3">
                                     <Briefcase className="h-6 w-6 text-orange-500" />
                                     <div>
-                                        <CardTitle className="text-2xl font-black">Vacancy Management</CardTitle>
-                                        <CardDescription className="text-muted-foreground">Curation of job listings across the platform.</CardDescription>
+                                        <CardTitle className="text-2xl font-black uppercase italic">Platform Openings</CardTitle>
+                                        <CardDescription className="text-muted-foreground">Review and moderate job vacancies.</CardDescription>
                                     </div>
                                 </div>
-                                <Button onClick={() => { setSelectedVacancy(null); setIsVacancyDialogOpen(true); }} className="rounded-xl font-bold bg-orange-500 hover:bg-orange-600"><PlusCircle className="mr-2 h-4 w-4" /> New Vacancy</Button>
+                                <Button onClick={() => { setSelectedVacancy(null); setIsVacancyDialogOpen(true); }} className="rounded-xl font-black bg-orange-500 hover:bg-orange-600 shadow-lg shadow-orange-500/20"><PlusCircle className="mr-2 h-4 w-4" /> Post Admin Vacancy</Button>
                             </div>
                         </CardHeader>
                         <CardContent className="p-6">
@@ -708,25 +660,32 @@ export default function AdminDashboardPage() {
                                 <Table>
                                     <TableHeader className="bg-white/5">
                                         <TableRow className="border-white/5">
-                                            <TableHead className="font-bold text-white">Role</TableHead>
+                                            <TableHead className="font-bold text-white">Title</TableHead>
                                             <TableHead className="font-bold text-white">Company</TableHead>
-                                            <TableHead className="font-bold text-white">Location</TableHead>
-                                            <TableHead className="font-bold text-center text-white">Type</TableHead>
-                                            <TableHead className="text-right font-bold text-white"></TableHead>
+                                            <TableHead className="font-bold text-white text-center">Status</TableHead>
+                                            <TableHead className="text-right font-bold text-white">Actions</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
                                         {isVacanciesLoading ? (
-                                            <TableRow><TableCell colSpan={5} className="text-center py-8"><Loader className="animate-spin mx-auto" /></TableCell></TableRow>
+                                            <TableRow><TableCell colSpan={4} className="text-center py-8"><Loader className="animate-spin mx-auto text-orange-500" /></TableCell></TableRow>
+                                        ) : vacancies?.length === 0 ? (
+                                            <TableRow><TableCell colSpan={4} className="text-center py-12 text-muted-foreground italic">No job openings recorded.</TableCell></TableRow>
                                         ) : vacancies?.map(v => (
                                             <TableRow key={v.id} className="hover:bg-white/5 border-white/5 h-16">
-                                                <TableCell className="font-bold text-white">{v.title}</TableCell>
-                                                <TableCell className="text-muted-foreground text-sm">{v.companyName}</TableCell>
-                                                <TableCell className="text-muted-foreground text-sm">{v.location}</TableCell>
-                                                <TableCell className="text-center"><Badge variant="outline" className="text-[10px]">{v.employmentType}</Badge></TableCell>
+                                                <TableCell className="font-black text-white italic">{v.title}</TableCell>
+                                                <TableCell className="text-muted-foreground font-bold text-xs uppercase tracking-wider">{v.companyName}</TableCell>
+                                                <TableCell className="text-center">
+                                                    <Badge variant={v.status === 'Approved' ? 'default' : v.status === 'Rejected' ? 'destructive' : 'secondary'} className="text-[10px] font-black uppercase tracking-tighter">
+                                                        {v.status}
+                                                    </Badge>
+                                                </TableCell>
                                                 <TableCell className="text-right">
-                                                    <Button variant="ghost" size="icon" onClick={() => { setSelectedVacancy(v); setIsVacancyDialogOpen(true); }}><Edit className="h-4 w-4" /></Button>
-                                                    <Button variant="ghost" size="icon" className="text-red-500" onClick={() => handleDeleteVacancy(v.id)}><Trash2 className="h-4 w-4" /></Button>
+                                                    <div className="flex justify-end gap-2">
+                                                        <Button variant="outline" size="sm" className="rounded-lg h-8 px-3 border-green-500/20 text-green-500 hover:bg-green-500/10" onClick={() => updateDocumentNonBlocking(doc(firestore, 'vacancies', v.id), { status: 'Approved' })}><Check className="h-3 w-3" /></Button>
+                                                        <Button variant="outline" size="sm" className="rounded-lg h-8 px-3 border-red-500/20 text-red-500 hover:bg-red-500/10" onClick={() => updateDocumentNonBlocking(doc(firestore, 'vacancies', v.id), { status: 'Rejected' })}><Ban className="h-3 w-3" /></Button>
+                                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-white/30 hover:text-red-500" onClick={() => deleteDocumentNonBlocking(doc(firestore, 'vacancies', v.id))}><Trash className="h-4 w-4" /></Button>
+                                                    </div>
                                                 </TableCell>
                                             </TableRow>
                                         ))}
@@ -738,13 +697,13 @@ export default function AdminDashboardPage() {
                 </TabsContent>
 
                 <TabsContent value="payments">
-                    <Card className="border-none bg-card rounded-2xl overflow-hidden">
+                    <Card className="border-none bg-card rounded-2xl overflow-hidden shadow-2xl">
                         <CardHeader className="bg-white/5 pb-6 border-b border-white/5">
                             <div className="flex items-center gap-3">
                                 <CreditCard className="h-6 w-6 text-orange-500" />
                                 <div>
-                                    <CardTitle className="text-2xl font-black">Transaction Logs</CardTitle>
-                                    <CardDescription className="text-muted-foreground">Monitor revenue and payment statuses.</CardDescription>
+                                    <CardTitle className="text-2xl font-black uppercase italic">Transaction Ledger</CardTitle>
+                                    <CardDescription className="text-muted-foreground">Monitor revenue and payment attempts.</CardDescription>
                                 </div>
                             </div>
                         </CardHeader>
@@ -753,25 +712,25 @@ export default function AdminDashboardPage() {
                                 <Table>
                                     <TableHeader className="bg-white/5">
                                         <TableRow className="border-white/5">
-                                            <TableHead className="font-bold text-white">Expert ID</TableHead>
+                                            <TableHead className="font-bold text-white">Order ID</TableHead>
                                             <TableHead className="font-bold text-white">Plan</TableHead>
                                             <TableHead className="font-bold text-center text-white">Amount</TableHead>
                                             <TableHead className="font-bold text-center text-white">Status</TableHead>
-                                            <TableHead className="font-bold text-white">Date</TableHead>
+                                            <TableHead className="text-right font-bold text-white">Date</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
                                         {isPaymentsLoading ? (
-                                            <TableRow><TableCell colSpan={5} className="text-center py-8"><Loader className="animate-spin mx-auto" /></TableCell></TableRow>
+                                            <TableRow><TableCell colSpan={5} className="text-center py-8"><Loader className="animate-spin mx-auto text-orange-500" /></TableCell></TableRow>
                                         ) : payments?.map(p => (
                                             <TableRow key={p.id} className="hover:bg-white/5 border-white/5 h-16">
-                                                <TableCell className="font-mono text-[10px] opacity-50">{p.userId}</TableCell>
-                                                <TableCell><Badge variant="outline" className="text-[10px]">{p.plan}</Badge></TableCell>
-                                                <TableCell className="text-center font-bold text-orange-500">₹{p.amount}</TableCell>
+                                                <TableCell className="font-mono text-[10px] text-orange-500/70">{p.orderId}</TableCell>
+                                                <TableCell><Badge variant="secondary" className="text-[10px] font-black uppercase tracking-tighter">{p.plan}</Badge></TableCell>
+                                                <TableCell className="text-center font-black text-white">₹{p.amount}</TableCell>
                                                 <TableCell className="text-center">
-                                                    <Badge className={cn("text-[9px] font-black uppercase", p.status === 'successful' ? "bg-green-500" : "bg-red-500")}>{p.status}</Badge>
+                                                    <Badge className={cn("text-[9px] font-black uppercase tracking-widest", p.status === 'successful' ? "bg-green-500" : "bg-red-500/20 text-red-500 border border-red-500/30")}>{p.status}</Badge>
                                                 </TableCell>
-                                                <TableCell className="text-[10px] text-muted-foreground">{p.createdAt ? format(p.createdAt.toDate(), 'PP p') : '-'}</TableCell>
+                                                <TableCell className="text-[10px] text-muted-foreground text-right">{p.createdAt ? format(p.createdAt.toDate(), 'PP p') : '---'}</TableCell>
                                             </TableRow>
                                         ))}
                                     </TableBody>
@@ -780,70 +739,93 @@ export default function AdminDashboardPage() {
                         </CardContent>
                     </Card>
                 </TabsContent>
+
+                <TabsContent value="feed">
+                    <Card className="border-none bg-card rounded-2xl overflow-hidden shadow-2xl">
+                        <CardHeader className="bg-white/5 pb-6 border-b border-white/5">
+                            <div className="flex items-center gap-3">
+                                <Rss className="h-6 w-6 text-orange-500" />
+                                <div>
+                                    <CardTitle className="text-2xl font-black uppercase italic">Feed Moderation</CardTitle>
+                                    <CardDescription className="text-muted-foreground">Monitor and remove community updates.</CardDescription>
+                                </div>
+                            </div>
+                        </CardHeader>
+                        <CardContent className="p-6">
+                            <div className="rounded-xl border border-white/5 overflow-hidden">
+                                <Table>
+                                    <TableHeader className="bg-white/5">
+                                        <TableRow className="border-white/5">
+                                            <TableHead className="w-[60px] font-bold text-white text-center">S.No</TableHead>
+                                            <TableHead className="font-bold text-white">Author</TableHead>
+                                            <TableHead className="font-bold text-white">Preview</TableHead>
+                                            <TableHead className="text-right font-bold text-white">Actions</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {isPostsLoading ? (
+                                            <TableRow><TableCell colSpan={4} className="text-center py-8"><Loader className="animate-spin mx-auto text-orange-500" /></TableCell></TableRow>
+                                        ) : posts?.slice((feedPage - 1) * ITEMS_PER_PAGE, feedPage * ITEMS_PER_PAGE).map((post, idx) => {
+                                            const globalIndex = (feedPage - 1) * ITEMS_PER_PAGE + idx + 1;
+                                            return (
+                                                <TableRow key={post.id} className="hover:bg-white/5 border-white/5 h-16">
+                                                    <TableCell className="text-center font-bold text-muted-foreground text-xs">{globalIndex}</TableCell>
+                                                    <TableCell className="font-black text-white text-xs">{post.authorName || 'Expert'}</TableCell>
+                                                    <TableCell className="max-w-xs truncate text-[10px] text-muted-foreground italic font-medium">{post.content}</TableCell>
+                                                    <TableCell className="text-right">
+                                                        <Button variant="ghost" size="icon" className="text-red-500 hover:bg-red-500/10" onClick={() => { setSelectedPost(post); setIsPostDeleteDialogOpen(true); }}><Trash2 className="h-4 w-4" /></Button>
+                                                    </TableCell>
+                                                </TableRow>
+                                            )
+                                        })}
+                                    </TableBody>
+                                </Table>
+                            </div>
+                            <div className="flex items-center justify-between pt-4">
+                                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Page {feedPage}</p>
+                                <div className="flex items-center gap-2">
+                                    <Button variant="outline" size="sm" onClick={() => setFeedPage(prev => Math.max(prev - 1, 1))} disabled={feedPage === 1} className="rounded-xl h-9 border-white/10 bg-transparent"><ChevronLeft className="h-4 w-4" /></Button>
+                                    <Button variant="outline" size="sm" onClick={() => setFeedPage(prev => prev + 1)} disabled={feedPage >= Math.ceil((posts?.length || 0) / ITEMS_PER_PAGE)} className="rounded-xl h-9 border-white/10 bg-transparent"><ChevronRight className="h-4 w-4" /></Button>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </TabsContent>
             </Tabs>
           </TabsContent>
 
           <TabsContent value="reports" className="mt-0 space-y-8">
-            {/* KPI Section */}
             <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
-                <Card className="border-none bg-card shadow-lg">
+                <Card className="border-none bg-card shadow-xl">
                     <CardHeader className="pb-2">
-                        <CardDescription className="text-xs font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                            <TrendingUp className="h-3 w-3 text-green-500" /> Total Revenue
-                        </CardDescription>
+                        <CardDescription className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2"><TrendingUp className="h-3 w-3 text-green-500" /> Platform Revenue</CardDescription>
                         <CardTitle className="text-3xl font-black text-orange-500">₹{reportData?.totalRevenue.toLocaleString()}</CardTitle>
                     </CardHeader>
-                    <CardContent>
-                        <p className="text-[10px] text-muted-foreground font-medium">All-time earnings from subscriptions.</p>
-                    </CardContent>
                 </Card>
-                <Card className="border-none bg-card shadow-lg">
+                <Card className="border-none bg-card shadow-xl">
                     <CardHeader className="pb-2">
-                        <CardDescription className="text-xs font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                            <Activity className="h-3 w-3 text-blue-500" /> Verification Rate
-                        </CardDescription>
-                        <CardTitle className="text-3xl font-black text-white">
-                            {stats.total > 0 ? Math.round((stats.verified / stats.total) * 100) : 0}%
-                        </CardTitle>
+                        <CardDescription className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2"><Activity className="h-3 w-3 text-blue-500" /> Verification Rate</CardDescription>
+                        <CardTitle className="text-3xl font-black">{stats.total > 0 ? Math.round((stats.verified / stats.total) * 100) : 0}%</CardTitle>
                     </CardHeader>
-                    <CardContent>
-                        <p className="text-[10px] text-muted-foreground font-medium">Percentage of safely audited experts.</p>
-                    </CardContent>
                 </Card>
-                <Card className="border-none bg-card shadow-lg">
+                <Card className="border-none bg-card shadow-xl">
                     <CardHeader className="pb-2">
-                        <CardDescription className="text-xs font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                            <BarChart3 className="h-3 w-3 text-purple-500" /> Premium Adoption
-                        </CardDescription>
-                        <CardTitle className="text-3xl font-black text-white">
-                            {stats.total > 0 ? Math.round(((stats.premier + stats.super) / stats.total) * 100) : 0}%
-                        </CardTitle>
+                        <CardDescription className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2"><Crown className="h-3 w-3 text-purple-500" /> Premium Users</CardDescription>
+                        <CardTitle className="text-3xl font-black">{stats.premier + stats.super}</CardTitle>
                     </CardHeader>
-                    <CardContent>
-                        <p className="text-[10px] text-muted-foreground font-medium">Users opted for high-visibility plans.</p>
-                    </CardContent>
                 </Card>
-                <Card className="border-none bg-card shadow-lg">
+                <Card className="border-none bg-card shadow-xl">
                     <CardHeader className="pb-2">
-                        <CardDescription className="text-xs font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                            <MessageSquare className="h-3 w-3 text-orange-500" /> Community Score
-                        </CardDescription>
-                        <CardTitle className="text-3xl font-black text-white">{reportData?.totalLikes || 0}</CardTitle>
+                        <CardDescription className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2"><MessageSquare className="h-3 w-3 text-orange-500" /> Comm. Updates</CardDescription>
+                        <CardTitle className="text-3xl font-black">{reportData?.totalPosts || 0}</CardTitle>
                     </CardHeader>
-                    <CardContent>
-                        <p className="text-[10px] text-muted-foreground font-medium">Total hearts given across the feed.</p>
-                    </CardContent>
                 </Card>
             </div>
 
-            {/* Visual Analytics */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <Card className="border-none bg-card rounded-2xl overflow-hidden shadow-2xl">
                     <CardHeader className="bg-white/5 border-b border-white/5">
-                        <CardTitle className="text-xl font-black flex items-center gap-2">
-                            <TrendingUp className="h-5 w-5 text-orange-500" /> Expert Growth Trend
-                        </CardTitle>
-                        <CardDescription className="text-[10px] uppercase font-bold tracking-widest">New experts joined in last 6 months</CardDescription>
+                        <CardTitle className="text-xl font-black flex items-center gap-2 uppercase italic"><TrendingUp className="h-5 w-5 text-orange-500" /> Expert Growth</CardTitle>
                     </CardHeader>
                     <CardContent className="pt-8 h-[300px]">
                         <ResponsiveContainer width="100%" height="100%">
@@ -851,7 +833,7 @@ export default function AdminDashboardPage() {
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#ffffff10" />
                                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#8a92a6', fontSize: 12}} />
                                 <YAxis axisLine={false} tickLine={false} tick={{fill: '#8a92a6', fontSize: 12}} />
-                                <Tooltip contentStyle={{backgroundColor: '#24262d', border: 'none', borderRadius: '12px', fontSize: '12px', color: '#fff'}} cursor={{fill: '#ffffff05'}} />
+                                <Tooltip contentStyle={{backgroundColor: '#24262d', border: 'none', borderRadius: '12px', fontSize: '12px'}} cursor={{fill: '#ffffff05'}} />
                                 <Bar dataKey="users" fill="#f97316" radius={[4, 4, 0, 0]} barSize={30} />
                             </BarChart>
                         </ResponsiveContainer>
@@ -860,10 +842,7 @@ export default function AdminDashboardPage() {
 
                 <Card className="border-none bg-card rounded-2xl overflow-hidden shadow-2xl">
                     <CardHeader className="bg-white/5 border-b border-white/5">
-                        <CardTitle className="text-xl font-black flex items-center gap-2">
-                            <PieChart className="h-5 w-5 text-orange-500" /> Revenue Distribution
-                        </CardTitle>
-                        <CardDescription className="text-[10px] uppercase font-bold tracking-widest">Income split by subscription plan</CardDescription>
+                        <CardTitle className="text-xl font-black flex items-center gap-2 uppercase italic"><PieChart className="h-5 w-5 text-orange-500" /> Revenue Split</CardTitle>
                     </CardHeader>
                     <CardContent className="pt-8 h-[300px] flex items-center">
                         <div className="w-1/2 h-full">
@@ -874,7 +853,7 @@ export default function AdminDashboardPage() {
                                             <Cell key={`cell-${index}`} fill={entry.color} />
                                         ))}
                                     </Pie>
-                                    <Tooltip contentStyle={{backgroundColor: '#24262d', border: 'none', borderRadius: '12px', fontSize: '12px'}} />
+                                    <Tooltip contentStyle={{backgroundColor: '#24262d', border: 'none', borderRadius: '12px'}} />
                                 </RePieChart>
                             </ResponsiveContainer>
                         </div>
@@ -883,7 +862,7 @@ export default function AdminDashboardPage() {
                                 <div key={i} className="flex items-center justify-between">
                                     <div className="flex items-center gap-2">
                                         <div className="h-3 w-3 rounded-full" style={{backgroundColor: item.color}} />
-                                        <span className="text-xs font-bold text-muted-foreground">{item.name}</span>
+                                        <span className="text-[10px] font-black uppercase text-muted-foreground">{item.name}</span>
                                     </div>
                                     <span className="text-sm font-black text-white">₹{item.value.toLocaleString()}</span>
                                 </div>
@@ -892,373 +871,196 @@ export default function AdminDashboardPage() {
                     </CardContent>
                 </Card>
             </div>
+          </TabsContent>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Role Distribution */}
-                <Card className="lg:col-span-1 border-none bg-card rounded-2xl overflow-hidden shadow-2xl">
-                    <CardHeader className="bg-white/5 border-b border-white/5">
-                        <CardTitle className="text-xl font-black">Expert Types</CardTitle>
+          <TabsContent value="settings" className="mt-0 space-y-6">
+            <Card className="border-none rounded-2xl overflow-hidden bg-card">
+              <CardHeader className="bg-white/5 border-b border-white/5 pb-6">
+                <div className="flex items-center gap-3">
+                    <CreditCard className="h-6 w-6 text-orange-500" />
+                    <CardTitle className="text-2xl font-black uppercase italic">Payment Configuration</CardTitle>
+                </div>
+                <CardDescription className="text-muted-foreground">Manage API keys and static payment links.</CardDescription>
+              </CardHeader>
+              <CardContent className="p-6 space-y-8">
+                <div className="flex items-center justify-between p-4 bg-background rounded-xl border border-white/5 shadow-inner">
+                    <div>
+                        <Label className="text-base font-black uppercase italic">Payments Status</Label>
+                        <p className="text-xs text-muted-foreground font-medium">Toggle global payment accessibility.</p>
+                    </div>
+                    <Switch checked={paymentsEnabled} onCheckedChange={setPaymentsEnabled} className="data-[state=checked]:bg-orange-500" />
+                </div>
+
+                <div className="space-y-4">
+                    <Label className="font-black text-primary text-[10px] uppercase tracking-[0.2em]">Select Preferred Gateway</Label>
+                    <RadioGroup value={paymentMethod} onValueChange={(v: 'API' | 'Link') => setPaymentMethod(v)} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className={cn("flex items-center space-x-3 p-4 rounded-xl border transition-all cursor-pointer", paymentMethod === 'API' ? "border-orange-500 bg-orange-500/5" : "border-white/5 bg-white/5")} onClick={() => setPaymentMethod('API')}>
+                            <RadioGroupItem value="API" id="method-api" className="border-orange-500 text-orange-500" />
+                            <Label htmlFor="method-api" className="font-black text-sm uppercase italic cursor-pointer">API (Cashfree Direct)</Label>
+                        </div>
+                        <div className={cn("flex items-center space-x-3 p-4 rounded-xl border transition-all cursor-pointer", paymentMethod === 'Link' ? "border-orange-500 bg-orange-500/5" : "border-white/5 bg-white/5")} onClick={() => setPaymentMethod('Link')}>
+                            <RadioGroupItem value="Link" id="method-link" className="border-white/20" />
+                            <Label htmlFor="method-link" className="font-black text-sm uppercase italic cursor-pointer">Static Payment Links</Label>
+                        </div>
+                    </RadioGroup>
+                </div>
+
+                {paymentMethod === 'Link' && (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-6 bg-white/5 rounded-2xl border border-white/5 border-dashed">
+                        <div className="space-y-2">
+                            <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Premier Plan Link</Label>
+                            <Input value={premierPaymentLink} onChange={e => setPremierPaymentLink(e.target.value)} className="bg-background border-none rounded-xl h-11" placeholder="Enter URL..." />
+                        </div>
+                        <div className="space-y-2">
+                            <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Super Premier Link</Label>
+                            <Input value={superPremierPaymentLink} onChange={e => setSuperPremierPaymentLink(e.target.value)} className="bg-background border-none rounded-xl h-11" placeholder="Enter URL..." />
+                        </div>
+                        <div className="space-y-2">
+                            <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Verification Fee Link</Label>
+                            <Input value={verificationPaymentLink} onChange={e => setVerificationPaymentLink(e.target.value)} className="bg-background border-none rounded-xl h-11" placeholder="Enter URL..." />
+                        </div>
+                    </div>
+                )}
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                        <Label className="font-black text-primary text-[10px] uppercase tracking-[0.2em]">Public API Key / App ID</Label>
+                        <Input value={publicApiKey} onChange={e => setPublicApiKey(e.target.value)} className="rounded-xl h-12 bg-background border-none font-mono text-orange-500 shadow-inner" placeholder="Enter Cashfree App ID..." />
+                    </div>
+                    <div className="space-y-2">
+                        <Label className="font-black text-primary text-[10px] uppercase tracking-[0.2em]">One-time Verification Fee (₹)</Label>
+                        <Input type="number" value={verificationFee} onChange={e => setVerificationFee(Number(e.target.value))} className="rounded-xl h-12 bg-background border-none font-black text-white text-xl shadow-inner" />
+                    </div>
+                </div>
+              </CardContent>
+              <CardFooter className="bg-white/5 p-6">
+                <Button onClick={handleSaveSettings} disabled={isSaving} className="w-full h-14 rounded-2xl font-black text-lg bg-orange-500 hover:bg-orange-600 shadow-xl shadow-orange-500/20 uppercase tracking-widest transition-all active:scale-95">
+                    {isSaving ? <Loader className="animate-spin h-5 w-5 mr-2" /> : <Save className="mr-2 h-5 w-5" />} 
+                    Publish Platform Settings
+                </Button>
+              </CardFooter>
+            </Card>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Card className="border-none rounded-2xl overflow-hidden bg-card">
+                    <CardHeader className="bg-white/5 border-b border-white/5 pb-6">
+                        <div className="flex items-center gap-3">
+                            <Megaphone className="h-6 w-6 text-orange-500" />
+                            <CardTitle className="text-xl font-black uppercase italic">Announcements</CardTitle>
+                        </div>
                     </CardHeader>
-                    <CardContent className="p-6 space-y-6">
-                        {reportData?.roleDistribution.map((item, i) => (
-                            <div key={i} className="space-y-2">
-                                <div className="flex justify-between items-center text-xs font-black uppercase tracking-wider">
-                                    <span className="text-muted-foreground">{item.name}</span>
-                                    <span className="text-white">{item.count}</span>
-                                </div>
-                                <div className="h-2 bg-white/5 rounded-full overflow-hidden">
-                                    <div className="h-full bg-orange-500 rounded-full" style={{width: `${(item.count / stats.total) * 100}%`}} />
-                                </div>
-                            </div>
-                        ))}
+                    <CardContent className="p-6 space-y-4">
+                        <div className="flex items-center justify-between mb-4">
+                            <Label className="font-bold">Enable Banner</Label>
+                            <Switch checked={announcementEnabled} onCheckedChange={setAnnouncementEnabled} className="data-[state=checked]:bg-orange-500" />
+                        </div>
+                        <Textarea value={announcementText} onChange={e => setAnnouncementText(e.target.value)} className="bg-background border-none rounded-xl min-h-[80px]" placeholder="Breaking news text here..." />
                     </CardContent>
                 </Card>
 
-                {/* Referral Leaderboard */}
-                <Card className="lg:col-span-2 border-none bg-card rounded-2xl overflow-hidden shadow-2xl">
-                    <CardHeader className="bg-white/5 border-b border-white/5">
-                        <CardTitle className="text-xl font-black flex items-center gap-2">
-                            <Award className="h-5 w-5 text-orange-500" /> Referral Leaderboard
-                        </CardTitle>
-                        <CardDescription className="text-[10px] uppercase font-bold tracking-widest">Top members driving new signups</CardDescription>
+                <Card className="border-none rounded-2xl overflow-hidden bg-card">
+                    <CardHeader className="bg-white/5 border-b border-white/5 pb-6">
+                        <div className="flex items-center gap-3">
+                            <Gift className="h-6 w-6 text-orange-500" />
+                            <CardTitle className="text-xl font-black uppercase italic">Referral Rewards</CardTitle>
+                        </div>
                     </CardHeader>
-                    <CardContent className="p-0">
-                        <Table>
-                            <TableHeader>
-                                <TableRow className="border-white/5 hover:bg-transparent">
-                                    <TableHead className="font-black text-[10px] uppercase text-muted-foreground">Expert</TableHead>
-                                    <TableHead className="font-black text-[10px] uppercase text-muted-foreground text-center">Referral ID</TableHead>
-                                    <TableHead className="font-black text-[10px] uppercase text-muted-foreground text-center">Referrals</TableHead>
-                                    <TableHead className="font-black text-[10px] uppercase text-muted-foreground text-right">Points Earned</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {reportData?.referrers.map((ref, idx) => (
-                                    <TableRow key={ref.id} className="border-white/5 hover:bg-white/5">
-                                        <TableCell>
-                                            <div className="flex items-center gap-3">
-                                                <div className="text-xs font-black opacity-30 w-4">{idx + 1}</div>
-                                                <div className="font-bold text-sm">{ref.firstName} {ref.lastName}</div>
-                                            </div>
-                                        </TableCell>
-                                        <TableCell className="text-center font-mono text-xs text-orange-500">{ref.referralCode}</TableCell>
-                                        <TableCell className="text-center font-bold">{referralUsageMap[ref.referralCode || ''] || 0}</TableCell>
-                                        <TableCell className="text-right">
-                                            <Badge className="bg-orange-500/10 text-orange-500 border-none font-black">{ref.referralPoints || 0} PTS</Badge>
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
+                    <CardContent className="p-6 space-y-4">
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Points per signup</Label>
+                        <Input type="number" value={referralPoints} onChange={e => setReferralPoints(Number(e.target.value))} className="h-12 bg-background border-none rounded-xl font-black text-2xl text-orange-500" />
                     </CardContent>
                 </Card>
             </div>
           </TabsContent>
 
-          <TabsContent value="settings" className="mt-0 space-y-6">
-            <Card className="border-none rounded-2xl overflow-hidden bg-card">
-              <CardHeader className="bg-white/5 border-b border-white/5">
-                <div className="flex items-center gap-3">
-                    <Video className="h-6 w-6 text-orange-500" />
-                    <CardTitle className="text-2xl font-black text-white">Content Management</CardTitle>
-                </div>
-                <CardDescription className="text-muted-foreground">Manage dynamic content like introduction videos.</CardDescription>
-              </CardHeader>
-              <CardContent className="p-6 space-y-4">
-                <div className="space-y-2">
-                    <Label className="font-bold text-white/70 text-xs uppercase tracking-widest">Introduction Video URL</Label>
-                    <div className="relative">
-                        <Video className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-orange-500" />
-                        <Input value={introVideoUrl} onChange={e => setIntroVideoUrl(e.target.value)} className="rounded-xl h-12 bg-background border-none pl-10 text-white placeholder:text-muted-foreground" placeholder="YouTube link or direct MP4/Storage URL..." />
-                    </div>
-                    <p className="text-[10px] text-muted-foreground">This video will be featured at the top of the Guides page. Supports YouTube, gs:// paths, and direct MP4 links.</p>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-none rounded-2xl overflow-hidden bg-card">
-              <CardHeader className="bg-white/5 border-b border-white/5">
-                <div className="flex items-center gap-3">
-                    <Key className="h-6 w-6 text-orange-500" />
-                    <CardTitle className="text-2xl font-black text-white">Manage API Keys</CardTitle>
-                </div>
-                <CardDescription className="text-muted-foreground">Manage public-facing API keys and view instructions for secret keys.</CardDescription>
-              </CardHeader>
-              <CardContent className="p-6 space-y-4">
-                <div className="space-y-2">
-                    <Label className="font-bold text-white/70 text-xs uppercase tracking-widest">Public API Key / App ID (e.g., Cashfree)</Label>
-                    <Input value={publicApiKey} onChange={e => setPublicApiKey(e.target.value)} className="rounded-xl h-12 bg-background border-none font-mono text-orange-500" placeholder="Enter public API key..." />
-                    <p className="text-[10px] text-muted-foreground">This key will be used for client-side operations where needed.</p>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-none rounded-2xl overflow-hidden bg-card">
-              <CardHeader className="bg-white/5 border-b border-white/5">
-                <div className="flex items-center gap-3">
-                    <CreditCard className="h-6 w-6 text-orange-500" />
-                    <CardTitle className="text-2xl font-black text-white">Manage Payment Method</CardTitle>
-                </div>
-                <CardDescription className="text-muted-foreground">Globally enable or disable payments and choose the method for expert activation.</CardDescription>
-              </CardHeader>
-              <CardContent className="p-6 space-y-6">
-                <div className="flex items-center justify-between p-4 bg-background rounded-xl border border-white/5">
-                    <div>
-                        <Label className="text-base font-bold text-white">Payments Enabled</Label>
-                        <p className="text-xs text-muted-foreground">Turn all payment functionalities on or off.</p>
-                    </div>
-                    <Switch checked={paymentsEnabled} onCheckedChange={setPaymentsEnabled} className="data-[state=checked]:bg-orange-500" />
-                </div>
-                <div className="space-y-3">
-                    <Label className="font-bold text-white/70 text-xs uppercase tracking-widest">Payment Method</Label>
-                    <RadioGroup value={paymentMethod} onValueChange={(v: 'API' | 'Link') => setPaymentMethod(v)} className="flex flex-col gap-2">
-                        <div className="flex items-center space-x-3">
-                            <RadioGroupItem value="API" id="method-api" className="border-orange-500 text-orange-500" />
-                            <Label htmlFor="method-api" className="font-bold text-sm text-orange-500">API (Cashfree Popup)</Label>
-                        </div>
-                        <div className="flex items-center space-x-3">
-                            <RadioGroupItem value="Link" id="method-link" className="border-white/20" />
-                            <Label htmlFor="method-link" className="font-bold text-sm text-white/70">Payment Link</Label>
-                        </div>
-                    </RadioGroup>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-none rounded-2xl overflow-hidden bg-card">
-              <CardHeader className="bg-white/5 border-b border-white/5">
-                <div className="flex items-center gap-3">
-                    <Gift className="h-6 w-6 text-orange-500" />
-                    <CardTitle className="text-2xl font-black text-white">Referral Settings</CardTitle>
-                </div>
-                <CardDescription className="text-muted-foreground">Configure points for successful referrals.</CardDescription>
-              </CardHeader>
-              <CardContent className="p-6 space-y-4">
-                <div className="space-y-2">
-                    <Label className="font-bold text-white/70 text-xs uppercase tracking-widest">Points Awarded per Referral</Label>
-                    <Input type="number" value={referralPoints} onChange={e => setReferralPoints(Number(e.target.value))} className="rounded-xl h-12 bg-background border-none font-black text-orange-500 text-xl" />
-                    <p className="text-[10px] text-muted-foreground">Set the number of points awarded to a user for each successful referral.</p>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border-none rounded-2xl overflow-hidden bg-card">
-              <CardHeader className="bg-white/5 border-b border-white/5">
-                <div className="flex items-center gap-3">
-                    <Settings className="h-6 w-6 text-orange-500" />
-                    <CardTitle className="text-2xl font-black text-white">Global Settings</CardTitle>
-                </div>
-                <CardDescription className="text-muted-foreground">Control content, pricing, and payment links.</CardDescription>
-              </CardHeader>
-              <CardContent className="p-6 space-y-8">
-                <div className="space-y-4">
-                    <div className="flex items-center gap-3">
-                        <List className="h-5 w-5 text-orange-500" />
-                        <h4 className="font-black text-white">Homepage Categories</h4>
-                    </div>
-                    <p className="text-xs text-muted-foreground">Manage and reorder the categories displayed on the homepage.</p>
-                    <div className="space-y-2">
-                        {homepageCategories.map((cat, idx) => (
-                            <div key={cat.id} className="flex items-center gap-2">
-                                <Input value={cat.name} onChange={e => {
-                                    const newCats = [...homepageCategories];
-                                    newCats[idx].name = e.target.value;
-                                    setHomepageCategories(newCats);
-                                }} className="bg-background border-none text-white h-10" />
-                                <Input value={cat.icon} onChange={e => {
-                                    const newCats = [...homepageCategories];
-                                    newCats[idx].icon = e.target.value;
-                                    setHomepageCategories(newCats);
-                                }} className="bg-background border-none text-white h-10 w-32" />
-                                <div className="flex gap-1 shrink-0">
-                                    <Button variant="outline" size="icon" className="h-8 w-8 border-white/10 hover:bg-white/5" onClick={() => moveCategory(idx, 'up')} disabled={idx === 0}><ArrowUp className="h-3 w-3" /></Button>
-                                    <Button variant="outline" size="icon" className="h-8 w-8 border-white/10 hover:bg-white/5" onClick={() => moveCategory(idx, 'down')} disabled={idx === homepageCategories.length - 1}><ArrowDown className="h-3 w-3" /></Button>
-                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:bg-red-500/10 hover:text-red-500" onClick={() => deleteCategory(cat.id)}><Trash2 className="h-3 w-3" /></Button>
-                                </div>
-                            </div>
-                        ))}
-                        <div className="flex flex-col sm:flex-row gap-2 pt-2">
-                            <Input placeholder="New Category Name" value={newCatName} onChange={e => setNewCatName(e.target.value)} className="bg-background border-dashed border-white/20 h-10 text-white" />
-                            <Input placeholder="Icon Name" value={newCatIcon} onChange={e => setNewCatIcon(e.target.value)} className="bg-background border-dashed border-white/20 h-10 text-white" />
-                            <Button onClick={addCategory} className="bg-orange-500 hover:bg-orange-600 h-10 font-bold"><PlusCircle className="mr-2 h-4 w-4" /> Add</Button>
-                        </div>
-                    </div>
-                </div>
-
-                <Separator className="bg-white/5" />
-
-                <div className="space-y-4">
-                    <div className="flex items-center gap-3">
-                        <Building className="h-5 w-5 text-orange-500" />
-                        <h4 className="font-black text-white">Department Management</h4>
-                    </div>
-                    <p className="text-xs text-muted-foreground">Create and manage company departments.</p>
-                    <div className="space-y-2">
-                        {departments.map((dep, idx) => (
-                            <div key={idx} className="flex items-center justify-between p-2 bg-background border border-white/5 rounded-lg">
-                                <span className="font-bold text-sm px-2 text-white/80">{dep}</span>
-                                <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:bg-red-500/10 hover:text-red-500" onClick={() => deleteDepartment(dep)}><Trash2 className="h-3 w-3" /></Button>
-                            </div>
-                        ))}
-                        <div className="flex gap-2 pt-2">
-                            <Input placeholder="New Department Name" value={newDepName} onChange={e => setNewDepName(e.target.value)} className="bg-background border-dashed border-white/20 h-10 text-white" />
-                            <Button onClick={addDepartment} className="bg-orange-500 hover:bg-orange-600 h-10 font-bold"><PlusCircle className="mr-2 h-4 w-4" /> Add</Button>
-                        </div>
-                    </div>
-                </div>
-              </CardContent>
-              <CardFooter className="bg-white/5 p-6 border-t border-white/5">
-                <Button onClick={handleSaveSettings} disabled={isSaving} className="w-full h-12 rounded-xl font-black text-lg bg-orange-500 hover:bg-orange-600">
-                    {isSaving ? <Loader className="animate-spin h-5 w-5 mr-2" /> : <Save className="mr-2 h-5 w-5" />} 
-                    Save All Settings
-                </Button>
-              </CardFooter>
-            </Card>
-          </TabsContent>
-
           <TabsContent value="data" className="mt-0 space-y-6">
-            <Card className="border-none bg-card rounded-2xl overflow-hidden">
-              <CardHeader className="bg-white/5 border-b border-white/5">
-                <div className="flex items-center gap-3">
-                    <Users className="h-6 w-6 text-orange-500" />
-                    <div>
-                        <CardTitle className="text-2xl font-black text-white">Expert User Management</CardTitle>
-                        <CardDescription className="text-muted-foreground">Bulk create, update, or export expert users.</CardDescription>
-                    </div>
-                </div>
-              </CardHeader>
-              <CardContent className="p-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <div className="space-y-4">
-                        <div className="space-y-1">
-                            <h4 className="font-bold text-white">Import Users from CSV</h4>
-                            <p className="text-xs text-muted-foreground">Upload a CSV file to bulk create or update users. Matches based on &apos;id&apos; or &apos;email&apos;.</p>
-                        </div>
-                        <div className="flex flex-col gap-2">
-                            <input
-                                type="file"
-                                accept=".csv"
-                                className="hidden"
-                                id="csv-import-input"
-                                onChange={handleImportCSV}
-                            />
-                            <Button 
-                                variant="outline" 
-                                className="w-full h-12 rounded-xl border-white/10 bg-transparent text-white hover:bg-white/5"
-                                onClick={() => document.getElementById('csv-import-input')?.click()}
-                                disabled={isImporting}
-                            >
-                                {isImporting ? <Loader className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
-                                Select CSV to Import
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Card className="border-none bg-card rounded-2xl overflow-hidden shadow-xl">
+                    <CardHeader className="bg-white/5 border-b border-white/5 pb-6"><CardTitle className="font-black uppercase italic">CSV Actions</CardTitle></CardHeader>
+                    <CardContent className="p-6 space-y-4">
+                        <div className="flex flex-col gap-3">
+                            <input type="file" accept=".csv" className="hidden" id="csv-import-input" onChange={handleImportCSV} />
+                            <Button variant="outline" className="h-12 rounded-xl border-white/10 bg-white/5 hover:bg-white/10" onClick={() => document.getElementById('csv-import-input')?.click()} disabled={isImporting}>
+                                {isImporting ? <Loader className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />} Select CSV to Import
+                            </Button>
+                            <Button className="h-12 rounded-xl bg-orange-500 hover:bg-orange-600 font-black" onClick={handleExportCSV}>
+                                <Download className="mr-2 h-4 w-4" /> Export Registry (CSV)
                             </Button>
                         </div>
-                    </div>
+                    </CardContent>
+                </Card>
 
-                    <div className="space-y-4">
-                        <div className="space-y-1">
-                            <h4 className="font-bold text-white">Export Users to Excel (CSV)</h4>
-                            <p className="text-xs text-muted-foreground">Download a CSV file of all expert users. This can be opened in Excel or used as a template.</p>
-                        </div>
-                        <Button 
-                            className="w-full h-12 rounded-xl bg-orange-500 hover:bg-orange-600 font-bold"
-                            onClick={handleExportCSV}
-                        >
-                            <Download className="mr-2 h-4 w-4" />
-                            Export Users (CSV)
+                <Card className="border-none bg-card rounded-2xl overflow-hidden shadow-xl">
+                    <CardHeader className="bg-white/5 border-b border-white/5 pb-6"><CardTitle className="font-black uppercase italic">System Backup</CardTitle></CardHeader>
+                    <CardContent className="p-6">
+                        <Button className="w-full h-12 rounded-xl bg-orange-500 hover:bg-orange-600 font-black" onClick={handleExportJSON} disabled={isExporting}>
+                            {isExporting ? <Loader className="animate-spin mr-2 h-4 w-4" /> : <HardDriveDownload className="mr-2 h-4 w-4" />} Full Data Backup (JSON)
                         </Button>
-                    </div>
-                </div>
-              </CardContent>
-            </Card>
+                    </CardContent>
+                </Card>
+            </div>
 
-            <Card className="border-none bg-card rounded-2xl overflow-hidden">
-              <CardHeader className="bg-white/5 border-b border-white/5">
-                <div className="flex items-center gap-3">
-                    <HardDriveDownload className="h-6 w-6 text-orange-500" />
-                    <div>
-                        <CardTitle className="text-2xl font-black text-white">Full Application Backup</CardTitle>
-                        <CardDescription className="text-muted-foreground">Export all application data (users, vacancies, etc.) as a single JSON file.</CardDescription>
-                    </div>
-                </div>
-              </CardHeader>
-              <CardContent className="p-6">
-                <Button 
-                    className="w-full h-12 rounded-xl bg-orange-500 hover:bg-orange-600 font-bold"
-                    onClick={handleExportJSON}
-                    disabled={isExporting}
-                >
-                    {isExporting ? <Loader className="animate-spin mr-2 h-4 w-4" /> : <Download className="mr-2 h-4 w-4" />} 
-                    Export All Data (JSON)
-                </Button>
-              </CardContent>
-            </Card>
-
-            <Card className="border-none bg-card rounded-2xl overflow-hidden">
-              <CardHeader className="bg-white/5 border-b border-white/5">
-                <div className="flex items-center gap-3">
-                    <UserPlus className="h-6 w-6 text-orange-500" />
-                    <CardTitle className="text-2xl font-black text-white">Manual User Provisioning</CardTitle>
-                </div>
-              </CardHeader>
-              <CardContent className="p-6">
-                <CreateUserForm onSuccess={() => toast({ title: "User created" })} />
-              </CardContent>
+            <Card className="border-none bg-card rounded-2xl overflow-hidden shadow-xl">
+              <CardHeader className="bg-white/5 border-b border-white/5 pb-6"><CardTitle className="font-black uppercase italic">Manual User Provisioning</CardTitle></CardHeader>
+              <CardContent className="p-6"><CreateUserForm onSuccess={() => toast({ title: "User created" })} /></CardContent>
             </Card>
           </TabsContent>
         </Tabs>
       </div>
 
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-3xl overflow-y-auto max-h-[90vh] rounded-2xl border-none bg-background text-white">
-          <DialogHeader><DialogTitle className="text-2xl font-black">Edit Expert Profile</DialogTitle></DialogHeader>
+        <DialogContent className="max-w-3xl overflow-y-auto max-h-[90vh] rounded-[2rem] border-none bg-background text-white shadow-2xl">
+          <DialogHeader className="mb-4"><DialogTitle className="text-3xl font-black uppercase italic">Modify Expert Profile</DialogTitle></DialogHeader>
           {selectedUser && <EditProfileForm userProfile={selectedUser as any} isAdmin onSuccess={() => setIsEditDialogOpen(false)} />}
         </DialogContent>
       </Dialog>
 
       <Dialog open={isVacancyDialogOpen} onOpenChange={setIsVacancyDialogOpen}>
-        <DialogContent className="max-w-3xl overflow-y-auto max-h-[90vh] rounded-2xl border-none bg-background text-white">
-          <DialogHeader><DialogTitle className="text-2xl font-black">{selectedVacancy ? 'Edit Job Opening' : 'Post New Job'}</DialogTitle></DialogHeader>
+        <DialogContent className="max-w-3xl overflow-y-auto max-h-[90vh] rounded-[2rem] border-none bg-background text-white shadow-2xl">
+          <DialogHeader className="mb-4"><DialogTitle className="text-3xl font-black uppercase italic">{selectedVacancy ? 'Edit Vacancy' : 'Post Admin Opening'}</DialogTitle></DialogHeader>
           <PostVacancyForm isAdmin vacancy={selectedVacancy || undefined} onSuccess={() => setIsVacancyDialogOpen(false)} />
         </DialogContent>
       </Dialog>
 
       <Dialog open={isAwardDialogOpen} onOpenChange={setIsAwardDialogOpen}>
-        <DialogContent className="rounded-2xl border-none bg-background text-white">
-          <DialogHeader>
-            <DialogTitle className="text-2xl font-black">Award Referral Points</DialogTitle>
-            <DialogDescription className="text-muted-foreground">
-                Manually grant extra referral points to {selectedUser?.firstName}.
-            </DialogDescription>
+        <DialogContent className="rounded-[2rem] border-none bg-background text-white p-8">
+          <DialogHeader className="items-center text-center">
+            <div className="p-4 bg-orange-500/10 rounded-full w-fit mb-4"><Award className="h-10 w-10 text-orange-500" /></div>
+            <DialogTitle className="text-3xl font-black uppercase italic">Award Credits</DialogTitle>
+            <DialogDescription className="text-muted-foreground font-medium">Manually grant referral points to {selectedUser?.firstName}.</DialogDescription>
           </DialogHeader>
-          <div className="py-4 space-y-4">
-            <div className="space-y-2">
-                <Label className="font-bold text-white/70 text-xs uppercase tracking-widest">Points Amount</Label>
-                <Input 
-                    type="number" 
-                    value={awardPoints} 
-                    onChange={(e) => setAwardPoints(Number(e.target.value))}
-                    className="rounded-xl h-12 bg-white/5 border-none font-black text-orange-500 text-xl"
-                />
-            </div>
+          <div className="py-8 space-y-2">
+                <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-[0.2em]">Amount to Grant</Label>
+                <Input type="number" value={awardPoints} onChange={(e) => setAwardPoints(Number(e.target.value))} className="rounded-xl h-14 bg-white/5 border-none font-black text-orange-500 text-2xl text-center shadow-inner" />
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsAwardDialogOpen(false)} className="rounded-xl border-white/10 bg-transparent text-white hover:bg-white/5">Cancel</Button>
-            <Button onClick={handleAwardPoints} className="rounded-xl font-bold bg-orange-500 hover:bg-orange-600">Grant Reward</Button>
-          </DialogFooter>
+          <DialogFooter className="flex-col gap-3 sm:flex-col"><Button onClick={handleAwardPoints} className="w-full h-12 rounded-xl font-black bg-orange-500 hover:bg-orange-600">Apply Reward</Button></DialogFooter>
         </DialogContent>
       </Dialog>
 
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <AlertDialogContent className="rounded-2xl border-none bg-background text-white">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="text-2xl font-black text-white">Confirm Deletion</AlertDialogTitle>
-            <AlertDialogDescription className="text-muted-foreground">
-                This action is permanent and will remove this expert's profile, post history, and authentication credentials.
-            </AlertDialogDescription>
+      <AlertDialog open={isPostDeleteDialogOpen} onOpenChange={setIsPostDeleteDialogOpen}>
+        <AlertDialogContent className="rounded-[2rem] border-none bg-background text-white">
+          <AlertDialogHeader className="items-center text-center">
+            <div className="p-4 bg-red-500/10 rounded-full w-fit mb-4"><AlertCircle className="h-10 w-10 text-red-500" /></div>
+            <AlertDialogTitle className="text-2xl font-black uppercase italic">Remove Update?</AlertDialogTitle>
+            <AlertDialogDescription className="text-muted-foreground font-medium">This professional update will be permanently deleted from the public feed.</AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel className="rounded-xl border-white/10 bg-transparent text-white hover:bg-white/5">Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteUser} className="bg-red-500 hover:bg-red-600 text-white rounded-xl">Permanently Delete User</AlertDialogAction>
+          <AlertDialogFooter className="flex-col gap-2 sm:flex-col pt-4">
+            <AlertDialogAction onClick={handleDeletePost} className="w-full h-12 bg-red-500 hover:bg-red-600 font-black rounded-xl border-none">Confirm Removal</AlertDialogAction>
+            <AlertDialogCancel className="w-full h-12 bg-transparent border-white/10 hover:bg-white/5 rounded-xl font-bold">Discard Action</AlertDialogCancel>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent className="rounded-[2rem] border-none bg-background text-white">
+          <AlertDialogHeader className="items-center text-center">
+            <div className="p-4 bg-red-500/10 rounded-full w-fit mb-4"><UserX className="h-10 w-10 text-red-500" /></div>
+            <AlertDialogTitle className="text-2xl font-black uppercase italic">Purge User Account?</AlertDialogTitle>
+            <AlertDialogDescription className="text-muted-foreground font-medium">This action is irreversible and will remove all profile data, history, and login access for this expert.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-col gap-2 sm:flex-col pt-4">
+            <AlertDialogAction onClick={handleDeleteUser} className="w-full h-12 bg-red-500 hover:bg-red-600 font-black rounded-xl border-none">Permanently Delete</AlertDialogAction>
+            <AlertDialogCancel className="w-full h-12 bg-transparent border-white/10 hover:bg-white/5 rounded-xl font-bold">Discard Action</AlertDialogCancel>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

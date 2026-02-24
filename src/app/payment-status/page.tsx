@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import { Suspense, useEffect, useState } from 'react';
@@ -7,177 +5,98 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Loader2, CheckCircle, XCircle } from 'lucide-react';
-import { useFirestore, updateDocumentNonBlocking } from '@/firebase';
-import { doc, collection, query, where, getDocs, writeBatch } from 'firebase/firestore';
+import { Loader2, CheckCircle, XCircle, ShieldCheck, Sparkles } from 'lucide-react';
+import { verifyPaymentOrder } from '@/ai/flows/payment-flow';
 
 function PaymentStatusContent() {
     const searchParams = useSearchParams();
-    const firestore = useFirestore();
     const router = useRouter();
-    const [isLoading, setIsLoading] = useState(true);
-    const [status, setStatus] = useState<'processing' | 'success' | 'failed' | 'cancelled' | 'error'>('processing');
-    const [message, setMessage] = useState('Please wait while we confirm your payment status. Do not refresh this page.');
-
+    const [status, setStatus] = useState<'processing' | 'success' | 'failed' | 'error'>('processing');
+    const [message, setMessage] = useState('Verifying your transaction with Cashfree...');
     const orderId = searchParams.get('order_id');
 
     useEffect(() => {
-        if (!orderId || !firestore) {
+        if (!orderId) {
             setStatus('error');
-            setMessage('Invalid request. Order ID is missing.');
-            setIsLoading(false);
+            setMessage('Order ID missing from redirect.');
             return;
         }
 
-        const finalizePayment = async () => {
-            const paymentsCol = collection(firestore, 'payments');
-            const q = query(paymentsCol, where('orderId', '==', orderId), where('status', '==', 'pending'));
-
+        const verify = async () => {
             try {
-                // Cashfree sends a server-to-server webhook as well.
-                // We poll for a few seconds to wait for the webhook to update the status.
-                // This makes the user experience faster.
-                let paymentDoc, paymentData;
-                for (let i = 0; i < 5; i++) {
-                  const updatedQuery = query(paymentsCol, where('orderId', '==', orderId));
-                  const updatedSnapshot = await getDocs(updatedQuery);
-                  if (!updatedSnapshot.empty) {
-                      const doc = updatedSnapshot.docs[0];
-                      if (doc.data().status !== 'pending') {
-                          paymentDoc = doc;
-                          paymentData = doc.data();
-                          break;
-                      }
-                  }
-                  await new Promise(resolve => setTimeout(resolve, 1000)); // wait 1s
-                }
-
-                if (paymentDoc && paymentData && paymentData.status === 'successful') {
-                    // Status was already updated (likely by webhook)
+                const result = await verifyPaymentOrder({ orderId });
+                if (result.status === 'SUCCESS') {
                     setStatus('success');
-                    setMessage('Your payment was already confirmed and your account has been updated.');
-                    setIsLoading(false);
-                    if (paymentData.plan === 'Verification') {
-                        router.push('/verified');
-                    } else {
-                        router.push('/success');
-                    }
-                    return;
-                }
-
-                const querySnapshot = await getDocs(q);
-
-                if (querySnapshot.empty) {
-                    setStatus('error');
-                    setMessage('Payment record not found or already processed. If you have been charged, please contact support.');
-                    setIsLoading(false);
-                    return;
-                }
-                
-                paymentDoc = querySnapshot.docs[0];
-                paymentData = paymentDoc.data();
-                const userId = paymentData.userId;
-                const plan = paymentData.plan;
-
-                // Since we couldn't confirm via polling, assume success from redirect and update manually.
-                // The webhook would have caught a failure state already. In a production app,
-                // you might call the Cashfree API here to get the final order status.
-                const batch = writeBatch(firestore);
-                const userDocRef = doc(firestore, 'users', userId);
-
-                // Update payment status
-                batch.update(paymentDoc.ref, { status: 'successful', updatedAt: new Date() });
-
-                // Update user profile
-                let updateData: any = {};
-                if (plan === 'Verification') {
-                    updateData.verified = true;
-                } else if (plan === 'Premier' || plan === 'Super Premier') {
-                    updateData.tier = plan;
-                }
-                batch.update(userDocRef, updateData);
-
-                await batch.commit();
-                setStatus('success');
-                setMessage('Your payment was successful and your account has been updated.');
-                
-                if (plan === 'Verification') {
-                    router.push('/verified');
+                    setMessage(result.message);
+                    // Automatic redirect after a short delay
+                    setTimeout(() => {
+                        if (result.plan === 'Verification') router.push('/verified');
+                        else router.push('/success');
+                    }, 3000);
                 } else {
-                    router.push('/success');
+                    setStatus('failed');
+                    setMessage(result.message);
                 }
-
-            } catch (error) {
-                console.error("Error processing payment status:", error);
+            } catch (err: any) {
                 setStatus('error');
-                setMessage('An error occurred while updating your status. Please contact support.');
-                setIsLoading(false);
+                setMessage(err.message || 'System error during verification.');
             }
         };
 
-        finalizePayment();
+        verify();
+    }, [orderId, router]);
 
-    }, [orderId, firestore, router]);
-
-    // This component will show a loading state until redirection happens.
-    if (isLoading || status === 'processing' || status === 'success') {
-        return (
-            <Card className="w-full max-w-md">
-                <CardHeader className="text-center">
-                    <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 mb-4">
-                       <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                    </div>
-                    <CardTitle className="text-2xl">
-                        Processing Payment
-                    </CardTitle>
-                    <CardDescription>
-                        {message}
-                    </CardDescription>
-                </CardHeader>
-            </Card>
-        );
-    }
-    
-    // This will show for failed/cancelled states which might be set by a webhook before this page loads.
     return (
-        <Card className="w-full max-w-md">
-            <CardHeader className="text-center">
-                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 mb-4">
-                    <XCircle className="h-8 w-8 text-destructive" />
-                </div>
-                <CardTitle className="text-2xl">
-                     {status === 'cancelled' ? 'Payment Cancelled' : 'Payment Failed'}
+        <Card className="w-full max-w-md border-none bg-card shadow-2xl rounded-[2rem] overflow-hidden">
+            <CardHeader className="text-center items-center pt-10">
+                {status === 'processing' && (
+                    <div className="p-4 bg-orange-500/10 rounded-full mb-4">
+                        <Loader2 className="h-10 w-10 animate-spin text-orange-500" />
+                    </div>
+                )}
+                {status === 'success' && (
+                    <div className="p-4 bg-green-500/10 rounded-full mb-4">
+                        <CheckCircle className="h-10 w-10 text-green-500" />
+                    </div>
+                )}
+                {status === 'failed' || status === 'error' && (
+                    <div className="p-4 bg-red-500/10 rounded-full mb-4">
+                        <XCircle className="h-10 w-10 text-red-500" />
+                    </div>
+                )}
+                <CardTitle className="text-3xl font-black uppercase italic">
+                    {status === 'processing' ? 'Verifying' : status === 'success' ? 'Confirmed!' : 'Payment Issue'}
                 </CardTitle>
-                <CardDescription>
+                <CardDescription className="text-muted-foreground font-medium pt-2">
                     {message}
                 </CardDescription>
             </CardHeader>
-            <CardContent>
-                <div className="text-sm text-muted-foreground text-center">
-                    <p>Order ID: {orderId}</p>
-                    {status === 'error' && <p>If you have any questions, please contact our support.</p>}
-                </div>
+            <CardContent className="text-center pb-10">
+                {status === 'success' && (
+                    <div className="space-y-4 animate-in fade-in zoom-in duration-500">
+                        <p className="text-sm font-bold text-muted-foreground uppercase tracking-widest">Redirecting to your new profile...</p>
+                        <Loader2 className="h-4 w-4 animate-spin mx-auto text-muted-foreground opacity-30" />
+                    </div>
+                )}
+                {(status === 'failed' || status === 'error') && (
+                    <div className="bg-white/5 p-4 rounded-xl text-xs font-mono text-muted-foreground break-all">
+                        ORDER_ID: {orderId}
+                    </div>
+                )}
             </CardContent>
             <CardFooter>
-                <Button className="w-full" asChild>
-                    <Link href="/dashboard">
-                        Go to Dashboard
-                    </Link>
+                <Button className="w-full h-12 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-white font-bold" asChild>
+                    <Link href="/dashboard">Return to Dashboard</Link>
                 </Button>
             </CardFooter>
         </Card>
     );
 }
 
-
 export default function PaymentStatusPage() {
     return (
         <div className="min-h-screen bg-background flex items-center justify-center p-4">
-             <Suspense fallback={
-                <div className="flex h-64 w-full items-center justify-center">
-                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                </div>
-            }>
+             <Suspense fallback={<Loader2 className="h-8 w-8 animate-spin text-primary" />}>
                 <PaymentStatusContent />
             </Suspense>
         </div>
