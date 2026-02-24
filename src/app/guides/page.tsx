@@ -8,13 +8,14 @@ import { useFirestore, useDoc, useMemoFirebase, useFirebaseApp } from '@/firebas
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { ChevronLeft, BookOpen, Video, Rss, Users, Briefcase, PlayCircle, Info, Loader2 } from 'lucide-react';
+import { ChevronLeft, BookOpen, Video, Rss, Users, Briefcase, PlayCircle, Info, Loader2, Share2 } from 'lucide-react';
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { ShareDialog } from '@/components/share-dialog';
 
 type AppConfig = {
     introVideoUrl?: string;
@@ -100,12 +101,19 @@ export default function GuidesPage() {
             </Card>
         ) : videoType !== 'none' && resolvedUrl ? (
             <Card className="overflow-hidden border-2 border-primary/20 rounded-[2rem] shadow-2xl shadow-primary/5 bg-[#24262d]">
-                <CardHeader className="bg-white/5 border-b border-white/5 p-6">
-                    <CardTitle className="flex items-center gap-3 text-2xl font-black text-white">
-                        <PlayCircle className="h-6 w-6 text-orange-500" />
-                        Platform Introduction
-                    </CardTitle>
-                    <CardDescription className="text-muted-foreground font-medium">Watch this guide to learn how to make the most of DriveGuru.</CardDescription>
+                <CardHeader className="bg-white/5 border-b border-white/5 p-6 flex flex-row items-center justify-between">
+                    <div>
+                        <CardTitle className="flex items-center gap-3 text-2xl font-black text-white">
+                            <PlayCircle className="h-6 w-6 text-orange-500" />
+                            Platform Introduction
+                        </CardTitle>
+                        <CardDescription className="text-muted-foreground font-medium">Watch this guide to learn how to make the most of DriveGuru.</CardDescription>
+                    </div>
+                    <ShareDialog shareDetails={{ type: 'group-post', title: 'DriveGuru Platform Introduction', text: 'Check out this guide to master the DriveGuru platform.', url: typeof window !== 'undefined' ? window.location.href : '' }}>
+                        <Button variant="ghost" size="icon" className="rounded-full hover:bg-white/10 h-10 w-10">
+                            <Share2 className="h-5 w-5 text-muted-foreground" />
+                        </Button>
+                    </ShareDialog>
                 </CardHeader>
                 <CardContent className="p-0">
                     <div className="aspect-video w-full bg-black">
@@ -123,6 +131,8 @@ export default function GuidesPage() {
                         ) : (
                             <video 
                                 controls 
+                                controlsList="nodownload"
+                                onContextMenu={(e) => e.preventDefault()}
                                 className="w-full h-full"
                                 src={resolvedUrl}
                             >

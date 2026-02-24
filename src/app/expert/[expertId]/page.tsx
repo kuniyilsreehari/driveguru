@@ -1,12 +1,12 @@
 
 'use client';
 
-import { Suspense, useState, useRef, useEffect, useMemo } from 'react';
+import { Suspense, useState, useEffect, useMemo } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { doc, arrayUnion, arrayRemove, query, collection, where, serverTimestamp } from 'firebase/firestore';
+import { doc, arrayUnion, arrayRemove, collection, serverTimestamp } from 'firebase/firestore';
 import { useFirestore, useDoc, useMemoFirebase, useUser, updateDocumentNonBlocking, addDocumentNonBlocking } from '@/firebase';
-import { Loader2, Star, ChevronLeft, MapPin, IndianRupee, Briefcase, Calendar, Info, Book, GraduationCap, School, User as UserIcon, UserCheck, XCircle, Crown, Sparkles, LogIn, Lock, Building, FileDown, Home, MessageSquare, PenSquare, Factory, Linkedin, Twitter, Github, Globe, UserPlus, UserMinus, Users, List, Phone, Youtube, Share2, Rss, Fingerprint, AlertCircle, ImageIcon } from 'lucide-react';
+import { Loader2, ChevronLeft, MapPin, IndianRupee, Briefcase, Calendar, Info, Book, GraduationCap, School, User as UserIcon, UserCheck, XCircle, Crown, Sparkles, LogIn, Lock, Building, Home, MessageSquare, PenSquare, Factory, Linkedin, Twitter, Github, Globe, UserPlus, UserMinus, Phone, Youtube, Share2, Rss, Fingerprint, ImageIcon } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardFooter } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -16,7 +16,6 @@ import { useToast } from '@/hooks/use-toast';
 import { FloatingActions } from '@/components/floating-actions';
 import { WhatsAppBookingDialog } from '@/components/whatsapp-booking-dialog';
 import { Icons } from '@/components/icons';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription as UiDialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { FollowerStats } from '@/components/follower-stats';
 import { ShareDialog } from '@/components/share-dialog';
 import { ImageLightbox } from '@/components/image-lightbox';
@@ -72,11 +71,8 @@ function ExpertProfileContent() {
     const firestore = useFirestore();
     const { user, isUserLoading } = useUser();
     const { toast } = useToast();
-    const profileCardRef = useRef<HTMLDivElement>(null);
-    const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
     const [isFollowing, setIsFollowing] = useState(false);
     const [isFollowLoading, setIsFollowLoading] = useState(false);
-    const [isPremiumDialogOpen, setIsPremiumDialogOpen] = useState(false);
 
 
     const expertDocRef = useMemoFirebase(() => {
@@ -173,62 +169,6 @@ function ExpertProfileContent() {
         if (!expert?.id) return '';
         return `DG-${expert.id.substring(0, 8).toUpperCase()}`;
     }, [expert?.id]);
-
-    const handleDownloadPdf = async () => {
-        const element = profileCardRef.current;
-        if (!element || !expert) {
-            toast({ variant: 'destructive', title: 'Error', description: 'Could not capture profile content.' });
-            return;
-        }
-        
-        const isPremium = expert.tier === 'Premier' || expert.tier === 'Super Premier';
-        if (!isPremium) {
-            setIsPremiumDialogOpen(true);
-            return;
-        }
-
-        setIsGeneratingPdf(true);
-
-        try {
-            const { default: jsPDF } = await import('jspdf');
-            const { default: html2canvas } = await import('html2canvas');
-
-            const canvas = await html2canvas(element, {
-                scale: 2, // Increase resolution
-                useCORS: true, // For external images
-                backgroundColor: null, // Use element's background
-            });
-            const imgData = canvas.toDataURL('image/png');
-
-            // A4 page dimensions in mm: 210 x 297
-            const pdf = new jsPDF('p', 'mm', 'a4');
-            const pdfWidth = pdf.internal.pageSize.getWidth();
-            const pdfHeight = pdf.internal.pageSize.getHeight();
-            
-            const imgWidth = canvas.width;
-            const imgHeight = canvas.height;
-            const ratio = imgWidth / imgHeight;
-
-            let finalImgWidth = pdfWidth - 20; // with margin
-            let finalImgHeight = finalImgWidth / ratio;
-            
-            if (finalImgHeight > pdfHeight - 20) {
-                finalImgHeight = pdfHeight - 20;
-                finalImgWidth = finalImgHeight * ratio;
-            }
-            
-            const x = (pdfWidth - finalImgWidth) / 2;
-            const y = 10; // Top margin
-
-            pdf.addImage(imgData, 'PNG', x, y, finalImgWidth, finalImgHeight);
-            pdf.save(`${displayName}-profile.pdf`);
-        } catch (error) {
-            console.error("Error generating PDF:", error);
-            toast({ variant: 'destructive', title: 'PDF Generation Failed', description: 'An unexpected error occurred.' });
-        } finally {
-            setIsGeneratingPdf(false);
-        }
-    };
 
     if (isLoadingExpert || isUserLoading || isRoleLoading) {
         return (
@@ -327,7 +267,7 @@ function ExpertProfileContent() {
                     </div>
                 )}
 
-                <Card ref={profileCardRef}>
+                <Card>
                     <CardHeader>
                         <div className="flex flex-col sm:flex-row items-start gap-8">
                             <div className="flex flex-col gap-4">
@@ -532,38 +472,8 @@ function ExpertProfileContent() {
                         </div>
                     </CardFooter>
                 </Card>
-                <FloatingActions
-                    expert={expert}
-                    isGeneratingPdf={isGeneratingPdf}
-                    onDownloadPdf={handleDownloadPdf}
-                />
+                <FloatingActions expert={expert} />
             </div>
-            <Dialog open={isPremiumDialogOpen} onOpenChange={setIsPremiumDialogOpen}>
-                <DialogContent>
-                    <DialogHeader>
-                    <DialogTitle>Premium Feature Locked</DialogTitle>
-                    <UiDialogDescription>
-                        Downloading profiles as a PDF is an exclusive feature for Premier members.
-                    </UiDialogDescription>
-                    </DialogHeader>
-                    <div className="text-center">
-                        <div className="mx-auto w-fit rounded-full p-3 mb-2 bg-primary/10">
-                        <Lock className="h-8 w-8 text-primary" />
-                        </div>
-                        <p className="text-center text-sm text-muted-foreground">
-                        Upgrade your plan to unlock this and many other powerful features.
-                        </p>
-                    </div>
-                    <DialogFooter className="flex-col gap-2 pt-4">
-                        <Button asChild className="w-full">
-                            <Link href="/dashboard#plan-management">Upgrade Plan</Link>
-                        </Button>
-                        <Button variant="outline" className="w-full" onClick={() => setIsPremiumDialogOpen(false)}>
-                            Maybe Later
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
         </div>
     );
 }

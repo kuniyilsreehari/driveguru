@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { Plus, Download, FileDown, Phone, Share2, MessageCircle } from 'lucide-react';
+import { Plus, Download, Phone, Share2, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
@@ -14,8 +14,6 @@ import { useToast } from '@/hooks/use-toast';
 
 interface FloatingActionsProps {
     expert?: ExpertUser;
-    isGeneratingPdf?: boolean;
-    onDownloadPdf?: () => void;
 }
 
 const cleanPhoneNumber = (phoneNumber?: string) => {
@@ -23,7 +21,7 @@ const cleanPhoneNumber = (phoneNumber?: string) => {
     return phoneNumber.replace(/\s+/g, '');
 }
 
-export function FloatingActions({ expert, isGeneratingPdf, onDownloadPdf }: FloatingActionsProps) {
+export function FloatingActions({ expert }: FloatingActionsProps) {
     const [isOpen, setIsOpen] = useState(false);
     const [installPrompt, setInstallPrompt] = useAtom(installPromptAtom);
     const [canShare, setCanShare] = useState(false);
@@ -80,9 +78,6 @@ export function FloatingActions({ expert, isGeneratingPdf, onDownloadPdf }: Floa
     const canWhatsapp = expert?.verified && formattedPhoneNumber;
     const whatsappLink = `https://wa.me/${formattedPhoneNumber}`;
     const callLink = `tel:${formattedPhoneNumber}`;
-    
-    // The download button is always enabled visually but its function is conditional
-    const downloadActionEnabled = true; 
 
     const allActions = [
         ...(installPrompt ? [{
@@ -91,13 +86,6 @@ export function FloatingActions({ expert, isGeneratingPdf, onDownloadPdf }: Floa
             icon: <Download className="h-6 w-6" />,
             onClick: handleInstallClick,
             enabled: true,
-        }] : []),
-        ...(expert && onDownloadPdf ? [{
-            id: 'pdf',
-            label: 'Download PDF',
-            icon: <FileDown className="h-6 w-6" />,
-            onClick: onDownloadPdf,
-            enabled: downloadActionEnabled,
         }] : []),
         ...(expert ? [{
             id: 'call',
@@ -123,7 +111,7 @@ export function FloatingActions({ expert, isGeneratingPdf, onDownloadPdf }: Floa
         }] : []),
     ];
 
-    const actions = allActions.filter(action => expert ? true : !['pdf', 'call', 'whatsapp'].includes(action.id));
+    const actions = allActions.filter(action => expert ? true : !['call', 'whatsapp'].includes(action.id));
 
     if (actions.length === 0) {
         return null;
@@ -163,7 +151,7 @@ export function FloatingActions({ expert, isGeneratingPdf, onDownloadPdf }: Floa
                                     </Button>
                                 </TooltipTrigger>
                                 <TooltipContent side="left">
-                                    <p>{!action.enabled && expert && action.id !== 'pdf' ? `${action.label} (Locked)` : action.label}</p>
+                                    <p>{!action.enabled && expert ? `${action.label} (Locked)` : action.label}</p>
                                 </TooltipContent>
                             </Tooltip>
                         </div>
