@@ -310,6 +310,7 @@ export default function AdminDashboardPage() {
             `${u.firstName} ${u.lastName}`.toLowerCase().includes(userSearchQuery.toLowerCase()) ||
             u.email?.toLowerCase().includes(userSearchQuery.toLowerCase()) ||
             u.referralCode?.toLowerCase().includes(userSearchQuery.toLowerCase()) ||
+            u.phoneNumber?.toLowerCase().includes(userSearchQuery.toLowerCase()) ||
             u.id.toLowerCase().includes(userSearchQuery.toLowerCase());
         
         const matchesFilter = 
@@ -417,12 +418,13 @@ export default function AdminDashboardPage() {
 
   const handleExportCSV = () => {
     if (!users) return;
-    const headers = ["ID", "First Name", "Last Name", "Email", "Role", "Tier", "Verified", "Referral Code", "Points"];
+    const headers = ["ID", "First Name", "Last Name", "Email", "Phone Number", "Role", "Tier", "Verified", "Referral Code", "Points"];
     const rows = users.map(u => [
         u.id,
         u.firstName,
         u.lastName,
-        u.email,
+        u.email || '',
+        u.phoneNumber || '',
         u.role,
         u.tier || 'Standard',
         u.verified ? 'Yes' : 'No',
@@ -435,7 +437,7 @@ export default function AdminDashboardPage() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.setAttribute('download', `experts-export-${format(new Date(), 'yyyy-MM-dd')}.csv`);
+    link.setAttribute('download', `experts-registry-${format(new Date(), 'yyyy-MM-dd')}.csv`);
     link.click();
     toast({ title: "CSV Exported" });
   };
@@ -554,7 +556,7 @@ export default function AdminDashboardPage() {
                             <div className="relative group">
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-orange-500 transition-colors" />
                                 <Input 
-                                    placeholder="Search experts by name, email or code..." 
+                                    placeholder="Search experts by name, phone, email or code..." 
                                     className="pl-10 h-12 bg-white/5 border-none rounded-xl text-white placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-orange-500"
                                     value={userSearchQuery}
                                     onChange={(e) => setUserSearchQuery(e.target.value)}
@@ -567,6 +569,7 @@ export default function AdminDashboardPage() {
                                         <TableRow className="border-white/5">
                                             <TableHead className="w-[60px] font-bold text-white text-center">S.No</TableHead>
                                             <TableHead className="font-bold text-white">Expert Profile</TableHead>
+                                            <TableHead className="font-bold text-white text-center">Contact</TableHead>
                                             <TableHead className="font-bold text-white text-center">Code</TableHead>
                                             <TableHead className="font-bold text-white text-center">Tier</TableHead>
                                             <TableHead className="font-bold text-white text-center">Points</TableHead>
@@ -578,7 +581,7 @@ export default function AdminDashboardPage() {
                                         {(() => {
                                             const paginated = filteredUsers.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
                                             if (paginated.length === 0 && !isUsersLoading) {
-                                                return <TableRow><TableCell colSpan={7} className="text-center py-12 text-muted-foreground italic">No experts found matching your criteria.</TableCell></TableRow>;
+                                                return <TableRow><TableCell colSpan={8} className="text-center py-12 text-muted-foreground italic">No experts found matching your criteria.</TableCell></TableRow>;
                                             }
                                             return paginated.map((u, index) => {
                                                 const globalIndex = (currentPage - 1) * ITEMS_PER_PAGE + index + 1;
@@ -595,6 +598,12 @@ export default function AdminDashboardPage() {
                                                                     <div className="font-black text-sm text-white">{u.firstName} {u.lastName}</div>
                                                                     <div className="text-[10px] text-muted-foreground uppercase tracking-widest">{u.role}</div>
                                                                 </div>
+                                                            </div>
+                                                        </TableCell>
+                                                        <TableCell className="text-center">
+                                                            <div className="flex flex-col items-center">
+                                                                <span className="text-xs font-black text-white/80">{u.phoneNumber || 'N/A'}</span>
+                                                                {u.email && <span className="text-[9px] text-muted-foreground lowercase truncate max-w-[120px]">{u.email}</span>}
                                                             </div>
                                                         </TableCell>
                                                         <TableCell className="text-center font-mono text-xs text-orange-500 font-bold">{u.referralCode || '---'}</TableCell>
