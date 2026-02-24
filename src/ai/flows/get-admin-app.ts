@@ -30,8 +30,10 @@ export async function getAdminApp(): Promise<App> {
 
   try {
     // Initialize the Firebase Admin App using Application Default Credentials.
+    // Explicitly providing the projectId helps resolve metadata server 500 errors in some environments.
     const newApp = initializeApp({
       credential: applicationDefault(),
+      projectId: "studio-8621980584-11b8b",
       storageBucket: "studio-8621980584-11b8b.appspot.com",
     });
 

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
@@ -5,10 +6,10 @@ import { useRouter } from 'next/navigation';
 import { collection, serverTimestamp, orderBy, query, where, limit, arrayUnion, arrayRemove, doc, Timestamp } from 'firebase/firestore';
 import { signOut } from 'firebase/auth';
 import { useUser, useAuth, useFirestore, useDoc, useMemoFirebase, useCollection } from '@/firebase';
-import { updateDocumentNonBlocking, addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { updateDocumentNonBlocking, addDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { LogOut, Loader, Edit, UserCheck, User as UserIcon, MessageSquare, Gift, Info, Book, Pen, PlusCircle, MapPin, IndianRupee, Calendar, GraduationCap, School, Building, Home, Share2, Rss, UserPlus, Users, Link as LinkIcon, Search, AlertCircle, Check, CheckCircle, ArrowUpCircle, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Crown, Sparkles, Eye, EyeOff, Clock } from 'lucide-react';
+import { LogOut, Loader, Edit, UserCheck, User as UserIcon, MessageSquare, Gift, Info, Book, Pen, PlusCircle, MapPin, IndianRupee, Calendar, GraduationCap, School, Building, Home, Share2, Rss, UserPlus, Users, Link as LinkIcon, Search, AlertCircle, Check, CheckCircle, ArrowUpCircle, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Crown, Sparkles, Eye, EyeOff, Clock, Briefcase, Trash2, MoreHorizontal } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription as UiDialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { EditProfileForm } from '@/components/auth/edit-profile-form';
@@ -27,12 +28,28 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { UserList } from '@/components/user-list';
 import { Separator } from '@/components/ui/separator';
 import { ProfileCompletionWizard } from '@/components/profile-completion-wizard';
+import { PostVacancyForm } from '@/components/auth/post-vacancy-form';
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { formatDistanceToNow } from 'date-fns';
+import type { Vacancy } from '@/app/vacancies/page';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 type ExpertUserProfile = {
     id: string;
@@ -76,6 +93,8 @@ const postFormSchema = z.object({
   link: z.string().url().optional().or(z.literal('')),
 });
 
+const MAX_VACANCIES = 2;
+
 export default function ExpertDashboardPage() {
   const { user, isUserLoading } = useUser();
   const auth = useAuth();
@@ -89,6 +108,8 @@ export default function ExpertDashboardPage() {
   const [suggestionSearch, setSuggestionSearch] = useState('');
   const [isProfileExpanded, setIsProfileExpanded] = useState(true);
   const [isHideDialogOpen, setIsHideDialogOpen] = useState(false);
+  const [isVacancyDialogOpen, setIsVacancyDialogOpen] = useState(false);
+  const [selectedVacancy, setSelectedVacancy] = useState<Vacancy | null>(null);
 
   const userDocRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
   const { data: userProfile, isLoading: isProfileLoading } = useDoc<ExpertUserProfile>(userDocRef);
@@ -129,6 +150,12 @@ export default function ExpertDashboardPage() {
     const filled = fields.filter(f => !!f).length;
     return Math.round((filled / fields.length) * 100);
   }, [userProfile]);
+
+  const myVacanciesQuery = useMemoFirebase(() => {
+    if (!firestore || !user) return null;
+    return query(collection(firestore, 'vacancies'), where('companyId', '==', user.uid), orderBy('postedAt', 'desc'));
+  }, [firestore, user]);
+  const { data: myVacancies, isLoading: isVacanciesLoading } = useCollection<Vacancy>(myVacanciesQuery);
 
   const suggestionsQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
@@ -224,13 +251,25 @@ export default function ExpertDashboardPage() {
     }
   }
 
-  if (isUserLoading || isProfileLoading) return <div className="flex h-screen items-center justify-center"><Loader className="animate-spin" /></div>;
+  const handleDeleteVacancy = async (vacancyId: string) => {
+    const vacancyRef = doc(firestore, 'vacancies', vacancyId);
+    try {
+        await deleteDocumentNonBlocking(vacancyRef);
+        toast({ title: "Vacancy Deleted" });
+    } catch (e) {
+        toast({ variant: "destructive", title: "Delete Failed" });
+    }
+  };
+
+  if (isUserLoading || isProfileLoading) return <div className="flex h-screen items-center justify-center"><Loader className="animate-spin text-orange-500" /></div>;
   if (!user || !userProfile) return null;
 
   const isHidden = userProfile.hiddenUntil && userProfile.hiddenUntil.toDate() > new Date();
+  const canManageJobs = userProfile.role === 'Company' || userProfile.role === 'Authorized Pro';
+  const vacancyLimitReached = (myVacancies?.length || 0) >= MAX_VACANCIES;
 
   return (
-    <div className="min-h-screen bg-background p-4 sm:p-8">
+    <div className="min-h-screen bg-[#1a1c23] p-4 sm:p-8">
       <div className="mx-auto max-w-5xl">
         <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-8 gap-4 border-b border-white/5 mb-8">
           <div>
@@ -239,46 +278,29 @@ export default function ExpertDashboardPage() {
           </div>
           <Button 
             variant="outline" 
-            className="rounded-xl border-2 border-white/10 bg-transparent text-white hover:bg-white/5 font-bold" 
-            onClick={() => signOut(auth!).then(() => router.push('/'))}
+            className="rounded-xl border-2 border-white/10 bg-transparent text-white hover:bg-white/5 font-bold h-12" 
+            onClick={() => auth && signOut(auth).then(() => router.push('/'))}
           >
             <LogOut className="mr-2 h-4 w-4" /> Log Out
           </Button>
         </header>
 
         <Tabs defaultValue="overview" className="w-full">
-          <TabsList className="flex w-full bg-secondary/30 p-1 h-12 rounded-2xl mb-8">
-            <TabsTrigger 
-                value="overview" 
-                className="flex-1 rounded-xl data-[state=active]:bg-orange-500 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-orange-500/20 font-black text-xs uppercase tracking-wider transition-all"
-            >
-                Overview
-            </TabsTrigger>
-            <TabsTrigger 
-                value="network" 
-                className="flex-1 rounded-xl data-[state=active]:bg-orange-500 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-orange-500/20 font-black text-xs uppercase tracking-wider transition-all"
-            >
-                My Network
-            </TabsTrigger>
-            <TabsTrigger 
-                value="feed" 
-                className="flex-1 rounded-xl data-[state=active]:bg-orange-500 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-orange-500/20 font-black text-xs uppercase tracking-wider transition-all"
-            >
-                Feed
-            </TabsTrigger>
-            <TabsTrigger 
-                value="plans" 
-                className="flex-1 rounded-xl data-[state=active]:bg-orange-500 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-orange-500/20 font-black text-xs uppercase tracking-wider transition-all"
-            >
-                My Plan
-            </TabsTrigger>
+          <TabsList className="flex w-full bg-white/5 p-1 h-14 rounded-2xl mb-8">
+            <TabsTrigger value="overview" className="flex-1 rounded-xl data-[state=active]:bg-orange-500 data-[state=active]:text-white font-black text-xs uppercase tracking-wider transition-all">Overview</TabsTrigger>
+            <TabsTrigger value="network" className="flex-1 rounded-xl data-[state=active]:bg-orange-500 data-[state=active]:text-white font-black text-xs uppercase tracking-wider transition-all">My Network</TabsTrigger>
+            {canManageJobs && (
+                <TabsTrigger value="jobs" className="flex-1 rounded-xl data-[state=active]:bg-orange-500 data-[state=active]:text-white font-black text-xs uppercase tracking-wider transition-all">My Jobs</TabsTrigger>
+            )}
+            <TabsTrigger value="feed" className="flex-1 rounded-xl data-[state=active]:bg-orange-500 data-[state=active]:text-white font-black text-xs uppercase tracking-wider transition-all">Feed</TabsTrigger>
+            <TabsTrigger value="plans" className="flex-1 rounded-xl data-[state=active]:bg-orange-500 data-[state=active]:text-white font-black text-xs uppercase tracking-wider transition-all">My Plan</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="mt-0 space-y-8">
             <Card className="border-none bg-[#24262d] rounded-3xl overflow-hidden shadow-xl">
               <Collapsible open={isProfileExpanded} onOpenChange={setIsProfileExpanded}>
                 <CardHeader className="flex flex-col md:flex-row items-start md:items-center gap-6 pb-6 bg-white/5 border-b border-white/5">
-                  <Avatar className="h-24 w-24 border-4 border-primary/20 cursor-pointer hover:border-primary/50 transition-all" onClick={() => setIsEditDialogOpen(true)}>
+                  <Avatar className="h-24 w-24 border-4 border-orange-500/20 cursor-pointer hover:border-orange-500/50 transition-all" onClick={() => setIsEditDialogOpen(true)}>
                     <AvatarImage src={userProfile.photoUrl} className="object-cover" />
                     <AvatarFallback className="text-[10px] text-center px-2 font-bold leading-tight bg-orange-500/10 text-orange-500">change image</AvatarFallback>
                   </Avatar>
@@ -302,16 +324,8 @@ export default function ExpertDashboardPage() {
                     </div>
                     <div className="flex flex-wrap gap-2 mt-3">
                       {userProfile.verified && <Badge className="bg-green-500 text-white border-none font-black text-[10px] uppercase h-6 px-3"><UserCheck className="h-3 w-3 mr-1" /> Verified</Badge>}
-                      {userProfile.tier === 'Super Premier' && (
-                        <Badge className="bg-blue-600 text-white border-none font-black text-[10px] uppercase h-6 px-3 flex items-center gap-1 shadow-lg shadow-blue-500/20">
-                          <Sparkles className="h-3 w-3" /> Super Premier
-                        </Badge>
-                      )}
-                      {userProfile.tier === 'Premier' && (
-                        <Badge className="bg-purple-600 text-white border-none font-black text-[10px] uppercase h-6 px-3 flex items-center gap-1 shadow-lg shadow-purple-500/20">
-                          <Crown className="h-3 w-3" /> Premier
-                        </Badge>
-                      )}
+                      {userProfile.tier === 'Super Premier' && <Badge className="bg-blue-600 text-white border-none font-black text-[10px] uppercase h-6 px-3 flex items-center gap-1"><Sparkles className="h-3 w-3" /> Super Premier</Badge>}
+                      {userProfile.tier === 'Premier' && <Badge className="bg-purple-600 text-white border-none font-black text-[10px] uppercase h-6 px-3 flex items-center gap-1"><Crown className="h-3 w-3" /> Premier</Badge>}
                       <Badge variant="secondary" className="font-bold bg-white/10 text-white border-none text-[10px] uppercase">{userProfile.role}</Badge>
                     </div>
                   </div>
@@ -500,71 +514,6 @@ export default function ExpertDashboardPage() {
                     </div>
                 </CardContent>
             </Card>
-
-            <Card className="border-none bg-[#24262d] rounded-[2.5rem] p-6 sm:p-8 shadow-xl overflow-hidden">
-                <div className="mb-8">
-                    <h2 className="text-2xl font-black text-white">Experts Near You</h2>
-                    <p className="text-sm text-muted-foreground font-medium">Follow local experts to grow your professional circle.</p>
-                </div>
-
-                <div className="relative group mb-8">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground group-focus-within:text-orange-500 transition-colors" />
-                    <Input 
-                        placeholder="Search for experts to follow..." 
-                        className="pl-12 h-14 bg-[#1a1c23] border-2 border-orange-500 rounded-2xl text-white text-lg placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:border-orange-400 transition-all shadow-[0_0_15px_rgba(249,115,22,0.1)]" 
-                        value={suggestionSearch} 
-                        onChange={(e) => setSuggestionSearch(e.target.value)} 
-                    />
-                </div>
-
-                <div className="relative">
-                    <div className="flex gap-6 overflow-x-auto pb-8 pt-2 scrollbar-hide snap-x px-1">
-                        {suggestedExperts.map(expert => (
-                            <Card key={expert.id} className="min-w-[240px] max-w-[240px] bg-[#1a1c23] border-white/5 flex flex-col items-center p-8 text-center rounded-[2rem] snap-start transition-all hover:scale-[1.05] group">
-                                <div className="relative mb-6">
-                                    <Avatar className="h-24 w-24 border-4 border-white/10 group-hover:border-orange-500/50 transition-colors duration-500">
-                                        <AvatarImage src={expert.photoUrl} className="object-cover" />
-                                        <AvatarFallback className="bg-orange-500/10 text-orange-500 text-3xl font-black">
-                                            {expert.firstName[0]}
-                                        </AvatarFallback>
-                                    </Avatar>
-                                    {expert.verified && (
-                                        <div className="absolute -bottom-1 -right-1 bg-green-500 p-1.5 rounded-full border-4 border-[#1a1c23]">
-                                            <UserCheck className="h-3 w-3 text-white" />
-                                        </div>
-                                    )}
-                                </div>
-                                <p className="font-black text-white text-xl line-clamp-1 mb-1 tracking-tight">{expert.firstName} {expert.lastName}</p>
-                                <p className="text-[11px] text-[#8a92a6] uppercase tracking-[0.15em] font-black mb-8 line-clamp-1 h-4">{expert.profession || expert.role}</p>
-                                <Button 
-                                    className="w-full bg-orange-500 hover:bg-orange-600 text-white rounded-2xl font-black text-sm h-12 shadow-lg shadow-orange-500/20 active:scale-95 transition-transform"
-                                    onClick={() => handleToggleFollow(expert.id, false)}
-                                >
-                                    <UserPlus className="h-4 w-4 mr-2" /> Follow
-                                </Button>
-                            </Card>
-                        ))}
-                        {suggestedExperts.length === 0 && (
-                            <div className="w-full flex flex-col items-center justify-center py-16 bg-white/5 rounded-[2rem] border-4 border-dashed border-white/5">
-                                <Users className="h-16 w-16 text-muted-foreground opacity-10 mb-4" />
-                                <p className="text-lg text-muted-foreground font-black opacity-40">No suggestions match your search.</p>
-                            </div>
-                        )}
-                    </div>
-
-                    <div className="flex items-center justify-between mt-4 px-2">
-                        <Button variant="ghost" size="icon" className="text-muted-foreground/40 hover:text-white hover:bg-white/5 rounded-full h-8 w-8">
-                            <ChevronLeft className="h-6 w-6" />
-                        </Button>
-                        <div className="flex-1 mx-8 h-1.5 bg-white/5 rounded-full overflow-hidden relative">
-                            <div className="absolute left-[30%] top-0 bottom-0 w-[40%] bg-white/30 rounded-full" />
-                        </div>
-                        <Button variant="ghost" size="icon" className="text-muted-foreground/40 hover:text-white hover:bg-white/5 rounded-full h-8 w-8">
-                            <ChevronRight className="h-6 w-6" />
-                        </Button>
-                    </div>
-                </div>
-            </Card>
           </TabsContent>
 
           <TabsContent value="network" className="mt-0">
@@ -576,17 +525,9 @@ export default function ExpertDashboardPage() {
                 <CardContent className="p-6">
                     <Tabs defaultValue="my-groups" className="w-full">
                         <TabsList className="grid w-full grid-cols-3 bg-white/5 p-1 h-12 rounded-xl mb-8">
-                            <TabsTrigger value="my-groups" className="rounded-lg data-[state=active]:bg-orange-500 data-[state=active]:text-white font-black text-xs uppercase tracking-wider">
-                                My Groups
-                            </TabsTrigger>
-                            <TabsTrigger value="followers" className="rounded-lg data-[state=active]:bg-orange-500 data-[state=active]:text-white font-black text-xs uppercase tracking-wider">
-                                Followers
-                                <Badge variant="secondary" className="ml-2 bg-white/10 text-white border-none font-bold text-[10px]">{myFollowers?.length || 0}</Badge>
-                            </TabsTrigger>
-                            <TabsTrigger value="following" className="rounded-lg data-[state=active]:bg-orange-500 data-[state=active]:text-white font-black text-xs uppercase tracking-wider">
-                                Following
-                                <Badge variant="secondary" className="ml-2 bg-white/10 text-white border-none font-bold text-[10px]">{userProfile?.following?.length || 0}</Badge>
-                            </TabsTrigger>
+                            <TabsTrigger value="my-groups" className="rounded-lg data-[state=active]:bg-orange-500 data-[state=active]:text-white font-black text-xs uppercase tracking-wider">My Groups</TabsTrigger>
+                            <TabsTrigger value="followers" className="rounded-lg data-[state=active]:bg-orange-500 data-[state=active]:text-white font-black text-xs uppercase tracking-wider">Followers <Badge variant="secondary" className="ml-2 bg-white/10 text-white border-none font-bold text-[10px]">{myFollowers?.length || 0}</Badge></TabsTrigger>
+                            <TabsTrigger value="following" className="rounded-lg data-[state=active]:bg-orange-500 data-[state=active]:text-white font-black text-xs uppercase tracking-wider">Following <Badge variant="secondary" className="ml-2 bg-white/10 text-white border-none font-bold text-[10px]">{userProfile?.following?.length || 0}</Badge></TabsTrigger>
                         </TabsList>
                         
                         <TabsContent value="my-groups" className="space-y-4 mt-0">
@@ -600,9 +541,7 @@ export default function ExpertDashboardPage() {
                                                 <div className="flex items-center justify-between">
                                                     <div>
                                                         <h4 className="font-black text-white text-lg group-hover:text-orange-500 transition-colors">{group.name}</h4>
-                                                        <p className="text-xs text-muted-foreground font-bold uppercase tracking-widest mt-1">
-                                                            {group.members?.length || 0} Professional{group.members?.length !== 1 ? 's' : ''}
-                                                        </p>
+                                                        <p className="text-xs text-muted-foreground font-bold uppercase tracking-widest mt-1">{group.members?.length || 0} Professional{group.members?.length !== 1 ? 's' : ''}</p>
                                                     </div>
                                                     <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-orange-500 transition-all" />
                                                 </div>
@@ -626,12 +565,87 @@ export default function ExpertDashboardPage() {
                         </TabsContent>
 
                         <TabsContent value="following" className="mt-0">
-                            <UserList userIds={userProfile?.following || []} emptyStateMessage="You aren't following any experts yet. Start following people from the 'Suggestions' section!" />
+                            <UserList userIds={userProfile?.following || []} emptyStateMessage="You aren't following any experts yet." />
                         </TabsContent>
                     </Tabs>
                 </CardContent>
             </Card>
           </TabsContent>
+
+          {canManageJobs && (
+            <TabsContent value="jobs" className="mt-0">
+                <Card className="border-none bg-[#24262d] rounded-3xl overflow-hidden shadow-xl">
+                    <CardHeader className="bg-white/5 border-b border-white/5 pb-6">
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                            <div>
+                                <CardTitle className="text-2xl font-black text-white flex items-center gap-3">
+                                    <Briefcase className="h-6 w-6 text-orange-500" /> Vacancy Management
+                                </CardTitle>
+                                <CardDescription className="text-muted-foreground font-medium">Post and manage job openings for your company.</CardDescription>
+                            </div>
+                            <div className="flex flex-col items-end gap-2">
+                                <Button 
+                                    onClick={() => { setSelectedVacancy(null); setIsVacancyDialogOpen(true); }} 
+                                    className="rounded-xl font-black bg-orange-500 hover:bg-orange-600 h-12 px-6 shadow-lg shadow-orange-500/20"
+                                    disabled={vacancyLimitReached}
+                                >
+                                    <PlusCircle className="mr-2 h-5 w-5" /> Post New Job
+                                </Button>
+                                {vacancyLimitReached && (
+                                    <Badge variant="outline" className="border-orange-500/50 bg-orange-500/5 text-orange-500 font-bold text-[10px] uppercase h-6">
+                                        <AlertCircle className="h-3 w-3 mr-1" /> Max 2 Posts Reached
+                                    </Badge>
+                                )}
+                            </div>
+                        </div>
+                    </CardHeader>
+                    <CardContent className="p-0">
+                        <Table>
+                            <TableHeader className="bg-white/5">
+                                <TableRow className="border-white/5 hover:bg-transparent">
+                                    <TableHead className="w-[60px] font-bold text-white text-center">S.No</TableHead>
+                                    <TableHead className="font-bold text-white">Job Title</TableHead>
+                                    <TableHead className="font-bold text-white">Location</TableHead>
+                                    <TableHead className="font-bold text-white text-center">Type</TableHead>
+                                    <TableHead className="font-bold text-white">Posted</TableHead>
+                                    <TableHead className="text-right font-bold text-white pr-6"></TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {isVacanciesLoading ? (
+                                    <TableRow className="border-none"><TableCell colSpan={6} className="text-center py-12"><Loader className="animate-spin mx-auto text-orange-500" /></TableCell></TableRow>
+                                ) : !myVacancies || myVacancies.length === 0 ? (
+                                    <TableRow className="border-none"><TableCell colSpan={6} className="text-center py-20 text-muted-foreground font-medium">You haven't posted any jobs yet.</TableCell></TableRow>
+                                ) : (
+                                    myVacancies.map((v, index) => (
+                                        <TableRow key={v.id} className="hover:bg-white/5 transition-colors border-white/5 h-20">
+                                            <TableCell className="text-center font-bold text-muted-foreground text-xs">{index + 1}</TableCell>
+                                            <TableCell className="font-black text-white">{v.title}</TableCell>
+                                            <TableCell className="text-sm text-muted-foreground">{v.location}</TableCell>
+                                            <TableCell className="text-center">
+                                                <Badge variant="secondary" className="bg-white/10 text-white border-none font-bold text-[10px] uppercase h-6">{v.employmentType}</Badge>
+                                            </TableCell>
+                                            <TableCell className="text-[10px] text-muted-foreground font-bold">
+                                                {v.postedAt ? formatDistanceToNow(v.postedAt.toDate(), { addSuffix: true }) : '-'}
+                                            </TableCell>
+                                            <TableCell className="text-right pr-6">
+                                                <DropdownMenu>
+                                                    <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="rounded-xl hover:bg-white/5 text-muted-foreground"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
+                                                    <DropdownMenuContent align="end" className="rounded-xl border-2 border-white/10 bg-[#1a1c23] text-white">
+                                                        <DropdownMenuItem onClick={() => { setSelectedVacancy(v); setIsVacancyDialogOpen(true); }} className="rounded-lg focus:bg-white/5 focus:text-white font-bold"><Edit className="mr-2 h-4 w-4" /> Edit Job</DropdownMenuItem>
+                                                        <DropdownMenuItem onClick={() => handleDeleteVacancy(v.id)} className="text-red-500 focus:text-red-500 rounded-lg focus:bg-red-500/5 font-bold"><Trash2 className="mr-2 h-4 w-4" /> Delete Job</DropdownMenuItem>
+                                                    </DropdownMenuContent>
+                                                </DropdownMenu>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))
+                                )}
+                            </TableBody>
+                        </Table>
+                    </CardContent>
+                </Card>
+            </TabsContent>
+          )}
 
           <TabsContent value="feed" className="mt-0 space-y-6">
             {!showPostForm ? (
@@ -640,9 +654,7 @@ export default function ExpertDashboardPage() {
                   <CardTitle className="flex items-center gap-3 text-2xl font-black text-white">
                     <Rss className="h-6 w-6 text-orange-500" /> Engage with the Community
                   </CardTitle>
-                  <CardDescription className="text-muted-foreground font-medium">
-                    Share updates, ask questions, and connect with other professionals.
-                  </CardDescription>
+                  <CardDescription className="text-muted-foreground font-medium">Share updates, ask questions, and connect with other professionals.</CardDescription>
                 </CardHeader>
                 <CardContent className="p-8 flex flex-col sm:flex-row gap-4">
                   <Button asChild className="flex-1 bg-white text-black hover:bg-white/90 font-black rounded-2xl h-14 text-lg" size="lg">
@@ -673,124 +685,62 @@ export default function ExpertDashboardPage() {
             <Card className="border-none bg-[#24262d] rounded-3xl overflow-hidden shadow-xl">
               <CardHeader className="bg-white/5 border-b border-white/5 pb-6">
                 <CardTitle className="text-2xl font-black text-white">Upgrade Your Presence</CardTitle>
-                <CardDescription className="text-muted-foreground font-medium">
-                  Unlock powerful tools and increase your visibility to clients.
-                </CardDescription>
+                <CardDescription className="text-muted-foreground font-medium">Unlock powerful tools and increase your visibility to clients.</CardDescription>
               </CardHeader>
               <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6 p-8">
-                <div className={cn(
-                  "relative flex flex-col items-center p-8 rounded-3xl border-2 transition-all duration-500",
-                  (userProfile.tier === 'Standard' || !userProfile.tier) 
-                    ? "border-orange-500 bg-orange-500/5 shadow-2xl shadow-orange-500/10 scale-105 z-10" 
-                    : "border-white/5 bg-[#1a1c23] opacity-60"
-                )}>
-                  <div className="bg-white/5 p-4 rounded-full mb-4">
-                    <UserIcon className="h-8 w-8 text-muted-foreground" />
-                  </div>
+                <div className={cn("relative flex flex-col items-center p-8 rounded-3xl border-2 transition-all duration-500", (userProfile.tier === 'Standard' || !userProfile.tier) ? "border-orange-500 bg-orange-500/5 shadow-2xl" : "border-white/5 bg-[#1a1c23] opacity-60")}>
+                  <div className="bg-white/5 p-4 rounded-full mb-4"><UserIcon className="h-8 w-8 text-muted-foreground" /></div>
                   <h3 className="text-2xl font-black text-white mb-1">Standard</h3>
                   <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-8">Basic Profile</p>
-                  
                   <ul className="w-full space-y-4 mb-10">
-                    <li className="flex items-center gap-2 text-xs font-bold text-white/70">
-                      <Check className="h-4 w-4 text-green-500" /> Public profile listing
-                    </li>
-                    <li className="flex items-center gap-2 text-xs font-bold text-white/70">
-                      <Check className="h-4 w-4 text-green-500" /> Appear in search results
-                    </li>
-                    <li className="flex items-center gap-2 text-xs font-bold text-white/70">
-                      <Check className="h-4 w-4 text-green-500" /> Earn referral points
-                    </li>
+                    <li className="flex items-center gap-2 text-xs font-bold text-white/70"><Check className="h-4 w-4 text-green-500" /> Public profile listing</li>
+                    <li className="flex items-center gap-2 text-xs font-bold text-white/70"><Check className="h-4 w-4 text-green-500" /> Appear in search results</li>
+                    <li className="flex items-center gap-2 text-xs font-bold text-white/70"><Check className="h-4 w-4 text-green-500" /> Earn referral points</li>
                   </ul>
-
-                  {(userProfile.tier === 'Standard' || !userProfile.tier) ? (
-                    <Button disabled className="w-full h-12 rounded-xl bg-white/5 text-muted-foreground border-none font-black uppercase tracking-widest text-[10px]">
-                      <CheckCircle className="mr-2 h-4 w-4" /> Your Active Plan
-                    </Button>
-                  ) : (
-                    <Button variant="outline" className="w-full h-12 rounded-xl border-white/10 bg-transparent text-white hover:bg-white/5 font-black uppercase tracking-widest text-[10px]" asChild>
-                      <Link href="/dashboard">Current Active</Link>
-                    </Button>
-                  )}
+                  {(userProfile.tier === 'Standard' || !userProfile.tier) ? <Button disabled className="w-full h-12 rounded-xl bg-white/5 text-muted-foreground font-black uppercase tracking-widest text-[10px]"><CheckCircle className="mr-2 h-4 w-4" /> Active Plan</Button> : <Button variant="outline" className="w-full h-12 rounded-xl border-white/10 font-black uppercase tracking-widest text-[10px]" asChild><Link href="/dashboard">Active</Link></Button>}
                 </div>
-
-                <div className={cn(
-                  "relative flex flex-col items-center p-8 rounded-3xl border-2 transition-all duration-500",
-                  userProfile.tier === 'Premier' 
-                    ? "border-orange-500 bg-orange-500/5 shadow-2xl shadow-orange-500/10 scale-105 z-10" 
-                    : "border-white/5 bg-[#1a1c23]"
-                )}>
-                  <div className="bg-orange-500/10 p-4 rounded-full mb-4">
-                    <Crown className="h-8 w-8 text-orange-500" />
-                  </div>
+                <div className={cn("relative flex flex-col items-center p-8 rounded-3xl border-2 transition-all duration-500", userProfile.tier === 'Premier' ? "border-orange-500 bg-orange-500/5 shadow-2xl" : "border-white/5 bg-[#1a1c23]")}>
+                  <div className="bg-orange-500/10 p-4 rounded-full mb-4"><Crown className="h-8 w-8 text-orange-500" /></div>
                   <h3 className="text-2xl font-black text-white mb-1">Premier</h3>
                   <p className="text-[10px] font-black uppercase tracking-widest text-orange-500 mb-8">Power User</p>
-                  
                   <ul className="w-full space-y-4 mb-10">
-                    <li className="flex items-center gap-2 text-xs font-bold text-white/70">
-                      <Check className="h-4 w-4 text-green-500" /> Higher search ranking
-                    </li>
-                    <li className="flex items-center gap-2 text-xs font-bold text-white/70">
-                      <Check className="h-4 w-4 text-green-500" /> AI-powered bio creation
-                    </li>
-                    <li className="flex items-center gap-2 text-xs font-bold text-white/70">
-                      <Check className="h-4 w-4 text-green-500" /> Advanced skill tagging
-                    </li>
+                    <li className="flex items-center gap-2 text-xs font-bold text-white/70"><Check className="h-4 w-4 text-green-500" /> Higher search ranking</li>
+                    <li className="flex items-center gap-2 text-xs font-bold text-white/70"><Check className="h-4 w-4 text-green-500" /> AI-powered bio creation</li>
+                    <li className="flex items-center gap-2 text-xs font-bold text-white/70"><Check className="h-4 w-4 text-green-500" /> Advanced skill tagging</li>
                   </ul>
-
-                  {userProfile.tier === 'Premier' ? (
-                    <Button disabled className="w-full h-12 rounded-xl bg-white/5 text-muted-foreground border-none font-black uppercase tracking-widest text-[10px]">
-                      <CheckCircle className="mr-2 h-4 w-4" /> Active Plan
-                    </Button>
-                  ) : (
-                    <Button className="w-full h-12 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-black uppercase tracking-widest text-[10px] shadow-lg shadow-orange-500/20" asChild>
-                      <Link href="/payment/premier">
-                        <ArrowUpCircle className="mr-2 h-4 w-4" /> Upgrade Now
-                      </Link>
-                    </Button>
-                  )}
+                  {userProfile.tier === 'Premier' ? <Button disabled className="w-full h-12 rounded-xl bg-white/5 text-muted-foreground font-black uppercase tracking-widest text-[10px]"><CheckCircle className="mr-2 h-4 w-4" /> Active Plan</Button> : <Button className="w-full h-12 rounded-xl bg-orange-500 hover:bg-orange-600 font-black uppercase tracking-widest text-[10px]" asChild><Link href="/payment/premier">Upgrade Now</Link></Button>}
                 </div>
-
-                <div className={cn(
-                  "relative flex flex-col items-center p-8 rounded-3xl border-2 transition-all duration-500",
-                  userProfile.tier === 'Super Premier' 
-                    ? "border-orange-500 bg-orange-500/5 shadow-2xl shadow-orange-500/10 scale-105 z-10" 
-                    : "border-white/5 bg-[#1a1c23]"
-                )}>
-                  <div className="bg-blue-500/10 p-4 rounded-full mb-4">
-                    <Sparkles className="h-8 w-8 text-blue-500" />
-                  </div>
+                <div className={cn("relative flex flex-col items-center p-8 rounded-3xl border-2 transition-all duration-500", userProfile.tier === 'Super Premier' ? "border-orange-500 bg-orange-500/5 shadow-2xl" : "border-white/5 bg-[#1a1c23]")}>
+                  <div className="bg-blue-500/10 p-4 rounded-full mb-4"><Sparkles className="h-8 w-8 text-blue-500" /></div>
                   <h3 className="text-2xl font-black text-white mb-1">Super</h3>
                   <p className="text-[10px] font-black uppercase tracking-widest text-blue-500 mb-8">Ultimate Access</p>
-                  
                   <ul className="w-full space-y-4 mb-10">
-                    <li className="flex items-center gap-2 text-xs font-bold text-white/70">
-                      <Check className="h-4 w-4 text-green-500" /> All Premier features
-                    </li>
-                    <li className="flex items-center gap-2 text-xs font-bold text-white/70">
-                      <Check className="h-4 w-4 text-green-500" /> Exclusive AI Search access
-                    </li>
-                    <li className="flex items-center gap-2 text-xs font-bold text-white/70">
-                      <Check className="h-4 w-4 text-green-500" /> Verified blue badge
-                    </li>
+                    <li className="flex items-center gap-2 text-xs font-bold text-white/70"><Check className="h-4 w-4 text-green-500" /> All Premier features</li>
+                    <li className="flex items-center gap-2 text-xs font-bold text-white/70"><Check className="h-4 w-4 text-green-500" /> Exclusive AI Search access</li>
+                    <li className="flex items-center gap-2 text-xs font-bold text-white/70"><Check className="h-4 w-4 text-green-500" /> Verified blue badge</li>
                   </ul>
-
-                  {userProfile.tier === 'Super Premier' ? (
-                    <Button disabled className="w-full h-12 rounded-xl bg-white/5 text-muted-foreground border-none font-black uppercase tracking-widest text-[10px]">
-                      <CheckCircle className="mr-2 h-4 w-4" /> Active Plan
-                    </Button>
-                  ) : (
-                    <Button className="w-full h-12 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-black uppercase tracking-widest text-[10px] shadow-lg shadow-blue-500/20" asChild>
-                      <Link href="/payment/super-premier">
-                        <ArrowUpCircle className="mr-2 h-4 w-4" /> Go Super
-                      </Link>
-                    </Button>
-                  )}
+                  {userProfile.tier === 'Super Premier' ? <Button disabled className="w-full h-12 rounded-xl bg-white/5 text-muted-foreground font-black uppercase tracking-widest text-[10px]"><CheckCircle className="mr-2 h-4 w-4" /> Active Plan</Button> : <Button className="w-full h-12 rounded-xl bg-blue-600 hover:bg-blue-700 font-black uppercase tracking-widest text-[10px]" asChild><Link href="/payment/super-premier">Go Super</Link></Button>}
                 </div>
               </CardContent>
             </Card>
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Vacancy Dialog */}
+      <Dialog open={isVacancyDialogOpen} onOpenChange={setIsVacancyDialogOpen}>
+        <DialogContent className="max-w-3xl overflow-y-auto max-h-[90vh] rounded-[2rem] border-none bg-[#1a1c23] text-white">
+          <DialogHeader><DialogTitle className="text-2xl font-black">{selectedVacancy ? 'Edit Job Opening' : 'Post New Job'}</DialogTitle></DialogHeader>
+          <PostVacancyForm 
+            onSuccess={() => setIsVacancyDialogOpen(false)} 
+            companyId={user.uid}
+            companyName={userProfile.companyName}
+            companyEmail={userProfile.email || ''}
+            contactPhone={userProfile.phoneNumber}
+            vacancy={selectedVacancy || undefined}
+          />
+        </DialogContent>
+      </Dialog>
 
       {/* Hide Profile Dialog */}
       <Dialog open={isHideDialogOpen} onOpenChange={setIsHideDialogOpen}>
@@ -800,9 +750,7 @@ export default function ExpertDashboardPage() {
                     <EyeOff className="text-orange-500 h-10 w-10" />
                   </div>
                   <DialogTitle className="text-3xl font-black">Temporary Hide</DialogTitle>
-                  <UiDialogDescription className="text-muted-foreground font-medium pt-2">
-                      Hide your profile card from all public search results instantly.
-                  </UiDialogDescription>
+                  <UiDialogDescription className="text-muted-foreground font-medium pt-2">Hide your profile card from all public search results instantly.</UiDialogDescription>
               </DialogHeader>
               <div className="grid grid-cols-2 gap-3 py-8">
                   <Button variant="secondary" className="h-14 font-black rounded-xl border border-white/5 bg-white/5 hover:bg-white/10" onClick={() => handleHideProfile(1)}>1 Hour</Button>
@@ -810,26 +758,18 @@ export default function ExpertDashboardPage() {
                   <Button variant="secondary" className="h-14 font-black rounded-xl border border-white/5 bg-white/5 hover:bg-white/10" onClick={() => handleHideProfile(72)}>3 Days</Button>
                   <Button variant="secondary" className="h-14 font-black rounded-xl border border-white/5 bg-white/5 hover:bg-white/10" onClick={() => handleHideProfile(168)}>1 Week</Button>
               </div>
-              <DialogFooter>
-                  <Button variant="ghost" onClick={() => setIsHideDialogOpen(false)} className="w-full h-12 rounded-xl text-muted-foreground hover:text-white font-bold">Nevermind</Button>
-              </DialogFooter>
+              <DialogFooter><Button variant="ghost" onClick={() => setIsHideDialogOpen(false)} className="w-full h-12 rounded-xl text-muted-foreground hover:text-white font-bold">Nevermind</Button></DialogFooter>
           </DialogContent>
       </Dialog>
 
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="max-w-3xl overflow-y-auto max-h-[90vh] rounded-[2rem] border-none bg-[#1a1c23]">
           <DialogHeader><DialogTitle className="text-2xl font-black text-white">Edit Your Professional Profile</DialogTitle></DialogHeader>
-          <div className="p-4">
-            {userProfile && <EditProfileForm userProfile={userProfile as any} onSuccess={() => setIsEditDialogOpen(false)} />}
-          </div>
+          <div className="p-4">{userProfile && <EditProfileForm userProfile={userProfile as any} onSuccess={() => setIsEditDialogOpen(false)} />}</div>
         </DialogContent>
       </Dialog>
 
-      <ProfileCompletionWizard 
-        isOpen={isWizardOpen} 
-        onOpenChange={setIsWizardOpen} 
-        userProfile={userProfile} 
-      />
+      <ProfileCompletionWizard isOpen={isWizardOpen} onOpenChange={setIsWizardOpen} userProfile={userProfile} />
     </div>
   );
 }
