@@ -132,7 +132,6 @@ function SearchResults() {
         // Filter out hidden profiles
         experts = experts.filter(e => {
             if (!e.hiddenUntil) return true;
-            // hiddenUntil is a Timestamp object from useCollection
             return (e.hiddenUntil as any).toDate() < new Date();
         });
 

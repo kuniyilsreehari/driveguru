@@ -8,7 +8,7 @@ import { useUser, useFirestore, useDoc, useMemoFirebase, useAuth, useCollection 
 import { updateDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, UserX, Crown, Sparkles, User as UserIcon, Save, Briefcase, Building, MessageSquare, Search, PlusCircle, Download, ExternalLink, IndianRupee, Upload, HardDriveDownload, Megaphone, Rss, Award, CheckCircle, TrendingUp, PieChart, Activity, Trash, ChevronLeft, ChevronRight, Check, Gift, Phone, Home, Eye } from 'lucide-react';
+import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, UserX, Crown, Sparkles, User as UserIcon, Save, Briefcase, Building, MessageSquare, Search, PlusCircle, Download, ExternalLink, IndianRupee, Upload, HardDriveDownload, Megaphone, Rss, Award, CheckCircle, TrendingUp, PieChart, Activity, Trash, ChevronLeft, ChevronRight, Check, Gift, Phone, Home, Eye, Layout } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -431,7 +431,7 @@ export default function AdminDashboardPage() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.setAttribute('download', `experts-registry-${format(new Date(), 'yyyy-MM-dd')}.csv`);
+    link.download = `experts-registry-${format(new Date(), 'yyyy-MM-dd')}.csv`;
     link.click();
     toast({ title: "CSV Exported" });
   };
@@ -1090,6 +1090,24 @@ export default function AdminDashboardPage() {
                 <Card className="border-none rounded-2xl overflow-hidden bg-card">
                     <CardHeader className="bg-white/5 border-b border-white/5 pb-6">
                         <div className="flex items-center gap-3">
+                            <Layout className="h-6 w-6 text-orange-500" />
+                            <CardTitle className="text-xl font-black uppercase italic">Homepage Layout</CardTitle>
+                        </div>
+                        <CardDescription className="text-muted-foreground">Manage the "Recent Professionals" display.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="p-6 space-y-4">
+                        <div className="space-y-2">
+                            <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Max Recent Professionals</Label>
+                            <Input type="number" value={featuredLimit} onChange={e => setFeaturedLimit(Number(e.target.value))} className="h-12 bg-background border-none rounded-xl font-black text-xl text-white" />
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Card className="border-none rounded-2xl overflow-hidden bg-card">
+                    <CardHeader className="bg-white/5 border-b border-white/5 pb-6">
+                        <div className="flex items-center gap-3">
                             <Megaphone className="h-6 w-6 text-orange-500" />
                             <CardTitle className="text-xl font-black uppercase italic">Announcements</CardTitle>
                         </div>
@@ -1100,21 +1118,6 @@ export default function AdminDashboardPage() {
                             <Switch checked={announcementEnabled} onCheckedChange={setAnnouncementEnabled} className="data-[state=checked]:bg-orange-500" />
                         </div>
                         <Textarea value={announcementText} onChange={e => setAnnouncementText(e.target.value)} className="bg-background border-none rounded-xl min-h-[80px]" placeholder="Breaking news text here..." />
-                    </CardContent>
-                </Card>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Card className="border-none rounded-2xl overflow-hidden bg-card">
-                    <CardHeader className="bg-white/5 border-b border-white/5 pb-6">
-                        <div className="flex items-center gap-3">
-                            <PlusCircle className="h-6 w-6 text-orange-500" />
-                            <CardTitle className="text-xl font-black uppercase italic">Referral Rewards</CardTitle>
-                        </div>
-                    </CardHeader>
-                    <CardContent className="p-6 space-y-4">
-                        <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Points per signup</Label>
-                        <Input type="number" value={referralPoints} onChange={e => setReferralPoints(Number(e.target.value))} className="h-12 bg-background border-none rounded-xl font-black text-2xl text-orange-500" />
                     </CardContent>
                 </Card>
 
