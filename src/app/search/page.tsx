@@ -4,8 +4,8 @@
 import { Suspense, useMemo, useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { collection, query, where, limit, or, and } from 'firebase/firestore';
-import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { collection, query, where, limit, or, and, doc } from 'firebase/firestore';
+import { useFirestore, useCollection, useMemoFirebase, useDoc } from '@/firebase';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -53,6 +53,9 @@ function SearchResults() {
     const radius = radiusParam ? parseInt(radiusParam, 10) : null;
     const latParam = searchParams.get('lat');
     const lonParam = searchParams.get('lon');
+
+    const appConfigDocRef = useMemoFirebase(() => doc(firestore, 'app_config', 'homepage'), [firestore]);
+    const { data: appConfig } = useDoc<any>(appConfigDocRef);
 
     useEffect(() => {
         const geocodeLocation = async () => {
@@ -213,18 +216,16 @@ function SearchResults() {
             );
         }
         
-        // Sort experts
+        // Sort experts by Tier First
         experts.sort((a, b) => {
             const tierOrder = { 'Super Premier': 0, 'Premier': 1, 'Standard': 2 };
             const aTier = a.tier || 'Standard';
             const bTier = b.tier || 'Standard';
 
-            // Sort by tier first
             if (tierOrder[aTier] !== tierOrder[bTier]) {
                 return tierOrder[aTier] - tierOrder[bTier];
             }
 
-            // If tiers are the same, sort by verification status (verified first)
             if (a.verified !== b.verified) {
                 return a.verified ? -1 : 1;
             }
@@ -232,9 +233,16 @@ function SearchResults() {
             return 0;
         });
 
-        return experts;
+        // Apply Search Limits based on Subscription Tier
+        const limits = appConfig?.tierSearchLimits || { standard: 100, premier: 100, superPremier: 100 };
+        
+        const superPremiers = experts.filter(e => e.tier === 'Super Premier').slice(0, limits.superPremier);
+        const premiers = experts.filter(e => e.tier === 'Premier').slice(0, limits.premier);
+        const standards = experts.filter(e => !e.tier || e.tier === 'Standard').slice(0, limits.standard);
 
-    }, [allExperts, searchQueryParam, city, state, pincode, maxRate, radius, searchCenter, isGeocoding, locationQuery]);
+        return [...superPremiers, ...premiers, ...standards];
+
+    }, [allExperts, searchQueryParam, city, state, pincode, maxRate, radius, searchCenter, isGeocoding, locationQuery, appConfig]);
 
 
     if (isLoading || isGeocoding || filteredExperts === null) {

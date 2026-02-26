@@ -152,17 +152,7 @@
         },
         "photoUrl": {
           "type": "string",
-          "description": "URL of the user's primary profile photo.",
-          "format": "uri"
-        },
-        "photoUrl2": {
-          "type": "string",
-          "description": "URL of the user's second profile photo.",
-          "format": "uri"
-        },
-        "photoUrl3": {
-          "type": "string",
-          "description": "URL of the user's third profile photo.",
+          "description": "URL of the user's profile photo.",
           "format": "uri"
         },
         "linkedinUrl": {
@@ -208,11 +198,6 @@
         "isAvailable": {
           "type": "boolean",
           "description": "Indicates if the expert is currently available for work."
-        },
-        "hiddenUntil": {
-          "type": ["string", "null"],
-          "format": "date-time",
-          "description": "If set, the profile is hidden from public lists until this time."
         },
         "referralCode": {
           "type": "string",
@@ -605,6 +590,15 @@
         "featuredExpertsLimit": {
           "type": "number",
           "description": "The number of featured experts to show on the homepage."
+        },
+        "tierSearchLimits": {
+            "type": "object",
+            "description": "Limits for how many experts of each tier to show in search results.",
+            "properties": {
+                "standard": { "type": "number" },
+                "premier": { "type": "number" },
+                "superPremier": { "type": "number" }
+            }
         },
         "homepageCategories": {
             "type": "array",

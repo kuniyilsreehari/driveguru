@@ -9,7 +9,7 @@ import { useUser, useFirestore, useDoc, useMemoFirebase, useAuth, useCollection 
 import { updateDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, UserX, Crown, Sparkles, User as UserIcon, Save, Briefcase, Building, MessageSquare, Search, PlusCircle, Download, ExternalLink, IndianRupee, Upload, HardDriveDownload, Megaphone, Rss, Award, CheckCircle, TrendingUp, PieChart, Activity, Trash, ChevronLeft, ChevronRight, Check, Gift, Phone, Home } from 'lucide-react';
+import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, UserX, Crown, Sparkles, User as UserIcon, Save, Briefcase, Building, MessageSquare, Search, PlusCircle, Download, ExternalLink, IndianRupee, Upload, HardDriveDownload, Megaphone, Rss, Award, CheckCircle, TrendingUp, PieChart, Activity, Trash, ChevronLeft, ChevronRight, Check, Gift, Phone, Home, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -125,6 +125,11 @@ type Post = {
 type AppConfig = {
     introVideoUrl?: string;
     featuredExpertsLimit?: number;
+    tierSearchLimits?: {
+        standard: number;
+        premier: number;
+        superPremier: number;
+    };
     announcementText?: string;
     isAnnouncementEnabled?: boolean;
     announcementSpeed?: number;
@@ -174,6 +179,7 @@ export default function AdminDashboardPage() {
 
   const [introVideoUrl, setIntroVideoUrl] = useState("");
   const [featuredLimit, setFeaturedLimit] = useState(3);
+  const [tierLimits, setTierLimits] = useState({ standard: 10, premier: 25, superPremier: 50 });
   const [announcementText, setAnnouncementText] = useState("");
   const [announcementEnabled, setAnnouncementEnabled] = useState(false);
   const [announcementSpeed, setAnnouncementSpeed] = useState(20);
@@ -214,6 +220,7 @@ export default function AdminDashboardPage() {
     if (appConfig) {
       setIntroVideoUrl(appConfig.introVideoUrl || "");
       setFeaturedLimit(appConfig.featuredExpertsLimit || 3);
+      if (appConfig.tierSearchLimits) setTierLimits(appConfig.tierSearchLimits);
       setAnnouncementText(appConfig.announcementText || "");
       setAnnouncementEnabled(appConfig.isAnnouncementEnabled || false);
       setAnnouncementSpeed(appConfig.announcementSpeed || 20);
@@ -330,6 +337,7 @@ export default function AdminDashboardPage() {
       await setDocumentNonBlocking(appConfigDocRef!, {
         introVideoUrl,
         featuredExpertsLimit: featuredLimit,
+        tierSearchLimits: tierLimits,
         announcementText,
         isAnnouncementEnabled: announcementEnabled,
         announcementSpeed,
@@ -922,7 +930,7 @@ export default function AdminDashboardPage() {
             <Card className="border-none rounded-2xl overflow-hidden bg-card">
               <CardHeader className="bg-white/5 border-b border-white/5 pb-6">
                 <div className="flex items-center gap-3">
-                    < IndianRupee className="h-6 w-6 text-orange-500" />
+                    <IndianRupee className="h-6 w-6 text-orange-500" />
                     <CardTitle className="text-2xl font-black uppercase italic">Payment Configuration</CardTitle>
                 </div>
                 <CardDescription className="text-muted-foreground">Manage API keys, pricing, and cycle-specific payment links.</CardDescription>
@@ -1053,7 +1061,33 @@ export default function AdminDashboardPage() {
               </CardFooter>
             </Card>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Card className="border-none rounded-2xl overflow-hidden bg-card">
+                    <CardHeader className="bg-white/5 border-b border-white/5 pb-6">
+                        <div className="flex items-center gap-3">
+                            <Eye className="h-6 w-6 text-orange-500" />
+                            <CardTitle className="text-xl font-black uppercase italic">Search Visibility Limits</CardTitle>
+                        </div>
+                        <CardDescription className="text-muted-foreground">Max results shown in search per tier.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="p-6 space-y-4">
+                        <div className="grid grid-cols-3 gap-4">
+                            <div className="space-y-2">
+                                <Label className="text-[10px] font-black uppercase text-muted-foreground">Standard</Label>
+                                <Input type="number" value={tierLimits.standard} onChange={e => setTierLimits({...tierLimits, standard: Number(e.target.value)})} className="h-12 bg-background border-none rounded-xl font-black text-xl text-white" />
+                            </div>
+                            <div className="space-y-2">
+                                <Label className="text-[10px] font-black uppercase text-muted-foreground text-purple-500">Premier</Label>
+                                <Input type="number" value={tierLimits.premier} onChange={e => setTierLimits({...tierLimits, premier: Number(e.target.value)})} className="h-12 bg-background border-none rounded-xl font-black text-xl text-purple-500" />
+                            </div>
+                            <div className="space-y-2">
+                                <Label className="text-[10px] font-black uppercase text-muted-foreground text-blue-500">Super Premier</Label>
+                                <Input type="number" value={tierLimits.superPremier} onChange={e => setTierLimits({...tierLimits, superPremier: Number(e.target.value)})} className="h-12 bg-background border-none rounded-xl font-black text-xl text-blue-500" />
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+
                 <Card className="border-none rounded-2xl overflow-hidden bg-card">
                     <CardHeader className="bg-white/5 border-b border-white/5 pb-6">
                         <div className="flex items-center gap-3">
@@ -1069,7 +1103,9 @@ export default function AdminDashboardPage() {
                         <Textarea value={announcementText} onChange={e => setAnnouncementText(e.target.value)} className="bg-background border-none rounded-xl min-h-[80px]" placeholder="Breaking news text here..." />
                     </CardContent>
                 </Card>
+            </div>
 
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <Card className="border-none rounded-2xl overflow-hidden bg-card">
                     <CardHeader className="bg-white/5 border-b border-white/5 pb-6">
                         <div className="flex items-center gap-3">
