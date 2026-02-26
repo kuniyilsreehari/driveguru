@@ -14,7 +14,7 @@ import { Icons } from "@/components/icons"
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { useFirestore, useCollection, useDoc, useMemoFirebase, useUser, updateDocumentNonBlocking } from '@/firebase';
-import { collection, query, where, limit, doc, arrayUnion, arrayRemove } from 'firebase/firestore';
+import { collection, query, where, limit, doc, arrayUnion, arrayRemove, orderBy } from 'firebase/firestore';
 import { ExpertCard } from '@/components/expert-card';
 import type { ExpertUser } from '@/components/expert-card';
 import * as LucideIcons from 'lucide-react';
@@ -91,10 +91,11 @@ function HomePageContent() {
 
     const topExpertsQuery = useMemoFirebase(() => {
         if (!firestore) return null;
-        // Updated to use hand-picked featured flag
+        // Optimized to use featured flag and registration order
         return query(
             collection(firestore, 'users'), 
             where('isFeatured', '==', true),
+            orderBy('createdAt', 'desc'),
             limit(20)
         );
     }, [firestore]);
@@ -125,6 +126,7 @@ function HomePageContent() {
         return query(
             collection(firestore, 'users'), 
             where('verified', '==', true),
+            orderBy('createdAt', 'desc'),
             limit(featuredExpertsLimit + 10) // Fetch extra to account for hidden filtering
         );
     }, [firestore, featuredExpertsLimit]);
@@ -310,7 +312,7 @@ function HomePageContent() {
                 </header>
 
                 <main className="space-y-12">
-                    {/* Top Experts Carousel - Matching High-Fidelity Module Design */}
+                    {/* Top Experts Carousel - High-Fidelity Hand-Picked Selections */}
                     <section className="bg-[#24262d] rounded-[2.5rem] p-6 sm:p-8 shadow-2xl overflow-hidden">
                         <div className="mb-8">
                             <h2 className="text-2xl font-black text-white">Top Rated Experts</h2>
@@ -374,7 +376,7 @@ function HomePageContent() {
                                 )}
                             </div>
 
-                            {/* Navigation Bar matching design */}
+                            {/* Navigation Bar */}
                             <div className="flex items-center justify-between mt-4 px-2">
                                 <Button variant="ghost" size="icon" className="text-muted-foreground/40 hover:text-white hover:bg-white/5 rounded-full h-8 w-8">
                                     <ChevronLeft className="h-6 w-6" />

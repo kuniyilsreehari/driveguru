@@ -501,14 +501,49 @@ export default function AdminDashboardPage() {
                             </div>
                         </CardHeader>
                         <CardContent className="p-6 space-y-6">
-                            <div className="relative group">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-orange-500 transition-colors" />
-                                <Input 
-                                    placeholder="Search experts by name, phone, email or code..." 
-                                    className="pl-10 h-12 bg-white/5 border-none rounded-xl text-white placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-orange-500"
-                                    value={userSearchQuery}
-                                    onChange={(e) => setUserSearchQuery(e.target.value)}
-                                />
+                            <div className="space-y-4">
+                                <div className="flex flex-wrap items-center justify-between gap-4">
+                                    <div className="flex flex-wrap gap-1">
+                                        {[
+                                            { id: 'all', label: 'All Experts', count: stats.total },
+                                            { id: 'verified', label: 'Verified', count: stats.verified, color: 'text-green-500' },
+                                            { id: 'unverified', label: 'Unverified', count: stats.unverified, color: 'text-red-500' },
+                                            { id: 'premier', label: 'Premier', count: stats.premier, color: 'text-purple-500' },
+                                            { id: 'super', label: 'Super Premier', count: stats.super, color: 'text-blue-500' },
+                                        ].map((f) => (
+                                            <Button
+                                                key={f.id}
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() => setUserFilter(f.id as any)}
+                                                className={cn(
+                                                    "rounded-xl px-3 h-9 text-[10px] font-black uppercase tracking-widest transition-all",
+                                                    userFilter === f.id 
+                                                        ? "bg-white/10 text-white" 
+                                                        : "text-muted-foreground hover:bg-white/5 hover:text-white"
+                                                )}
+                                            >
+                                                <span className={cn(userFilter === f.id && f.color)}>{f.label}</span>
+                                                <Badge variant="secondary" className="ml-2 bg-white/5 text-white border-none font-bold px-1.5 h-4 min-w-[1.25rem]">
+                                                    {f.count}
+                                                </Badge>
+                                            </Button>
+                                        ))}
+                                    </div>
+                                    <Button variant="outline" size="sm" className="rounded-xl border-white/10 h-9 font-black uppercase text-[10px]" onClick={handleExportCSV}>
+                                        <Download className="mr-2 h-3.5 w-3.5" /> Export List
+                                    </Button>
+                                </div>
+
+                                <div className="relative group">
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-orange-500 transition-colors" />
+                                    <Input 
+                                        placeholder="Search experts by name, phone, email or code..." 
+                                        className="pl-10 h-12 bg-white/5 border-none rounded-xl text-white placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-orange-500"
+                                        value={userSearchQuery}
+                                        onChange={(e) => setUserSearchQuery(e.target.value)}
+                                    />
+                                </div>
                             </div>
 
                             <div className="rounded-xl border border-white/5 overflow-hidden">
