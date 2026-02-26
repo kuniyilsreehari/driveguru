@@ -527,9 +527,9 @@ export default function ExpertDashboardPage() {
                   <h3 className="text-2xl font-black text-white mb-1 uppercase tracking-tighter italic">Standard</h3>
                   <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-8">Base Tier</p>
                   <ul className="w-full space-y-4 mb-10">
-                    <li className="flex items-center gap-2 text-xs font-black text-white/70 uppercase"><CheckCircle className="h-4 w-4 text-green-500" /> Profile Listing</li>
-                    <li className="flex items-center gap-2 text-xs font-black text-white/70 uppercase"><CheckCircle className="h-4 w-4 text-green-500" /> Basic Search</li>
-                    <li className="flex items-center gap-2 text-xs font-black text-white/70 uppercase"><CheckCircle className="h-4 w-4 text-green-500" /> Refer & Earn</li>
+                    <li className="flex items-center gap-2 text-xs font-black text-white/70 uppercase"><CheckCircle className="h-4 w-4 text-green-500" /> Basic Profile Listing</li>
+                    <li className="flex items-center gap-2 text-xs font-black text-white/70 uppercase"><CheckCircle className="h-4 w-4 text-green-500" /> Standard Search Ranking</li>
+                    <li className="flex items-center gap-2 text-xs font-black text-white/70 uppercase"><CheckCircle className="h-4 w-4 text-green-500" /> Referral Rewards Program</li>
                   </ul>
                   {(userProfile.tier === 'Standard' || !userProfile.tier) ? <Button disabled className="w-full h-12 rounded-xl bg-white/10 text-muted-foreground font-black uppercase tracking-widest text-[10px]">Active</Button> : <Button variant="outline" className="w-full h-12 rounded-xl border-white/10 font-black uppercase tracking-widest text-[10px]" asChild><Link href="/dashboard">Selected</Link></Button>}
                 </div>
@@ -537,25 +537,27 @@ export default function ExpertDashboardPage() {
                 <div className={cn("relative flex flex-col items-center p-8 rounded-3xl border-2 transition-all duration-500", userProfile.tier === 'Premier' ? "border-orange-500 bg-orange-500/5 shadow-2xl scale-105" : "border-white/5 bg-[#1a1c23]")}>
                   <div className="bg-orange-500/10 p-4 rounded-full mb-4"><Crown className="h-8 w-8 text-orange-500" /></div>
                   <h3 className="text-2xl font-black text-white mb-1 uppercase tracking-tighter italic">Premier</h3>
-                  <p className="text-[10px] font-black uppercase tracking-widest text-orange-500 mb-8">Power User</p>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-orange-500 mb-8">Power Professional</p>
                   <ul className="w-full space-y-4 mb-10">
-                    <li className="flex items-center gap-2 text-xs font-black text-white/70 uppercase"><CheckCircle className="h-4 w-4 text-green-500" /> High Ranking</li>
-                    <li className="flex items-center gap-2 text-xs font-black text-white/70 uppercase"><CheckCircle className="h-4 w-4 text-green-500" /> AI Bio Generator</li>
-                    <li className="flex items-center gap-2 text-xs font-black text-white/70 uppercase"><CheckCircle className="h-4 w-4 text-green-500" /> Smart Tagging</li>
+                    <li className="flex items-center gap-2 text-xs font-black text-white/70 uppercase"><CheckCircle className="h-4 w-4 text-green-500" /> High Priority Search Ranking</li>
+                    <li className="flex items-center gap-2 text-xs font-black text-white/70 uppercase"><CheckCircle className="h-4 w-4 text-green-500" /> AI Bio & Profile Generator</li>
+                    <li className="flex items-center gap-2 text-xs font-black text-white/70 uppercase"><CheckCircle className="h-4 w-4 text-green-500" /> Smart Skills Suggestions</li>
+                    <li className="flex items-center gap-2 text-xs font-black text-white/70 uppercase"><CheckCircle className="h-4 w-4 text-green-500" /> Featured Purple Badge</li>
                   </ul>
-                  {userProfile.tier === 'Premier' ? <Button disabled className="w-full h-12 rounded-xl bg-white/10 text-muted-foreground font-black uppercase tracking-widest text-[10px]">Active</Button> : <Button className="w-full h-12 rounded-xl bg-orange-500 hover:bg-orange-600 font-black uppercase tracking-widest text-[10px] shadow-xl" asChild><Link href="/payment/premier">Upgrade</Link></Button>}
+                  {userProfile.tier === 'Premier' ? <Button disabled className="w-full h-12 rounded-xl bg-white/10 text-muted-foreground font-black uppercase tracking-widest text-[10px]">Active</Button> : <Button className="w-full h-12 rounded-xl bg-orange-500 hover:bg-orange-600 font-black uppercase tracking-widest text-[10px] shadow-xl" asChild><Link href="/payment/premier">Upgrade Now</Link></Button>}
                 </div>
                 {/* Super Premier Plan */}
                 <div className={cn("relative flex flex-col items-center p-8 rounded-3xl border-2 transition-all duration-500", userProfile.tier === 'Super Premier' ? "border-orange-500 bg-orange-500/5 shadow-2xl scale-105" : "border-white/5 bg-[#1a1c23]")}>
                   <div className="bg-blue-500/10 p-4 rounded-full mb-4"><Sparkles className="h-8 w-8 text-blue-500" /></div>
                   <h3 className="text-2xl font-black text-white mb-1 uppercase tracking-tighter italic">Super</h3>
-                  <p className="text-[10px] font-black uppercase tracking-widest text-blue-500 mb-8">Elite Access</p>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-blue-500 mb-8">Elite Executive</p>
                   <ul className="w-full space-y-4 mb-10">
-                    <li className="flex items-center gap-2 text-xs font-black text-white/70 uppercase"><CheckCircle className="h-4 w-4 text-green-500" /> Full AI Suite</li>
-                    <li className="flex items-center gap-2 text-xs font-black text-white/70 uppercase"><CheckCircle className="h-4 w-4 text-green-500" /> AI Search Tool</li>
-                    <li className="flex items-center gap-2 text-xs font-black text-white/70 uppercase"><CheckCircle className="h-4 w-4 text-green-500" /> Elite Blue Badge</li>
+                    <li className="flex items-center gap-2 text-xs font-black text-white/70 uppercase"><CheckCircle className="h-4 w-4 text-green-500" /> Maximum Search Visibility</li>
+                    <li className="flex items-center gap-2 text-xs font-black text-white/70 uppercase"><CheckCircle className="h-4 w-4 text-green-500" /> AI Natural Language Search</li>
+                    <li className="flex items-center gap-2 text-xs font-black text-white/70 uppercase"><CheckCircle className="h-4 w-4 text-green-500" /> Featured on Homepage Carousel</li>
+                    <li className="flex items-center gap-2 text-xs font-black text-white/70 uppercase"><CheckCircle className="h-4 w-4 text-green-500" /> Elite Blue Verification Badge</li>
                   </ul>
-                  {userProfile.tier === 'Super Premier' ? <Button disabled className="w-full h-12 rounded-xl bg-white/10 text-muted-foreground font-black uppercase tracking-widest text-[10px]">Active</Button> : <Button className="w-full h-12 rounded-xl bg-blue-600 hover:bg-blue-700 font-black uppercase tracking-widest text-[10px] shadow-xl" asChild><Link href="/payment/super-premier">Go Elite</Link></Button>}
+                  {userProfile.tier === 'Super Premier' ? <Button disabled className="w-full h-12 rounded-xl bg-white/10 text-muted-foreground font-black uppercase tracking-widest text-[10px]">Active</Button> : <Button className="w-full h-12 rounded-xl bg-blue-600 hover:bg-blue-700 font-black uppercase tracking-widest text-[10px] shadow-xl" asChild><Link href="/payment/super-premier">Unlock Elite Access</Link></Button>}
                 </div>
               </CardContent>
             </Card>
