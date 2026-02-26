@@ -96,6 +96,10 @@
           "type": "boolean",
           "description": "Indicates if the expert has been verified by a super admin."
         },
+        "isFeatured": {
+          "type": "boolean",
+          "description": "If true, the expert is shown in the featured 'Top Rated' carousel on the homepage."
+        },
         "cashPaymentStatus": {
           "type": "string",
           "description": "The status of an offline cash payment, managed by managers.",
@@ -530,17 +534,13 @@
             "description": "The tier of the company posting the vacancy.",
             "enum": ["Standard", "Premier", "Super Premier"]
         },
-        "status": {
-          "type": "string",
-          "enum": ["Pending", "Approved", "Rejected"]
-        },
         "postedAt": {
           "type": "string",
           "format": "date-time",
           "description": "Timestamp of when the vacancy was posted."
         }
       },
-      "required": ["id", "title", "description", "companyId", "companyName", "companyEmail", "location", "employmentType", "postedAt", "positionsAvailable", "status"]
+      "required": ["id", "title", "description", "companyId", "companyName", "companyEmail", "location", "employmentType", "postedAt", "positionsAvailable"]
     },
      "Payment": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -602,11 +602,6 @@
       "type": "object",
       "description": "Stores global application settings.",
       "properties": {
-        "introVideoUrl": {
-          "type": "string",
-          "description": "YouTube link for the introduction video on the Guides page.",
-          "format": "uri"
-        },
         "featuredExpertsLimit": {
           "type": "number",
           "description": "The number of featured experts to show on the homepage."
@@ -703,6 +698,10 @@
         "referralRewardPoints": {
           "type": "number",
           "description": "The number of points awarded for a successful referral."
+        },
+        "centralContactPhone": {
+          "type": "string",
+          "description": "A central admin contact number for global support calls."
         }
       }
     }

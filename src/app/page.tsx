@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Suspense, useState, useEffect, useMemo } from 'react';
@@ -90,11 +91,11 @@ function HomePageContent() {
 
     const topExpertsQuery = useMemoFirebase(() => {
         if (!firestore) return null;
+        // Updated to use hand-picked featured flag
         return query(
             collection(firestore, 'users'), 
-            where('tier', 'in', ['Premier', 'Super Premier']),
-            where('verified', '==', true),
-            limit(30)
+            where('isFeatured', '==', true),
+            limit(20)
         );
     }, [firestore]);
     

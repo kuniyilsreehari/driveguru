@@ -9,7 +9,7 @@ import { useUser, useFirestore, useDoc, useMemoFirebase, useAuth, useCollection 
 import { updateDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, UserX, Crown, Sparkles, User as UserIcon, Save, Briefcase, Building, MessageSquare, Search, PlusCircle, Download, ExternalLink, IndianRupee, Upload, HardDriveDownload, Megaphone, Rss, Award, CheckCircle, TrendingUp, PieChart, Activity, Trash, ChevronLeft, ChevronRight, Check, Gift, Phone } from 'lucide-react';
+import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, UserX, Crown, Sparkles, User as UserIcon, Save, Briefcase, Building, MessageSquare, Search, PlusCircle, Download, ExternalLink, IndianRupee, Upload, HardDriveDownload, Megaphone, Rss, Award, CheckCircle, TrendingUp, PieChart, Activity, Trash, ChevronLeft, ChevronRight, Check, Gift, Phone, Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -85,6 +85,7 @@ type ExpertUser = {
     role: string;
     photoUrl?: string;
     verified?: boolean;
+    isFeatured?: boolean;
     tier?: 'Standard' | 'Premier' | 'Super Premier';
     referralCode?: string;
     referralPoints?: number;
@@ -522,6 +523,7 @@ export default function AdminDashboardPage() {
                                             <TableHead className="font-bold text-white text-center text-[10px] uppercase tracking-widest">Points</TableHead>
                                             <TableHead className="font-bold text-blue-500 text-center text-[10px] uppercase tracking-widest">Joins</TableHead>
                                             <TableHead className="font-bold text-center text-white text-[10px] uppercase tracking-widest">Verification</TableHead>
+                                            <TableHead className="font-bold text-center text-orange-500 text-[10px] uppercase tracking-widest">On Home</TableHead>
                                             <TableHead className="text-right font-bold text-white"></TableHead>
                                         </TableRow>
                                     </TableHeader>
@@ -529,7 +531,7 @@ export default function AdminDashboardPage() {
                                         {(() => {
                                             const paginated = filteredUsers.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
                                             if (paginated.length === 0 && !isUsersLoading) {
-                                                return <TableRow><TableCell colSpan={9} className="text-center py-12 text-muted-foreground italic">No experts found matching your criteria.</TableCell></TableRow>;
+                                                return <TableRow><TableCell colSpan={10} className="text-center py-12 text-muted-foreground italic">No experts found matching your criteria.</TableCell></TableRow>;
                                             }
                                             return paginated.map((u, index) => {
                                                 const globalIndex = (currentPage - 1) * ITEMS_PER_PAGE + index + 1;
@@ -570,6 +572,11 @@ export default function AdminDashboardPage() {
                                                         <TableCell>
                                                             <div className="flex items-center justify-center">
                                                                 <Switch checked={u.verified} onCheckedChange={(v) => updateDocumentNonBlocking(doc(firestore, 'users', u.id), { verified: v })} className="scale-75 data-[state=checked]:bg-green-500" />
+                                                            </div>
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            <div className="flex items-center justify-center">
+                                                                <Switch checked={u.isFeatured} onCheckedChange={(v) => updateDocumentNonBlocking(doc(firestore, 'users', u.id), { isFeatured: v })} className="scale-75 data-[state=checked]:bg-orange-500" />
                                                             </div>
                                                         </TableCell>
                                                         <TableCell className="text-right">
