@@ -8,7 +8,7 @@ import { useUser, useFirestore, useDoc, useMemoFirebase, useAuth, useCollection 
 import { updateDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, UserX, Crown, Sparkles, User as UserIcon, Save, Briefcase, Building, MessageSquare, Search, PlusCircle, Download, ExternalLink, IndianRupee, Upload, HardDriveDownload, Megaphone, Rss, Award, CheckCircle, TrendingUp, PieChart, Activity, Trash, ChevronLeft, ChevronRight, Check } from 'lucide-react';
+import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, UserX, Crown, Sparkles, User as UserIcon, Save, Briefcase, Building, MessageSquare, Search, PlusCircle, Download, ExternalLink, IndianRupee, Upload, HardDriveDownload, Megaphone, Rss, Award, CheckCircle, TrendingUp, PieChart, Activity, Trash, ChevronLeft, ChevronRight, Check, Gift } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -1083,7 +1083,7 @@ export default function AdminDashboardPage() {
           <DialogHeader className="items-center text-center">
             <div className="p-4 bg-orange-500/10 rounded-full w-fit mb-4"><PlusCircle className="h-10 w-10 text-orange-500" /></div>
             <DialogTitle className="text-3xl font-black uppercase italic">Award Credits</DialogTitle>
-            <DialogDescription className="text-muted-foreground font-medium">Manually grant referral points to {selectedUser?.firstName}.</DialogDescription>
+            <DialogDescription className="text-muted-foreground font-medium pt-2">Manually grant referral points to {selectedUser?.firstName}.</DialogDescription>
           </DialogHeader>
           <div className="py-8 space-y-2">
                 <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-[0.2em]">Amount to Grant</Label>
