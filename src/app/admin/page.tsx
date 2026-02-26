@@ -95,6 +95,9 @@ type ExpertUser = {
     phoneNumber?: string;
     companyName?: string;
     following?: string[];
+    city?: string;
+    state?: string;
+    pincode?: string;
 };
 
 type Payment = {
@@ -296,13 +299,19 @@ export default function AdminDashboardPage() {
 
   const filteredUsers = useMemo(() => {
     if (!users) return [];
+    const queryStr = userSearchQuery.toLowerCase();
     return users.filter(u => {
         const matchesSearch = 
-            `${u.firstName} ${u.lastName}`.toLowerCase().includes(userSearchQuery.toLowerCase()) ||
-            u.email?.toLowerCase().includes(userSearchQuery.toLowerCase()) ||
-            u.referralCode?.toLowerCase().includes(userSearchQuery.toLowerCase()) ||
-            u.phoneNumber?.toLowerCase().includes(userSearchQuery.toLowerCase()) ||
-            u.id.toLowerCase().includes(userSearchQuery.toLowerCase());
+            `${u.firstName} ${u.lastName}`.toLowerCase().includes(queryStr) ||
+            u.email?.toLowerCase().includes(queryStr) ||
+            u.referralCode?.toLowerCase().includes(queryStr) ||
+            u.phoneNumber?.toLowerCase().includes(queryStr) ||
+            u.profession?.toLowerCase().includes(queryStr) ||
+            u.city?.toLowerCase().includes(queryStr) ||
+            u.state?.toLowerCase().includes(queryStr) ||
+            u.pincode?.toLowerCase().includes(queryStr) ||
+            u.companyName?.toLowerCase().includes(queryStr) ||
+            u.id.toLowerCase().includes(queryStr);
         
         const matchesFilter = 
             userFilter === 'all' ? true :
@@ -538,7 +547,7 @@ export default function AdminDashboardPage() {
                                 <div className="relative group">
                                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-orange-500 transition-colors" />
                                     <Input 
-                                        placeholder="Search experts by name, phone, email or code..." 
+                                        placeholder="Search experts by name, profession, location or pincode..." 
                                         className="pl-10 h-12 bg-white/5 border-none rounded-xl text-white placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-orange-500"
                                         value={userSearchQuery}
                                         onChange={(e) => setUserSearchQuery(e.target.value)}
@@ -581,7 +590,7 @@ export default function AdminDashboardPage() {
                                                                 </Avatar>
                                                                 <div className="space-y-0.5">
                                                                     <div className="font-black text-sm text-white">{u.firstName} {u.lastName}</div>
-                                                                    <div className="text-[10px] text-muted-foreground uppercase tracking-widest">{u.role}</div>
+                                                                    <div className="text-[10px] text-muted-foreground uppercase tracking-widest truncate max-w-[150px]">{u.profession || u.role}</div>
                                                                 </div>
                                                             </div>
                                                         </TableCell>
