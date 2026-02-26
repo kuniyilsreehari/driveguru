@@ -2,13 +2,13 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { collection, Timestamp, orderBy, query, doc, deleteDoc, getDocs, where, increment } from 'firebase/firestore';
+import { collection, Timestamp, orderBy, query, doc, deleteDoc, where, increment } from 'firebase/firestore';
 import { signOut } from 'firebase/auth';
 import { useUser, useFirestore, useDoc, useMemoFirebase, useAuth, useCollection } from '@/firebase';
 import { updateDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, CheckCircle2, UserCheck, UserX, Crown, Sparkles, User as UserIcon, Settings, Save, Briefcase, Building, MessageSquare, Search, PlusCircle, Mail, Download, ExternalLink, IndianRupee, X, Upload, HardDriveDownload, Megaphone, Phone, MapPinIcon, Key, Gift, Code, List, Grip, ArrowUp, ArrowDown, Rss, UserPlus, Fingerprint, Award, CircleHelp, CheckCircle, FileJson, MapPin, Clock, AlertCircle, CreditCard, Fingerprint as IdIcon, Check, XCircle, Youtube, Video, ChevronLeft, ChevronRight, BarChart3, TrendingUp, PieChart, Activity, Trash } from 'lucide-react';
+import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, UserX, Crown, Sparkles, User as UserIcon, Save, Briefcase, Building, MessageSquare, Search, PlusCircle, Download, ExternalLink, IndianRupee, Upload, HardDriveDownload, Megaphone, Rss, Award, CheckCircle, TrendingUp, PieChart, Activity, Trash, ChevronLeft, ChevronRight, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -49,7 +49,7 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
-import { format, startOfMonth, endOfMonth, eachMonthOfInterval, subMonths, isSameMonth } from 'date-fns';
+import { format, eachMonthOfInterval, subMonths, isSameMonth } from 'date-fns';
 import { exportAllData } from '@/ai/flows/export-data-flow';
 import { importUsers } from '@/ai/flows/import-users-flow';
 import { EditProfileForm } from '@/components/auth/edit-profile-form';
@@ -160,14 +160,12 @@ export default function AdminDashboardPage() {
   const [userSearchQuery, setUserSearchQuery] = useState('');
   const [userFilter, setUserFilter] = useState<'all' | 'verified' | 'unverified' | 'premier' | 'super'>('all');
 
-  // Pagination State
   const ITEMS_PER_PAGE = 10;
   const [currentPage, setCurrentPage] = useState(1);
   const [vacancyPage, setVacancyPage] = useState(1);
   const [paymentPage, setPaymentPage] = useState(1);
   const [feedPage, setFeedPage] = useState(1);
 
-  // App Config State
   const [introVideoUrl, setIntroVideoUrl] = useState("");
   const [featuredLimit, setFeaturedLimit] = useState(3);
   const [announcementText, setAnnouncementText] = useState("");
@@ -679,7 +677,7 @@ export default function AdminDashboardPage() {
                     <Card className="border-none bg-card rounded-2xl overflow-hidden shadow-2xl">
                         <CardHeader className="bg-white/5 pb-6 border-b border-white/5">
                             <div className="flex items-center gap-3">
-                                <CreditCard className="h-6 w-6 text-orange-500" />
+                                <IndianRupee className="h-6 w-6 text-orange-500" />
                                 <div>
                                     <CardTitle className="text-2xl font-black uppercase italic">Transaction Ledger</CardTitle>
                                     <CardDescription className="text-muted-foreground">Monitor revenue and payment attempts.</CardDescription>
@@ -868,7 +866,7 @@ export default function AdminDashboardPage() {
             <Card className="border-none rounded-2xl overflow-hidden bg-card">
               <CardHeader className="bg-white/5 border-b border-white/5 pb-6">
                 <div className="flex items-center gap-3">
-                    <CreditCard className="h-6 w-6 text-orange-500" />
+                    < IndianRupee className="h-6 w-6 text-orange-500" />
                     <CardTitle className="text-2xl font-black uppercase italic">Payment Configuration</CardTitle>
                 </div>
                 <CardDescription className="text-muted-foreground">Manage API keys, pricing, and cycle-specific payment links.</CardDescription>
@@ -1019,7 +1017,7 @@ export default function AdminDashboardPage() {
                 <Card className="border-none rounded-2xl overflow-hidden bg-card">
                     <CardHeader className="bg-white/5 border-b border-white/5 pb-6">
                         <div className="flex items-center gap-3">
-                            <Gift className="h-6 w-6 text-orange-500" />
+                            <PlusCircle className="h-6 w-6 text-orange-500" />
                             <CardTitle className="text-xl font-black uppercase italic">Referral Rewards</CardTitle>
                         </div>
                     </CardHeader>
@@ -1083,7 +1081,7 @@ export default function AdminDashboardPage() {
       <Dialog open={isAwardDialogOpen} onOpenChange={setIsAwardDialogOpen}>
         <DialogContent className="rounded-[2rem] border-none bg-background text-white p-8">
           <DialogHeader className="items-center text-center">
-            <div className="p-4 bg-orange-500/10 rounded-full w-fit mb-4"><Award className="h-10 w-10 text-orange-500" /></div>
+            <div className="p-4 bg-orange-500/10 rounded-full w-fit mb-4"><PlusCircle className="h-10 w-10 text-orange-500" /></div>
             <DialogTitle className="text-3xl font-black uppercase italic">Award Credits</DialogTitle>
             <DialogDescription className="text-muted-foreground font-medium">Manually grant referral points to {selectedUser?.firstName}.</DialogDescription>
           </DialogHeader>
@@ -1098,7 +1096,7 @@ export default function AdminDashboardPage() {
       <AlertDialog open={isPostDeleteDialogOpen} onOpenChange={setIsPostDeleteDialogOpen}>
         <AlertDialogContent className="rounded-[2rem] border-none bg-background text-white">
           <AlertDialogHeader className="items-center text-center">
-            <div className="p-4 bg-red-500/10 rounded-full w-fit mb-4"><AlertCircle className="h-10 w-10 text-red-500" /></div>
+            <div className="p-4 bg-red-500/10 rounded-full w-fit mb-4"><Activity className="h-10 w-10 text-red-500" /></div>
             <AlertDialogTitle className="text-2xl font-black uppercase italic">Remove Update?</AlertDialogTitle>
             <AlertDialogDescription className="text-muted-foreground font-medium">This professional update will be permanently deleted from the public feed.</AlertDialogDescription>
           </AlertDialogHeader>

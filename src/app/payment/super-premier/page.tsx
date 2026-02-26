@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Suspense, useState } from 'react';
@@ -24,7 +23,7 @@ function SuperPremierPaymentPageContent() {
     const router = useRouter();
 
     const appConfigDocRef = useMemoFirebase(() => doc(firestore, 'app_config', 'homepage'), [firestore]);
-    const { data: appConfig } = useDoc(appConfigDocRef);
+    const { data: appConfig } = useDoc<any>(appConfigDocRef);
 
     const handlePayment = async () => {
         if (!user) {
@@ -49,16 +48,16 @@ function SuperPremierPaymentPageContent() {
             }
 
             if (result.payment_link) {
-                // Directly open the payment link page
+                // Instantly open the payment link page
                 window.location.href = result.payment_link;
             } else {
-                throw new Error("Could not retrieve checkout link.");
+                throw new Error("Could not retrieve checkout link. Check Admin settings.");
             }
         } catch (error: any) {
             console.error("Payment initiation failed:", error);
             toast({
                 variant: 'destructive',
-                title: "Payment Error",
+                title: "Action Failed",
                 description: error.message || "Failed to start checkout. Please check Admin credentials.",
             });
         } finally {
