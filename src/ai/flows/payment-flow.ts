@@ -2,8 +2,8 @@
 /**
  * @fileOverview A flow for handling payment gateway integration and verification.
  *
- * - createPaymentOrder: Generates a payment link (API or static).
- * - verifyPaymentOrder: Securesly checks transaction status via Cashfree API.
+ * - createPaymentOrder: Generates a payment link (API or cycle-specific static).
+ * - verifyPaymentOrder: Securely checks transaction status via Cashfree API.
  */
 
 import { ai } from '@/ai/genkit';
@@ -106,12 +106,18 @@ const createPaymentOrderFlow = ai.defineFlow(
 
     if (appConfig.paymentMethod === 'Link') {
         let link = '';
-        if (input.plan === 'Premier') link = appConfig.premierPaymentLink;
-        if (input.plan === 'Super Premier') link = appConfig.superPremierPaymentLink;
-        if (input.plan === 'Verification') link = appConfig.verificationPaymentLink;
+        if (input.plan === 'Verification') {
+            link = appConfig.verificationPaymentLink;
+        } else if (input.plan === 'Premier') {
+            // Retrieve link based on billing cycle (daily, monthly, yearly)
+            link = appConfig.premierPlanLinks?.[input.billingCycle] || appConfig.premierPaymentLink;
+        } else if (input.plan === 'Super Premier') {
+            // Retrieve link based on billing cycle (daily, monthly, yearly)
+            link = appConfig.superPremierPlanLinks?.[input.billingCycle] || appConfig.superPremierPaymentLink;
+        }
 
         if (link) return { payment_link: link };
-        throw new Error(`Static link for ${input.plan} not configured.`);
+        throw new Error(`Static link for ${input.plan} (${input.billingCycle}) not configured.`);
     }
 
     let amount = 0;

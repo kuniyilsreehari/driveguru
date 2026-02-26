@@ -132,8 +132,8 @@ type AppConfig = {
     pricingModels?: string[];
     premierPlanPrices?: { daily: number; monthly: number; yearly: number };
     superPremierPlanPrices?: { daily: number; monthly: number; yearly: number };
-    premierPaymentLink?: string;
-    superPremierPaymentLink?: string;
+    premierPlanLinks?: { daily: string; monthly: string; yearly: string };
+    superPremierPlanLinks?: { daily: string; monthly: string; yearly: string };
     verificationPaymentLink?: string;
     verificationFee?: number;
 };
@@ -179,12 +179,12 @@ export default function AdminDashboardPage() {
   const [referralPoints, setReferralPoints] = useState(100);
   const [homepageCategories, setHomepageCategories] = useState<HomepageCategory[]>([]);
   const [departments, setDepartments] = useState<string[]>([]);
-  const [premierPaymentLink, setPremierPaymentLink] = useState("");
-  const [superPremierPaymentLink, setSuperPremierPaymentLink] = useState("");
   const [verificationPaymentLink, setVerificationPaymentLink] = useState("");
   const [verificationFee, setVerificationFee] = useState(500);
   const [premierPrices, setPremierPrices] = useState({ daily: 10, monthly: 200, yearly: 2000 });
   const [superPremierPrices, setSuperPremierPrices] = useState({ daily: 50, monthly: 1000, yearly: 10000 });
+  const [premierLinks, setPremierLinks] = useState({ daily: "", monthly: "", yearly: "" });
+  const [superLinks, setSuperLinks] = useState({ daily: "", monthly: "", yearly: "" });
 
   const superAdminDocRef = useMemoFirebase(() => user ? doc(firestore, 'roles_super_admin', user.uid) : null, [firestore, user]);
   const { data: superAdminData, isLoading: isRoleLoading } = useDoc(superAdminDocRef);
@@ -218,12 +218,12 @@ export default function AdminDashboardPage() {
       setReferralPoints(appConfig.referralRewardPoints || 100);
       setHomepageCategories(appConfig.homepageCategories || []);
       setDepartments(appConfig.departments || []);
-      setPremierPaymentLink(appConfig.premierPaymentLink || "");
-      setSuperPremierPaymentLink(appConfig.superPremierPaymentLink || "");
       setVerificationPaymentLink(appConfig.verificationPaymentLink || "");
       setVerificationFee(appConfig.verificationFee || 500);
       if (appConfig.premierPlanPrices) setPremierPrices(appConfig.premierPlanPrices);
       if (appConfig.superPremierPlanPrices) setSuperPremierPrices(appConfig.superPremierPlanPrices);
+      if (appConfig.premierPlanLinks) setPremierLinks(appConfig.premierPlanLinks);
+      if (appConfig.superPremierPlanLinks) setSuperLinks(appConfig.superPremierPlanLinks);
     }
   }, [appConfig]);
 
@@ -327,12 +327,12 @@ export default function AdminDashboardPage() {
         referralRewardPoints: referralPoints,
         homepageCategories,
         departments,
-        premierPaymentLink,
-        superPremierPaymentLink,
-        verificationPaymentLink,
-        verificationFee,
         premierPlanPrices: premierPrices,
         superPremierPlanPrices: superPremierPrices,
+        premierPlanLinks: premierLinks,
+        superPremierPlanLinks: superLinks,
+        verificationPaymentLink,
+        verificationFee,
       }, { merge: true });
       toast({ title: "Settings Saved" });
     } finally {
@@ -871,7 +871,7 @@ export default function AdminDashboardPage() {
                     <CreditCard className="h-6 w-6 text-orange-500" />
                     <CardTitle className="text-2xl font-black uppercase italic">Payment Configuration</CardTitle>
                 </div>
-                <CardDescription className="text-muted-foreground">Manage API keys, pricing, and static payment links.</CardDescription>
+                <CardDescription className="text-muted-foreground">Manage API keys, pricing, and cycle-specific payment links.</CardDescription>
               </CardHeader>
               <CardContent className="p-6 space-y-8">
                 <div className="flex items-center justify-between p-4 bg-background rounded-xl border border-white/5 shadow-inner">
@@ -934,18 +934,48 @@ export default function AdminDashboardPage() {
                 </div>
 
                 {paymentMethod === 'Link' && (
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-6 bg-white/5 rounded-2xl border border-white/5 border-dashed">
-                        <div className="space-y-2">
-                            <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Premier Plan Link</Label>
-                            <Input value={premierPaymentLink} onChange={e => setPremierPaymentLink(e.target.value)} className="bg-background border-none rounded-xl h-11" placeholder="Enter URL..." />
+                    <div className="space-y-8 animate-in fade-in duration-500">
+                        <div className="p-6 bg-white/5 rounded-2xl border border-white/5 border-dashed space-y-6">
+                            <h4 className="text-sm font-black text-purple-500 uppercase tracking-widest flex items-center gap-2"><Crown className="h-4 w-4" /> Premier Plan Links</h4>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div className="space-y-2">
+                                    <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Daily Link</Label>
+                                    <Input value={premierLinks.daily} onChange={e => setPremierLinks({...premierLinks, daily: e.target.value})} className="bg-background border-none rounded-xl h-11" placeholder="Daily URL..." />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Monthly Link</Label>
+                                    <Input value={premierLinks.monthly} onChange={e => setPremierLinks({...premierLinks, monthly: e.target.value})} className="bg-background border-none rounded-xl h-11" placeholder="Monthly URL..." />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Yearly Link</Label>
+                                    <Input value={premierLinks.yearly} onChange={e => setPremierLinks({...premierLinks, yearly: e.target.value})} className="bg-background border-none rounded-xl h-11" placeholder="Yearly URL..." />
+                                </div>
+                            </div>
                         </div>
-                        <div className="space-y-2">
-                            <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Super Premier Link</Label>
-                            <Input value={superPremierPaymentLink} onChange={e => setSuperPremierPaymentLink(e.target.value)} className="bg-background border-none rounded-xl h-11" placeholder="Enter URL..." />
+
+                        <div className="p-6 bg-white/5 rounded-2xl border border-white/5 border-dashed space-y-6">
+                            <h4 className="text-sm font-black text-blue-500 uppercase tracking-widest flex items-center gap-2"><Sparkles className="h-4 w-4" /> Super Premier Links</h4>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div className="space-y-2">
+                                    <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Daily Link</Label>
+                                    <Input value={superLinks.daily} onChange={e => setSuperLinks({...superLinks, daily: e.target.value})} className="bg-background border-none rounded-xl h-11" placeholder="Daily URL..." />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Monthly Link</Label>
+                                    <Input value={superLinks.monthly} onChange={e => setSuperLinks({...superLinks, monthly: e.target.value})} className="bg-background border-none rounded-xl h-11" placeholder="Monthly URL..." />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Yearly Link</Label>
+                                    <Input value={superLinks.yearly} onChange={e => setSuperLinks({...superLinks, yearly: e.target.value})} className="bg-background border-none rounded-xl h-11" placeholder="Yearly URL..." />
+                                </div>
+                            </div>
                         </div>
-                        <div className="space-y-2">
-                            <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Verification Fee Link</Label>
-                            <Input value={verificationPaymentLink} onChange={e => setVerificationPaymentLink(e.target.value)} className="bg-background border-none rounded-xl h-11" placeholder="Enter URL..." />
+
+                        <div className="p-6 bg-white/5 rounded-2xl border border-white/5 border-dashed">
+                            <div className="space-y-2">
+                                <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">One-time Verification Link</Label>
+                                <Input value={verificationPaymentLink} onChange={e => setVerificationPaymentLink(e.target.value)} className="bg-background border-none rounded-xl h-11" placeholder="Verification URL..." />
+                            </div>
                         </div>
                     </div>
                 )}
