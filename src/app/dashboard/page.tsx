@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { collection, serverTimestamp, orderBy, query, where, limit, arrayUnion, arrayRemove, doc, Timestamp } from 'firebase/firestore';
+import { collection, serverTimestamp, doc, Timestamp, query, where } from 'firebase/firestore';
 import { signOut } from 'firebase/auth';
 import { useUser, useAuth, useFirestore, useDoc, useMemoFirebase, useCollection } from '@/firebase';
 import { updateDocumentNonBlocking, addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
@@ -189,7 +189,6 @@ export default function ExpertDashboardPage() {
   if (isUserLoading || isProfileLoading || isRoleLoading) return <div className="flex h-screen items-center justify-center"><Loader className="animate-spin text-orange-500" /></div>;
   if (!user) return null;
 
-  // If the user is a Super Admin and doesn't have an expert profile, show an admin session state
   if (!userProfile) {
       if (isSuperAdmin) {
           return (
@@ -272,7 +271,7 @@ export default function ExpertDashboardPage() {
                       <span className="flex items-center gap-1.5"><Users className="h-3.5 w-3.5 text-orange-500" /> {myFollowers?.length || 0} Followers</span>
                       <span className="flex items-center gap-1.5"><Users className="h-3.5 w-3.5 text-orange-500" /> {userProfile.following?.length || 0} Following</span>
                     </div>
-                    <div className="flex flex-wrap gap-2 mt-3">
+                    <div className="flex wrap gap-2 mt-3">
                       {userProfile.verified && <Badge className="bg-green-500 text-white border-none font-black text-[10px] uppercase h-6 px-3"><UserCheck className="h-3 w-3 mr-1" /> Verified</Badge>}
                       {userProfile.tier === 'Super Premier' && <Badge className="bg-blue-600 text-white border-none font-black text-[10px] uppercase h-6 px-3 flex items-center gap-1"><Sparkles className="h-3 w-3" /> Super Premier</Badge>}
                       {userProfile.tier === 'Premier' && <Badge className="bg-purple-600 text-white border-none font-black text-[10px] uppercase h-6 px-3 flex items-center gap-1"><Crown className="h-3 w-3" /> Premier</Badge>}
@@ -495,7 +494,7 @@ export default function ExpertDashboardPage() {
                     <Link href="/feed">Public Feed</Link>
                   </Button>
                   <Button variant="secondary" className="flex-1 bg-orange-500 hover:bg-orange-600 text-white font-black rounded-2xl h-14 text-lg border-none uppercase shadow-xl" size="lg" onClick={() => setShowPostForm(true)}>
-                    <PlusCircle className="mr-2 h-5 w-5" /> Create Post
+                    <PlusCircle className="mr-2 h-5 w-5" /> Share Update
                   </Button>
                 </CardContent>
               </Card>

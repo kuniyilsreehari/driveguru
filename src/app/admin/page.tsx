@@ -49,7 +49,7 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
-import { format, formatDistanceToNow, startOfMonth, endOfMonth, eachMonthOfInterval, subMonths, isSameMonth } from 'date-fns';
+import { format, startOfMonth, endOfMonth, eachMonthOfInterval, subMonths, isSameMonth } from 'date-fns';
 import { exportAllData } from '@/ai/flows/export-data-flow';
 import { importUsers } from '@/ai/flows/import-users-flow';
 import { EditProfileForm } from '@/components/auth/edit-profile-form';
@@ -67,9 +67,7 @@ import {
   ResponsiveContainer, 
   PieChart as RePieChart, 
   Pie, 
-  Cell,
-  LineChart,
-  Line
+  Cell
 } from 'recharts';
 
 export type HomepageCategory = {
@@ -229,7 +227,6 @@ export default function AdminDashboardPage() {
     }
   }, [appConfig]);
 
-  // Reset page when search or filter changes
   useEffect(() => {
     setCurrentPage(1);
   }, [userSearchQuery, userFilter]);
