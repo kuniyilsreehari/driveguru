@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
@@ -8,7 +7,7 @@ import { signOut } from 'firebase/auth';
 import { useUser, useAuth, useFirestore, useDoc, useMemoFirebase, useCollection } from '@/firebase';
 import { updateDocumentNonBlocking, addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Button } from '@/components/ui/button';
-import { LogOut, Loader, Edit, UserCheck, User as UserIcon, MessageSquare, Gift, Info, Book, Pen, PlusCircle, MapPin, IndianRupee, Calendar, GraduationCap, School, Building, Home, Rss, Users, Link as LinkIcon, AlertCircle, CheckCircle, Eye, EyeOff, Clock, Crown, Sparkles, ChevronUp, ChevronDown } from 'lucide-react';
+import { LogOut, Loader, Edit, UserCheck, User as UserIcon, MessageSquare, Gift, Info, Book, Pen, PlusCircle, MapPin, IndianRupee, Calendar, GraduationCap, School, Building, Home, Rss, Users, Link as LinkIcon, AlertCircle, CheckCircle, Eye, EyeOff, Clock, Crown, Sparkles, ChevronUp, ChevronDown, Shield } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription as UiDialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { EditProfileForm } from '@/components/auth/edit-profile-form';
@@ -91,6 +90,10 @@ export default function ExpertDashboardPage() {
 
   const userDocRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
   const { data: userProfile, isLoading: isProfileLoading } = useDoc<ExpertUserProfile>(userDocRef);
+
+  const superAdminDocRef = useMemoFirebase(() => user ? doc(firestore, 'roles_super_admin', user.uid) : null, [firestore, user]);
+  const { data: superAdminData, isLoading: isRoleLoading } = useDoc(superAdminDocRef);
+  const isSuperAdmin = !!superAdminData;
 
   useEffect(() => {
     if (!isUserLoading && !user) {
@@ -183,8 +186,38 @@ export default function ExpertDashboardPage() {
     }
   }
 
-  if (isUserLoading || isProfileLoading) return <div className="flex h-screen items-center justify-center"><Loader className="animate-spin text-orange-500" /></div>;
-  if (!user || !userProfile) return null;
+  if (isUserLoading || isProfileLoading || isRoleLoading) return <div className="flex h-screen items-center justify-center"><Loader className="animate-spin text-orange-500" /></div>;
+  if (!user) return null;
+
+  // If the user is a Super Admin and doesn't have an expert profile, show an admin session state
+  if (!userProfile) {
+      if (isSuperAdmin) {
+          return (
+              <div className="flex h-screen flex-col items-center justify-center bg-[#1a1c23] text-white p-8 text-center">
+                  <div className="bg-orange-500/10 p-6 rounded-[2rem] mb-6">
+                    <Shield className="h-16 w-16 text-orange-500" />
+                  </div>
+                  <h2 className="text-3xl font-black uppercase italic tracking-tight">Administrative Session</h2>
+                  <p className="text-muted-foreground mt-2 max-w-sm font-medium">You are logged in as a Super Admin. To view your expert dashboard, please complete your profile or switch to the Admin panel.</p>
+                  <div className="flex flex-col sm:flex-row gap-4 mt-8">
+                    <Button asChild size="lg" className="bg-orange-500 hover:bg-orange-600 rounded-2xl font-black h-14 px-8 shadow-xl shadow-orange-500/20 uppercase tracking-widest">
+                        <Link href="/admin">Super Admin Panel</Link>
+                    </Button>
+                    <Button variant="outline" size="lg" onClick={() => setIsEditDialogOpen(true)} className="border-white/10 bg-white/5 hover:bg-white/10 rounded-2xl font-black h-14 px-8 uppercase tracking-widest">
+                        Create Expert Profile
+                    </Button>
+                  </div>
+                  <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+                    <DialogContent className="max-w-3xl overflow-y-auto max-h-[90vh] rounded-[2rem] border-none bg-[#1a1c23] p-8 shadow-2xl">
+                      <DialogHeader className="mb-6"><DialogTitle className="text-3xl font-black text-white uppercase italic tracking-tight">Create Admin Profile</DialogTitle></DialogHeader>
+                      <div className="p-4"><EditProfileForm userProfile={{ id: user.uid, firstName: 'Admin', lastName: 'User', role: 'Super Admin', email: user.email } as any} isAdmin onSuccess={() => window.location.reload()} /></div>
+                    </DialogContent>
+                  </Dialog>
+              </div>
+          );
+      }
+      return null;
+  }
 
   const isHidden = userProfile.hiddenUntil && userProfile.hiddenUntil.toDate() > new Date();
 

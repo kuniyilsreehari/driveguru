@@ -164,6 +164,8 @@ export default function AdminDashboardPage() {
   // Pagination State
   const ITEMS_PER_PAGE = 10;
   const [currentPage, setCurrentPage] = useState(1);
+  const [vacancyPage, setVacancyPage] = useState(1);
+  const [paymentPage, setPaymentPage] = useState(1);
   const [feedPage, setFeedPage] = useState(1);
 
   // App Config State
@@ -267,27 +269,11 @@ export default function AdminDashboardPage() {
         };
     });
 
-    const roleDistribution = [
-        { name: 'Freelancer', count: users.filter(u => u.role === 'Freelancer').length },
-        { name: 'Company', count: users.filter(u => u.role === 'Company').length },
-        { name: 'Auth Pro', count: users.filter(u => u.role === 'Authorized Pro').length },
-    ];
-
-    const referrers = users
-        .filter(u => u.referralPoints && u.referralPoints > 0)
-        .sort((a, b) => (b.referralPoints || 0) - (a.referralPoints || 0))
-        .slice(0, 5);
-
-    const totalLikes = (posts as any).reduce((sum: number, p: any) => sum + (p.likes?.length || 0), 0);
-
     return {
         totalRevenue,
         revenueByPlan,
         userGrowth,
-        roleDistribution,
-        referrers,
         totalPosts: posts.length,
-        totalLikes
     };
   }, [users, payments, posts]);
 
@@ -347,22 +333,6 @@ export default function AdminDashboardPage() {
       toast({ title: "Settings Saved" });
     } finally {
       setIsSaving(false);
-    }
-  };
-
-  const handleUpdateUserRole = async (userId: string, newRole: string) => {
-    const userRef = doc(firestore, 'users', userId);
-    const adminRef = doc(firestore, 'roles_super_admin', userId);
-    const managerRef = doc(firestore, 'roles_manager', userId);
-    try {
-      await updateDocumentNonBlocking(userRef, { role: newRole });
-      if (newRole === 'Super Admin') await setDocumentNonBlocking(adminRef, { uid: userId });
-      else await deleteDoc(adminRef);
-      if (newRole === 'Manager') await setDocumentNonBlocking(managerRef, { uid: userId });
-      else await deleteDoc(managerRef);
-      toast({ title: "Role Updated" });
-    } catch (e) {
-      toast({ variant: "destructive", title: "Update Failed" });
     }
   };
 
@@ -464,36 +434,6 @@ export default function AdminDashboardPage() {
         }
     };
     reader.readAsText(file);
-  };
-
-  const [newCatName, setNewCatName] = useState("");
-  const [newCatIcon, setNewCatIcon] = useState("");
-  const [newDepName, setNewDepName] = useState("");
-
-  const addCategory = () => {
-    if (!newCatName || !newCatIcon) return;
-    setHomepageCategories([...homepageCategories, { id: Date.now().toString(), name: newCatName, icon: newCatIcon }]);
-    setNewCatName("");
-    setNewCatIcon("");
-  };
-
-  const deleteCategory = (id: string) => {
-    setHomepageCategories(homepageCategories.filter(c => c.id !== id));
-  };
-
-  const moveCategory = (index: number, direction: 'up' | 'down') => {
-    const newCats = [...homepageCategories];
-    const targetIndex = direction === 'up' ? index - 1 : index + 1;
-    if (targetIndex < 0 || targetIndex >= newCats.length) return;
-    [newCats[index], newCats[targetIndex]] = [newCats[targetIndex], newCats[index]];
-    setHomepageCategories(newCats);
-  };
-
-  const addDepartment = () => {
-    if (!newDepName) return;
-    if (departments.includes(newDepName)) return;
-    setDepartments([...departments, newDepName]);
-    setNewDepName("");
   };
 
   if (isUserLoading || isRoleLoading) return <div className="flex h-screen items-center justify-center"><Loader className="animate-spin" /></div>;
@@ -683,6 +623,7 @@ export default function AdminDashboardPage() {
                                 <Table>
                                     <TableHeader className="bg-white/5">
                                         <TableRow className="border-white/5">
+                                            <TableHead className="w-[60px] font-bold text-white text-center">S.No</TableHead>
                                             <TableHead className="font-bold text-white">Title</TableHead>
                                             <TableHead className="font-bold text-white">Company</TableHead>
                                             <TableHead className="font-bold text-white text-center">Status</TableHead>
@@ -691,29 +632,40 @@ export default function AdminDashboardPage() {
                                     </TableHeader>
                                     <TableBody>
                                         {isVacanciesLoading ? (
-                                            <TableRow><TableCell colSpan={4} className="text-center py-8"><Loader className="animate-spin mx-auto text-orange-500" /></TableCell></TableRow>
+                                            <TableRow><TableCell colSpan={5} className="text-center py-8"><Loader className="animate-spin mx-auto text-orange-500" /></TableCell></TableRow>
                                         ) : vacancies?.length === 0 ? (
-                                            <TableRow><TableCell colSpan={4} className="text-center py-12 text-muted-foreground italic">No job openings recorded.</TableCell></TableRow>
-                                        ) : vacancies?.map(v => (
-                                            <TableRow key={v.id} className="hover:bg-white/5 border-white/5 h-16">
-                                                <TableCell className="font-black text-white italic">{v.title}</TableCell>
-                                                <TableCell className="text-muted-foreground font-bold text-xs uppercase tracking-wider">{v.companyName}</TableCell>
-                                                <TableCell className="text-center">
-                                                    <Badge variant={v.status === 'Approved' ? 'default' : v.status === 'Rejected' ? 'destructive' : 'secondary'} className="text-[10px] font-black uppercase tracking-tighter">
-                                                        {v.status}
-                                                    </Badge>
-                                                </TableCell>
-                                                <TableCell className="text-right">
-                                                    <div className="flex justify-end gap-2">
-                                                        <Button variant="outline" size="sm" className="rounded-lg h-8 px-3 border-green-500/20 text-green-500 hover:bg-green-500/10" onClick={() => updateDocumentNonBlocking(doc(firestore, 'vacancies', v.id), { status: 'Approved' })}><Check className="h-3 w-3" /></Button>
-                                                        <Button variant="outline" size="sm" className="rounded-lg h-8 px-3 border-red-500/20 text-red-500 hover:bg-red-500/10" onClick={() => updateDocumentNonBlocking(doc(firestore, 'vacancies', v.id), { status: 'Rejected' })}><Ban className="h-3 w-3" /></Button>
-                                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-white/30 hover:text-red-500" onClick={() => deleteDocumentNonBlocking(doc(firestore, 'vacancies', v.id))}><Trash className="h-4 w-4" /></Button>
-                                                    </div>
-                                                </TableCell>
-                                            </TableRow>
-                                        ))}
+                                            <TableRow><TableCell colSpan={5} className="text-center py-12 text-muted-foreground italic">No job openings recorded.</TableCell></TableRow>
+                                        ) : vacancies?.slice((vacancyPage - 1) * ITEMS_PER_PAGE, vacancyPage * ITEMS_PER_PAGE).map((v, idx) => {
+                                            const globalIndex = (vacancyPage - 1) * ITEMS_PER_PAGE + idx + 1;
+                                            return (
+                                                <TableRow key={v.id} className="hover:bg-white/5 border-white/5 h-16">
+                                                    <TableCell className="text-center font-bold text-muted-foreground text-xs">{globalIndex}</TableCell>
+                                                    <TableCell className="font-black text-white italic">{v.title}</TableCell>
+                                                    <TableCell className="text-muted-foreground font-bold text-xs uppercase tracking-wider">{v.companyName}</TableCell>
+                                                    <TableCell className="text-center">
+                                                        <Badge variant={v.status === 'Approved' ? 'default' : v.status === 'Rejected' ? 'destructive' : 'secondary'} className="text-[10px] font-black uppercase tracking-tighter">
+                                                            {v.status}
+                                                        </Badge>
+                                                    </TableCell>
+                                                    <TableCell className="text-right">
+                                                        <div className="flex justify-end gap-2">
+                                                            <Button variant="outline" size="sm" className="rounded-lg h-8 px-3 border-green-500/20 text-green-500 hover:bg-green-500/10" onClick={() => updateDocumentNonBlocking(doc(firestore, 'vacancies', v.id), { status: 'Approved' })}><Check className="h-3 w-3" /></Button>
+                                                            <Button variant="outline" size="sm" className="rounded-lg h-8 px-3 border-red-500/20 text-red-500 hover:bg-red-500/10" onClick={() => updateDocumentNonBlocking(doc(firestore, 'vacancies', v.id), { status: 'Rejected' })}><Ban className="h-3 w-3" /></Button>
+                                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-white/30 hover:text-red-500" onClick={() => deleteDocumentNonBlocking(doc(firestore, 'vacancies', v.id))}><Trash className="h-4 w-4" /></Button>
+                                                        </div>
+                                                    </TableCell>
+                                                </TableRow>
+                                            );
+                                        })}
                                     </TableBody>
                                 </Table>
+                            </div>
+                            <div className="flex items-center justify-between pt-4">
+                                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Page {vacancyPage}</p>
+                                <div className="flex items-center gap-2">
+                                    <Button variant="outline" size="sm" onClick={() => setVacancyPage(prev => Math.max(prev - 1, 1))} disabled={vacancyPage === 1} className="rounded-xl h-9 border-white/10 bg-transparent"><ChevronLeft className="h-4 w-4" /></Button>
+                                    <Button variant="outline" size="sm" onClick={() => setVacancyPage(prev => prev + 1)} disabled={vacancyPage >= Math.ceil((vacancies?.length || 0) / ITEMS_PER_PAGE)} className="rounded-xl h-9 border-white/10 bg-transparent"><ChevronRight className="h-4 w-4" /></Button>
+                                </div>
                             </div>
                         </CardContent>
                     </Card>
@@ -735,6 +687,7 @@ export default function AdminDashboardPage() {
                                 <Table>
                                     <TableHeader className="bg-white/5">
                                         <TableRow className="border-white/5">
+                                            <TableHead className="w-[60px] font-bold text-white text-center">S.No</TableHead>
                                             <TableHead className="font-bold text-white">Order ID</TableHead>
                                             <TableHead className="font-bold text-white">Plan</TableHead>
                                             <TableHead className="font-bold text-center text-white">Amount</TableHead>
@@ -744,20 +697,31 @@ export default function AdminDashboardPage() {
                                     </TableHeader>
                                     <TableBody>
                                         {isPaymentsLoading ? (
-                                            <TableRow><TableCell colSpan={5} className="text-center py-8"><Loader className="animate-spin mx-auto text-orange-500" /></TableCell></TableRow>
-                                        ) : payments?.map(p => (
-                                            <TableRow key={p.id} className="hover:bg-white/5 border-white/5 h-16">
-                                                <TableCell className="font-mono text-[10px] text-orange-500/70">{p.orderId}</TableCell>
-                                                <TableCell><Badge variant="secondary" className="text-[10px] font-black uppercase tracking-tighter">{p.plan}</Badge></TableCell>
-                                                <TableCell className="text-center font-black text-white">₹{p.amount}</TableCell>
-                                                <TableCell className="text-center">
-                                                    <Badge className={cn("text-[9px] font-black uppercase tracking-widest", p.status === 'successful' ? "bg-green-500" : "bg-red-500/20 text-red-500 border border-red-500/30")}>{p.status}</Badge>
-                                                </TableCell>
-                                                <TableCell className="text-[10px] text-muted-foreground text-right">{p.createdAt ? format(p.createdAt.toDate(), 'PP p') : '---'}</TableCell>
-                                            </TableRow>
-                                        ))}
+                                            <TableRow><TableCell colSpan={6} className="text-center py-8"><Loader className="animate-spin mx-auto text-orange-500" /></TableCell></TableRow>
+                                        ) : payments?.slice((paymentPage - 1) * ITEMS_PER_PAGE, paymentPage * ITEMS_PER_PAGE).map((p, idx) => {
+                                            const globalIndex = (paymentPage - 1) * ITEMS_PER_PAGE + idx + 1;
+                                            return (
+                                                <TableRow key={p.id} className="hover:bg-white/5 border-white/5 h-16">
+                                                    <TableCell className="text-center font-bold text-muted-foreground text-xs">{globalIndex}</TableCell>
+                                                    <TableCell className="font-mono text-[10px] text-orange-500/70">{p.orderId}</TableCell>
+                                                    <TableCell><Badge variant="secondary" className="text-[10px] font-black uppercase tracking-tighter">{p.plan}</Badge></TableCell>
+                                                    <TableCell className="text-center font-black text-white">₹{p.amount}</TableCell>
+                                                    <TableCell className="text-center">
+                                                        <Badge className={cn("text-[9px] font-black uppercase tracking-widest", p.status === 'successful' ? "bg-green-500" : "bg-red-500/20 text-red-500 border border-red-500/30")}>{p.status}</Badge>
+                                                    </TableCell>
+                                                    <TableCell className="text-[10px] text-muted-foreground text-right">{p.createdAt ? format(p.createdAt.toDate(), 'PP p') : '---'}</TableCell>
+                                                </TableRow>
+                                            );
+                                        })}
                                     </TableBody>
                                 </Table>
+                            </div>
+                            <div className="flex items-center justify-between pt-4">
+                                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Page {paymentPage}</p>
+                                <div className="flex items-center gap-2">
+                                    <Button variant="outline" size="sm" onClick={() => setPaymentPage(prev => Math.max(prev - 1, 1))} disabled={paymentPage === 1} className="rounded-xl h-9 border-white/10 bg-transparent"><ChevronLeft className="h-4 w-4" /></Button>
+                                    <Button variant="outline" size="sm" onClick={() => setPaymentPage(prev => prev + 1)} disabled={paymentPage >= Math.ceil((payments?.length || 0) / ITEMS_PER_PAGE)} className="rounded-xl h-9 border-white/10 bg-transparent"><ChevronRight className="h-4 w-4" /></Button>
+                                </div>
                             </div>
                         </CardContent>
                     </Card>
@@ -839,8 +803,8 @@ export default function AdminDashboardPage() {
                 </Card>
                 <Card className="border-none bg-card shadow-xl">
                     <CardHeader className="pb-2">
-                        <CardDescription className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2"><MessageSquare className="h-3 w-3 text-orange-500" /> Comm. Updates</CardDescription>
-                        <CardTitle className="text-3xl font-black">{reportData?.totalPosts || 0}</CardTitle>
+                        <CardDescription className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2"><MessageSquare className="h-3 w-3 text-orange-500" /> Community Content</CardDescription>
+                        <CardTitle className="text-3xl font-black">{reportData?.totalPosts || 0} Posts</CardTitle>
                     </CardHeader>
                 </Card>
             </div>
