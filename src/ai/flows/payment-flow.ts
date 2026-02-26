@@ -2,7 +2,7 @@
 /**
  * @fileOverview A flow for handling payment gateway integration and verification.
  *
- * - createPaymentOrder: Generates a payment link and session ID for Direct Open.
+ * - createPaymentOrder: Generates a payment link and session ID for checkout.
  * - verifyPaymentOrder: Securely checks transaction status via Cashfree API.
  */
 
@@ -123,7 +123,7 @@ const createPaymentOrderFlow = ai.defineFlow(
             }
 
             if (link) return { payment_link: link };
-            throw new Error(`Static link for ${input.plan} (${input.billingCycle}) not configured.`);
+            throw new Error(`Static link for ${input.plan} (${input.billingCycle}) not configured in Admin panel.`);
         }
 
         // Handle API Method
@@ -132,7 +132,7 @@ const createPaymentOrderFlow = ai.defineFlow(
         else if (input.plan === 'Premier') amount = appConfig.premierPlanPrices?.[input.billingCycle] || 0;
         else if (input.plan === 'Super Premier') amount = appConfig.superPremierPlanPrices?.[input.billingCycle] || 0;
 
-        if (amount <= 0) throw new Error("Price for this plan is not correctly configured.");
+        if (amount <= 0) throw new Error(`Price for ${input.plan} (${input.billingCycle}) is not configured correctly in Admin panel.`);
 
         const orderId = `order_${uuidv4()}`;
         const paymentRef = firestore.collection('payments').doc();
@@ -156,6 +156,7 @@ const createPaymentOrderFlow = ai.defineFlow(
 
     } catch (error: any) {
         console.error("Payment Order Flow Failure:", error);
+        // Explicitly return the specific error message to be shown in the UI toast
         return { error: error.message || "An internal error occurred." };
     }
   }

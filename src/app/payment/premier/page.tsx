@@ -48,17 +48,16 @@ function PremierPaymentPageContent() {
             }
 
             if (result.payment_link) {
-                // Instantly open the payment link page
                 window.location.href = result.payment_link;
             } else {
-                throw new Error("Could not retrieve checkout link. Check Admin settings.");
+                throw new Error("Payment link not generated. Please check Admin settings.");
             }
         } catch (error: any) {
             console.error("Payment initiation failed:", error);
             toast({
                 variant: 'destructive',
                 title: "Action Failed",
-                description: error.message || "Failed to start checkout. Please check Admin credentials.",
+                description: error.message || "Failed to start checkout. Check platform configuration.",
             });
         } finally {
             setIsCreatingOrder(false);
@@ -120,7 +119,7 @@ function PremierPaymentPageContent() {
                 <CardFooter className="bg-white/5 p-8">
                     <Button onClick={handlePayment} disabled={isCreatingOrder} className="w-full h-16 rounded-2xl font-black text-xl bg-orange-500 hover:bg-orange-600 shadow-xl shadow-orange-500/20 uppercase tracking-widest transition-all active:scale-95">
                         {isCreatingOrder ? (
-                            <><Loader2 className="mr-3 h-6 w-6 animate-spin" />Initializing...</>
+                            <><Loader2 className="mr-3 h-6 w-6 animate-spin" />Processing...</>
                         ) : (
                             <><ExternalLink className="mr-3 h-6 w-6" />Proceed to Payment</>
                         )}

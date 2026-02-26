@@ -44,21 +44,22 @@ function SuperPremierPaymentPageContent() {
             });
 
             if (result.error) {
+                // This catches the Authentication Error and displays the instructions to the user
                 throw new Error(result.error);
             }
 
             if (result.payment_link) {
-                // Instantly open the payment link page
+                // Open the payment page directly in the current window
                 window.location.href = result.payment_link;
             } else {
-                throw new Error("Could not retrieve checkout link. Check Admin settings.");
+                throw new Error("Payment link not generated. Please ensure Admin settings are complete.");
             }
         } catch (error: any) {
             console.error("Payment initiation failed:", error);
             toast({
                 variant: 'destructive',
                 title: "Action Failed",
-                description: error.message || "Failed to start checkout. Please check Admin credentials.",
+                description: error.message || "Failed to start checkout. Check platform configuration.",
             });
         } finally {
             setIsCreatingOrder(false);
@@ -68,7 +69,7 @@ function SuperPremierPaymentPageContent() {
     if (isUserLoading) {
         return (
             <div className="flex h-64 w-full flex-col items-center justify-center gap-4">
-                <Loader2 className="h-8 w-8 animate-spin text-orange-500" />
+                <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
                 <p className="text-sm font-bold text-muted-foreground uppercase tracking-widest">Loading Account...</p>
             </div>
         );
@@ -120,7 +121,7 @@ function SuperPremierPaymentPageContent() {
                 <CardFooter className="bg-white/5 p-8">
                     <Button onClick={handlePayment} disabled={isCreatingOrder} className="w-full h-16 rounded-2xl font-black text-xl bg-blue-600 hover:bg-blue-700 shadow-xl shadow-orange-500/20 uppercase tracking-widest transition-all active:scale-95">
                         {isCreatingOrder ? (
-                            <><Loader2 className="mr-3 h-6 w-6 animate-spin" />Initializing...</>
+                            <><Loader2 className="mr-3 h-6 w-6 animate-spin" />Processing...</>
                         ) : (
                             <><ExternalLink className="mr-3 h-6 w-6" />Proceed to Payment</>
                         )}
