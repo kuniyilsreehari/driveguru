@@ -1,6 +1,6 @@
 'use server';
 
-import { initializeApp, getApps, App, applicationDefault } from 'firebase-admin/app';
+import { initializeApp, getApps, App, credential } from 'firebase-admin/app';
 
 const globalWithApp = global as typeof globalThis & {
   _firebaseAdminApp?: App;
@@ -21,8 +21,8 @@ export async function getAdminApp(): Promise<App> {
   }
 
   try {
+    // Attempt to initialize using Application Default Credentials
     const newApp = initializeApp({
-      credential: applicationDefault(),
       projectId: "studio-8621980584-11b8b",
       storageBucket: "studio-8621980584-11b8b.appspot.com",
     });
@@ -32,13 +32,14 @@ export async function getAdminApp(): Promise<App> {
 
   } catch (e: any) {
     console.error("Firebase Admin SDK Initialization Error:", e);
-    // GUIDE THE USER ON ADC ISSUES
-    if (e.message?.includes('Could not find') || e.message?.includes('access token')) {
+    
+    // Provide explicit guidance for ADC issues seen in the logs
+    if (e.message?.includes('Could not find') || e.message?.includes('access token') || e.message?.includes('500')) {
          throw new Error(
-            `AUTHENTICATION ERROR: Application Default Credentials (ADC) are missing or expired.
+            `AUTHENTICATION ERROR: Application Default Credentials (ADC) are missing or invalid.
              ACTION REQUIRED: Open your terminal and run:
              'gcloud auth application-default login'
-             Then restart your development server.`
+             Then restart your development server to refresh the session.`
         );
     }
     throw new Error(`Firebase Admin SDK Error: ${e.message}`);

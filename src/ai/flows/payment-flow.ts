@@ -2,7 +2,7 @@
 /**
  * @fileOverview A flow for handling payment gateway integration and verification.
  *
- * - createPaymentOrder: Generates a payment link (API or cycle-specific static).
+ * - createPaymentOrder: Generates a payment link and session ID for Direct Open.
  * - verifyPaymentOrder: Securely checks transaction status via Cashfree API.
  */
 
@@ -25,7 +25,9 @@ const CreatePaymentOrderInputSchema = z.object({
 export type CreatePaymentOrderInput = z.infer<typeof CreatePaymentOrderInputSchema>;
 
 const CreatePaymentOrderOutputSchema = z.object({
-  payment_link: z.string(),
+  payment_link: z.string().optional(),
+  payment_session_id: z.string().optional(),
+  error: z.string().optional(),
 });
 export type CreatePaymentOrderOutput = z.infer<typeof CreatePaymentOrderOutputSchema>;
 
@@ -42,16 +44,17 @@ const VerifyPaymentOutputSchema = z.object({
 });
 export type VerifyPaymentOutput = z.infer<typeof VerifyPaymentOutputSchema>;
 
-async function createCashfreeOrder(input: CreatePaymentOrderInput & { amount: number, orderId: string }): Promise<{ payment_link: string }> {
+async function createCashfreeOrder(input: CreatePaymentOrderInput & { amount: number, orderId: string }): Promise<{ payment_link: string, payment_session_id: string }> {
     const cashfreeAppId = process.env.CASHFREE_APP_ID;
     const cashfreeSecret = process.env.CASHFREE_SECRET;
 
     if (!cashfreeAppId || !cashfreeSecret) {
-        throw new Error('Cashfree credentials not configured.');
+        throw new Error('Cashfree credentials not configured in environment variables.');
     }
     
     Cashfree.XClientId = cashfreeAppId;
     Cashfree.XClientSecret = cashfreeSecret;
+    // Switch to production if needed
     Cashfree.XEnvironment = Cashfree.Environment.SANDBOX;
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9004';
@@ -65,9 +68,9 @@ async function createCashfreeOrder(input: CreatePaymentOrderInput & { amount: nu
         order_currency: 'INR',
         customer_details: {
             customer_id: input.userId,
-            customer_email: input.userEmail,
+            customer_email: input.userEmail || 'customer@example.com',
             customer_phone: sanitizedPhone,
-            customer_name: input.userName,
+            customer_name: input.userName || 'Guest User',
         },
         order_meta: {
             return_url: returnUrl,
@@ -77,12 +80,15 @@ async function createCashfreeOrder(input: CreatePaymentOrderInput & { amount: nu
 
     try {
         const response = await Cashfree.PGCreateOrder("2023-08-01", request);
-        if (response.data && response.data.payment_link) {
-            return { payment_link: response.data.payment_link };
+        if (response.data && response.data.payment_session_id) {
+            return { 
+                payment_link: response.data.payment_link || '',
+                payment_session_id: response.data.payment_session_id 
+            };
         }
-        throw new Error('Link missing in response');
+        throw new Error('Session ID missing in Cashfree response');
     } catch (error: any) {
-        throw new Error(error.response?.data?.message || 'Cashfree API Error');
+        throw new Error(error.response?.data?.message || error.message || 'Cashfree API Error');
     }
 }
 
@@ -97,53 +103,61 @@ const createPaymentOrderFlow = ai.defineFlow(
     outputSchema: CreatePaymentOrderOutputSchema,
   },
   async (input) => {
-    const adminApp = await getAdminApp();
-    const firestore = getFirestore(adminApp);
-    const appConfigSnap = await firestore.doc('app_config/homepage').get();
-    const appConfig = appConfigSnap.data() || {};
-    
-    if (!appConfig.isPaymentsEnabled) throw new Error("Payments disabled.");
+    try {
+        const adminApp = await getAdminApp();
+        const firestore = getFirestore(adminApp);
+        const appConfigSnap = await firestore.doc('app_config/homepage').get();
+        const appConfig = appConfigSnap.data() || {};
+        
+        if (!appConfig.isPaymentsEnabled) throw new Error("Payments are currently disabled by the administrator.");
 
-    if (appConfig.paymentMethod === 'Link') {
-        let link = '';
-        if (input.plan === 'Verification') {
-            link = appConfig.verificationPaymentLink;
-        } else if (input.plan === 'Premier') {
-            // Retrieve link based on billing cycle (daily, monthly, yearly)
-            link = appConfig.premierPlanLinks?.[input.billingCycle] || appConfig.premierPaymentLink;
-        } else if (input.plan === 'Super Premier') {
-            // Retrieve link based on billing cycle (daily, monthly, yearly)
-            link = appConfig.superPremierPlanLinks?.[input.billingCycle] || appConfig.superPremierPaymentLink;
+        // Handle Static Link Method
+        if (appConfig.paymentMethod === 'Link') {
+            let link = '';
+            if (input.plan === 'Verification') {
+                link = appConfig.verificationPaymentLink;
+            } else if (input.plan === 'Premier') {
+                link = appConfig.premierPlanLinks?.[input.billingCycle] || appConfig.premierPaymentLink;
+            } else if (input.plan === 'Super Premier') {
+                link = appConfig.superPremierPlanLinks?.[input.billingCycle] || appConfig.superPremierPaymentLink;
+            }
+
+            if (link) return { payment_link: link };
+            throw new Error(`Static link for ${input.plan} (${input.billingCycle}) not configured.`);
         }
 
-        if (link) return { payment_link: link };
-        throw new Error(`Static link for ${input.plan} (${input.billingCycle}) not configured.`);
+        // Handle API Method
+        let amount = 0;
+        if (input.plan === 'Verification') amount = appConfig.verificationFee || 0;
+        else if (input.plan === 'Premier') amount = appConfig.premierPlanPrices?.[input.billingCycle] || 0;
+        else if (input.plan === 'Super Premier') amount = appConfig.superPremierPlanPrices?.[input.billingCycle] || 0;
+
+        if (amount <= 0) throw new Error("Price for this plan is not correctly configured.");
+
+        const orderId = `order_${uuidv4()}`;
+        const paymentRef = firestore.collection('payments').doc();
+        
+        // Use standard Date for Firestore write
+        await paymentRef.set({
+            id: paymentRef.id,
+            userId: input.userId,
+            plan: input.plan,
+            billingCycle: input.billingCycle,
+            amount,
+            currency: 'INR',
+            orderId,
+            status: 'pending',
+            createdAt: new Date(),
+            updatedAt: new Date(),
+        });
+
+        const { payment_link, payment_session_id } = await createCashfreeOrder({ ...input, amount, orderId });
+        return { payment_link, payment_session_id };
+
+    } catch (error: any) {
+        console.error("Payment Order Flow Failure:", error);
+        return { error: error.message || "An internal error occurred." };
     }
-
-    let amount = 0;
-    if (input.plan === 'Verification') amount = appConfig.verificationFee || 0;
-    else if (input.plan === 'Premier') amount = appConfig.premierPlanPrices?.[input.billingCycle] || 0;
-    else if (input.plan === 'Super Premier') amount = appConfig.superPremierPlanPrices?.[input.billingCycle] || 0;
-
-    if (amount <= 0) throw new Error("Invalid price configuration.");
-
-    const orderId = `order_${uuidv4()}`;
-    const paymentRef = firestore.collection('payments').doc();
-    await paymentRef.set({
-        id: paymentRef.id,
-        userId: input.userId,
-        plan: input.plan,
-        billingCycle: input.billingCycle,
-        amount,
-        currency: 'INR',
-        orderId,
-        status: 'pending',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-    });
-
-    const { payment_link } = await createCashfreeOrder({ ...input, amount, orderId });
-    return { payment_link };
   }
 );
 
@@ -158,10 +172,10 @@ const verifyPaymentOrderFlow = ai.defineFlow(
         outputSchema: VerifyPaymentOutputSchema,
     },
     async ({ orderId }) => {
-        const adminApp = await getAdminApp();
-        const firestore = getFirestore(adminApp);
-        
         try {
+            const adminApp = await getAdminApp();
+            const firestore = getFirestore(adminApp);
+            
             const paymentsSnap = await firestore.collection('payments').where('orderId', '==', orderId).limit(1).get();
             if (paymentsSnap.empty) return { status: 'ERROR', message: 'Order record not found.' };
             
@@ -169,13 +183,13 @@ const verifyPaymentOrderFlow = ai.defineFlow(
             const paymentData = paymentDoc.data();
 
             if (paymentData.status === 'successful') {
-                return { status: 'SUCCESS', message: 'Payment verified.', plan: paymentData.plan, userId: paymentData.userId };
+                return { status: 'SUCCESS', message: 'Payment already verified.', plan: paymentData.plan, userId: paymentData.userId };
             }
 
-            // Check Cashfree API
+            // Securely check Cashfree API
             const clientId = process.env.CASHFREE_APP_ID;
             const secret = process.env.CASHFREE_SECRET;
-            const env = 'sandbox'; // Adjust based on env
+            const env = 'sandbox'; // Adjust based on environment
 
             const response = await axios.get(
                 `https://${env}.cashfree.com/pg/orders/${orderId}`,
@@ -201,10 +215,11 @@ const verifyPaymentOrderFlow = ai.defineFlow(
                 return { status: 'SUCCESS', message: 'Payment confirmed.', plan: paymentData.plan, userId: paymentData.userId };
             }
 
-            return { status: 'FAILED', message: `Current status: ${response.data.order_status}` };
+            return { status: 'FAILED', message: `Payment status: ${response.data.order_status}` };
 
         } catch (error: any) {
-            return { status: 'ERROR', message: error.message };
+            console.error("Verification Flow Error:", error);
+            return { status: 'ERROR', message: error.message || "Failed to verify transaction." };
         }
     }
 );
