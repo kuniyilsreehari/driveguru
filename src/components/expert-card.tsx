@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -80,109 +79,109 @@ export function ExpertCard({ expert }: ExpertCardProps) {
     const canShowContactActions = expert.verified && expert.showPhoneNumberOnProfile && expert.phoneNumber;
     
     return (
-        <Card key={expert.id} className="relative overflow-hidden transition-all hover:shadow-lg hover:border-primary/50">
-            <CardContent className="p-4">
-                <div className="flex items-start space-x-4">
+        <Card key={expert.id} className="relative overflow-hidden transition-all bg-[#24262d] border-none rounded-[2rem] shadow-2xl hover:shadow-orange-500/5 group">
+            <CardContent className="p-6">
+                <div className="flex items-start space-x-5">
                     <Link href={`/expert/${expert.id}`} className="block cursor-pointer">
-                        <Avatar className="h-20 w-20 text-3xl">
+                        <Avatar className="h-24 w-24 border-4 border-white/10 group-hover:border-orange-500/30 transition-colors shadow-xl">
                             <AvatarImage 
                                 src={expert.photoUrl} 
                                 alt={getDisplayName(expert)} 
                                 onContextMenu={(e) => e.preventDefault()} 
                                 draggable={false}
-                                className="select-none"
+                                className="select-none object-cover"
                             />
-                            <AvatarFallback>{getInitials(expert)}</AvatarFallback>
+                            <AvatarFallback className="bg-orange-500/10 text-orange-500 font-black text-2xl">{getInitials(expert)}</AvatarFallback>
                         </Avatar>
                     </Link>
 
-                    <div className="flex-1">
+                    <div className="flex-1 space-y-1">
                          <div className="flex justify-between items-start">
                             <Link href={`/expert/${expert.id}`} className="block cursor-pointer flex-1">
                                 <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                                    <h3 className="text-xl font-bold">{getDisplayName(expert)}</h3>
+                                    <h3 className="text-xl font-black text-white group-hover:text-orange-500 transition-colors uppercase italic">{getDisplayName(expert)}</h3>
                                     {expert.isAvailable && (
-                                        <Badge className="bg-green-500 text-white">Available</Badge>
+                                        <Badge className="bg-green-500 text-white rounded-full px-3 text-[9px] font-black h-5 uppercase tracking-tighter">Available</Badge>
                                     )}
-                                    <Badge variant="outline" className="font-mono text-[9px] uppercase border-primary/20 bg-primary/5 text-primary/70 h-4 px-1.5">
+                                    <Badge variant="outline" className="font-mono text-[9px] uppercase border-orange-500/30 bg-orange-500/5 text-orange-500 h-5 px-1.5">
                                         {dgId}
                                     </Badge>
                                 </div>
                                 {expert.companyName && (
-                                    <p className="text-sm text-muted-foreground">{`${expert.firstName} ${expert.lastName}`}</p>
+                                    <p className="text-xs text-muted-foreground font-bold uppercase tracking-wider">{`${expert.firstName} ${expert.lastName}`}</p>
                                 )}
                                 {expert.profession && (
-                                    <p className="text-sm font-semibold text-primary">{expert.profession}</p>
+                                    <p className="text-sm font-black text-orange-500 uppercase tracking-tighter">{expert.profession}</p>
                                 )}
-                                {expert.businessDescription && <p className="text-sm text-muted-foreground mt-1">{expert.businessDescription}</p>}
                                 <div className="mt-1">
                                     <FollowerStats expert={expert} />
                                 </div>
-                                <div className="flex flex-wrap items-center gap-2 mt-2">
+                                <div className="flex flex-wrap items-center gap-2 mt-3">
                                     {expert.verified ? (
-                                        <Badge variant="outline" className="border-green-500 text-green-500">
+                                        <Badge variant="outline" className="border-green-500/30 bg-green-500/5 text-green-500 text-[9px] font-black uppercase">
                                             <UserCheck className="mr-1 h-3 w-3" />
                                             Verified
                                         </Badge>
                                     ) : (
-                                        <Badge variant="destructive">Not Verified</Badge>
+                                        <Badge variant="destructive" className="text-[9px] font-black uppercase">Not Verified</Badge>
                                     )}
-                                    {expert.tier === 'Premier' && <Badge variant="outline" className="border-purple-500 text-purple-500"><Crown className="mr-1 h-3 w-3" /> Premier</Badge>}
-                                    {expert.tier === 'Super Premier' && <Badge variant="outline" className="border-blue-500 text-blue-500"><Sparkles className="mr-1 h-3 w-3" /> Super Premier</Badge>}
                                     <Badge variant="secondary" className={cn(
-                                        "text-white border-none text-[10px]",
+                                        "text-white border-none text-[9px] font-black uppercase tracking-widest",
                                         expert.role === 'Freelancer' ? "bg-blue-600" :
                                         expert.role === 'Company' ? "bg-indigo-600" :
                                         expert.role === 'Authorized Pro' ? "bg-emerald-600" :
                                         "bg-secondary"
                                     )}>{expert.role}</Badge>
-                                    {expert.category && <Badge variant="secondary" className="text-[10px]"><List className="mr-1 h-3 w-3" />{expert.category}</Badge>}
                                 </div>
                             </Link>
                             <ShareDialog shareDetails={{ type: 'expert-profile', expertId: expert.id, expertName: getDisplayName(expert) }}>
-                                <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0">
-                                    <Share2 className="h-4 w-4" />
+                                <Button variant="ghost" size="icon" className="h-10 w-10 flex-shrink-0 text-white/40 hover:text-white hover:bg-white/5 rounded-full">
+                                    <Share2 className="h-5 w-5" />
                                 </Button>
                             </ShareDialog>
                         </div>
-
-                        <Separator className="my-3" />
-                        
-                         <Link href={`/expert/${expert.id}`} className="block cursor-pointer">
-                            <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm text-muted-foreground">
-                                <div className="flex items-center gap-2 truncate"><MapPin className="h-4 w-4 flex-shrink-0" /> <span className="truncate">{locationString || 'N/A'}</span></div>
-                                <div className="flex items-center gap-2">
-                                    <IndianRupee className="h-4 w-4 flex-shrink-0" />
-                                    {expert.pricingValue ? (
-                                        <span>{`₹${expert.pricingValue}`} {expert.pricingModel && `/ ${expert.pricingModel}`}</span>
-                                    ) : 'N/A'}
-                                </div>
-                                <div className="flex items-center gap-2"><Briefcase className="h-4 w-4 flex-shrink-0" /> {expert.yearsOfExperience ? `${expert.yearsOfExperience} years` : 'N/A'}</div>
-                                <div className="flex items-center gap-2"><span className="text-[10px] uppercase font-bold opacity-50">Profile Status</span></div>
-                            </div>
-                        </Link>
                     </div>
                 </div>
-                
-                <Separator className="my-4" />
 
-                <div className="flex flex-wrap items-center gap-2">
-                    <Button asChild size="sm" variant="outline" className="flex-1">
+                <div className="mt-6 p-4 bg-white/5 rounded-2xl border border-white/5 space-y-4">
+                    <Link href={`/expert/${expert.id}`} className="block cursor-pointer">
+                        <div className="grid grid-cols-2 gap-4 text-xs font-bold text-muted-foreground uppercase tracking-widest">
+                            <div className="flex items-center gap-2 truncate">
+                                <MapPin className="h-4 w-4 text-orange-500 flex-shrink-0" /> 
+                                <span className="truncate">{expert.city || 'Kozhikode, Kera...'}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <IndianRupee className="h-4 w-4 text-orange-500 flex-shrink-0" />
+                                {expert.pricingValue ? (
+                                    <span className="text-white">₹{expert.pricingValue} <span className="text-[9px] opacity-50">/ {expert.pricingModel || 'hr'}</span></span>
+                                ) : <span className="opacity-50">N/A</span>}
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <Briefcase className="h-4 w-4 text-orange-500 flex-shrink-0" /> 
+                                {expert.yearsOfExperience ? <span className="text-white">{expert.yearsOfExperience} Years</span> : <span className="opacity-50">N/A</span>}
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <span className="text-[10px] font-black opacity-30 tracking-tighter">Profile Status</span>
+                            </div>
+                        </div>
+                    </Link>
+                </div>
+                
+                <div className="flex items-center gap-3 mt-6">
+                    <Button asChild variant="outline" className="flex-1 h-12 rounded-xl border-white/10 bg-transparent text-white font-black uppercase text-xs tracking-widest hover:bg-white/5">
                         <Link href={`/expert/${expert.id}`}>View Profile</Link>
                     </Button>
-                    <div className="flex flex-1 gap-2">
                     {canShowContactActions ? (
                         <WhatsAppBookingDialog expert={expert}>
-                            <Button size="sm" className="flex-1 bg-green-500 hover:bg-green-600">
+                            <Button className="flex-1 h-12 rounded-xl bg-[#25D366] hover:bg-[#20ba56] text-white font-black uppercase text-xs tracking-widest shadow-xl shadow-[#25D366]/10">
                                 <MessageSquare className="mr-2 h-4 w-4" /> WhatsApp
                             </Button>
                         </WhatsAppBookingDialog>
                     ) : (
-                         <Button variant="secondary" disabled size="sm" className="w-full">
+                         <Button variant="secondary" disabled className="flex-1 h-12 rounded-xl bg-white/5 border border-white/10 text-muted-foreground/50 font-black uppercase text-xs tracking-widest">
                             <Lock className="mr-2 h-4 w-4" /> Contact
                         </Button>
                     )}
-                    </div>
                 </div>
             </CardContent>
         </Card>

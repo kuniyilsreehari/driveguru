@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -16,8 +15,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import type { ExpertUser } from './expert-card';
 import { useUser } from '@/firebase';
-import { ScrollArea } from './ui/scroll-area';
-import { Separator } from './ui/separator';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
 
 const formSchema = z.object({
   clientName: z.string().min(2, { message: 'Name is required.' }),
@@ -99,32 +98,32 @@ To proceed, please reply with "Confirm" or "Cancel".`;
   return (
     <Dialog onOpenChange={() => setStep(1)}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="sm:max-w-[425px] max-h-[90vh] flex flex-col">
-        <DialogHeader>
-          <DialogTitle>Book Appointment via WhatsApp</DialogTitle>
-          <DialogDescription>
+      <DialogContent className="sm:max-w-[425px] max-h-[90vh] flex flex-col bg-[#1a1c23] border-none rounded-[2.5rem] shadow-2xl p-0 overflow-hidden">
+        <DialogHeader className="p-8 pb-4">
+          <DialogTitle className="text-3xl font-black text-white uppercase italic tracking-tighter">Request Booking</DialogTitle>
+          <DialogDescription className="text-muted-foreground font-medium pt-1">
             {step === 1 
-              ? "First, let's get your contact information."
-              : `Fill in the details for your appointment with ${getDisplayName(expert)}.`
+              ? "Tell us how the professional can reach you."
+              : `Appointment details for ${getDisplayName(expert)}.`
             }
           </DialogDescription>
         </DialogHeader>
         
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 flex flex-col flex-grow min-h-0">
-            <ScrollArea className="flex-grow border rounded-md p-4">
-              <div className="space-y-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col flex-grow min-h-0">
+            <ScrollArea className="flex-grow px-8 h-[400px]">
+              <div className="space-y-6 pb-8">
                 {step === 1 && (
-                  <>
+                  <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
                     <FormField
                       control={form.control}
                       name="clientName"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Your Name</FormLabel>
+                          <FormLabel className="text-[10px] font-black uppercase tracking-widest text-orange-500/50">Your Full Name</FormLabel>
                           <div className="relative">
                             <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                            <FormControl><Input placeholder="e.g. John Doe" {...field} className="pl-10" /></FormControl>
+                            <FormControl><Input placeholder="e.g. John Doe" {...field} className="pl-10 h-12 bg-white/5 border-none rounded-xl" /></FormControl>
                           </div>
                           <FormMessage />
                         </FormItem>
@@ -135,10 +134,10 @@ To proceed, please reply with "Confirm" or "Cancel".`;
                       name="clientEmail"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Your Email (Optional)</FormLabel>
+                          <FormLabel className="text-[10px] font-black uppercase tracking-widest text-orange-500/50">Email Address (Optional)</FormLabel>
                           <div className="relative">
                             <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                            <FormControl><Input type="email" placeholder="e.g. john@example.com" {...field} className="pl-10" /></FormControl>
+                            <FormControl><Input type="email" placeholder="e.g. john@example.com" {...field} className="pl-10 h-12 bg-white/5 border-none rounded-xl" /></FormControl>
                           </div>
                           <FormMessage />
                         </FormItem>
@@ -149,30 +148,28 @@ To proceed, please reply with "Confirm" or "Cancel".`;
                       name="clientPhone"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Your Contact Number</FormLabel>
+                          <FormLabel className="text-[10px] font-black uppercase tracking-widest text-orange-500/50">WhatsApp Number</FormLabel>
                           <div className="relative">
                             <Phone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                            <FormControl><Input type="tel" placeholder="e.g. +91 9876543210" {...field} className="pl-10" /></FormControl>
+                            <FormControl><Input type="tel" placeholder="e.g. +91 9876543210" {...field} className="pl-10 h-12 bg-white/5 border-none rounded-xl" /></FormControl>
                           </div>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
-                  </>
+                  </div>
                 )}
 
                 {step === 2 && (
-                  <>
-                    <h4 className="text-sm font-medium text-muted-foreground">Appointment Details</h4>
-                    
+                  <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
                     <FormField
                       control={form.control}
                       name="date"
                       render={({ field }) => (
                         <FormItem className="flex flex-col">
-                          <FormLabel>Date</FormLabel>
+                          <FormLabel className="text-[10px] font-black uppercase tracking-widest text-orange-500/50">Requested Date</FormLabel>
                             <FormControl>
-                              <Input type="date" {...field} />
+                              <Input type="date" {...field} className="h-12 bg-white/5 border-none rounded-xl" />
                             </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -183,9 +180,9 @@ To proceed, please reply with "Confirm" or "Cancel".`;
                         name="time"
                         render={({ field }) => (
                             <FormItem>
-                                <FormLabel>Time</FormLabel>
+                                <FormLabel className="text-[10px] font-black uppercase tracking-widest text-orange-500/50">Requested Time</FormLabel>
                                 <FormControl>
-                                    <Input type="time" {...field} />
+                                    <Input type="time" {...field} className="h-12 bg-white/5 border-none rounded-xl" />
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>
@@ -196,10 +193,10 @@ To proceed, please reply with "Confirm" or "Cancel".`;
                       name="location"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Location</FormLabel>
+                          <FormLabel className="text-[10px] font-black uppercase tracking-widest text-orange-500/50">Service Location</FormLabel>
                           <div className="relative">
                             <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                            <FormControl><Input placeholder="e.g., Your City" {...field} className="pl-10" /></FormControl>
+                            <FormControl><Input placeholder="e.g., Kozhikode, Main Road" {...field} className="pl-10 h-12 bg-white/5 border-none rounded-xl" /></FormControl>
                           </div>
                           <FormMessage />
                         </FormItem>
@@ -210,34 +207,34 @@ To proceed, please reply with "Confirm" or "Cancel".`;
                       name="workRequired"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Work Required</FormLabel>
+                          <FormLabel className="text-[10px] font-black uppercase tracking-widest text-orange-500/50">Detailed Requirements</FormLabel>
                           <div className="relative">
                             <MessageSquare className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                             <FormControl>
-                              <Textarea placeholder="Briefly describe the work you need done..." {...field} className="pl-10 min-h-[100px]" />
+                              <Textarea placeholder="Please describe the tasks or problems you need help with..." {...field} className="pl-10 min-h-[120px] bg-white/5 border-none rounded-xl" />
                             </FormControl>
                           </div>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
-                  </>
+                  </div>
                 )}
               </div>
             </ScrollArea>
-             <DialogFooter className="pt-4 flex-shrink-0">
+             <DialogFooter className="p-8 bg-white/5 mt-auto flex-shrink-0 sm:justify-between sm:space-x-0">
                 {step === 1 ? (
-                  <Button type="button" className="w-full" onClick={handleNextStep}>
-                    Next <ArrowRight className="ml-2 h-4 w-4" />
+                  <Button type="button" className="w-full h-14 rounded-2xl bg-orange-500 hover:bg-orange-600 font-black text-lg shadow-xl shadow-orange-500/20 uppercase tracking-widest" onClick={handleNextStep}>
+                    Next Step <ArrowRight className="ml-2 h-5 w-5" />
                   </Button>
                 ) : (
-                  <div className="w-full flex gap-2">
-                    <Button type="button" variant="outline" className="flex-1" onClick={() => setStep(1)}>
+                  <div className="w-full flex gap-3">
+                    <Button type="button" variant="outline" className="flex-1 h-14 rounded-2xl border-white/10 bg-transparent text-white font-bold uppercase tracking-widest" onClick={() => setStep(1)}>
                       <ArrowLeft className="mr-2 h-4 w-4" /> Back
                     </Button>
-                    <Button type="submit" className="flex-1">
-                        <Send className="mr-2 h-4 w-4" />
-                        Generate Message
+                    <Button type="submit" className="flex-1 h-14 rounded-2xl bg-[#25D366] hover:bg-[#20ba56] text-white font-black uppercase tracking-widest shadow-xl shadow-[#25D366]/20">
+                        <Send className="mr-2 h-5 w-5" />
+                        Generate
                     </Button>
                   </div>
                 )}
