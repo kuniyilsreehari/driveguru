@@ -1,5 +1,4 @@
 
-
 {
   "entities": {
     "User": {
@@ -680,6 +679,10 @@
         "referralRewardPoints": {
           "type": "number",
           "description": "The number of points awarded for a successful referral."
+        },
+        "centralContactPhone": {
+          "type": "string",
+          "description": "A central admin contact number for global support calls."
         }
       }
     }

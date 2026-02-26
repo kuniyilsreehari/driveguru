@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
@@ -8,7 +9,7 @@ import { useUser, useFirestore, useDoc, useMemoFirebase, useAuth, useCollection 
 import { updateDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, UserX, Crown, Sparkles, User as UserIcon, Save, Briefcase, Building, MessageSquare, Search, PlusCircle, Download, ExternalLink, IndianRupee, Upload, HardDriveDownload, Megaphone, Rss, Award, CheckCircle, TrendingUp, PieChart, Activity, Trash, ChevronLeft, ChevronRight, Check, Gift } from 'lucide-react';
+import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, UserX, Crown, Sparkles, User as UserIcon, Save, Briefcase, Building, MessageSquare, Search, PlusCircle, Download, ExternalLink, IndianRupee, Upload, HardDriveDownload, Megaphone, Rss, Award, CheckCircle, TrendingUp, PieChart, Activity, Trash, ChevronLeft, ChevronRight, Check, Gift, Phone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -46,7 +47,7 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/tabs';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import { format, eachMonthOfInterval, subMonths, isSameMonth } from 'date-fns';
@@ -136,6 +137,7 @@ type AppConfig = {
     superPremierPlanLinks?: { daily: string; monthly: string; yearly: string };
     verificationPaymentLink?: string;
     verificationFee?: number;
+    centralContactPhone?: string;
 };
 
 export default function AdminDashboardPage() {
@@ -183,6 +185,7 @@ export default function AdminDashboardPage() {
   const [superPremierPrices, setSuperPremierPrices] = useState({ daily: 50, monthly: 1000, yearly: 10000 });
   const [premierLinks, setPremierLinks] = useState({ daily: "", monthly: "", yearly: "" });
   const [superLinks, setSuperLinks] = useState({ daily: "", monthly: "", yearly: "" });
+  const [centralContactPhone, setCentralContactPhone] = useState("");
 
   const superAdminDocRef = useMemoFirebase(() => user ? doc(firestore, 'roles_super_admin', user.uid) : null, [firestore, user]);
   const { data: superAdminData, isLoading: isRoleLoading } = useDoc(superAdminDocRef);
@@ -218,6 +221,7 @@ export default function AdminDashboardPage() {
       setDepartments(appConfig.departments || []);
       setVerificationPaymentLink(appConfig.verificationPaymentLink || "");
       setVerificationFee(appConfig.verificationFee || 500);
+      setCentralContactPhone(appConfig.centralContactPhone || "");
       if (appConfig.premierPlanPrices) setPremierPrices(appConfig.premierPlanPrices);
       if (appConfig.superPremierPlanPrices) setSuperPremierPrices(appConfig.superPremierPlanPrices);
       if (appConfig.premierPlanLinks) setPremierLinks(appConfig.premierPlanLinks);
@@ -331,6 +335,7 @@ export default function AdminDashboardPage() {
         superPremierPlanLinks: superLinks,
         verificationPaymentLink,
         verificationFee,
+        centralContactPhone,
       }, { merge: true });
       toast({ title: "Settings Saved" });
     } finally {
@@ -997,7 +1002,7 @@ export default function AdminDashboardPage() {
               </CardFooter>
             </Card>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <Card className="border-none rounded-2xl overflow-hidden bg-card">
                     <CardHeader className="bg-white/5 border-b border-white/5 pb-6">
                         <div className="flex items-center gap-3">
@@ -1024,6 +1029,19 @@ export default function AdminDashboardPage() {
                     <CardContent className="p-6 space-y-4">
                         <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Points per signup</Label>
                         <Input type="number" value={referralPoints} onChange={e => setReferralPoints(Number(e.target.value))} className="h-12 bg-background border-none rounded-xl font-black text-2xl text-orange-500" />
+                    </CardContent>
+                </Card>
+
+                <Card className="border-none rounded-2xl overflow-hidden bg-card">
+                    <CardHeader className="bg-white/5 border-b border-white/5 pb-6">
+                        <div className="flex items-center gap-3">
+                            <Phone className="h-6 w-6 text-orange-500" />
+                            <CardTitle className="text-xl font-black uppercase italic">Central Support</CardTitle>
+                        </div>
+                    </CardHeader>
+                    <CardContent className="p-6 space-y-4">
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Global Support Phone</Label>
+                        <Input value={centralContactPhone} onChange={e => setCentralContactPhone(e.target.value)} className="h-12 bg-background border-none rounded-xl font-black text-2xl text-white" placeholder="+91..." />
                     </CardContent>
                 </Card>
             </div>

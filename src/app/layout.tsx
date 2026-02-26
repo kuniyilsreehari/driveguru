@@ -1,3 +1,4 @@
+
 import type {Metadata} from 'next';
 import { PT_Sans } from 'next/font/google';
 import './globals.css';
@@ -7,6 +8,7 @@ import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
 import { ThemeProvider } from '@/components/theme-provider';
 import { ChatAssistant } from '@/components/chat-assistant';
+import { CentralCallButton } from '@/components/layout/central-call-button';
 
 const ptSans = PT_Sans({
   subsets: ['latin'],
@@ -46,6 +48,7 @@ export default function RootLayout({
               {children}
             </main>
             <ChatAssistant />
+            <CentralCallButton />
             <Footer />
           </FirebaseClientProvider>
           <Toaster />
