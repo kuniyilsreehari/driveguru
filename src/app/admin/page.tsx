@@ -131,6 +131,7 @@ type AppConfig = {
     referralRewardPoints?: number;
     homepageCategories?: HomepageCategory[];
     departments?: string[];
+    pricingModels?: string[];
     premierPlanPrices?: { daily: number; monthly: number; yearly: number };
     superPremierPlanPrices?: { daily: number; monthly: number; yearly: number };
     premierPaymentLink?: string;
@@ -184,6 +185,8 @@ export default function AdminDashboardPage() {
   const [superPremierPaymentLink, setSuperPremierPaymentLink] = useState("");
   const [verificationPaymentLink, setVerificationPaymentLink] = useState("");
   const [verificationFee, setVerificationFee] = useState(500);
+  const [premierPrices, setPremierPrices] = useState({ daily: 10, monthly: 200, yearly: 2000 });
+  const [superPremierPrices, setSuperPremierPrices] = useState({ daily: 50, monthly: 1000, yearly: 10000 });
 
   const superAdminDocRef = useMemoFirebase(() => user ? doc(firestore, 'roles_super_admin', user.uid) : null, [firestore, user]);
   const { data: superAdminData, isLoading: isRoleLoading } = useDoc(superAdminDocRef);
@@ -221,6 +224,8 @@ export default function AdminDashboardPage() {
       setSuperPremierPaymentLink(appConfig.superPremierPaymentLink || "");
       setVerificationPaymentLink(appConfig.verificationPaymentLink || "");
       setVerificationFee(appConfig.verificationFee || 500);
+      if (appConfig.premierPlanPrices) setPremierPrices(appConfig.premierPlanPrices);
+      if (appConfig.superPremierPlanPrices) setSuperPremierPrices(appConfig.superPremierPlanPrices);
     }
   }, [appConfig]);
 
@@ -329,6 +334,8 @@ export default function AdminDashboardPage() {
         superPremierPaymentLink,
         verificationPaymentLink,
         verificationFee,
+        premierPlanPrices: premierPrices,
+        superPremierPlanPrices: superPremierPrices,
       }, { merge: true });
       toast({ title: "Settings Saved" });
     } finally {
@@ -867,7 +874,7 @@ export default function AdminDashboardPage() {
                     <CreditCard className="h-6 w-6 text-orange-500" />
                     <CardTitle className="text-2xl font-black uppercase italic">Payment Configuration</CardTitle>
                 </div>
-                <CardDescription className="text-muted-foreground">Manage API keys and static payment links.</CardDescription>
+                <CardDescription className="text-muted-foreground">Manage API keys, pricing, and static payment links.</CardDescription>
               </CardHeader>
               <CardContent className="p-6 space-y-8">
                 <div className="flex items-center justify-between p-4 bg-background rounded-xl border border-white/5 shadow-inner">
@@ -890,6 +897,43 @@ export default function AdminDashboardPage() {
                             <Label htmlFor="method-link" className="font-black text-sm uppercase italic cursor-pointer">Static Payment Links</Label>
                         </div>
                     </RadioGroup>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 p-6 bg-white/5 rounded-2xl border border-white/5">
+                    <div className="space-y-4">
+                        <h4 className="text-sm font-black text-purple-500 uppercase tracking-widest flex items-center gap-2"><Crown className="h-4 w-4" /> Premier Plan Pricing (₹)</h4>
+                        <div className="grid grid-cols-3 gap-3">
+                            <div className="space-y-1">
+                                <Label className="text-[10px] text-muted-foreground uppercase">Daily</Label>
+                                <Input type="number" value={premierPrices.daily} onChange={e => setPremierPrices({...premierPrices, daily: Number(e.target.value)})} className="bg-background border-none h-10" />
+                            </div>
+                            <div className="space-y-1">
+                                <Label className="text-[10px] text-muted-foreground uppercase">Monthly</Label>
+                                <Input type="number" value={premierPrices.monthly} onChange={e => setPremierPrices({...premierPrices, monthly: Number(e.target.value)})} className="bg-background border-none h-10" />
+                            </div>
+                            <div className="space-y-1">
+                                <Label className="text-[10px] text-muted-foreground uppercase">Yearly</Label>
+                                <Input type="number" value={premierPrices.yearly} onChange={e => setPremierPrices({...premierPrices, yearly: Number(e.target.value)})} className="bg-background border-none h-10" />
+                            </div>
+                        </div>
+                    </div>
+                    <div className="space-y-4">
+                        <h4 className="text-sm font-black text-blue-500 uppercase tracking-widest flex items-center gap-2"><Sparkles className="h-4 w-4" /> Super Premier Pricing (₹)</h4>
+                        <div className="grid grid-cols-3 gap-3">
+                            <div className="space-y-1">
+                                <Label className="text-[10px] text-muted-foreground uppercase">Daily</Label>
+                                <Input type="number" value={superPremierPrices.daily} onChange={e => setSuperPremierPrices({...superPremierPrices, daily: Number(e.target.value)})} className="bg-background border-none h-10" />
+                            </div>
+                            <div className="space-y-1">
+                                <Label className="text-[10px] text-muted-foreground uppercase">Monthly</Label>
+                                <Input type="number" value={superPremierPrices.monthly} onChange={e => setSuperPremierPrices({...superPremierPrices, monthly: Number(e.target.value)})} className="bg-background border-none h-10" />
+                            </div>
+                            <div className="space-y-1">
+                                <Label className="text-[10px] text-muted-foreground uppercase">Yearly</Label>
+                                <Input type="number" value={superPremierPrices.yearly} onChange={e => setSuperPremierPrices({...superPremierPrices, yearly: Number(e.target.value)})} className="bg-background border-none h-10" />
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 {paymentMethod === 'Link' && (
