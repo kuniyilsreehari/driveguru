@@ -1,11 +1,12 @@
+
 'use client';
 
-import { Suspense, useState, useEffect } from 'react';
+import { Suspense, useState } from 'react';
 import Link from 'next/link';
 import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Loader2, ChevronLeft, Sparkles, ExternalLink, AlertCircle } from 'lucide-react';
+import { Loader2, ChevronLeft, Sparkles, ExternalLink } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { createPaymentOrder } from '@/ai/flows/payment-flow';
@@ -13,7 +14,6 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { doc } from 'firebase/firestore';
 import { cn } from '@/lib/utils';
-import { load } from '@cashfreepayments/cashfree-js';
 
 function SuperPremierPaymentPageContent() {
     const { user, isUserLoading } = useUser();
@@ -22,22 +22,9 @@ function SuperPremierPaymentPageContent() {
     const [billingCycle, setBillingCycle] = useState<'daily' | 'monthly' | 'yearly'>('monthly');
     const { toast } = useToast();
     const router = useRouter();
-    const [cashfree, setCashfree] = useState<any>(null);
 
     const appConfigDocRef = useMemoFirebase(() => doc(firestore, 'app_config', 'homepage'), [firestore]);
     const { data: appConfig } = useDoc(appConfigDocRef);
-
-    useEffect(() => {
-        const initCashfree = async () => {
-            try {
-                const cf = await load({ mode: "sandbox" }); // or "production"
-                setCashfree(cf);
-            } catch (e) {
-                console.error("Cashfree SDK failed to load", e);
-            }
-        };
-        initCashfree();
-    }, []);
 
     const handlePayment = async () => {
         if (!user) {
@@ -61,19 +48,11 @@ function SuperPremierPaymentPageContent() {
                 throw new Error(result.error);
             }
 
-            // Direct Open with SDK if session ID is available
-            if (result.payment_session_id && cashfree) {
-                const checkoutOptions = {
-                    paymentSessionId: result.payment_session_id,
-                    redirectTarget: "_self", // Directly open page
-                };
-                cashfree.checkout(checkoutOptions);
-            } 
-            // Fallback to direct redirect link
-            else if (result.payment_link) {
+            if (result.payment_link) {
+                // Directly open the payment link page
                 window.location.href = result.payment_link;
             } else {
-                throw new Error("Could not retrieve checkout details.");
+                throw new Error("Could not retrieve checkout link.");
             }
         } catch (error: any) {
             console.error("Payment initiation failed:", error);
@@ -140,7 +119,7 @@ function SuperPremierPaymentPageContent() {
                    </div>
                 </CardContent>
                 <CardFooter className="bg-white/5 p-8">
-                    <Button onClick={handlePayment} disabled={isCreatingOrder} className="w-full h-16 rounded-2xl font-black text-xl bg-blue-600 hover:bg-blue-700 shadow-xl shadow-blue-500/20 uppercase tracking-widest transition-all active:scale-95">
+                    <Button onClick={handlePayment} disabled={isCreatingOrder} className="w-full h-16 rounded-2xl font-black text-xl bg-blue-600 hover:bg-blue-700 shadow-xl shadow-orange-500/20 uppercase tracking-widest transition-all active:scale-95">
                         {isCreatingOrder ? (
                             <><Loader2 className="mr-3 h-6 w-6 animate-spin" />Initializing...</>
                         ) : (

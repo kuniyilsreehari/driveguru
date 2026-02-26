@@ -1,6 +1,7 @@
+
 'use client';
 
-import { Suspense, useState, useEffect } from 'react';
+import { Suspense, useState } from 'react';
 import Link from 'next/link';
 import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
@@ -13,7 +14,6 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { doc } from 'firebase/firestore';
 import { cn } from '@/lib/utils';
-import { load } from '@cashfreepayments/cashfree-js';
 
 function PremierPaymentPageContent() {
     const { user, isUserLoading } = useUser();
@@ -22,22 +22,9 @@ function PremierPaymentPageContent() {
     const [billingCycle, setBillingCycle] = useState<'daily' | 'monthly' | 'yearly'>('monthly');
     const { toast } = useToast();
     const router = useRouter();
-    const [cashfree, setCashfree] = useState<any>(null);
 
     const appConfigDocRef = useMemoFirebase(() => doc(firestore, 'app_config', 'homepage'), [firestore]);
     const { data: appConfig } = useDoc(appConfigDocRef);
-
-    useEffect(() => {
-        const initCashfree = async () => {
-            try {
-                const cf = await load({ mode: "sandbox" });
-                setCashfree(cf);
-            } catch (e) {
-                console.error("Cashfree SDK failed to load", e);
-            }
-        };
-        initCashfree();
-    }, []);
 
     const handlePayment = async () => {
         if (!user) {
@@ -61,18 +48,11 @@ function PremierPaymentPageContent() {
                 throw new Error(result.error);
             }
 
-            // Direct Open with SDK
-            if (result.payment_session_id && cashfree) {
-                const checkoutOptions = {
-                    paymentSessionId: result.payment_session_id,
-                    redirectTarget: "_self",
-                };
-                cashfree.checkout(checkoutOptions);
-            } 
-            else if (result.payment_link) {
+            if (result.payment_link) {
+                // Directly open the payment link page
                 window.location.href = result.payment_link;
             } else {
-                throw new Error("Could not retrieve checkout details.");
+                throw new Error("Could not retrieve checkout link.");
             }
         } catch (error: any) {
             console.error("Payment initiation failed:", error);
