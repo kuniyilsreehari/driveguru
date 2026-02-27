@@ -231,14 +231,8 @@ function SearchResults() {
             return 0;
         });
 
-        // Apply Search Limits based on Subscription Tier
-        const limits = appConfig?.tierSearchLimits || { standard: 100, premier: 100, superPremier: 100 };
-        
-        const superPremiers = experts.filter(e => e.tier === 'Super Premier').slice(0, limits.superPremier);
-        const premiers = experts.filter(e => e.tier === 'Premier').slice(0, limits.premier);
-        const standards = experts.filter(e => !e.tier || e.tier === 'Standard').slice(0, limits.standard);
-
-        return [...superPremiers, ...premiers, ...standards];
+        // Search Limits Removed per user request
+        return experts;
 
     }, [allExperts, searchQueryParam, city, state, pincode, maxRate, radius, searchCenter, isGeocoding, locationQuery, appConfig]);
 

@@ -15,27 +15,27 @@ service cloud.firestore {
     }
 
     function isSuperAdmin() {
-      return isSignedIn() &&
-        exists(/databases/$(database)/documents/roles_super_admin/$(request.auth.uid));
+      return isSignedIn() && (
+        request.auth.uid == "UtMmElKnuMXbOM2cBP4oM6bFTre2" ||
+        request.auth.token.email == "kuniyilsreehari@gmail.com" ||
+        request.auth.token.email == "royatosolutions@gmail.com" ||
+        exists(/databases/$(database)/documents/roles_super_admin/$(request.auth.uid)) ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "superAdmin"
+      );
     }
     
     function isManager() {
-      return isSignedIn() &&
-        exists(/databases/$(database)/documents/roles_manager/$(request.auth.uid));
+      return isSignedIn() && (
+        exists(/databases/$(database)/documents/roles_manager/$(request.auth.uid)) ||
+        isSuperAdmin()
+      );
     }
 
     /* =====================================================
      * Collection Rules
      * ===================================================== */
 
-    // Job Vacancies - Explicit Public Access (v15.0 - Direct Collection Access)
-    match /vacancies/{vacancyId} {
-      allow read, list: if true;
-      allow create: if isSignedIn();
-      allow update, delete: if isSuperAdmin() || (isSignedIn() && resource.data.companyId == request.auth.uid);
-    }
-
-    // User Profiles and related data
+    // User Profiles - Publicly readable for Search and Marketplace
     match /users/{userId} {
       allow read, list: if true;
       allow create: if isOwner(userId);
@@ -50,6 +50,19 @@ service cloud.firestore {
       match /location_data/{locId} {
         allow read, write: if isOwner(userId);
       }
+    }
+    
+    // Global App Configuration - Publicly readable for Homepage settings
+    match /app_config/{configId} { 
+      allow read, list: if true;
+      allow write: if isSuperAdmin(); 
+    }
+
+    // Job Vacancies - Explicit Public Access
+    match /vacancies/{vacancyId} {
+      allow read, list: if true;
+      allow create: if isSignedIn();
+      allow update, delete: if isSuperAdmin() || (isSignedIn() && resource.data.companyId == request.auth.uid);
     }
     
     // Public Feed Posts
@@ -96,12 +109,6 @@ service cloud.firestore {
     
     match /roles_manager/{userId} { 
       allow read: if isSignedIn();
-      allow write: if isSuperAdmin(); 
-    }
-    
-    // Global App Configuration
-    match /app_config/{configId} { 
-      allow read, list: if true;
       allow write: if isSuperAdmin(); 
     }
   }

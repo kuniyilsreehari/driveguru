@@ -124,11 +124,6 @@ type Post = {
 type AppConfig = {
     introVideoUrl?: string;
     featuredExpertsLimit?: number;
-    tierSearchLimits?: {
-        standard: number;
-        premier: number;
-        superPremier: number;
-    };
     announcementText?: string;
     isAnnouncementEnabled?: boolean;
     announcementSpeed?: number;
@@ -178,7 +173,6 @@ export default function AdminDashboardPage() {
 
   const [introVideoUrl, setIntroVideoUrl] = useState("");
   const [featuredLimit, setFeaturedLimit] = useState(3);
-  const [tierLimits, setTierLimits] = useState({ standard: 10, premier: 25, superPremier: 50 });
   const [announcementText, setAnnouncementText] = useState("");
   const [announcementEnabled, setAnnouncementEnabled] = useState(false);
   const [announcementSpeed, setAnnouncementSpeed] = useState(20);
@@ -198,7 +192,14 @@ export default function AdminDashboardPage() {
 
   const superAdminDocRef = useMemoFirebase(() => user ? doc(firestore, 'roles_super_admin', user.uid) : null, [firestore, user]);
   const { data: superAdminData, isLoading: isRoleLoading } = useDoc(superAdminDocRef);
-  const isSuperAdmin = !!superAdminData;
+  
+  // Robust Super Admin Check for Developer and Database Role
+  const isSuperAdmin = useMemo(() => {
+    if (!user) return false;
+    const isDevEmail = user.email === 'kuniyilsreehari@gmail.com' || user.email === 'royatosolutions@gmail.com';
+    const isDevUid = user.uid === 'UtMmElKnuMXbOM2cBP4oM6bFTre2';
+    return isDevEmail || isDevUid || !!superAdminData;
+  }, [user, superAdminData]);
 
   const usersQuery = useMemoFirebase(() => isSuperAdmin ? query(collection(firestore, 'users'), orderBy('createdAt', 'desc')) : null, [firestore, isSuperAdmin]);
   const { data: users, isLoading: isUsersLoading } = useCollection<ExpertUser>(usersQuery);
@@ -219,7 +220,6 @@ export default function AdminDashboardPage() {
     if (appConfig) {
       setIntroVideoUrl(appConfig.introVideoUrl || "");
       setFeaturedLimit(appConfig.featuredExpertsLimit || 3);
-      if (appConfig.tierSearchLimits) setTierLimits(appConfig.tierSearchLimits);
       setAnnouncementText(appConfig.announcementText || "");
       setAnnouncementEnabled(appConfig.isAnnouncementEnabled || false);
       setAnnouncementSpeed(appConfig.announcementSpeed || 20);
@@ -336,7 +336,6 @@ export default function AdminDashboardPage() {
       await setDocumentNonBlocking(appConfigDocRef!, {
         introVideoUrl,
         featuredExpertsLimit: featuredLimit,
-        tierSearchLimits: tierLimits,
         announcementText,
         isAnnouncementEnabled: announcementEnabled,
         announcementSpeed,
@@ -1064,32 +1063,6 @@ export default function AdminDashboardPage() {
                 <Card className="border-none rounded-2xl overflow-hidden bg-card">
                     <CardHeader className="bg-white/5 border-b border-white/5 pb-6">
                         <div className="flex items-center gap-3">
-                            <Eye className="h-6 w-6 text-orange-500" />
-                            <CardTitle className="text-xl font-black uppercase italic">Search Visibility Limits</CardTitle>
-                        </div>
-                        <CardDescription className="text-muted-foreground">Max results shown in search per tier.</CardDescription>
-                    </CardHeader>
-                    <CardContent className="p-6 space-y-4">
-                        <div className="grid grid-cols-3 gap-4">
-                            <div className="space-y-2">
-                                <Label className="text-[10px] font-black uppercase text-muted-foreground">Standard</Label>
-                                <Input type="number" value={tierLimits.standard} onChange={e => setTierLimits({...tierLimits, standard: Number(e.target.value)})} className="h-12 bg-background border-none rounded-xl font-black text-xl text-white" />
-                            </div>
-                            <div className="space-y-2">
-                                <Label className="text-[10px] font-black uppercase text-muted-foreground text-purple-500">Premier</Label>
-                                <Input type="number" value={tierLimits.premier} onChange={e => setTierLimits({...tierLimits, premier: Number(e.target.value)})} className="h-12 bg-background border-none rounded-xl font-black text-xl text-purple-500" />
-                            </div>
-                            <div className="space-y-2">
-                                <Label className="text-[10px] font-black uppercase text-muted-foreground text-blue-500">Super Premier</Label>
-                                <Input type="number" value={tierLimits.superPremier} onChange={e => setTierLimits({...tierLimits, superPremier: Number(e.target.value)})} className="h-12 bg-background border-none rounded-xl font-black text-xl text-blue-500" />
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                <Card className="border-none rounded-2xl overflow-hidden bg-card">
-                    <CardHeader className="bg-white/5 border-b border-white/5 pb-6">
-                        <div className="flex items-center gap-3">
                             <Layout className="h-6 w-6 text-orange-500" />
                             <CardTitle className="text-xl font-black uppercase italic">Homepage Layout</CardTitle>
                         </div>
@@ -1102,9 +1075,7 @@ export default function AdminDashboardPage() {
                         </div>
                     </CardContent>
                 </Card>
-            </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <Card className="border-none rounded-2xl overflow-hidden bg-card">
                     <CardHeader className="bg-white/5 border-b border-white/5 pb-6">
                         <div className="flex items-center gap-3">
@@ -1120,7 +1091,9 @@ export default function AdminDashboardPage() {
                         <Textarea value={announcementText} onChange={e => setAnnouncementText(e.target.value)} className="bg-background border-none rounded-xl min-h-[80px]" placeholder="Breaking news text here..." />
                     </CardContent>
                 </Card>
+            </div>
 
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <Card className="border-none rounded-2xl overflow-hidden bg-card">
                     <CardHeader className="bg-white/5 border-b border-white/5 pb-6">
                         <div className="flex items-center gap-3">
