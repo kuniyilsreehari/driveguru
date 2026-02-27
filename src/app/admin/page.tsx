@@ -193,12 +193,13 @@ export default function AdminDashboardPage() {
   const superAdminDocRef = useMemoFirebase(() => user ? doc(firestore, 'roles_super_admin', user.uid) : null, [firestore, user]);
   const { data: superAdminData, isLoading: isRoleLoading } = useDoc(superAdminDocRef);
   
-  // Robust Super Admin Check for Developer and Database Role
+  // Explicitly check for developer account, custom claim, or roles collection
   const isSuperAdmin = useMemo(() => {
     if (!user) return false;
     const isDevEmail = user.email === 'kuniyilsreehari@gmail.com' || user.email === 'royatosolutions@gmail.com';
     const isDevUid = user.uid === 'UtMmElKnuMXbOM2cBP4oM6bFTre2';
-    return isDevEmail || isDevUid || !!superAdminData;
+    const hasClaim = (user as any).auth?.token?.role === 'superAdmin';
+    return isDevEmail || isDevUid || hasClaim || !!superAdminData;
   }, [user, superAdminData]);
 
   const usersQuery = useMemoFirebase(() => isSuperAdmin ? query(collection(firestore, 'users'), orderBy('createdAt', 'desc')) : null, [firestore, isSuperAdmin]);
@@ -460,7 +461,7 @@ export default function AdminDashboardPage() {
   };
 
   if (isUserLoading || isRoleLoading) return <div className="flex h-screen items-center justify-center"><Loader className="animate-spin" /></div>;
-  if (!isSuperAdmin) return <div className="flex h-screen items-center justify-center">Access Denied.</div>;
+  if (!isSuperAdmin) return <div className="flex h-screen items-center justify-center">Access Denied. Redirecting to Dashboard... {useEffect(() => { router.push('/dashboard') }, [])}</div>;
 
   return (
     <div className="min-h-screen bg-background text-white p-4 sm:p-8">
