@@ -198,8 +198,9 @@ export default function AdminDashboardPage() {
     // Check developer UID, Email, or Token Claim
     const isDevUid = user.uid === 'UtMmElKnuMXbOM2cBP4oM6bFTre2';
     const isDevEmail = user.email === 'kuniyilsreehari@gmail.com' || user.email === 'royatosolutions@gmail.com';
-    const hasClaim = (user as any).auth?.token?.role === 'superAdmin';
-    return isDevUid || isDevEmail || hasClaim || !!superAdminData;
+    // Custom claims are accessible via reloadUserInfo or async getTokenResult, 
+    // but standard practice here is profile check + UID for bootstrap.
+    return isDevUid || isDevEmail || !!superAdminData;
   }, [user, superAdminData]);
 
   const usersQuery = useMemoFirebase(() => isSuperAdmin ? query(collection(firestore, 'users'), orderBy('createdAt', 'desc')) : null, [firestore, isSuperAdmin]);
@@ -962,7 +963,7 @@ export default function AdminDashboardPage() {
                             <RadioGroupItem value="API" id="method-api" className="border-orange-500 text-orange-500" />
                             <Label htmlFor="method-api" className="font-black text-sm uppercase italic cursor-pointer">API (Cashfree Direct)</Label>
                         </div>
-                        <div className={cn("flex items-center space-x-3 p-4 rounded-xl border transition-all cursor-pointer", paymentMethod === 'Link' ? "border-orange-500 bg-orange-500/5" : "border-white/5 bg-white/5")} onClick={() => setPaymentMethod('Link')}>
+                        <div className={cn("flex items-center space-x-3 p-4 rounded-xl border transition-all cursor-pointer", paymentMethod === 'Link' ? "border-orange-500 bg-orange-500/5" : "border-white/5 bg-white/5")} onClick={() => setRuleMethod('Link')}>
                             <RadioGroupItem value="Link" id="method-link" className="border-white/20" />
                             <Label htmlFor="method-link" className="font-black text-sm uppercase italic cursor-pointer">Static Payment Links</Label>
                         </div>
