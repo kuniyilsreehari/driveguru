@@ -1,4 +1,3 @@
-
 {
   "entities": {
     "User": {
@@ -95,6 +94,10 @@
         "verified": {
           "type": "boolean",
           "description": "Indicates if the expert has been verified by a super admin."
+        },
+        "isFeatured": {
+          "type": "boolean",
+          "description": "If true, the expert is shown in the featured 'Top Rated' carousel on the homepage."
         },
         "cashPaymentStatus": {
           "type": "string",
