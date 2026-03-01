@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -57,7 +58,7 @@ export function useCollection<T = any>(
 
   const { isUserLoading } = useUser();
   const [data, setData] = useState<StateDataType>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true); // Start loading true
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<FirestoreError | Error | null>(null);
 
   useEffect(() => {
@@ -101,7 +102,7 @@ export function useCollection<T = any>(
                 });
                 
                 setError(contextualError);
-                setData(null);
+                setData([]); // Return empty array on permission error to prevent UI crash
                 setIsLoading(false);
         
                 // trigger global error propagation
@@ -124,11 +125,10 @@ export function useCollection<T = any>(
             unsubscribe();
         }
     }
-  }, [memoizedTargetRefOrQuery, isUserLoading]); // Re-run if the target query/reference or auth state changes.
+  }, [memoizedTargetRefOrQuery, isUserLoading]);
   
   if(memoizedTargetRefOrQuery && !memoizedTargetRefOrQuery.__memo) {
-    // During development, we'll log a warning instead of throwing to prevent complete crashes
-    console.warn(memoizedTargetRefOrQuery + ' was not properly memoized using useMemoFirebase. This can lead to infinite loops.');
+    console.warn('Query was not properly memoized using useMemoFirebase. This can lead to infinite loops.');
   }
 
   return { data, isLoading, error };
