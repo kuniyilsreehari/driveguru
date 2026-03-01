@@ -372,6 +372,18 @@ export function RegistrationForm() {
     return null;
   }
 
+  const sanitizePhone = (phoneNumber: string, countryCode?: string) => {
+    let clean = phoneNumber.trim().replace(/\s+/g, '');
+    if (countryCode && clean.startsWith(countryCode)) {
+        clean = clean.substring(countryCode.length);
+    }
+    // Final check for common mistakes like typing +91 in the main field
+    if (clean.startsWith('+91')) {
+        clean = clean.substring(3);
+    }
+    return clean;
+  }
+
   async function onEmailSubmit(values: z.infer<typeof formSchema>) {
     if (!auth || !firestore) {
       toast({
@@ -405,11 +417,7 @@ export function RegistrationForm() {
         
         const newUserDocRef = doc(firestore, "users", newUser.uid);
 
-        // Sanitize phone number to prevent double prefix
-        let sanitizedPhone = values.phoneNumber || "";
-        if (values.countryCode && sanitizedPhone.startsWith(values.countryCode)) {
-            sanitizedPhone = sanitizedPhone.replace(values.countryCode, "").trim();
-        }
+        const cleanPhone = sanitizePhone(values.phoneNumber || "", values.countryCode);
 
         const userData: any = {
             id: newUser.uid,
@@ -424,7 +432,7 @@ export function RegistrationForm() {
             address: values.address,
             latitude: coords?.lat || null,
             longitude: coords?.lon || null,
-            phoneNumber: values.countryCode && sanitizedPhone ? `${values.countryCode} ${sanitizedPhone}` : "",
+            phoneNumber: values.countryCode && cleanPhone ? `${values.countryCode} ${cleanPhone}` : "",
             companyName: values.companyName,
             verified: false,
             photoUrl: '',
@@ -481,13 +489,9 @@ export function RegistrationForm() {
         }
     }
 
-    // Sanitize phone number to prevent double prefix
-    let sanitizedPhone = values.phoneNumber || "";
-    if (sanitizedPhone.startsWith("+91")) {
-        sanitizedPhone = sanitizedPhone.replace("+91", "").trim();
-    }
-
-    const fullPhoneNumber = `+91${sanitizedPhone}`;
+    const cleanPhone = sanitizePhone(values.phoneNumber);
+    const fullPhoneNumber = `+91${cleanPhone}`;
+    
     setPhoneSignupData({
       phoneNumber: fullPhoneNumber,
       referralCode: values.referralCode,
@@ -1075,7 +1079,7 @@ export function RegistrationForm() {
                 )}
             />
             <Button type="submit" className="w-full" disabled={isSubmitting}>
-                {isSubmitting ? 'Verifying...' : 'Verify OTP & Sign Up'}
+                {isSubmitting ? 'Verifying...' : 'Verify OTP & Sign In'}
             </Button>
             <Button variant="link" className="w-full" onClick={() => setView('phone')}>
                 Change phone number
