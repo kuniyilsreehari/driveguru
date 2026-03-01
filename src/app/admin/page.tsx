@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
@@ -9,7 +8,7 @@ import { useUser, useFirestore, useDoc, useMemoFirebase, useAuth, useCollection 
 import { updateDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, UserX, Crown, Sparkles, User as UserIcon, Save, Briefcase, Building, MessageSquare, Search, PlusCircle, Download, ExternalLink, IndianRupee, Upload, HardDriveDownload, Megaphone, Rss, Award, CheckCircle, TrendingUp, PieChart, Activity, Trash, ChevronLeft, ChevronRight, Check, Gift, Phone, Home, Eye, Layout } from 'lucide-react';
+import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, UserX, Crown, Sparkles, User as UserIcon, Save, Briefcase, Building, MessageSquare, Search, PlusCircle, Download, ExternalLink, IndianRupee, Upload, HardDriveDownload, Megaphone, Rss, Award, CheckCircle, TrendingUp, PieChart, Activity, Trash, ChevronLeft, ChevronRight, Check, Gift, Phone, Home, Eye, Layout, Hash } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -393,6 +392,16 @@ export default function AdminDashboardPage() {
     }
   };
 
+  const handleGenerateReferralCode = async (userId: string) => {
+    const code = Math.random().toString(36).substring(2, 10).toUpperCase();
+    try {
+        await updateDocumentNonBlocking(doc(firestore, 'users', userId), { referralCode: code });
+        toast({ title: "Referral Code Generated", description: `Assigned code: ${code}` });
+    } catch (e) {
+        toast({ variant: "destructive", title: "Action Failed" });
+    }
+  }
+
   const handleDeletePost = async () => {
     if (!selectedPost) return;
     try {
@@ -470,6 +479,12 @@ export default function AdminDashboardPage() {
     };
     reader.readAsText(file);
   };
+
+  const sanitizePhoneNumber = (phone?: string) => {
+    if (!phone) return 'N/A';
+    // Remove duplicate prefix if it exists (e.g., "+91 +91")
+    return phone.replace(/(\+\d{2})\s\1/, '$1').trim();
+  }
 
   if (isUserLoading || isRoleLoading) return <div className="flex h-screen items-center justify-center"><Loader className="animate-spin" /></div>;
   
@@ -626,7 +641,7 @@ export default function AdminDashboardPage() {
                                                         </TableCell>
                                                         <TableCell className="text-center">
                                                             <div className="flex flex-col items-center">
-                                                                <span className="text-xs font-black text-white/80">{u.phoneNumber || 'N/A'}</span>
+                                                                <span className="text-xs font-black text-white/80">{sanitizePhoneNumber(u.phoneNumber)}</span>
                                                                 {u.email && <span className="text-[9px] text-muted-foreground lowercase truncate max-w-[120px]">{u.email}</span>}
                                                             </div>
                                                         </TableCell>
@@ -635,13 +650,13 @@ export default function AdminDashboardPage() {
                                                             {u.tier === 'Super Premier' ? <Sparkles className="h-4 w-4 text-blue-500 mx-auto" /> : u.tier === 'Premier' ? <Crown className="h-4 w-4 text-purple-500 mx-auto" /> : <UserIcon className="h-4 w-4 text-muted-foreground/30 mx-auto" />}
                                                         </TableCell>
                                                         <TableCell className="text-center">
-                                                            <div className="flex items-center justify-center gap-2">
+                                                            <div className="flex items-center justify-center gap-1">
                                                                 <span className="text-xs font-black text-orange-500">{u.referralPoints || 0}</span>
                                                                 <Button variant="ghost" size="icon" className="h-6 w-6 rounded-full hover:bg-orange-500/10" onClick={() => { setSelectedUser(u); setIsAwardDialogOpen(true); }}><Gift className="h-3 w-3 text-orange-500" /></Button>
                                                             </div>
                                                         </TableCell>
-                                                        <TableCell className="text-center font-black text-sm text-blue-500">
-                                                            {referralUsageMap[u.referralCode || ''] || 0}
+                                                        <TableCell className="text-center">
+                                                            <span className="font-black text-sm text-blue-500">{referralUsageMap[u.referralCode || ''] || 0}</span>
                                                         </TableCell>
                                                         <TableCell>
                                                             <div className="flex items-center justify-center">
@@ -658,6 +673,9 @@ export default function AdminDashboardPage() {
                                                                 <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
                                                                 <DropdownMenuContent align="end" className="bg-[#24262d] text-white border-white/10 rounded-xl shadow-2xl p-1">
                                                                     <DropdownMenuItem onClick={() => { setSelectedUser(u); setIsEditDialogOpen(true); }} className="rounded-lg h-10"><Edit className="mr-2 h-4 w-4" /> Edit Profile</DropdownMenuItem>
+                                                                    {!u.referralCode && (
+                                                                        <DropdownMenuItem onClick={() => handleGenerateReferralCode(u.id)} className="rounded-lg h-10 text-orange-500"><Hash className="mr-2 h-4 w-4" /> Generate Code</DropdownMenuItem>
+                                                                    )}
                                                                     <DropdownMenuSub>
                                                                         <DropdownMenuSubTrigger className="rounded-lg h-10"><Crown className="mr-2 h-4 w-4" /> Change Tier</DropdownMenuSubTrigger>
                                                                         <DropdownMenuPortal>

@@ -1,5 +1,3 @@
-
-
 "use client";
 
 import * as React from "react";
@@ -407,6 +405,12 @@ export function RegistrationForm() {
         
         const newUserDocRef = doc(firestore, "users", newUser.uid);
 
+        // Sanitize phone number to prevent double prefix
+        let sanitizedPhone = values.phoneNumber || "";
+        if (values.countryCode && sanitizedPhone.startsWith(values.countryCode)) {
+            sanitizedPhone = sanitizedPhone.replace(values.countryCode, "").trim();
+        }
+
         const userData: any = {
             id: newUser.uid,
             firstName: values.firstName,
@@ -420,7 +424,7 @@ export function RegistrationForm() {
             address: values.address,
             latitude: coords?.lat || null,
             longitude: coords?.lon || null,
-            phoneNumber: values.countryCode && values.phoneNumber ? `${values.countryCode} ${values.phoneNumber}` : "",
+            phoneNumber: values.countryCode && sanitizedPhone ? `${values.countryCode} ${sanitizedPhone}` : "",
             companyName: values.companyName,
             verified: false,
             photoUrl: '',
@@ -477,7 +481,13 @@ export function RegistrationForm() {
         }
     }
 
-    const fullPhoneNumber = `+91${values.phoneNumber}`;
+    // Sanitize phone number to prevent double prefix
+    let sanitizedPhone = values.phoneNumber || "";
+    if (sanitizedPhone.startsWith("+91")) {
+        sanitizedPhone = sanitizedPhone.replace("+91", "").trim();
+    }
+
+    const fullPhoneNumber = `+91${sanitizedPhone}`;
     setPhoneSignupData({
       phoneNumber: fullPhoneNumber,
       referralCode: values.referralCode,
