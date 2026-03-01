@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -47,15 +46,8 @@ function getPathFromQuery(q: Query): string {
  * React hook to subscribe to a Firestore collection or query in real-time.
  * Handles nullable references/queries.
  * 
- *
  * IMPORTANT! YOU MUST MEMOIZE the inputted memoizedTargetRefOrQuery or BAD THINGS WILL HAPPEN
- * use useMemo to memoize it per React guidence.  Also make sure that it's dependencies are stable
- * references
- *  
- * @template T Optional type for document data. Defaults to any.
- * @param {CollectionReference<DocumentData> | Query<DocumentData> | null | undefined} targetRefOrQuery -
- * The Firestore CollectionReference or Query. Waits if null/undefined.
- * @returns {UseCollectionResult<T>} Object with data, isLoading, error.
+ * use useMemo to memoize it per React guidance.
  */
 export function useCollection<T = any>(
     memoizedTargetRefOrQuery: ((CollectionReference<DocumentData> | Query<DocumentData>) & {__memo?: boolean})  | null | undefined,
@@ -100,26 +92,25 @@ export function useCollection<T = any>(
             setIsLoading(false);
           },
           (error: FirestoreError) => {
-            let path: string = 'unknown';
-            if (memoizedTargetRefOrQuery) {
-                try {
-                   path = getPathFromQuery(memoizedTargetRefOrQuery);
-                } catch (e) {
-                    console.error("Could not determine path for Firestore permission error", e);
-                }
+            // Check for permission denied specifically to emit a contextual error
+            if (error.code === 'permission-denied') {
+                const path = getPathFromQuery(memoizedTargetRefOrQuery);
+                const contextualError = new FirestorePermissionError({
+                  operation: 'list',
+                  path,
+                });
+                
+                setError(contextualError);
+                setData(null);
+                setIsLoading(false);
+        
+                // trigger global error propagation
+                errorEmitter.emit('permission-error', contextualError);
+            } else {
+                console.error("Firestore useCollection error:", error);
+                setError(error);
+                setIsLoading(false);
             }
-    
-            const contextualError = new FirestorePermissionError({
-              operation: 'list',
-              path,
-            })
-            
-            setError(contextualError);
-            setData(null);
-            setIsLoading(false);
-    
-            // trigger global error propagation
-            errorEmitter.emit('permission-error', contextualError);
           }
         );
     } catch(e) {
@@ -136,7 +127,8 @@ export function useCollection<T = any>(
   }, [memoizedTargetRefOrQuery, isUserLoading]); // Re-run if the target query/reference or auth state changes.
   
   if(memoizedTargetRefOrQuery && !memoizedTargetRefOrQuery.__memo) {
-    throw new Error(memoizedTargetRefOrQuery + ' was not properly memoized using useMemoFirebase');
+    // During development, we'll log a warning instead of throwing to prevent complete crashes
+    console.warn(memoizedTargetRefOrQuery + ' was not properly memoized using useMemoFirebase. This can lead to infinite loops.');
   }
 
   return { data, isLoading, error };

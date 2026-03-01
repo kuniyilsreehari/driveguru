@@ -36,9 +36,9 @@ service cloud.firestore {
      * Collection Rules
      * ===================================================== */
 
-    // User Profiles - Publicly readable for Search and Marketplace
+    // User Profiles - Explicitly allow public reading and listing for search/homepage
     match /users/{userId} {
-      allow read, list: if true;
+      allow get, list: if true;
       allow create: if isOwner(userId);
       allow update: if isSuperAdmin() || isOwner(userId);
       allow delete: if isSuperAdmin();
@@ -53,20 +53,20 @@ service cloud.firestore {
       }
     }
     
-    // Global App Configuration - Publicly readable for Homepage settings
+    // Global App Configuration - Publicly readable
     match /app_config/{configId} { 
       allow read, list: if true;
       allow write: if isSuperAdmin(); 
     }
 
-    // Job Vacancies - Explicit Public Access
+    // Job Vacancies - Explicit Public Access for browsing
     match /vacancies/{vacancyId} {
       allow read, list: if true;
       allow create: if isSignedIn();
       allow update, delete: if isSuperAdmin() || (isSignedIn() && resource.data.companyId == request.auth.uid);
     }
     
-    // Public Feed Posts
+    // Public Feed Posts - Publicly readable
     match /posts/{postId} {
       allow read, list: if true;
       allow create: if isSignedIn();
