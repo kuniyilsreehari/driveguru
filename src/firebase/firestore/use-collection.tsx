@@ -29,13 +29,11 @@ export interface UseCollectionResult<T> {
 
 function getPathFromQuery(q: Query): string {
     if ((q as any)._query) {
-        // This is a robust way to get the path from a v9 query object
         const internalQuery = (q as any)._query;
         if (internalQuery.path) {
             return internalQuery.path.canonicalString();
         }
     }
-    // Fallback for collection references or other query types
     if ((q as any).path) {
         return (q as any).path;
     }
@@ -45,10 +43,7 @@ function getPathFromQuery(q: Query): string {
 
 /**
  * React hook to subscribe to a Firestore collection or query in real-time.
- * Handles nullable references/queries.
- * 
- * IMPORTANT! YOU MUST MEMOIZE the inputted memoizedTargetRefOrQuery or BAD THINGS WILL HAPPEN
- * use useMemo to memoize it per React guidance.
+ * Handles nullable references/queries and permission errors gracefully.
  */
 export function useCollection<T = any>(
     memoizedTargetRefOrQuery: ((CollectionReference<DocumentData> | Query<DocumentData>) & {__memo?: boolean})  | null | undefined,
@@ -62,7 +57,6 @@ export function useCollection<T = any>(
   const [error, setError] = useState<FirestoreError | Error | null>(null);
 
   useEffect(() => {
-    // Wait until firebase auth is resolved
     if (isUserLoading) {
       setIsLoading(true);
       return;
@@ -93,7 +87,6 @@ export function useCollection<T = any>(
             setIsLoading(false);
           },
           (error: FirestoreError) => {
-            // Check for permission denied specifically to emit a contextual error
             if (error.code === 'permission-denied') {
                 const path = getPathFromQuery(memoizedTargetRefOrQuery);
                 const contextualError = new FirestorePermissionError({
@@ -102,10 +95,8 @@ export function useCollection<T = any>(
                 });
                 
                 setError(contextualError);
-                setData([]); // Return empty array on permission error to prevent UI crash
+                setData([]); 
                 setIsLoading(false);
-        
-                // trigger global error propagation
                 errorEmitter.emit('permission-error', contextualError);
             } else {
                 console.error("Firestore useCollection error:", error);
@@ -115,8 +106,8 @@ export function useCollection<T = any>(
           }
         );
     } catch(e) {
-        console.error("Error setting up onSnapshot listener in useCollection", e);
-        setError(e instanceof Error ? e : new Error("An unknown error occurred while setting up the listener."));
+        console.error("Error setting up useCollection listener", e);
+        setError(e instanceof Error ? e : new Error("Listener setup failed"));
         setIsLoading(false);
     }
 
@@ -127,9 +118,5 @@ export function useCollection<T = any>(
     }
   }, [memoizedTargetRefOrQuery, isUserLoading]);
   
-  if(memoizedTargetRefOrQuery && !memoizedTargetRefOrQuery.__memo) {
-    console.warn('Query was not properly memoized using useMemoFirebase. This can lead to infinite loops.');
-  }
-
   return { data, isLoading, error };
 }

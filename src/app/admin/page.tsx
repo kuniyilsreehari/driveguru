@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
@@ -190,10 +191,6 @@ export default function AdminDashboardPage() {
   const [superLinks, setSuperLinks] = useState({ daily: "", monthly: "", yearly: "" });
   const [centralContactPhone, setCentralContactPhone] = useState("");
 
-  const superAdminDocRef = useMemoFirebase(() => user ? doc(firestore, 'roles_super_admin', user.uid) : null, [firestore, user]);
-  const { data: superAdminData, isLoading: isRoleLoading } = useDoc(superAdminDocRef);
-  
-  // Robust Super Admin check including Custom Claims and hardcoded developer credentials
   const [hasSuperAdminClaim, setHasSuperAdminClaim] = useState(false);
 
   useEffect(() => {
@@ -205,6 +202,9 @@ export default function AdminDashboardPage() {
         });
     }
   }, [user]);
+
+  const superAdminDocRef = useMemoFirebase(() => user ? doc(firestore, 'roles_super_admin', user.uid) : null, [firestore, user]);
+  const { data: superAdminData, isLoading: isRoleLoading } = useDoc(superAdminDocRef);
 
   const isSuperAdmin = useMemo(() => {
     if (!user) return false;
@@ -1157,7 +1157,8 @@ export default function AdminDashboardPage() {
                             {isExporting ? <Loader className="animate-spin mr-2 h-4 w-4" /> : <HardDriveDownload className="mr-2 h-4 w-4" />} Full Data Backup (JSON)
                         </Button>
                     </CardContent>
-                </div>
+                </Card>
+            </div>
 
             <Card className="border-none bg-card rounded-2xl overflow-hidden shadow-xl">
               <CardHeader className="bg-white/5 border-b border-white/5 pb-6"><CardTitle className="font-black uppercase italic">Manual User Provisioning</CardTitle></CardHeader>

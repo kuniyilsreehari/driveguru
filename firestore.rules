@@ -37,7 +37,7 @@ service cloud.firestore {
      * Collection Rules
      * ===================================================== */
 
-    // User Profiles - Explicitly allow public reading and listing for search/homepage
+    // User Profiles - Publicly readable for search and discovery
     match /users/{userId} {
       allow get, list: if true;
       allow create: if isOwner(userId);
@@ -60,7 +60,7 @@ service cloud.firestore {
       allow write: if isSuperAdmin(); 
     }
 
-    // Job Vacancies - Explicit Public Access for browsing
+    // Job Vacancies - Publicly readable
     match /vacancies/{vacancyId} {
       allow read, list: if true;
       allow create: if isSignedIn();
@@ -90,7 +90,7 @@ service cloud.firestore {
       allow delete: if isSuperAdmin() || (isSignedIn() && resource.data.creatorId == request.auth.uid);
       
       match /posts/{postId} {
-        allow read, list: if isSignedIn() && request.auth.uid in get(/databases/$(database)/documents/groups/$(groupId)).data.members;
+        allow read, list: if isSignedIn() && (request.auth.uid in get(/databases/$(database)/documents/groups/$(groupId)).data.members || isSuperAdmin());
         allow create: if isSignedIn() && request.auth.uid in get(/databases/$(database)/documents/groups/$(groupId)).data.members;
         allow update, delete: if isSuperAdmin() || (isSignedIn() && resource.data.authorId == request.auth.uid);
       }

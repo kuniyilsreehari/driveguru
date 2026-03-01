@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview A flow for a super admin to create a new user.
@@ -58,7 +59,7 @@ const createUserFlow = ai.defineFlow(
 
       const userId = userRecord.uid;
 
-      // 2. Set Custom User Claims for authorization
+      // 2. Set Custom User Claims for absolute authority
       if (input.role === 'Super Admin') {
         await auth.setCustomUserClaims(userId, { role: 'superAdmin' });
       } else if (input.role === 'Manager') {
@@ -82,7 +83,7 @@ const createUserFlow = ai.defineFlow(
       
       await userDocRef.set(userData);
 
-       // 4. Update legacy role collections for backward compatibility
+       // 4. Update legacy role collections for backward compatibility with security rules
       if (input.role === 'Super Admin') {
         await firestore.collection('roles_super_admin').doc(userId).set({ uid: userId });
       }
