@@ -193,13 +193,13 @@ export default function AdminDashboardPage() {
   const superAdminDocRef = useMemoFirebase(() => user ? doc(firestore, 'roles_super_admin', user.uid) : null, [firestore, user]);
   const { data: superAdminData, isLoading: isRoleLoading } = useDoc(superAdminDocRef);
   
-  // Explicitly check for developer account, custom claim, or roles collection
   const isSuperAdmin = useMemo(() => {
     if (!user) return false;
-    const isDevEmail = user.email === 'kuniyilsreehari@gmail.com' || user.email === 'royatosolutions@gmail.com';
+    // Check developer UID, Email, or Token Claim
     const isDevUid = user.uid === 'UtMmElKnuMXbOM2cBP4oM6bFTre2';
+    const isDevEmail = user.email === 'kuniyilsreehari@gmail.com' || user.email === 'royatosolutions@gmail.com';
     const hasClaim = (user as any).auth?.token?.role === 'superAdmin';
-    return isDevEmail || isDevUid || hasClaim || !!superAdminData;
+    return isDevUid || isDevEmail || hasClaim || !!superAdminData;
   }, [user, superAdminData]);
 
   const usersQuery = useMemoFirebase(() => isSuperAdmin ? query(collection(firestore, 'users'), orderBy('createdAt', 'desc')) : null, [firestore, isSuperAdmin]);
@@ -461,7 +461,19 @@ export default function AdminDashboardPage() {
   };
 
   if (isUserLoading || isRoleLoading) return <div className="flex h-screen items-center justify-center"><Loader className="animate-spin" /></div>;
-  if (!isSuperAdmin) return <div className="flex h-screen items-center justify-center">Access Denied. Redirecting to Dashboard... {useEffect(() => { router.push('/dashboard') }, [])}</div>;
+  
+  if (!isSuperAdmin) {
+    return (
+        <div className="flex h-screen flex-col items-center justify-center p-8 text-center bg-background text-foreground">
+            <div className="bg-red-500/10 p-6 rounded-[2rem] mb-6">
+                <Shield className="h-16 w-16 text-red-500" />
+            </div>
+            <h2 className="text-3xl font-black uppercase italic">Access Denied</h2>
+            <p className="text-muted-foreground mt-2 max-w-sm">This area is reserved for Super Admins. Please log in with an authorized account.</p>
+            <Button className="mt-8 rounded-2xl h-14 px-8 font-black bg-orange-500" onClick={() => router.push('/')}>Return to Homepage</Button>
+        </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background text-white p-4 sm:p-8">

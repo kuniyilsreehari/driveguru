@@ -4,11 +4,7 @@
  *
  * This file defines a Genkit flow that allows a Super Admin to create a new user
  * in both Firebase Authentication for login and in the Firestore database for their profile.
- * It also handles assigning special roles like 'Manager' or 'Super Admin'.
- *
- * - createUser - The main function to initiate user creation.
- * - CreateUserInput - The Zod schema for the input required to create a user.
- * - CreateUserOutput - The Zod schema for the result of the creation process.
+ * It also handles assigning special roles like 'Manager' or 'Super Admin' using Custom Claims.
  */
 
 import { ai } from '@/ai/genkit';
@@ -37,7 +33,6 @@ const generateReferralCode = () => {
     return Math.random().toString(36).substring(2, 10).toUpperCase();
 }
 
-
 export async function createUser(input: CreateUserInput): Promise<CreateUserOutput> {
   return createUserFlow(input);
 }
@@ -63,7 +58,14 @@ const createUserFlow = ai.defineFlow(
 
       const userId = userRecord.uid;
 
-      // 2. Create user document in Firestore
+      // 2. Set Custom User Claims for authorization
+      if (input.role === 'Super Admin') {
+        await auth.setCustomUserClaims(userId, { role: 'superAdmin' });
+      } else if (input.role === 'Manager') {
+        await auth.setCustomUserClaims(userId, { role: 'manager' });
+      }
+
+      // 3. Create user document in Firestore
       const userDocRef = firestore.collection('users').doc(userId);
       const userData = {
         id: userId,
@@ -80,7 +82,7 @@ const createUserFlow = ai.defineFlow(
       
       await userDocRef.set(userData);
 
-       // 3. If the role is Super Admin or Manager, add them to the respective roles collection
+       // 4. Update legacy role collections for backward compatibility
       if (input.role === 'Super Admin') {
         await firestore.collection('roles_super_admin').doc(userId).set({ uid: userId });
       }
@@ -88,11 +90,10 @@ const createUserFlow = ai.defineFlow(
          await firestore.collection('roles_manager').doc(userId).set({ uid: userId });
       }
 
-
       return {
         success: true,
         userId: userId,
-        message: 'User created successfully.',
+        message: 'User created successfully with custom claims.',
       };
 
     } catch (error: any) {
