@@ -488,6 +488,8 @@ export default function AdminDashboardPage() {
     if (sanitized.startsWith('+91+91')) {
         sanitized = '+91 ' + sanitized.substring(6).trim();
     }
+    // Clean up any remaining double prefixes like "+91 +91" with space
+    sanitized = sanitized.replace(/^(\+\d{2})\s(\+\d{2})/g, '$1').trim();
     return sanitized;
   }
 
@@ -1180,7 +1182,6 @@ export default function AdminDashboardPage() {
                             {isExporting ? <Loader className="animate-spin mr-2 h-4 w-4" /> : <HardDriveDownload className="mr-2 h-4 w-4" />} Full Data Backup (JSON)
                         </Button>
                     </CardContent>
-                </Card>
             </div>
 
             <Card className="border-none bg-card rounded-2xl overflow-hidden shadow-xl">
