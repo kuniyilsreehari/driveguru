@@ -1057,7 +1057,7 @@ export default function AdminDashboardPage() {
                                 </div>
                                 <div className="space-y-2">
                                     <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Yearly Link</Label>
-                                    <Input value={premierLinks.yearly} onChange={e => setPremierLinks({...premierLinks, yearly: e.target.value})} className="bg-background border-none rounded-xl h-11" placeholder="Yearly URL..." />
+                                    <Input value={premierLinks.yearly} onChange={e => setPremierLinks({...yearly, yearly: e.target.value})} className="bg-background border-none rounded-xl h-11" placeholder="Yearly URL..." />
                                 </div>
                             </div>
                         </div>
@@ -1182,6 +1182,7 @@ export default function AdminDashboardPage() {
                             {isExporting ? <Loader className="animate-spin mr-2 h-4 w-4" /> : <HardDriveDownload className="mr-2 h-4 w-4" />} Full Data Backup (JSON)
                         </Button>
                     </CardContent>
+                </Card>
             </div>
 
             <Card className="border-none bg-card rounded-2xl overflow-hidden shadow-xl">

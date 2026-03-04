@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -94,6 +93,7 @@ export function useCollection<T = any>(
                   path,
                 });
                 
+                // Return empty array instead of null to prevent white-screening
                 setError(contextualError);
                 setData([]); 
                 setIsLoading(false);
