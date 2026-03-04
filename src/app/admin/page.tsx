@@ -483,7 +483,7 @@ export default function AdminDashboardPage() {
   const sanitizePhoneNumber = (phone?: string) => {
     if (!phone) return 'N/A';
     // Remove duplicate prefix if it exists (e.g., "+91 +91")
-    let sanitized = phone.replace(/(\+\d{2})\s\1/, '$1').trim();
+    let sanitized = phone.replace(/(\+\d{2})\s\1/g, '$1').trim();
     // Final defensive check for double prefix without space
     if (sanitized.startsWith('+91+91')) {
         sanitized = '+91 ' + sanitized.substring(6).trim();
