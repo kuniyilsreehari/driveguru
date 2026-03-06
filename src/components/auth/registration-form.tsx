@@ -188,7 +188,7 @@ export function RegistrationForm() {
             (window as any).recaptchaVerifier = new RecaptchaVerifier(auth, recaptchaContainerRef.current, {
                 'size': 'invisible',
                 'callback': (response: any) => {
-                    // reCAPTCHA solved, allow signInWithPhoneNumber.
+                    // reCAPTCHA solved
                 }
             });
         }
@@ -333,7 +333,7 @@ export function RegistrationForm() {
                 lastName: lastName,
                 email: user.email,
                 photoUrl: user.photoURL || '',
-                role: 'Freelancer', // Default role
+                role: 'Freelancer',
                 verified: false,
                 isAvailable: true,
                 referralCode: generateReferralCode(),
@@ -372,38 +372,21 @@ export function RegistrationForm() {
     return null;
   }
 
-  const sanitizePhone = (phoneNumber: string, countryCode?: string) => {
-    let clean = phoneNumber.trim().replace(/\s+/g, '');
-    if (countryCode && clean.startsWith(countryCode)) {
-        clean = clean.substring(countryCode.length);
-    }
-    // Final check for common mistakes like typing +91 in the main field
-    if (clean.startsWith('+91')) {
-        clean = clean.substring(3);
-    }
-    return clean;
+  const sanitizePhone = (phoneNumber: string) => {
+    // Extract only the last 10 digits to remove redundant country codes
+    const digits = phoneNumber.trim().replace(/\D/g, '');
+    return digits.length > 10 ? digits.slice(-10) : digits;
   }
 
   async function onEmailSubmit(values: z.infer<typeof formSchema>) {
-    if (!auth || !firestore) {
-      toast({
-        variant: "destructive",
-        title: "Registration Failed",
-        description: "Firebase services are not available.",
-      });
-      return;
-    }
+    if (!auth || !firestore) return;
     setIsSubmitting(true);
     
     try {
-        // Validate referral code before creating user
         if (values.referralCode) {
             const referringUserDoc = await getReferringUser(values.referralCode);
             if (!referringUserDoc) {
-                form.setError("referralCode", {
-                    type: "manual",
-                    message: "This referral code is not valid.",
-                });
+                form.setError("referralCode", { type: "manual", message: "Invalid referral code." });
                 setIsSubmitting(false);
                 return;
             }
@@ -416,8 +399,7 @@ export function RegistrationForm() {
         const coords = await getCoordinates(fullAddress);
         
         const newUserDocRef = doc(firestore, "users", newUser.uid);
-
-        const cleanPhone = sanitizePhone(values.phoneNumber || "", values.countryCode);
+        const cleanPhone = sanitizePhone(values.phoneNumber);
 
         const userData: any = {
             id: newUser.uid,
@@ -432,41 +414,25 @@ export function RegistrationForm() {
             address: values.address,
             latitude: coords?.lat || null,
             longitude: coords?.lon || null,
-            phoneNumber: values.countryCode && cleanPhone ? `${values.countryCode} ${cleanPhone}` : "",
+            phoneNumber: `+91 ${cleanPhone}`,
             companyName: values.companyName,
             verified: false,
             photoUrl: '',
             isAvailable: true,
             referralCode: generateReferralCode(),
             referralPoints: 0,
-            referredByCode: values.referralCode || null, // Just store the code
+            referredByCode: values.referralCode || null,
             createdAt: serverTimestamp(),
         };
 
-        // This is a fire-and-forget call; we don't await it to avoid blocking.
-        // It will complete in the background. Errors will be caught by the global error handler.
         setDocumentNonBlocking(newUserDocRef, userData);
-        
-        toast({
-            title: "Account Created",
-            description: "Your account has been successfully created. You are now logged in.",
-        });
+        toast({ title: "Account Created", description: "Successfully joined DriveGuru." });
 
     } catch (error: any) {
         if (error.code === 'auth/email-already-in-use') {
-            form.setError("email", {
-                type: "manual",
-                message: "This email is already registered. Please use a different email or log in.",
-            });
-        } else {
-             // Let the global error handler catch other Firestore permission errors
-            if (error.name !== 'FirebaseError') {
-                toast({
-                    variant: "destructive",
-                    title: "Registration Failed",
-                    description: error.message || "An unexpected error occurred. Please try again.",
-                });
-            }
+            form.setError("email", { type: "manual", message: "Email already registered." });
+        } else if (error.name !== 'FirebaseError') {
+            toast({ variant: "destructive", title: "Registration Failed", description: error.message });
         }
     } finally {
         setIsSubmitting(false);
@@ -480,10 +446,7 @@ export function RegistrationForm() {
     if (values.referralCode) {
         const referringUserDoc = await getReferringUser(values.referralCode);
         if (!referringUserDoc) {
-            phoneForm.setError("referralCode", {
-                type: "manual",
-                message: "This referral code is not valid.",
-            });
+            phoneForm.setError("referralCode", { type: "manual", message: "Invalid referral code." });
             setIsSubmitting(false);
             return;
         }
@@ -503,21 +466,13 @@ export function RegistrationForm() {
 
     try {
         const verifier = (window as any).recaptchaVerifier;
-        await verifier.render(); // Explicitly render the verifier
+        await verifier.render();
         const result = await signInWithPhoneNumber(auth, fullPhoneNumber, verifier);
         setConfirmationResult(result);
         setView('otp');
-        toast({
-            title: "OTP Sent",
-            description: `An OTP has been sent to ${fullPhoneNumber}.`,
-        });
+        toast({ title: "OTP Sent", description: `Sent to ${fullPhoneNumber}.` });
     } catch (error: any) {
-        console.error("OTP send failed:", error);
-        toast({
-            variant: "destructive",
-            title: "Failed to Send OTP",
-            description: error.message || "Please check the phone number and try again.",
-        });
+        toast({ variant: "destructive", title: "Failed to Send OTP", description: error.message });
     } finally {
         setIsSubmitting(false);
     }
@@ -533,7 +488,6 @@ export function RegistrationForm() {
 
         if (additionalInfo?.isNewUser) {
             const userDocRef = doc(firestore, "users", user.uid);
-            
             const userData = {
                 id: user.uid,
                 firstName: phoneSignupData.firstName || 'New',
@@ -550,23 +504,12 @@ export function RegistrationForm() {
                 createdAt: serverTimestamp(),
             };
             await setDocumentNonBlocking(userDocRef, userData, { merge: true });
-            toast({
-                title: "Welcome!",
-                description: "Your account has been created. Please complete your profile in the dashboard.",
-            });
+            toast({ title: "Welcome!", description: "Account created successfully." });
         } else {
-             toast({
-                title: "Signed In",
-                description: "This phone number is already registered. You have been signed in.",
-            });
+             toast({ title: "Signed In", description: "Phone number already registered." });
         }
     } catch (error: any) {
-        console.error("OTP verification failed:", error);
-        toast({
-            variant: "destructive",
-            title: "OTP Verification Failed",
-            description: "The OTP you entered is incorrect. Please try again.",
-        });
+        toast({ variant: "destructive", title: "OTP Failed", description: "Incorrect OTP code." });
     } finally {
         setIsSubmitting(false);
     }
@@ -578,37 +521,19 @@ export function RegistrationForm() {
       <form onSubmit={form.handleSubmit(onEmailSubmit)} className="space-y-4">
         
         <div className="relative my-4">
-            <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background px-2 text-muted-foreground">
-                  Sign up with
-                </span>
-            </div>
+            <div className="absolute inset-0 flex items-center"><span className="w-full border-t" /></div>
+            <div className="relative flex justify-center text-xs uppercase"><span className="bg-background px-2 text-muted-foreground">Sign up with</span></div>
         </div>
 
         <div className="grid grid-cols-2 gap-2">
-            <Button onClick={handleGoogleSignUp} type="button">
-              <Icons.google className="mr-2 h-4 w-4" />
-              Google
-            </Button>
-             <Button onClick={() => setView('phone')} type="button" className="bg-green-600 text-white hover:bg-green-700 transition-transform duration-150 ease-in-out hover:scale-[1.02] active:scale-[0.98]">
-                <Phone className="mr-2 h-4 w-4" />
-                Phone
-            </Button>
+            <Button onClick={handleGoogleSignUp} type="button"><Icons.google className="mr-2 h-4 w-4" />Google</Button>
+             <Button onClick={() => setView('phone')} type="button" className="bg-green-600 text-white hover:bg-green-700 transition-transform hover:scale-[1.02] active:scale-[0.98]"><Phone className="mr-2 h-4 w-4" />Phone</Button>
         </div>
 
 
         <div className="relative my-4">
-            <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background px-2 text-muted-foreground">
-                Or continue with email
-                </span>
-            </div>
+            <div className="absolute inset-0 flex items-center"><span className="w-full border-t" /></div>
+            <div className="relative flex justify-center text-xs uppercase"><span className="bg-background px-2 text-muted-foreground">Or email details</span></div>
         </div>
         
         <FormField
@@ -619,9 +544,7 @@ export function RegistrationForm() {
                   <FormLabel>Referral Code (Optional)</FormLabel>
                   <div className="relative">
                       <Gift className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                      <FormControl>
-                          <Input placeholder="Enter a referral code" {...field} className="pl-10" disabled={!!searchParams.get('ref')} />
-                      </FormControl>
+                      <FormControl><Input placeholder="Enter a referral code" {...field} className="pl-10" disabled={!!searchParams.get('ref')} /></FormControl>
                   </div>
                   <FormMessage />
               </FormItem>
@@ -629,115 +552,67 @@ export function RegistrationForm() {
         />
         
         <div className="grid grid-cols-2 gap-4">
-            <FormField
-            control={form.control}
-            name="firstName"
-            render={({ field }) => (
+            <FormField control={form.control} name="firstName" render={({ field }) => (
                 <FormItem>
                 <FormLabel>First Name</FormLabel>
                 <div className="relative">
-                    <UserIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <FormControl>
-                    <Input placeholder="John" {...field} className="pl-10" />
-                    </FormControl>
+                    <UserIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><FormControl><Input placeholder="John" {...field} className="pl-10" /></FormControl>
                 </div>
                 <FormMessage />
                 </FormItem>
-            )}
-            />
-            <FormField
-            control={form.control}
-            name="lastName"
-            render={({ field }) => (
+            )} />
+            <FormField control={form.control} name="lastName" render={({ field }) => (
                 <FormItem>
                 <FormLabel>Last Name</FormLabel>
                 <div className="relative">
-                    <UserIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <FormControl>
-                    <Input placeholder="Doe" {...field} className="pl-10" />
-                    </FormControl>
+                    <UserIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><FormControl><Input placeholder="Doe" {...field} className="pl-10" /></FormControl>
                 </div>
                 <FormMessage />
                 </FormItem>
-            )}
-            />
+            )} />
         </div>
 
-        <FormField
-          control={form.control}
-          name="email"
-          render={({ field }) => (
+        <FormField control={form.control} name="email" render={({ field }) => (
             <FormItem>
               <FormLabel>Email</FormLabel>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <FormControl>
-                  <Input
-                    type="email"
-                    placeholder="name@example.com"
-                    {...field}
-                    className="pl-10"
-                  />
-                </FormControl>
+                <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><FormControl><Input type="email" placeholder="name@example.com" {...field} className="pl-10" /></FormControl>
               </div>
               <FormMessage />
             </FormItem>
-          )}
-        />
+          )} />
         
-        <FormField
-          control={form.control}
-          name="password"
-          render={({ field }) => (
+        <FormField control={form.control} name="password" render={({ field }) => (
             <FormItem>
-                <div className="flex items-center">
-                    <FormLabel>Password</FormLabel>
-                </div>
+              <FormLabel>Password</FormLabel>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <FormControl>
-                  <Input type={showPassword ? "text" : "password"} placeholder="••••••••" {...field} className="pl-10 pr-10" />
-                </FormControl>
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
-                >
-                  {showPassword ? <EyeOff /> : <Eye />}
+                <FormControl><Input type={showPassword ? "text" : "password"} placeholder="••••••••" {...field} className="pl-10 pr-10" /></FormControl>
+                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground">
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
               <FormMessage />
             </FormItem>
-          )}
-        />
+          )} />
         
         <FormField
           control={form.control}
           name="role"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Next, select your role</FormLabel>
+              <FormLabel>Professional Role</FormLabel>
               <FormControl>
                   <div className="grid grid-cols-1 gap-4">
                       {expertTypes.map((type) => (
                           <Card 
                               key={type.name} 
-                              className={cn(
-                                  "cursor-pointer transition-all duration-300 transform hover:-translate-y-1",
-                                  field.value === type.name 
-                                      ? "border-primary ring-2 ring-primary" 
-                                      : "hover:border-primary/50"
-                              )}
+                              className={cn("cursor-pointer transition-all hover:-translate-y-1", field.value === type.name ? "border-primary ring-2 ring-primary" : "hover:border-primary/50")}
                               onClick={() => form.setValue('role', type.name, { shouldValidate: true })}
                           >
                               <CardHeader className="flex flex-row items-center gap-4 p-4">
-                                  <div className={cn("p-3 rounded-full", field.value === type.name ? "bg-primary/10 text-primary" : "bg-secondary text-secondary-foreground")}>
-                                      {type.icon}
-                                  </div>
-                                  <div>
-                                      <CardTitle className="text-lg">{type.name}</CardTitle>
-                                      <CardDescription className="text-xs">{type.description}</CardDescription>
-                                  </div>
+                                  <div className={cn("p-3 rounded-full", field.value === type.name ? "bg-primary/10 text-primary" : "bg-secondary text-secondary-foreground")}>{type.icon}</div>
+                                  <div><CardTitle className="text-lg">{type.name}</CardTitle><CardDescription className="text-xs">{type.description}</CardDescription></div>
                                   <ArrowRight className={cn("ml-auto h-5 w-5 text-muted-foreground transition-transform", field.value === type.name && "translate-x-1")}/>
                               </CardHeader>
                           </Card>
@@ -754,191 +629,48 @@ export function RegistrationForm() {
               <FormItem>
                   <FormLabel>Phone Number</FormLabel>
                   <div className="flex items-center gap-2">
-                      <FormField
-                          control={form.control}
-                          name="countryCode"
-                          render={({ field: countryCodeField }) => (
-                          <Select
-                              onValueChange={countryCodeField.onChange}
-                              defaultValue={countryCodeField.value}
-                          >
-                              <FormControl>
-                              <SelectTrigger className="w-[80px]">
-                                  <SelectValue placeholder="Code" />
-                              </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                              <SelectItem value="+91">IN</SelectItem>
-                              <SelectItem value="+1">USA</SelectItem>
-                              <SelectItem value="+44">UK</SelectItem>
-                              </SelectContent>
-                          </Select>
-                          )}
-                      />
-                      <FormField
-                          control={form.control}
-                          name="phoneNumber"
-                          render={({ field }) => (
-                          <div className="relative flex-grow">
-                              <FormControl>
-                              <Input placeholder="555 123 4567" {...field} />
-                              </FormControl>
-                          </div>
-                          )}
-                      />
+                      <FormField control={form.control} name="countryCode" render={({ field: codeField }) => (
+                          <Select onValueChange={codeField.onChange} defaultValue={codeField.value}><FormControl><SelectTrigger className="w-[80px]"><SelectValue placeholder="Code" /></SelectTrigger></FormControl><SelectContent><SelectItem value="+91">IN</SelectItem><SelectItem value="+1">USA</SelectItem><SelectItem value="+44">UK</SelectItem></SelectContent></Select>
+                      )} />
+                      <FormField control={form.control} name="phoneNumber" render={({ field }) => (
+                          <div className="relative flex-grow"><FormControl><Input placeholder="9876543210" {...field} /></FormControl></div>
+                      )} />
                   </div>
                   <FormMessage />
               </FormItem>
               <div className="space-y-2">
                   <div className="flex items-center justify-between mb-2">
                       <FormLabel>Location</FormLabel>
-                      <Button type="button" variant="outline" size="sm" onClick={handleDetectLocation} disabled={isDetectingLocation}>
-                      {isDetectingLocation ? (
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      ) : (
-                          <LocateIcon className="mr-2 h-4 w-4" />
-                      )}
-                      Detect
-                      </Button>
+                      <Button type="button" variant="outline" size="sm" onClick={handleDetectLocation} disabled={isDetectingLocation}>{isDetectingLocation ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <LocateIcon className="mr-2 h-4 w-4" />}Detect</Button>
                   </div>
                   <div className="grid grid-cols-2 gap-2">
-                      <FormField
-                          control={form.control}
-                          name="city"
-                          render={({ field }) => (
-                          <FormItem>
-                              <FormLabel>District / City</FormLabel>
-                              <FormControl><Input placeholder="e.g., Kozhikode" {...field} /></FormControl>
-                              <FormMessage />
-                          </FormItem>
-                          )}
-                      />
-                      <FormField
-                          control={form.control}
-                          name="state"
-                          render={({ field }) => (
-                          <FormItem>
-                              <FormLabel>State</FormLabel>
-                              <FormControl><Input placeholder="e.g. Kerala" {...field} /></FormControl>
-                              <FormMessage />
-                          </FormItem>
-                          )}
-                      />
+                      <FormField control={form.control} name="city" render={({ field }) => (<FormItem><FormControl><Input placeholder="City" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                      <FormField control={form.control} name="state" render={({ field }) => (<FormItem><FormControl><Input placeholder="State" {...field} /></FormControl><FormMessage /></FormItem>)} />
                   </div>
-                  <FormField
-                    control={form.control}
-                    name="pincode"
-                    render={({ field }) => (
-                    <FormItem className="mt-2 text-center">
-                        <div className="relative">
-                        <FormControl><Input placeholder="Pincode" {...field} /></FormControl>
-                        {isFetchingPincode && <Loader2 className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin" />}
-                        </div>
-                        <FormLabel className="text-xs text-muted-foreground">Pincode</FormLabel>
-                        <FormMessage />
-                    </FormItem>
-                    )}
-                  />
+                  <FormField control={form.control} name="pincode" render={({ field }) => (
+                    <FormItem className="mt-2 text-center"><div className="relative"><FormControl><Input placeholder="Pincode" {...field} /></FormControl>{isFetchingPincode && <Loader2 className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin" />}</div><FormMessage /></FormItem>
+                  )} />
               </div>
 
               {(selectedRole === 'Company' || selectedRole === 'Authorized Pro') && (
                 <div className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="companyName"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Company Name</FormLabel>
-                        <div className="relative">
-                          <Building className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                          <FormControl>
-                            <Input placeholder="Your Company Inc." {...field} className="pl-10" />
-                          </FormControl>
-                        </div>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="department"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Department</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select a department" />
-                            </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                            {departments.map((dep) => (
-                                <SelectItem key={dep} value={dep}>{dep}</SelectItem>
-                            ))}
-                            </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="address"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Address & Building Details</FormLabel>
-                        <div className="relative">
-                          <Home className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                          <FormControl>
-                            <Textarea placeholder="Enter the full company address" {...field} className="pl-10" />
-                          </FormControl>
-                        </div>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  <FormField control={form.control} name="companyName" render={({ field }) => (<FormItem><FormLabel>Company Name</FormLabel><div className="relative"><Building className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><FormControl><Input placeholder="Company name" {...field} className="pl-10" /></FormControl></div><FormMessage /></FormItem>)} />
+                  <FormField control={form.control} name="department" render={({ field }) => (<FormItem><FormLabel>Department</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Department" /></SelectTrigger></FormControl><SelectContent>{departments.map(dep => <SelectItem key={dep} value={dep}>{dep}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
+                  <FormField control={form.control} name="address" render={({ field }) => (<FormItem><FormLabel>Address</FormLabel><div className="relative"><Home className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" /><FormControl><Textarea placeholder="Full address" {...field} className="pl-10" /></FormControl></div><FormMessage /></FormItem>)} />
                 </div>
               )}
                 
-                <FormField
-                  control={form.control}
-                  name="terms"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                      <FormControl>
-                        <Checkbox
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                      <div className="space-y-1 leading-none">
-                        <FormLabel>
-                          I agree to the{" "}
-                          <Link href="/terms" target="_blank" className="underline hover:text-primary">
-                            Terms & Conditions
-                          </Link>
-                          .
-                        </FormLabel>
-                        <FormMessage />
-                      </div>
-                    </FormItem>
-                  )}
-                />
+                <FormField control={form.control} name="terms" render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 shadow-sm"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange}/></FormControl><div className="space-y-1 leading-none"><FormLabel>Agree to <Link href="/terms" target="_blank" className="underline text-primary">Terms & Conditions</Link></FormLabel><FormMessage /></div></FormItem>
+                  )} />
 
-                <Button type="submit" className="w-full" disabled={form.formState.isSubmitting || isSubmitting}>
-                    {form.formState.isSubmitting || isSubmitting ? 'Creating Account...' : <>
-                    <Briefcase className="mr-2 h-4 w-4" /> Sign Up as Expert
-                    </>}
+                <Button type="submit" className="w-full h-12 bg-orange-500 hover:bg-orange-600 font-black text-lg shadow-lg" disabled={form.formState.isSubmitting || isSubmitting}>
+                    {form.formState.isSubmitting || isSubmitting ? 'Processing...' : <><Briefcase className="mr-2 h-4 w-4" /> Create Expert Profile</>}
                 </Button>
             </div>
         )}
 
-        <div className="mt-4 text-center text-sm">
-            Already have an account?{" "}
-            <Link href="/login" className="underline">
-                Sign In
-            </Link>
-        </div>
+        <div className="mt-4 text-center text-sm">Already have an account? <Link href="/login" className="underline">Sign In</Link></div>
       </form>
     </Form>
   );
@@ -946,115 +678,26 @@ export function RegistrationForm() {
   const renderPhoneForm = () => (
     <Form {...phoneForm}>
         <form onSubmit={phoneForm.handleSubmit(onPhoneSubmit)} className="space-y-4">
-            <FormField
-                control={phoneForm.control}
-                name="phoneNumber"
-                render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Mobile Number</FormLabel>
-                        <div className="flex items-center gap-2">
-                           <div className="relative flex-grow">
-                             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">+91</span>
-                             <FormControl>
-                                <Input type="tel" placeholder="98765 43210" {...field} className="pl-10"/>
-                             </FormControl>
-                           </div>
-                        </div>
-                         <FormMessage />
-                    </FormItem>
-                )}
-            />
-            <FormField
-              control={phoneForm.control}
-              name="referralCode"
-              render={({ field }) => (
-                  <FormItem>
-                      <FormLabel>Referral Code (Optional)</FormLabel>
-                      <div className="relative">
-                          <Gift className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                          <FormControl>
-                              <Input placeholder="Enter a referral code" {...field} className="pl-10" disabled={!!searchParams.get('ref')} />
-                          </FormControl>
-                      </div>
-                      <FormMessage />
-                  </FormItem>
-              )}
-            />
-            <FormField
-                control={phoneForm.control}
-                name="role"
-                render={({ field }) => (
-                <FormItem>
-                    <FormLabel>Your Role</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select your expert role" />
-                            </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                            {expertTypes.map((type) => (
-                            <SelectItem key={type.name} value={type.name}>
-                                <div className="flex items-center gap-2">
-                                {React.cloneElement(type.icon, { className: "w-4 h-4" })}
-                                {type.name}
-                                </div>
-                            </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                    <FormMessage />
-                </FormItem>
-                )}
-            />
-            
+            <FormField control={phoneForm.control} name="phoneNumber" render={({ field }) => (
+                    <FormItem><FormLabel>Mobile Number</FormLabel><div className="relative"><span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">+91</span><FormControl><Input type="tel" placeholder="9876543210" {...field} className="pl-10"/></FormControl></div><FormMessage /></FormItem>
+                )} />
+            <FormField control={phoneForm.control} name="referralCode" render={({ field }) => (
+                  <FormItem><FormLabel>Referral Code (Optional)</FormLabel><div className="relative"><Gift className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><FormControl><Input placeholder="Referral code" {...field} className="pl-10" disabled={!!searchParams.get('ref')} /></FormControl></div><FormMessage /></FormItem>
+              )} />
+            <FormField control={phoneForm.control} name="role" render={({ field }) => (
+                <FormItem><FormLabel>Role</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select role" /></SelectTrigger></FormControl><SelectContent>{expertTypes.map(t => <SelectItem key={type.name} value={t.name}>{t.name}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>
+                )} />
             {selectedPhoneRole === 'Freelancer' && (
                 <div className="grid grid-cols-2 gap-4">
-                    <FormField
-                        control={phoneForm.control}
-                        name="firstName"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>First Name</FormLabel>
-                                <FormControl><Input placeholder="John" {...field} /></FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                    <FormField
-                        control={phoneForm.control}
-                        name="lastName"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Last Name</FormLabel>
-                                <FormControl><Input placeholder="Doe" {...field} /></FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
+                    <FormField control={phoneForm.control} name="firstName" render={({ field }) => (<FormItem><FormLabel>First Name</FormLabel><FormControl><Input placeholder="John" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                    <FormField control={phoneForm.control} name="lastName" render={({ field }) => (<FormItem><FormLabel>Last Name</FormLabel><FormControl><Input placeholder="Doe" {...field} /></FormControl><FormMessage /></FormItem>)} />
                 </div>
             )}
-
             {(selectedPhoneRole === 'Company' || selectedPhoneRole === 'Authorized Pro') && (
-                 <FormField
-                    control={phoneForm.control}
-                    name="companyName"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Company Name</FormLabel>
-                            <FormControl><Input placeholder="Your Company Inc." {...field} /></FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
+                 <FormField control={phoneForm.control} name="companyName" render={({ field }) => (<FormItem><FormLabel>Company Name</FormLabel><FormControl><Input placeholder="Company" {...field} /></FormControl><FormMessage /></FormItem>)} />
             )}
-
-            <Button type="submit" className="w-full" disabled={isSubmitting}>
-                {isSubmitting ? 'Sending...' : 'Send OTP'}
-            </Button>
-            <Button variant="link" className="w-full" onClick={() => setView('email')}>
-                Sign up with Email instead
-            </Button>
+            <Button type="submit" className="w-full" disabled={isSubmitting}>{isSubmitting ? 'Sending...' : 'Send OTP'}</Button>
+            <Button variant="link" className="w-full" onClick={() => setView('email')}>Email Sign Up</Button>
         </form>
     </Form>
   );
@@ -1062,39 +705,22 @@ export function RegistrationForm() {
   const renderOtpForm = () => (
      <Form {...otpForm}>
         <form onSubmit={otpForm.handleSubmit(onOtpSubmit)} className="space-y-4">
-            <FormField
-                control={otpForm.control}
-                name="otp"
-                render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Enter OTP</FormLabel>
-                        <div className="relative">
-                            <MessageSquare className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                            <FormControl>
-                                <Input type="text" placeholder="123456" {...field} className="pl-10" />
-                            </FormControl>
-                        </div>
-                        <FormMessage />
-                    </FormItem>
-                )}
-            />
-            <Button type="submit" className="w-full" disabled={isSubmitting}>
-                {isSubmitting ? 'Verifying...' : 'Verify OTP & Sign In'}
-            </Button>
-            <Button variant="link" className="w-full" onClick={() => setView('phone')}>
-                Change phone number
-            </Button>
+            <FormField control={otpForm.control} name="otp" render={({ field }) => (
+                    <FormItem><FormLabel>Enter OTP</FormLabel><div className="relative"><MessageSquare className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><FormControl><Input type="text" placeholder="123456" {...field} className="pl-10" /></FormControl></div><FormMessage /></FormItem>
+                )} />
+            <Button type="submit" className="w-full" disabled={isSubmitting}>{isSubmitting ? 'Verifying...' : 'Verify & Sign Up'}</Button>
+            <Button variant="link" className="w-full" onClick={() => setView('phone')}>Change phone number</Button>
         </form>
     </Form>
   );
 
 
   return (
-    <>
+    <div className="w-full">
       <div id="recaptcha-container" ref={recaptchaContainerRef}></div>
       {view === 'email' && renderEmailForm()}
       {view === 'phone' && renderPhoneForm()}
       {view === 'otp' && renderOtpForm()}
-    </>
+    </div>
   );
 }

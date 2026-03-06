@@ -482,15 +482,16 @@ export default function AdminDashboardPage() {
 
   const sanitizePhoneNumber = (phone?: string) => {
     if (!phone) return 'N/A';
-    // Remove duplicate prefix if it exists (e.g., "+91 +91")
-    let sanitized = phone.replace(/(\+\d{2})\s\1/g, '$1').trim();
-    // Final defensive check for double prefix without space
-    if (sanitized.startsWith('+91+91')) {
-        sanitized = '+91 ' + sanitized.substring(6).trim();
+    // Remove all whitespace and reduce duplicate prefixes (e.g., +91+91)
+    let clean = phone.replace(/[^\d+]/g, '');
+    while (clean.startsWith('+91+91')) {
+        clean = '+91' + clean.substring(6);
     }
-    // Clean up any remaining double prefixes like "+91 +91" with space
-    sanitized = sanitized.replace(/^(\+\d{2})\s(\+\d{2})/g, '$1').trim();
-    return sanitized;
+    // Return formatted with a single prefix
+    if (clean.startsWith('+91')) {
+        return '+91 ' + clean.substring(3).replace(/(\d{5})(\d{5})/, '$1 $2');
+    }
+    return phone;
   }
 
   if (isUserLoading || isRoleLoading) return <div className="flex h-screen items-center justify-center"><Loader className="animate-spin" /></div>;
@@ -1057,7 +1058,7 @@ export default function AdminDashboardPage() {
                                 </div>
                                 <div className="space-y-2">
                                     <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Yearly Link</Label>
-                                    <Input value={premierLinks.yearly} onChange={e => setPremierLinks({...yearly, yearly: e.target.value})} className="bg-background border-none rounded-xl h-11" placeholder="Yearly URL..." />
+                                    <Input value={premierLinks.yearly} onChange={e => setPremierLinks({...premierLinks, yearly: e.target.value})} className="bg-background border-none rounded-xl h-11" placeholder="Yearly URL..." />
                                 </div>
                             </div>
                         </div>
@@ -1137,7 +1138,7 @@ export default function AdminDashboardPage() {
                             <Label className="font-bold">Enable Banner</Label>
                             <Switch checked={announcementEnabled} onCheckedChange={setAnnouncementEnabled} className="data-[state=checked]:bg-orange-500" />
                         </div>
-                        <Textarea value={announcementText} onChange={e => setAnnouncementText(e.target.value)} className="bg-background border-none rounded-xl min-h-[80px]" placeholder="Breaking news text here..." />
+                        <Textarea value={announcementText} onChange={(e) => setAnnouncementText(e.target.value)} className="bg-background border-none rounded-xl min-h-[80px]" placeholder="Breaking news text here..." />
                     </CardContent>
                 </Card>
             </div>
@@ -1152,7 +1153,7 @@ export default function AdminDashboardPage() {
                     </CardHeader>
                     <CardContent className="p-6 space-y-4">
                         <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Global Support Phone</Label>
-                        <Input value={centralContactPhone} onChange={e => setCentralContactPhone(e.target.value)} className="h-12 bg-background border-none rounded-xl font-black text-2xl text-white" placeholder="+91..." />
+                        <Input value={centralContactPhone} onChange={(e) => setCentralContactPhone(e.target.value)} className="h-12 bg-background border-none rounded-xl font-black text-2xl text-white" placeholder="+91..." />
                     </CardContent>
                 </Card>
             </div>
@@ -1182,8 +1183,7 @@ export default function AdminDashboardPage() {
                             {isExporting ? <Loader className="animate-spin mr-2 h-4 w-4" /> : <HardDriveDownload className="mr-2 h-4 w-4" />} Full Data Backup (JSON)
                         </Button>
                     </CardContent>
-                </Card>
-            </div>
+                </div>
 
             <Card className="border-none bg-card rounded-2xl overflow-hidden shadow-xl">
               <CardHeader className="bg-white/5 border-b border-white/5 pb-6"><CardTitle className="font-black uppercase italic">Manual User Provisioning</CardTitle></CardHeader>
