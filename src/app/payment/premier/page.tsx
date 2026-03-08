@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Suspense, useState } from 'react';
@@ -90,28 +91,28 @@ function PremierPaymentPageContent() {
                 </CardHeader>
                 <CardContent className="p-8 space-y-8">
                    <div className="space-y-6">
-                    <h3 className="text-sm font-black text-white uppercase tracking-[0.2em] text-center opacity-50">Choose Your Billing Cycle</h3>
+                    <h3 className="text-sm font-black text-muted-foreground uppercase tracking-[0.2em] text-center">Choose Your Billing Cycle</h3>
                      <RadioGroup value={billingCycle} onValueChange={(value: 'daily' | 'monthly' | 'yearly') => setBillingCycle(value)} className="grid grid-cols-1 gap-3">
-                        <div className={cn("flex items-center justify-between p-5 rounded-2xl border-2 transition-all cursor-pointer", billingCycle === 'daily' ? "bg-orange-500/10 border-orange-500 shadow-lg shadow-orange-500/10" : "bg-white/5 border-white/5")} onClick={() => setBillingCycle('daily')}>
+                        <div className={cn("flex items-center justify-between p-5 rounded-2xl border-2 transition-all cursor-pointer", billingCycle === 'daily' ? "bg-orange-500/10 border-orange-500 shadow-lg shadow-orange-500/10" : "bg-white/5 border-white/5 hover:bg-white/10")} onClick={() => setBillingCycle('daily')}>
                             <div className="flex items-center gap-4">
                                 <RadioGroupItem value="daily" id="daily" className="border-orange-500 text-orange-500 h-5 w-5" />
-                                <Label htmlFor="daily" className="font-black uppercase italic text-sm cursor-pointer">Daily Access</Label>
+                                <Label htmlFor="daily" className="font-black uppercase italic text-sm cursor-pointer">DAILY POWER</Label>
                             </div>
-                            <span className="font-black text-orange-500 text-lg">₹{prices.daily}</span>
+                            <span className="font-black text-orange-500 text-lg">₱{prices.daily}</span>
                         </div>
-                        <div className={cn("flex items-center justify-between p-5 rounded-2xl border-2 transition-all cursor-pointer", billingCycle === 'monthly' ? "bg-orange-500/10 border-orange-500 shadow-lg shadow-orange-500/10" : "bg-white/5 border-white/5")} onClick={() => setBillingCycle('monthly')}>
+                        <div className={cn("flex items-center justify-between p-5 rounded-2xl border-2 transition-all cursor-pointer", billingCycle === 'monthly' ? "bg-orange-500/10 border-orange-500 shadow-lg shadow-orange-500/10" : "bg-white/5 border-white/5 hover:bg-white/10")} onClick={() => setBillingCycle('monthly')}>
                             <div className="flex items-center gap-4">
                                 <RadioGroupItem value="monthly" id="monthly" className="border-orange-500 text-orange-500 h-5 w-5" />
-                                <Label htmlFor="monthly" className="font-black uppercase italic text-sm cursor-pointer">Monthly Professional</Label>
+                                <Label htmlFor="monthly" className="font-black uppercase italic text-sm cursor-pointer">MONTHLY PROFESSIONAL</Label>
                             </div>
-                            <span className="font-black text-orange-500 text-lg">₹{prices.monthly}</span>
+                            <span className="font-black text-orange-500 text-lg">₱{prices.monthly}</span>
                         </div>
-                        <div className={cn("flex items-center justify-between p-5 rounded-2xl border-2 transition-all cursor-pointer", billingCycle === 'yearly' ? "bg-orange-500/10 border-orange-500 shadow-lg shadow-orange-500/10" : "bg-white/5 border-white/5")} onClick={() => setBillingCycle('yearly')}>
+                        <div className={cn("flex items-center justify-between p-5 rounded-2xl border-2 transition-all cursor-pointer", billingCycle === 'yearly' ? "bg-orange-500/10 border-orange-500 shadow-lg shadow-orange-500/10" : "bg-white/5 border-white/5 hover:bg-white/10")} onClick={() => setBillingCycle('yearly')}>
                             <div className="flex items-center gap-4">
                                 <RadioGroupItem value="yearly" id="yearly" className="border-orange-500 text-orange-500 h-5 w-5" />
-                                <Label htmlFor="yearly" className="font-black uppercase italic text-sm cursor-pointer">Yearly Executive</Label>
+                                <Label htmlFor="yearly" className="font-black uppercase italic text-sm cursor-pointer">YEARLY EXECUTIVE</Label>
                             </div>
-                            <span className="font-black text-orange-500 text-lg">₹{prices.yearly}</span>
+                            <span className="font-black text-orange-500 text-lg">₱{prices.yearly}</span>
                         </div>
                     </RadioGroup>
                    </div>
