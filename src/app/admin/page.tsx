@@ -311,18 +311,6 @@ export default function AdminDashboardPage() {
     };
   }, [users, payments, posts]);
 
-  const referralUsageMap = useMemo(() => {
-    const map: Record<string, number> = {};
-    if (users) {
-        users.forEach(u => {
-            if (u.referredByCode) {
-                map[u.referredByCode] = (map[u.referredByCode] || 0) + 1;
-            }
-        });
-    }
-    return map;
-  }, [users]);
-
   const filteredUsers = useMemo(() => {
     if (!users) return [];
     const queryStr = userSearchQuery.toLowerCase();
@@ -564,7 +552,7 @@ export default function AdminDashboardPage() {
             if (event.target) event.target.value = '';
         }
     };
-    reader.readAsText(file);
+    reader.readAsDataURL(file);
   };
 
   if (isUserLoading || isRoleLoading) return <div className="flex h-screen items-center justify-center"><Loader className="animate-spin text-orange-500" /></div>;
@@ -1290,6 +1278,7 @@ export default function AdminDashboardPage() {
                             {isExporting ? <Loader className="animate-spin mr-2 h-4 w-4" /> : <HardDriveDownload className="mr-2 h-4 w-4" />} Full Data Backup (JSON)
                         </Button>
                     </CardContent>
+                </Card>
             </div>
 
             <Card className="border-none bg-card rounded-2xl overflow-hidden shadow-xl">
