@@ -8,7 +8,7 @@ const globalWithApp = global as typeof globalThis & {
 
 /**
  * Initializes and returns a Firebase Admin App instance using a robust singleton pattern.
- * Priorities explicit configuration to avoid metadata refreshing errors in Cloud environments.
+ * Prioritizes explicit configuration to avoid metadata refreshing errors in Cloud environments.
  */
 export async function getAdminApp(): Promise<App> {
   if (globalWithApp._firebaseAdminApp) {
@@ -22,23 +22,22 @@ export async function getAdminApp(): Promise<App> {
   }
 
   try {
-    // 1. Prioritize explicit config for stability in Studio/Hosting
-    const newApp = initializeApp({
-        projectId: "studio-8621980584-11b8b",
-        storageBucket: "studio-8621980584-11b8b.firebasestorage.app",
-    });
+    // 1. Always attempt standard environment discovery first (most stable in Hosting/Cloud)
+    const newApp = initializeApp();
     globalWithApp._firebaseAdminApp = newApp;
     return newApp;
-
-  } catch (e: any) {
+  } catch (fallbackError: any) {
     try {
-        // 2. Fallback to standard environment discovery (ADC)
-        const newApp = initializeApp();
+        // 2. Fallback to explicit configuration if discovery fails (common in local or Studio environments)
+        const newApp = initializeApp({
+            projectId: "studio-8621980584-11b8b",
+            storageBucket: "studio-8621980584-11b8b.firebasestorage.app",
+        });
         globalWithApp._firebaseAdminApp = newApp;
         return newApp;
-    } catch (fallbackError: any) {
-        console.error("Firebase Admin SDK Initialization Error:", fallbackError);
-        throw new Error(`CRITICAL: Backend authentication failed. If developing locally, run 'gcloud auth application-default login'. Error: ${fallbackError.message}`);
+    } catch (e: any) {
+        console.error("Firebase Admin SDK Initialization Error:", e);
+        throw new Error(`CRITICAL: Backend authentication failed. Error: ${e.message}`);
     }
   }
 }

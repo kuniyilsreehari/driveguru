@@ -190,7 +190,7 @@ export default function AdminDashboardPage() {
   const [verificationPaymentLink, setVerificationPaymentLink] = useState("");
   const [verificationFee, setVerificationFee] = useState(500);
   const [premierPrices, setPremierPrices] = useState({ daily: 10, monthly: 200, yearly: 2000 });
-  const [superPremierPrices, setSuperPremierPrices] = useState({ daily: 50, monthly: 1000, yearly: 10000 });
+  const [superPremierPrices, setSuperPremierPrices] = useState({ daily: 20, monthly: 400, yearly: 2000 });
   const [premierLinks, setPremierLinks] = useState({ daily: "", monthly: "", yearly: "" });
   const [superLinks, setSuperLinks] = useState({ daily: "", monthly: "", yearly: "" });
   const [centralContactPhone, setCentralContactPhone] = useState("");

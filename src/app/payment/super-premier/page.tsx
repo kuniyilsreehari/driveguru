@@ -73,7 +73,7 @@ function SuperPremierPaymentPageContent() {
         );
     }
 
-    const prices = appConfig?.superPremierPlanPrices || { daily: 0, monthly: 0, yearly: 0 };
+    const prices = appConfig?.superPremierPlanPrices || { daily: 20, monthly: 400, yearly: 2000 };
 
     return (
         <div className="space-y-6">
