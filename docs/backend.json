@@ -104,6 +104,14 @@
           "type": "number",
           "description": "Manual sort order for the homepage carousel (lower numbers appear first)."
         },
+        "showInRecent": {
+          "type": "boolean",
+          "description": "If true, the expert is shown in the 'Recent Professionals' grid on the homepage."
+        },
+        "recentOrder": {
+          "type": "number",
+          "description": "Manual sort order for the 'Recent Professionals' grid."
+        },
         "cashPaymentStatus": {
           "type": "string",
           "description": "The status of an offline cash payment, managed by managers.",
@@ -679,6 +687,10 @@
         "announcementSpeed": {
           "type": "number",
           "description": "The scrolling duration for the announcement in seconds. A higher number means slower speed."
+        },
+        "isRecentProfessionalsEnabled": {
+          "type": "boolean",
+          "description": "Global toggle to show or hide the 'Recent Professionals' section on the homepage."
         },
         "availabilityLocationText": {
           "type": "string",

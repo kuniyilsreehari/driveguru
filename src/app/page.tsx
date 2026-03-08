@@ -40,6 +40,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 type AppConfig = {
     featuredExpertsLimit?: number;
     homepageCategories?: HomepageCategory[];
+    isRecentProfessionalsEnabled?: boolean;
 };
 
 
@@ -87,11 +88,11 @@ function HomePageContent() {
     const { data: appConfig, isLoading: isAppConfigLoading } = useDoc<AppConfig>(appConfigDocRef);
     const featuredExpertsLimit = appConfig?.featuredExpertsLimit || 3;
     const homepageCategories = appConfig?.homepageCategories || [];
+    const isRecentProfessionalsEnabled = appConfig?.isRecentProfessionalsEnabled !== false;
 
 
     const topExpertsQuery = useMemoFirebase(() => {
         if (!firestore) return null;
-        // Prioritize by manual rank (featuredOrder), then by registration date
         return query(
             collection(firestore, 'users'), 
             where('isFeatured', '==', true),
@@ -122,21 +123,22 @@ function HomePageContent() {
         );
     }, [topExperts, moduleSearchQuery]);
 
-    const featuredExpertsQuery = useMemoFirebase(() => {
+    const recentExpertsQuery = useMemoFirebase(() => {
         if (!firestore) return null;
         return query(
             collection(firestore, 'users'), 
-            where('verified', '==', true),
+            where('showInRecent', '==', true),
+            orderBy('recentOrder', 'asc'),
             orderBy('createdAt', 'desc'),
-            limit(featuredExpertsLimit + 10) // Fetch extra to account for hidden filtering
+            limit(20)
         );
-    }, [firestore, featuredExpertsLimit]);
+    }, [firestore]);
     
-    const { data: rawFeaturedExperts, isLoading: isLoadingExperts } = useCollection<ExpertUser>(featuredExpertsQuery);
+    const { data: rawRecentExperts, isLoading: isLoadingExperts } = useCollection<ExpertUser>(recentExpertsQuery);
 
-    const featuredExperts = useMemo(() => {
-        return filterHidden(rawFeaturedExperts).slice(0, featuredExpertsLimit);
-    }, [rawFeaturedExperts, featuredExpertsLimit]);
+    const recentExperts = useMemo(() => {
+        return filterHidden(rawRecentExperts);
+    }, [rawRecentExperts]);
 
 
     const getCurrentPosition = (): Promise<GeolocationPosition> => {
@@ -313,7 +315,7 @@ function HomePageContent() {
                 </header>
 
                 <main className="space-y-12">
-                    {/* Top Experts Carousel - High-Fidelity Hand-Picked Selections */}
+                    {/* Top Experts Carousel */}
                     <section className="bg-[#24262d] rounded-[2.5rem] p-6 sm:p-8 shadow-2xl overflow-hidden">
                         <div className="mb-8">
                             <h2 className="text-2xl font-black text-white">Top Rated Experts</h2>
@@ -392,6 +394,7 @@ function HomePageContent() {
                         </div>
                     </section>
 
+                    {/* AI Search Card */}
                     <Card className="transition-all border-2 border-transparent hover:border-orange-500/50 hover:shadow-2xl hover:shadow-orange-500/10 focus-within:border-orange-500/50 focus-within:shadow-orange-500/10 rounded-[2.5rem] p-4">
                         <CardHeader>
                              <div className="flex items-center justify-between">
@@ -488,6 +491,7 @@ function HomePageContent() {
                         </div>
                     </div>
 
+                    {/* Manual Search Filters */}
                     <Card className="rounded-[2.5rem] p-6 sm:p-8 bg-[#24262d] border-none shadow-2xl">
                         <CardContent className="p-0 space-y-8">
                              <div>
@@ -565,6 +569,7 @@ function HomePageContent() {
                         </CardContent>
                     </Card>
 
+                    {/* Explore Categories */}
                     <div className="mt-12 text-center">
                         <h2 className="text-3xl font-black text-white mb-2">Explore Categories</h2>
                         <p className="text-muted-foreground font-medium mb-8">Find exactly who you need by industry.</p>
@@ -593,28 +598,31 @@ function HomePageContent() {
                         )}
                     </div>
 
-                     <div className="mt-16">
-                        <div className="flex items-center justify-between mb-8">
-                            <h2 className="text-3xl font-black text-white">Recent Professionals</h2>
-                            <Button variant="link" className="text-orange-500 font-bold" asChild><Link href="/search">View All <ChevronRight className="ml-1 h-4 w-4"/></Link></Button>
+                     {/* Recent Professionals Grid */}
+                     {isRecentProfessionalsEnabled && (
+                        <div className="mt-16">
+                            <div className="flex items-center justify-between mb-8">
+                                <h2 className="text-3xl font-black text-white">Recent Professionals</h2>
+                                <Button variant="link" className="text-orange-500 font-bold" asChild><Link href="/search">View All <ChevronRight className="ml-1 h-4 w-4"/></Link></Button>
+                            </div>
+                            {isLoadingExperts ? (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <Skeleton className="h-48 w-full rounded-[2rem] bg-white/5" />
+                                    <Skeleton className="h-48 w-full rounded-[2rem] bg-white/5" />
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    {recentExperts && recentExperts.length > 0 ? (
+                                        recentExperts.map(expert => (
+                                            <ExpertCard key={expert.id} expert={expert} />
+                                        ))
+                                    ) : (
+                                        <p className="text-center text-muted-foreground col-span-2 py-8 bg-white/5 rounded-[2rem] border-2 border-dashed border-white/5">No experts selected for this section yet.</p>
+                                    )}
+                                </div>
+                            )}
                         </div>
-                        {isLoadingExperts ? (
-                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <Skeleton className="h-48 w-full rounded-[2rem] bg-white/5" />
-                                <Skeleton className="h-48 w-full rounded-[2rem] bg-white/5" />
-                            </div>
-                        ) : (
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                {featuredExperts && featuredExperts.length > 0 ? (
-                                    featuredExperts.map(expert => (
-                                        <ExpertCard key={expert.id} expert={expert} />
-                                    ))
-                                ) : (
-                                    <p className="text-center text-muted-foreground col-span-2">No professionals available right now.</p>
-                                )}
-                            </div>
-                        )}
-                    </div>
+                     )}
                 </main>
                 <FloatingActions />
             </div>

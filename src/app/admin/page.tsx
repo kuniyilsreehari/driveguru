@@ -9,7 +9,7 @@ import { useUser, useFirestore, useDoc, useMemoFirebase, useAuth, useCollection 
 import { updateDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, UserX, Crown, Sparkles, User as UserIcon, Save, Briefcase, Building, MessageSquare, Search, PlusCircle, Download, ExternalLink, IndianRupee, Upload, HardDriveDownload, Megaphone, Rss, Award, CheckCircle, TrendingUp, PieChart, Activity, Trash, ChevronLeft, ChevronRight, Check, Gift, Phone, Home, Eye, Layout, Hash, AlertCircle, CalendarDays, SortAsc } from 'lucide-react';
+import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, UserX, Crown, Sparkles, User as UserIcon, Save, Briefcase, Building, MessageSquare, Search, PlusCircle, Download, ExternalLink, IndianRupee, Upload, HardDriveDownload, Megaphone, Rss, Award, CheckCircle, TrendingUp, PieChart, Activity, Trash, ChevronLeft, ChevronRight, Check, Gift, Phone, Home, Eye, Layout, Hash, AlertCircle, CalendarDays, SortAsc, LayoutGrid } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -87,6 +87,8 @@ type ExpertUser = {
     verified?: boolean;
     isFeatured?: boolean;
     featuredOrder?: number;
+    showInRecent?: boolean;
+    recentOrder?: number;
     tier?: 'Standard' | 'Premier' | 'Super Premier';
     referralCode?: string;
     referralPoints?: number;
@@ -143,6 +145,7 @@ type AppConfig = {
     verificationPaymentLink?: string;
     verificationFee?: number;
     centralContactPhone?: string;
+    isRecentProfessionalsEnabled?: boolean;
 };
 
 export default function AdminDashboardPage() {
@@ -192,6 +195,7 @@ export default function AdminDashboardPage() {
   const [premierLinks, setPremierLinks] = useState({ daily: "", monthly: "", yearly: "" });
   const [superLinks, setSuperLinks] = useState({ daily: "", monthly: "", yearly: "" });
   const [centralContactPhone, setCentralContactPhone] = useState("");
+  const [isRecentProfessionalsEnabled, setIsRecentProfessionalsEnabled] = useState(true);
 
   const [hasSuperAdminClaim, setHasSuperAdminClaim] = useState(false);
 
@@ -247,6 +251,7 @@ export default function AdminDashboardPage() {
       setVerificationPaymentLink(appConfig.verificationPaymentLink || "");
       setVerificationFee(appConfig.verificationFee || 500);
       setCentralContactPhone(appConfig.centralContactPhone || "");
+      setIsRecentProfessionalsEnabled(appConfig.isRecentProfessionalsEnabled !== false);
       if (appConfig.premierPlanPrices) setPremierPrices(appConfig.premierPlanPrices);
       if (appConfig.superPremierPlanPrices) setSuperPremierPrices(appConfig.superPremierPlanPrices);
       if (appConfig.premierPlanLinks) setPremierLinks(appConfig.premierPlanLinks);
@@ -347,14 +352,8 @@ export default function AdminDashboardPage() {
 
   const sanitizePhoneNumber = useCallback((phone?: string) => {
     if (!phone) return 'N/A';
-    // Remove all non-numeric characters to clean it first
     const digits = phone.replace(/\D/g, '');
-    
-    // If the number starts with 91 and has 12 digits total, it already has the country code
-    // Standard Indian number is 10 digits
     const clean = digits.length > 10 ? digits.slice(-10) : digits;
-    
-    // Return a clean formatted version
     return `+91 ${clean.replace(/(\d{5})(\d{5})/, '$1 $2')}`;
   }, []);
 
@@ -381,6 +380,7 @@ export default function AdminDashboardPage() {
         verificationPaymentLink,
         verificationFee,
         centralContactPhone,
+        isRecentProfessionalsEnabled,
       }, { merge: true });
       toast({ title: "Settings Saved" });
     } finally {
@@ -409,21 +409,46 @@ export default function AdminDashboardPage() {
     }
   };
 
+  const handleUpdateRecentOrder = async (userId: string, order: string) => {
+    const numOrder = parseInt(order);
+    if (isNaN(numOrder)) return;
+    try {
+        await updateDocumentNonBlocking(doc(firestore, 'users', userId), { recentOrder: numOrder });
+        toast({ title: "Recent Grid Position Set" });
+    } catch (e) {
+        toast({ variant: "destructive", title: "Update Failed" });
+    }
+  };
+
   const handleToggleFeatured = async (userId: string, isFeatured: boolean) => {
     try {
         const userRef = doc(firestore, 'users', userId);
         const updates: any = { isFeatured };
-        
-        // If enabling, ensure featuredOrder exists so document is indexed for ordered queries
         if (isFeatured) {
             const u = users?.find(user => user.id === userId);
             if (u && (u.featuredOrder === undefined || u.featuredOrder === null)) {
-                updates.featuredOrder = 999; // Default to end of priority list
+                updates.featuredOrder = 999;
             }
         }
-        
         await updateDocumentNonBlocking(userRef, updates);
         toast({ title: isFeatured ? "Expert Featured" : "Feature Removed" });
+    } catch (e) {
+        toast({ variant: "destructive", title: "Action Failed" });
+    }
+  }
+
+  const handleToggleRecent = async (userId: string, showInRecent: boolean) => {
+    try {
+        const userRef = doc(firestore, 'users', userId);
+        const updates: any = { showInRecent };
+        if (showInRecent) {
+            const u = users?.find(user => user.id === userId);
+            if (u && (u.recentOrder === undefined || u.recentOrder === null)) {
+                updates.recentOrder = 999;
+            }
+        }
+        await updateDocumentNonBlocking(userRef, updates);
+        toast({ title: showInRecent ? "Added to Recent Grid" : "Removed from Recent Grid" });
     } catch (e) {
         toast({ variant: "destructive", title: "Action Failed" });
     }
@@ -663,13 +688,11 @@ export default function AdminDashboardPage() {
                                             <TableHead className="w-[60px] font-bold text-white text-center text-[10px] uppercase tracking-widest">S.No</TableHead>
                                             <TableHead className="font-bold text-white text-[10px] uppercase tracking-widest">Expert Profile</TableHead>
                                             <TableHead className="font-bold text-white text-center text-[10px] uppercase tracking-widest">Contact</TableHead>
-                                            <TableHead className="font-bold text-white text-center text-[10px] uppercase tracking-widest">Code</TableHead>
                                             <TableHead className="font-bold text-white text-center text-[10px] uppercase tracking-widest">Tier</TableHead>
-                                            <TableHead className="font-bold text-white text-center text-[10px] uppercase tracking-widest">Points</TableHead>
-                                            <TableHead className="font-bold text-blue-500 text-center text-[10px] uppercase tracking-widest">Order</TableHead>
-                                            <TableHead className="font-bold text-center text-white text-[10px] uppercase tracking-widest">Joined</TableHead>
-                                            <TableHead className="font-bold text-center text-white text-[10px] uppercase tracking-widest">Verification</TableHead>
-                                            <TableHead className="font-bold text-center text-orange-500 text-[10px] uppercase tracking-widest">On Home</TableHead>
+                                            <TableHead className="font-bold text-white text-center text-[10px] uppercase tracking-widest">Joined</TableHead>
+                                            <TableHead className="font-bold text-white text-center text-[10px] uppercase tracking-widest">Verified</TableHead>
+                                            <TableHead className="font-bold text-orange-500 text-center text-[10px] uppercase tracking-widest">Carousel</TableHead>
+                                            <TableHead className="font-bold text-blue-500 text-center text-[10px] uppercase tracking-widest">Recent</TableHead>
                                             <TableHead className="text-right font-bold text-white"></TableHead>
                                         </TableRow>
                                     </TableHeader>
@@ -677,7 +700,7 @@ export default function AdminDashboardPage() {
                                         {(() => {
                                             const paginated = filteredUsers.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
                                             if (paginated.length === 0 && !isUsersLoading) {
-                                                return <TableRow><TableCell colSpan={11} className="text-center py-12 text-muted-foreground italic">No experts found matching your criteria.</TableCell></TableRow>;
+                                                return <TableRow><TableCell colSpan={9} className="text-center py-12 text-muted-foreground italic">No experts found matching your criteria.</TableCell></TableRow>;
                                             }
                                             return paginated.map((u, index) => {
                                                 const globalIndex = (currentPage - 1) * ITEMS_PER_PAGE + index + 1;
@@ -702,34 +725,13 @@ export default function AdminDashboardPage() {
                                                                 {u.email && <span className="text-[9px] text-muted-foreground lowercase truncate max-w-[120px]">{u.email}</span>}
                                                             </div>
                                                         </TableCell>
-                                                        <TableCell className="text-center font-mono text-xs text-orange-500 font-bold">{u.referralCode || '---'}</TableCell>
                                                         <TableCell className="text-center">
                                                             {u.tier === 'Super Premier' ? <Sparkles className="h-4 w-4 text-blue-500 mx-auto" /> : u.tier === 'Premier' ? <Crown className="h-4 w-4 text-purple-500 mx-auto" /> : <UserIcon className="h-4 w-4 text-muted-foreground/30 mx-auto" />}
                                                         </TableCell>
                                                         <TableCell className="text-center">
-                                                            <div className="flex items-center justify-center gap-1">
-                                                                <span className="text-xs font-black text-orange-500">{u.referralPoints || 0}</span>
-                                                                <Button variant="ghost" size="icon" className="h-6 w-6 rounded-full hover:bg-orange-500/10" onClick={() => { setSelectedUser(u); setIsAwardDialogOpen(true); }}><Gift className="h-3 w-3 text-orange-500" /></Button>
-                                                            </div>
-                                                        </TableCell>
-                                                        <TableCell className="text-center">
-                                                            <div className="flex items-center justify-center gap-1.5">
-                                                                <Input 
-                                                                    type="number" 
-                                                                    defaultValue={u.featuredOrder || 0}
-                                                                    onBlur={(e) => handleUpdateFeaturedOrder(u.id, e.target.value)}
-                                                                    className="w-12 h-8 px-1 text-center bg-white/5 border-none text-xs font-black text-blue-500 rounded-lg shadow-inner"
-                                                                />
-                                                                <SortAsc className="h-3 w-3 text-blue-500/30" />
-                                                            </div>
-                                                        </TableCell>
-                                                        <TableCell className="text-center">
-                                                            <div className="flex flex-col items-center">
-                                                                <CalendarDays className="h-3 w-3 text-muted-foreground mb-1 opacity-30" />
-                                                                <span className="text-[10px] font-bold text-muted-foreground whitespace-nowrap">
-                                                                    {u.createdAt ? format(u.createdAt.toDate(), 'dd-MM-yyyy') : '---'}
-                                                                </span>
-                                                            </div>
+                                                            <span className="text-[10px] font-bold text-muted-foreground whitespace-nowrap">
+                                                                {u.createdAt ? format(u.createdAt.toDate(), 'dd-MM-yyyy') : '---'}
+                                                            </span>
                                                         </TableCell>
                                                         <TableCell>
                                                             <div className="flex items-center justify-center">
@@ -737,8 +739,35 @@ export default function AdminDashboardPage() {
                                                             </div>
                                                         </TableCell>
                                                         <TableCell>
-                                                            <div className="flex items-center justify-center">
+                                                            <div className="flex flex-col items-center gap-1.5">
                                                                 <Switch checked={u.isFeatured} onCheckedChange={(v) => handleToggleFeatured(u.id, v)} className="scale-75 data-[state=checked]:bg-orange-500" />
+                                                                {u.isFeatured && (
+                                                                    <div className="flex items-center gap-1">
+                                                                        <SortAsc className="h-3 w-3 text-orange-500/50" />
+                                                                        <Input 
+                                                                            type="number" 
+                                                                            defaultValue={u.featuredOrder || 0}
+                                                                            onBlur={(e) => handleUpdateFeaturedOrder(u.id, e.target.value)}
+                                                                            className="w-10 h-6 px-1 text-center bg-white/5 border-none text-[10px] font-black text-orange-500 rounded shadow-inner"
+                                                                        />
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            <div className="flex flex-col items-center gap-1.5">
+                                                                <Switch checked={u.showInRecent} onCheckedChange={(v) => handleToggleRecent(u.id, v)} className="scale-75 data-[state=checked]:bg-blue-500" />
+                                                                {u.showInRecent && (
+                                                                    <div className="flex items-center gap-1">
+                                                                        <LayoutGrid className="h-3 w-3 text-blue-500/50" />
+                                                                        <Input 
+                                                                            type="number" 
+                                                                            defaultValue={u.recentOrder || 0}
+                                                                            onBlur={(e) => handleUpdateRecentOrder(u.id, e.target.value)}
+                                                                            className="w-10 h-6 px-1 text-center bg-white/5 border-none text-[10px] font-black text-blue-500 rounded shadow-inner"
+                                                                        />
+                                                                    </div>
+                                                                )}
                                                             </div>
                                                         </TableCell>
                                                         <TableCell className="text-right">
@@ -747,6 +776,7 @@ export default function AdminDashboardPage() {
                                                                 <DropdownMenuContent align="end" className="bg-[#24262d] text-white border-white/10 rounded-xl shadow-2xl p-1">
                                                                     <DropdownMenuItem onClick={() => router.push(`/expert/${u.id}`)} className="rounded-lg h-10"><Eye className="mr-2 h-4 w-4 text-orange-500" /> View Profile</DropdownMenuItem>
                                                                     <DropdownMenuItem onClick={() => { setSelectedUser(u); setIsEditDialogOpen(true); }} className="rounded-lg h-10"><Edit className="mr-2 h-4 w-4" /> Edit Profile</DropdownMenuItem>
+                                                                    <DropdownMenuItem onClick={() => { setSelectedUser(u); setIsAwardDialogOpen(true); }} className="rounded-lg h-10 text-orange-500"><Gift className="mr-2 h-4 w-4" /> Award Points</DropdownMenuItem>
                                                                     {!u.referralCode && (
                                                                         <DropdownMenuItem onClick={() => handleGenerateReferralCode(u.id)} className="rounded-lg h-10 text-orange-500"><Hash className="mr-2 h-4 w-4" /> Generate Code</DropdownMenuItem>
                                                                     )}
@@ -1184,14 +1214,21 @@ export default function AdminDashboardPage() {
                     <CardHeader className="bg-white/5 border-b border-white/5 pb-6">
                         <div className="flex items-center gap-3">
                             <Layout className="h-6 w-6 text-orange-500" />
-                            <CardTitle className="text-xl font-black uppercase italic">Homepage Layout</CardTitle>
+                            <CardTitle className="text-xl font-black uppercase italic">Homepage Modules</CardTitle>
                         </div>
-                        <CardDescription className="text-muted-foreground">Manage the "Recent Professionals" display.</CardDescription>
+                        <CardDescription className="text-muted-foreground">Manage the display of core homepage sections.</CardDescription>
                     </CardHeader>
-                    <CardContent className="p-6 space-y-4">
+                    <CardContent className="p-6 space-y-6">
                         <div className="space-y-2">
-                            <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Max Recent Professionals</Label>
+                            <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Max Carousel Professionals</Label>
                             <Input type="number" value={featuredLimit} onChange={e => setFeaturedLimit(Number(e.target.value))} className="h-12 bg-background border-none rounded-xl font-black text-xl text-white" />
+                        </div>
+                        <div className="flex items-center justify-between p-4 bg-background rounded-xl border border-white/5 shadow-inner">
+                            <div>
+                                <Label className="text-base font-black uppercase italic">Recent Professionals Grid</Label>
+                                <p className="text-xs text-muted-foreground font-medium">Show or hide the secondary grid section.</p>
+                            </div>
+                            <Switch checked={isRecentProfessionalsEnabled} onCheckedChange={setIsRecentProfessionalsEnabled} className="data-[state=checked]:bg-blue-500" />
                         </div>
                     </CardContent>
                 </Card>
@@ -1253,7 +1290,6 @@ export default function AdminDashboardPage() {
                             {isExporting ? <Loader className="animate-spin mr-2 h-4 w-4" /> : <HardDriveDownload className="mr-2 h-4 w-4" />} Full Data Backup (JSON)
                         </Button>
                     </CardContent>
-                </Card>
             </div>
 
             <Card className="border-none bg-card rounded-2xl overflow-hidden shadow-xl">
