@@ -86,7 +86,7 @@ service cloud.firestore {
     match /groups/{groupId} {
       allow get, list: if true;
       allow create: if isSignedIn();
-      allow update: if isSuperAdmin() || (isSignedIn() && (resource.data.creatorId == request.auth.uid || request.resource.data.diff(resource.data).affectedKeys().hasAny(['members', 'pendingMembers'])));
+      allow update, delete: if isSuperAdmin() || (isSignedIn() && (resource.data.creatorId == request.auth.uid || request.resource.data.diff(resource.data).affectedKeys().hasAny(['members', 'pendingMembers'])));
       allow delete: if isSuperAdmin() || (isSignedIn() && resource.data.creatorId == request.auth.uid);
       
       match /posts/{postId} {
