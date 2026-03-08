@@ -156,7 +156,6 @@ const createPaymentOrderFlow = ai.defineFlow(
 
     } catch (error: any) {
         console.error("Payment Order Flow Failure:", error);
-        // Explicitly return the specific error message to be shown in the UI toast
         return { error: error.message || "An internal error occurred." };
     }
   }

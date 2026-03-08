@@ -8,7 +8,7 @@ const globalWithApp = global as typeof globalThis & {
 
 /**
  * Initializes and returns a Firebase Admin App instance using a robust singleton pattern.
- * Prioritizes environment-based initialization for better stability in cloud environments.
+ * Priorities explicit configuration to avoid metadata refreshing errors in Cloud environments.
  */
 export async function getAdminApp(): Promise<App> {
   if (globalWithApp._firebaseAdminApp) {
@@ -22,36 +22,23 @@ export async function getAdminApp(): Promise<App> {
   }
 
   try {
-    // 1. Attempt standard initialization without arguments.
-    // This is the most reliable way to pick up Project ID and Service Account
-    // credentials from the environment (ADC) in App Hosting or Workstations.
-    const newApp = initializeApp();
+    // 1. Prioritize explicit config for stability in Studio/Hosting
+    const newApp = initializeApp({
+        projectId: "studio-8621980584-11b8b",
+        storageBucket: "studio-8621980584-11b8b.firebasestorage.app",
+    });
     globalWithApp._firebaseAdminApp = newApp;
     return newApp;
 
   } catch (e: any) {
     try {
-        // 2. Fallback to explicit config if environment discovery fails.
-        // Using the Project ID from your environment configuration.
-        const newApp = initializeApp({
-            projectId: "studio-8621980584-11b8b",
-            storageBucket: "studio-8621980584-11b8b.firebasestorage.app",
-        });
+        // 2. Fallback to standard environment discovery (ADC)
+        const newApp = initializeApp();
         globalWithApp._firebaseAdminApp = newApp;
         return newApp;
     } catch (fallbackError: any) {
         console.error("Firebase Admin SDK Initialization Error:", fallbackError);
-        
-        // Provide explicit guidance for Cloud authorization issues
-        const msg = fallbackError.message || '';
-        if (msg.includes('Could not find') || msg.includes('access token') || msg.includes('500')) {
-             throw new Error(
-                `AUTHORIZATION ERROR: The server cannot refresh its access token. 
-                 This usually means the environment credentials are misconfigured. 
-                 If developing locally, run 'gcloud auth application-default login'.`
-            );
-        }
-        throw new Error(`Firebase Admin SDK Error: ${fallbackError.message}`);
+        throw new Error(`CRITICAL: Backend authentication failed. If developing locally, run 'gcloud auth application-default login'. Error: ${fallbackError.message}`);
     }
   }
 }
