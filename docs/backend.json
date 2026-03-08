@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "User": {
@@ -98,6 +99,10 @@
         "isFeatured": {
           "type": "boolean",
           "description": "If true, the expert is shown in the featured 'Top Rated' carousel on the homepage."
+        },
+        "featuredOrder": {
+          "type": "number",
+          "description": "Manual sort order for the homepage carousel (lower numbers appear first)."
         },
         "cashPaymentStatus": {
           "type": "string",

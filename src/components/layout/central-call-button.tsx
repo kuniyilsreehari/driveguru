@@ -16,7 +16,7 @@ export function CentralCallButton() {
     const cleanNumber = appConfig.centralContactPhone.replace(/\s+/g, '');
 
     return (
-        <div className="fixed bottom-32 right-8 z-50 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div className="fixed bottom-8 left-24 z-50 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <Button
                 asChild
                 className="h-14 w-14 rounded-full shadow-2xl bg-green-500 hover:bg-green-600 text-white p-0 flex items-center justify-center transition-all hover:scale-110 active:scale-95 border-4 border-white/10"

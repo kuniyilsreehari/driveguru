@@ -91,10 +91,11 @@ function HomePageContent() {
 
     const topExpertsQuery = useMemoFirebase(() => {
         if (!firestore) return null;
-        // Optimized to use featured flag and registration order
+        // Prioritize by featuredOrder, then by registration date
         return query(
             collection(firestore, 'users'), 
             where('isFeatured', '==', true),
+            orderBy('featuredOrder', 'asc'),
             orderBy('createdAt', 'desc'),
             limit(20)
         );

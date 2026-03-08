@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
@@ -8,7 +9,7 @@ import { useUser, useFirestore, useDoc, useMemoFirebase, useAuth, useCollection 
 import { updateDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, UserX, Crown, Sparkles, User as UserIcon, Save, Briefcase, Building, MessageSquare, Search, PlusCircle, Download, ExternalLink, IndianRupee, Upload, HardDriveDownload, Megaphone, Rss, Award, CheckCircle, TrendingUp, PieChart, Activity, Trash, ChevronLeft, ChevronRight, Check, Gift, Phone, Home, Eye, Layout, Hash, AlertCircle, CalendarDays } from 'lucide-react';
+import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, UserX, Crown, Sparkles, User as UserIcon, Save, Briefcase, Building, MessageSquare, Search, PlusCircle, Download, ExternalLink, IndianRupee, Upload, HardDriveDownload, Megaphone, Rss, Award, CheckCircle, TrendingUp, PieChart, Activity, Trash, ChevronLeft, ChevronRight, Check, Gift, Phone, Home, Eye, Layout, Hash, AlertCircle, CalendarDays, SortAsc } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -85,6 +86,7 @@ type ExpertUser = {
     photoUrl?: string;
     verified?: boolean;
     isFeatured?: boolean;
+    featuredOrder?: number;
     tier?: 'Standard' | 'Premier' | 'Super Premier';
     referralCode?: string;
     referralPoints?: number;
@@ -396,6 +398,17 @@ export default function AdminDashboardPage() {
     }
   };
 
+  const handleUpdateFeaturedOrder = async (userId: string, order: string) => {
+    const numOrder = parseInt(order);
+    if (isNaN(numOrder)) return;
+    try {
+        await updateDocumentNonBlocking(doc(firestore, 'users', userId), { featuredOrder: numOrder });
+        toast({ title: "Carousel Position Set", description: `Priority updated to ${numOrder}` });
+    } catch (e) {
+        toast({ variant: "destructive", title: "Update Failed" });
+    }
+  };
+
   const handleAwardPoints = async () => {
     if (!selectedUser) return;
     try {
@@ -633,7 +646,7 @@ export default function AdminDashboardPage() {
                                             <TableHead className="font-bold text-white text-center text-[10px] uppercase tracking-widest">Code</TableHead>
                                             <TableHead className="font-bold text-white text-center text-[10px] uppercase tracking-widest">Tier</TableHead>
                                             <TableHead className="font-bold text-white text-center text-[10px] uppercase tracking-widest">Points</TableHead>
-                                            <TableHead className="font-bold text-blue-500 text-center text-[10px] uppercase tracking-widest">Joins</TableHead>
+                                            <TableHead className="font-bold text-blue-500 text-center text-[10px] uppercase tracking-widest">Order</TableHead>
                                             <TableHead className="font-bold text-center text-white text-[10px] uppercase tracking-widest">Joined</TableHead>
                                             <TableHead className="font-bold text-center text-white text-[10px] uppercase tracking-widest">Verification</TableHead>
                                             <TableHead className="font-bold text-center text-orange-500 text-[10px] uppercase tracking-widest">On Home</TableHead>
@@ -680,7 +693,15 @@ export default function AdminDashboardPage() {
                                                             </div>
                                                         </TableCell>
                                                         <TableCell className="text-center">
-                                                            <span className="font-black text-sm text-blue-500">{referralUsageMap[u.referralCode || ''] || 0}</span>
+                                                            <div className="flex items-center justify-center gap-1.5">
+                                                                <Input 
+                                                                    type="number" 
+                                                                    defaultValue={u.featuredOrder || 0}
+                                                                    onBlur={(e) => handleUpdateFeaturedOrder(u.id, e.target.value)}
+                                                                    className="w-12 h-8 px-1 text-center bg-white/5 border-none text-xs font-black text-blue-500 rounded-lg shadow-inner"
+                                                                />
+                                                                <SortAsc className="h-3 w-3 text-blue-500/30" />
+                                                            </div>
                                                         </TableCell>
                                                         <TableCell className="text-center">
                                                             <div className="flex flex-col items-center">
@@ -704,6 +725,7 @@ export default function AdminDashboardPage() {
                                                             <DropdownMenu>
                                                                 <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
                                                                 <DropdownMenuContent align="end" className="bg-[#24262d] text-white border-white/10 rounded-xl shadow-2xl p-1">
+                                                                    <DropdownMenuItem onClick={() => router.push(`/expert/${u.id}`)} className="rounded-lg h-10"><Eye className="mr-2 h-4 w-4 text-orange-500" /> View Profile</DropdownMenuItem>
                                                                     <DropdownMenuItem onClick={() => { setSelectedUser(u); setIsEditDialogOpen(true); }} className="rounded-lg h-10"><Edit className="mr-2 h-4 w-4" /> Edit Profile</DropdownMenuItem>
                                                                     {!u.referralCode && (
                                                                         <DropdownMenuItem onClick={() => handleGenerateReferralCode(u.id)} className="rounded-lg h-10 text-orange-500"><Hash className="mr-2 h-4 w-4" /> Generate Code</DropdownMenuItem>
