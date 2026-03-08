@@ -49,7 +49,7 @@ const formSchema = z.object({
   pincode: z.string().min(1, { message: "Pincode is required." }),
   address: z.string().optional(),
   countryCode: z.string().optional(),
-  phoneNumber: z.string().min(1, { message: "Phone number is required." }),
+  phoneNumber: z.string().min(10, { message: "Phone number is required." }),
   role: z.string({ required_error: "Please select your expert type." }),
   department: z.string().optional(),
   companyName: z.string().optional(),
@@ -187,9 +187,6 @@ export function RegistrationForm() {
         if (!(window as any).recaptchaVerifier) {
             (window as any).recaptchaVerifier = new RecaptchaVerifier(auth, recaptchaContainerRef.current, {
                 'size': 'invisible',
-                'callback': (response: any) => {
-                    // reCAPTCHA solved
-                }
             });
         }
     }
@@ -373,7 +370,6 @@ export function RegistrationForm() {
   }
 
   const sanitizePhone = (phoneNumber: string) => {
-    // Extract only the last 10 digits to remove redundant country codes
     const digits = phoneNumber.trim().replace(/\D/g, '');
     return digits.length > 10 ? digits.slice(-10) : digits;
   }

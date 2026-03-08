@@ -8,7 +8,7 @@ import { useUser, useFirestore, useDoc, useMemoFirebase, useAuth, useCollection 
 import { updateDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, UserX, Crown, Sparkles, User as UserIcon, Save, Briefcase, Building, MessageSquare, Search, PlusCircle, Download, ExternalLink, IndianRupee, Upload, HardDriveDownload, Megaphone, Rss, Award, CheckCircle, TrendingUp, PieChart, Activity, Trash, ChevronLeft, ChevronRight, Check, Gift, Phone, Home, Eye, Layout, Hash } from 'lucide-react';
+import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, UserX, Crown, Sparkles, User as UserIcon, Save, Briefcase, Building, MessageSquare, Search, PlusCircle, Download, ExternalLink, IndianRupee, Upload, HardDriveDownload, Megaphone, Rss, Award, CheckCircle, TrendingUp, PieChart, Activity, Trash, ChevronLeft, ChevronRight, Check, Gift, Phone, Home, Eye, Layout, Hash, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -150,6 +150,7 @@ export default function AdminDashboardPage() {
   const router = useRouter();
   const { toast } = useToast();
 
+  const [mounted, setMounted] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
@@ -193,6 +194,7 @@ export default function AdminDashboardPage() {
   const [hasSuperAdminClaim, setHasSuperAdminClaim] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     if (user) {
         user.getIdTokenResult().then(token => {
             if (token.claims.role === 'superAdmin') {
@@ -262,7 +264,7 @@ export default function AdminDashboardPage() {
         unverified: users.filter(u => !u.verified).length,
         premier: users.filter(u => u.tier === 'Premier').length,
         super: users.filter(u => u.tier === 'Super Premier').length,
-        referrals: users.filter(u => u.referredByCode).length,
+        referrals: users.filter(u => !!u.referredByCode).length,
     };
   }, [users]);
 
@@ -306,8 +308,8 @@ export default function AdminDashboardPage() {
     const map: Record<string, number> = {};
     if (users) {
         users.forEach(u => {
-            if (u.referralCode) {
-                map[u.referralCode] = (map[u.referralCode] || 0) + 1;
+            if (u.referredByCode) {
+                map[u.referredByCode] = (map[u.referredByCode] || 0) + 1;
             }
         });
     }
@@ -343,7 +345,6 @@ export default function AdminDashboardPage() {
 
   const sanitizePhoneNumber = useCallback((phone?: string) => {
     if (!phone) return 'N/A';
-    // Remove non-digits and strip multiple prefixes
     const digits = phone.replace(/\D/g, '');
     const clean = digits.length > 10 ? digits.slice(-10) : digits;
     return `+91 ${clean.replace(/(\d{5})(\d{5})/, '$1 $2')}`;
@@ -903,82 +904,86 @@ export default function AdminDashboardPage() {
           </TabsContent>
 
           <TabsContent value="reports" className="mt-0 space-y-8">
-            <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
-                <Card className="border-none bg-card shadow-xl">
-                    <CardHeader className="pb-2">
-                        <CardDescription className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2"><TrendingUp className="h-3 w-3 text-green-500" /> Platform Revenue</CardDescription>
-                        <CardTitle className="text-3xl font-black text-orange-500">₹{reportData ? reportData.totalRevenue.toLocaleString() : '0'}</CardTitle>
-                    </CardHeader>
-                </Card>
-                <Card className="border-none bg-card shadow-xl">
-                    <CardHeader className="pb-2">
-                        <CardDescription className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2"><Activity className="h-3 w-3 text-blue-500" /> Verification Rate</CardDescription>
-                        <CardTitle className="text-3xl font-black">{stats.total > 0 ? Math.round((stats.verified / stats.total) * 100) : 0}%</CardTitle>
-                    </CardHeader>
-                </Card>
-                <Card className="border-none bg-card shadow-xl">
-                    <CardHeader className="pb-2">
-                        <CardDescription className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2"><Crown className="h-3 w-3 text-purple-500" /> Premium Users</CardDescription>
-                        <CardTitle className="text-3xl font-black">{stats.premier + stats.super}</CardTitle>
-                    </CardHeader>
-                </Card>
-                <Card className="border-none bg-card shadow-xl">
-                    <CardHeader className="pb-2">
-                        <CardDescription className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2"><MessageSquare className="h-3 w-3 text-orange-500" /> Community Content</CardDescription>
-                        <CardTitle className="text-3xl font-black">{reportData?.totalPosts || 0} Posts</CardTitle>
-                    </CardHeader>
-                </Card>
-            </div>
+            {mounted && (
+              <>
+                <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
+                    <Card className="border-none bg-card shadow-xl">
+                        <CardHeader className="pb-2">
+                            <CardDescription className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2"><TrendingUp className="h-3 w-3 text-green-500" /> Platform Revenue</CardDescription>
+                            <CardTitle className="text-3xl font-black text-orange-500">₹{reportData ? reportData.totalRevenue.toLocaleString() : '0'}</CardTitle>
+                        </CardHeader>
+                    </Card>
+                    <Card className="border-none bg-card shadow-xl">
+                        <CardHeader className="pb-2">
+                            <CardDescription className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2"><Activity className="h-3 w-3 text-blue-500" /> Verification Rate</CardDescription>
+                            <CardTitle className="text-3xl font-black">{stats.total > 0 ? Math.round((stats.verified / stats.total) * 100) : 0}%</CardTitle>
+                        </CardHeader>
+                    </Card>
+                    <Card className="border-none bg-card shadow-xl">
+                        <CardHeader className="pb-2">
+                            <CardDescription className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2"><Crown className="h-3 w-3 text-purple-500" /> Premium Users</CardDescription>
+                            <CardTitle className="text-3xl font-black">{stats.premier + stats.super}</CardTitle>
+                        </CardHeader>
+                    </Card>
+                    <Card className="border-none bg-card shadow-xl">
+                        <CardHeader className="pb-2">
+                            <CardDescription className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2"><MessageSquare className="h-3 w-3 text-orange-500" /> Community Content</CardDescription>
+                            <CardTitle className="text-3xl font-black">{reportData?.totalPosts || 0} Posts</CardTitle>
+                        </CardHeader>
+                    </Card>
+                </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <Card className="border-none bg-card rounded-2xl overflow-hidden shadow-2xl">
-                    <CardHeader className="bg-white/5 border-b border-white/5">
-                        <CardTitle className="text-xl font-black flex items-center gap-2 uppercase italic"><TrendingUp className="h-5 w-5 text-orange-500" /> Expert Growth</CardTitle>
-                    </CardHeader>
-                    <CardContent className="pt-8 h-[300px]">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={reportData?.userGrowth || []}>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#ffffff10" />
-                                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#8a92a6', fontSize: 12}} />
-                                <YAxis axisLine={false} tickLine={false} tick={{fill: '#8a92a6', fontSize: 12}} />
-                                <Tooltip contentStyle={{backgroundColor: '#24262d', border: 'none', borderRadius: '12px', fontSize: '12px'}} cursor={{fill: '#ffffff05'}} />
-                                <Bar dataKey="users" fill="#f97316" radius={[4, 4, 0, 0]} barSize={30} />
-                            </BarChart>
-                        </ResponsiveContainer>
-                    </CardContent>
-                </Card>
-
-                <Card className="border-none bg-card rounded-2xl overflow-hidden shadow-2xl">
-                    <CardHeader className="bg-white/5 border-b border-white/5">
-                        <CardTitle className="text-xl font-black flex items-center gap-2 uppercase italic"><PieChart className="h-5 w-5 text-orange-500" /> Revenue Split</CardTitle>
-                    </CardHeader>
-                    <CardContent className="pt-8 h-[300px] flex items-center">
-                        <div className="w-1/2 h-full">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <Card className="border-none bg-card rounded-2xl overflow-hidden shadow-2xl">
+                        <CardHeader className="bg-white/5 border-b border-white/5">
+                            <CardTitle className="text-xl font-black flex items-center gap-2 uppercase italic"><TrendingUp className="h-5 w-5 text-orange-500" /> Expert Growth</CardTitle>
+                        </CardHeader>
+                        <CardContent className="pt-8 h-[300px]">
                             <ResponsiveContainer width="100%" height="100%">
-                                <RePieChart>
-                                    <Pie data={reportData?.revenueByPlan || []} innerRadius={60} outerRadius={100} paddingAngle={5} dataKey="value">
-                                        {(reportData?.revenueByPlan || []).map((entry, index) => (
-                                            <Cell key={`cell-${index}`} fill={entry.color} />
-                                        ))}
-                                    </Pie>
-                                    <Tooltip contentStyle={{backgroundColor: '#24262d', border: 'none', borderRadius: '12px'}} />
-                                </RePieChart>
+                                <BarChart data={reportData?.userGrowth || []}>
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#ffffff10" />
+                                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#8a92a6', fontSize: 12}} />
+                                    <YAxis axisLine={false} tickLine={false} tick={{fill: '#8a92a6', fontSize: 12}} />
+                                    <Tooltip contentStyle={{backgroundColor: '#24262d', border: 'none', borderRadius: '12px', fontSize: '12px'}} cursor={{fill: '#ffffff05'}} />
+                                    <Bar dataKey="users" fill="#f97316" radius={[4, 4, 0, 0]} barSize={30} />
+                                </BarChart>
                             </ResponsiveContainer>
-                        </div>
-                        <div className="w-1/2 space-y-4">
-                            {(reportData?.revenueByPlan || []).map((item, i) => (
-                                <div key={i} className="flex items-center justify-between">
-                                    <div className="flex items-center gap-2">
-                                        <div className="h-3 w-3 rounded-full" style={{backgroundColor: item.color}} />
-                                        <span className="text-[10px] font-black uppercase text-muted-foreground">{item.name}</span>
+                        </CardContent>
+                    </Card>
+
+                    <Card className="border-none bg-card rounded-2xl overflow-hidden shadow-2xl">
+                        <CardHeader className="bg-white/5 border-b border-white/5">
+                            <CardTitle className="text-xl font-black flex items-center gap-2 uppercase italic"><PieChart className="h-5 w-5 text-orange-500" /> Revenue Split</CardTitle>
+                        </CardHeader>
+                        <CardContent className="pt-8 h-[300px] flex items-center">
+                            <div className="w-1/2 h-full">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <RePieChart>
+                                        <Pie data={reportData?.revenueByPlan || []} innerRadius={60} outerRadius={100} paddingAngle={5} dataKey="value">
+                                            {(reportData?.revenueByPlan || []).map((entry, index) => (
+                                                <Cell key={`cell-${index}`} fill={entry.color} />
+                                            ))}
+                                        </Pie>
+                                        <Tooltip contentStyle={{backgroundColor: '#24262d', border: 'none', borderRadius: '12px'}} />
+                                    </RePieChart>
+                                </ResponsiveContainer>
+                            </div>
+                            <div className="w-1/2 space-y-4">
+                                {(reportData?.revenueByPlan || []).map((item, i) => (
+                                    <div key={i} className="flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                            <div className="h-3 w-3 rounded-full" style={{backgroundColor: item.color}} />
+                                            <span className="text-[10px] font-black uppercase text-muted-foreground">{item.name}</span>
+                                        </div>
+                                        <span className="text-sm font-black text-white">₹{item.value.toLocaleString()}</span>
                                     </div>
-                                    <span className="text-sm font-black text-white">₹{item.value.toLocaleString()}</span>
-                                </div>
-                            ))}
-                        </div>
-                    </CardContent>
-                </Card>
-            </div>
+                                ))}
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+              </>
+            )}
           </TabsContent>
 
           <TabsContent value="settings" className="mt-0 space-y-6">
