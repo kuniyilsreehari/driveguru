@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Suspense, useState } from 'react';
@@ -49,7 +48,8 @@ function PremierPaymentPageContent() {
             }
 
             if (result.payment_link) {
-                window.location.href = result.payment_link;
+                // Open the payment link in a new tab
+                window.open(result.payment_link, '_blank');
             } else {
                 throw new Error("Payment link not generated. Please check Admin settings.");
             }
@@ -122,7 +122,7 @@ function PremierPaymentPageContent() {
                         {isCreatingOrder ? (
                             <><Loader2 className="mr-3 h-6 w-6 animate-spin" />Processing...</>
                         ) : (
-                            <><ExternalLink className="mr-3 h-6 w-6" />Proceed to Payment</>
+                            <><ExternalLink className="mr-3 h-6 w-6" />PROCEED TO PAYMENT</>
                         )}
                     </Button>
                 </CardFooter>
