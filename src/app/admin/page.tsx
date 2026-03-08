@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { collection, Timestamp, orderBy, query, doc, deleteDoc, where, increment } from 'firebase/firestore';
 import { signOut } from 'firebase/auth';
@@ -306,8 +306,8 @@ export default function AdminDashboardPage() {
     const map: Record<string, number> = {};
     if (users) {
         users.forEach(u => {
-            if (u.referredByCode) {
-                map[u.referredByCode] = (map[u.referredByCode] || 0) + 1;
+            if (u.referralCode) {
+                map[u.referralCode] = (map[u.referralCode] || 0) + 1;
             }
         });
     }
@@ -341,10 +341,19 @@ export default function AdminDashboardPage() {
     });
   }, [users, userSearchQuery, userFilter]);
 
+  const sanitizePhoneNumber = useCallback((phone?: string) => {
+    if (!phone) return 'N/A';
+    // Remove non-digits and strip multiple prefixes
+    const digits = phone.replace(/\D/g, '');
+    const clean = digits.length > 10 ? digits.slice(-10) : digits;
+    return `+91 ${clean.replace(/(\d{5})(\d{5})/, '$1 $2')}`;
+  }, []);
+
   const handleSaveSettings = async () => {
+    if (!appConfigDocRef) return;
     setIsSaving(true);
     try {
-      await setDocumentNonBlocking(appConfigDocRef!, {
+      await setDocumentNonBlocking(appConfigDocRef, {
         introVideoUrl,
         featuredExpertsLimit: featuredLimit,
         announcementText,
@@ -414,6 +423,18 @@ export default function AdminDashboardPage() {
     }
   }
 
+  const handleDeleteUser = async () => {
+    if (!selectedUser) return;
+    try {
+        await deleteDoc(doc(firestore, 'users', selectedUser.id));
+        toast({ title: "User Deleted" });
+    } catch (e) {
+        toast({ variant: "destructive", title: "Deletion Failed" });
+    } finally {
+        setIsDeleteDialogOpen(false);
+    }
+  }
+
   const handleExportJSON = async () => {
     setIsExporting(true);
     try {
@@ -480,21 +501,7 @@ export default function AdminDashboardPage() {
     reader.readAsText(file);
   };
 
-  const sanitizePhoneNumber = (phone?: string) => {
-    if (!phone) return 'N/A';
-    // Remove all whitespace and reduce duplicate prefixes (e.g., +91+91)
-    let clean = phone.replace(/[^\d+]/g, '');
-    while (clean.startsWith('+91+91')) {
-        clean = '+91' + clean.substring(6);
-    }
-    // Return formatted with a single prefix
-    if (clean.startsWith('+91')) {
-        return '+91 ' + clean.substring(3).replace(/(\d{5})(\d{5})/, '$1 $2');
-    }
-    return phone;
-  }
-
-  if (isUserLoading || isRoleLoading) return <div className="flex h-screen items-center justify-center"><Loader className="animate-spin" /></div>;
+  if (isUserLoading || isRoleLoading) return <div className="flex h-screen items-center justify-center"><Loader className="animate-spin text-orange-500" /></div>;
   
   if (!isSuperAdmin) {
     return (
@@ -900,7 +907,7 @@ export default function AdminDashboardPage() {
                 <Card className="border-none bg-card shadow-xl">
                     <CardHeader className="pb-2">
                         <CardDescription className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2"><TrendingUp className="h-3 w-3 text-green-500" /> Platform Revenue</CardDescription>
-                        <CardTitle className="text-3xl font-black text-orange-500">₹{reportData?.totalRevenue.toLocaleString()}</CardTitle>
+                        <CardTitle className="text-3xl font-black text-orange-500">₹{reportData ? reportData.totalRevenue.toLocaleString() : '0'}</CardTitle>
                     </CardHeader>
                 </Card>
                 <Card className="border-none bg-card shadow-xl">
@@ -930,7 +937,7 @@ export default function AdminDashboardPage() {
                     </CardHeader>
                     <CardContent className="pt-8 h-[300px]">
                         <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={reportData?.userGrowth}>
+                            <BarChart data={reportData?.userGrowth || []}>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#ffffff10" />
                                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#8a92a6', fontSize: 12}} />
                                 <YAxis axisLine={false} tickLine={false} tick={{fill: '#8a92a6', fontSize: 12}} />
@@ -949,8 +956,8 @@ export default function AdminDashboardPage() {
                         <div className="w-1/2 h-full">
                             <ResponsiveContainer width="100%" height="100%">
                                 <RePieChart>
-                                    <Pie data={reportData?.revenueByPlan} innerRadius={60} outerRadius={100} paddingAngle={5} dataKey="value">
-                                        {reportData?.revenueByPlan.map((entry, index) => (
+                                    <Pie data={reportData?.revenueByPlan || []} innerRadius={60} outerRadius={100} paddingAngle={5} dataKey="value">
+                                        {(reportData?.revenueByPlan || []).map((entry, index) => (
                                             <Cell key={`cell-${index}`} fill={entry.color} />
                                         ))}
                                     </Pie>
@@ -959,7 +966,7 @@ export default function AdminDashboardPage() {
                             </ResponsiveContainer>
                         </div>
                         <div className="w-1/2 space-y-4">
-                            {reportData?.revenueByPlan.map((item, i) => (
+                            {(reportData?.revenueByPlan || []).map((item, i) => (
                                 <div key={i} className="flex items-center justify-between">
                                     <div className="flex items-center gap-2">
                                         <div className="h-3 w-3 rounded-full" style={{backgroundColor: item.color}} />
@@ -1183,7 +1190,8 @@ export default function AdminDashboardPage() {
                             {isExporting ? <Loader className="animate-spin mr-2 h-4 w-4" /> : <HardDriveDownload className="mr-2 h-4 w-4" />} Full Data Backup (JSON)
                         </Button>
                     </CardContent>
-                </div>
+                </Card>
+            </div>
 
             <Card className="border-none bg-card rounded-2xl overflow-hidden shadow-xl">
               <CardHeader className="bg-white/5 border-b border-white/5 pb-6"><CardTitle className="font-black uppercase italic">Manual User Provisioning</CardTitle></CardHeader>
@@ -1251,16 +1259,4 @@ export default function AdminDashboardPage() {
       </AlertDialog>
     </div>
   );
-
-  async function handleDeleteUser() {
-    if (!selectedUser) return;
-    try {
-        await deleteDoc(doc(firestore, 'users', selectedUser.id));
-        toast({ title: "User Deleted" });
-    } catch (e) {
-        toast({ variant: "destructive", title: "Deletion Failed" });
-    } finally {
-        setIsDeleteDialogOpen(false);
-    }
-  }
 }
