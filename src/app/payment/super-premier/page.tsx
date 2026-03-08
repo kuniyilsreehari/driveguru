@@ -48,6 +48,7 @@ function SuperPremierPaymentPageContent() {
             }
 
             if (result.payment_link) {
+                // Ensure the link is opened in a new tab
                 window.open(result.payment_link, '_blank');
             } else {
                 throw new Error("The secure link for this plan is not currently configured by the admin.");
