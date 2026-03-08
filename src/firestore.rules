@@ -55,26 +55,26 @@ service cloud.firestore {
     
     // Global App Configuration - Publicly readable
     match /app_config/{configId} { 
-      allow read: if true;
+      allow get, list: if true;
       allow write: if isSuperAdmin(); 
     }
 
     // Job Vacancies - Publicly readable
     match /vacancies/{vacancyId} {
-      allow read: if true;
+      allow get, list: if true;
       allow create: if isSignedIn();
       allow update, delete: if isSuperAdmin() || (isSignedIn() && resource.data.companyId == request.auth.uid);
     }
     
     // Public Feed Posts - Publicly readable
     match /posts/{postId} {
-      allow read: if true;
+      allow get, list: if true;
       allow create: if isSignedIn();
       allow update: if isSuperAdmin() || (isSignedIn() && (resource.data.authorId == request.auth.uid || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes'])));
       allow delete: if isSuperAdmin() || (isSignedIn() && resource.data.authorId == request.auth.uid);
       
       match /comments/{commentId} {
-        allow read: if true;
+        allow get, list: if true;
         allow create: if isSignedIn();
         allow update: if isSuperAdmin() || (isSignedIn() && (resource.data.authorId == request.auth.uid || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes'])));
         allow delete: if isSuperAdmin() || (isSignedIn() && (resource.data.authorId == request.authorId || get(/databases/$(database)/documents/posts/$(postId)).data.authorId == request.auth.uid));
@@ -83,13 +83,13 @@ service cloud.firestore {
     
     // Professional Groups
     match /groups/{groupId} {
-      allow read: if true;
+      allow get, list: if true;
       allow create: if isSignedIn();
       allow update: if isSuperAdmin() || (isSignedIn() && (resource.data.creatorId == request.auth.uid || request.resource.data.diff(resource.data).affectedKeys().hasAny(['members', 'pendingMembers'])));
       allow delete: if isSuperAdmin() || (isSignedIn() && resource.data.creatorId == request.auth.uid);
       
       match /posts/{postId} {
-        allow read: if isSignedIn() && (request.auth.uid in get(/databases/$(database)/documents/groups/$(groupId)).data.members || isSuperAdmin());
+        allow get, list: if isSignedIn() && (request.auth.uid in get(/databases/$(database)/documents/groups/$(groupId)).data.members || isSuperAdmin());
         allow create: if isSignedIn() && request.auth.uid in get(/databases/$(database)/documents/groups/$(groupId)).data.members;
         allow update, delete: if isSuperAdmin() || (isSignedIn() && resource.data.authorId == request.auth.uid);
       }
@@ -98,18 +98,18 @@ service cloud.firestore {
     // Payments and Subscriptions
     match /payments/{paymentId} {
       allow create: if isSignedIn();
-      allow read: if isSuperAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
+      allow get, list: if isSuperAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
       allow update, delete: if isSuperAdmin();
     }
 
     // Role Management Collections
     match /roles_super_admin/{userId} { 
-      allow read: if isSignedIn();
+      allow get, list: if isSignedIn();
       allow write: if isSuperAdmin(); 
     }
     
     match /roles_manager/{userId} { 
-      allow read: if isSignedIn();
+      allow get, list: if isSignedIn();
       allow write: if isSuperAdmin(); 
     }
   }
