@@ -409,6 +409,26 @@ export default function AdminDashboardPage() {
     }
   };
 
+  const handleToggleFeatured = async (userId: string, isFeatured: boolean) => {
+    try {
+        const userRef = doc(firestore, 'users', userId);
+        const updates: any = { isFeatured };
+        
+        // If enabling, ensure featuredOrder exists so document is indexed for ordered queries
+        if (isFeatured) {
+            const u = users?.find(user => user.id === userId);
+            if (u && (u.featuredOrder === undefined || u.featuredOrder === null)) {
+                updates.featuredOrder = 999; // Default to end of priority list
+            }
+        }
+        
+        await updateDocumentNonBlocking(userRef, updates);
+        toast({ title: isFeatured ? "Expert Featured" : "Feature Removed" });
+    } catch (e) {
+        toast({ variant: "destructive", title: "Action Failed" });
+    }
+  }
+
   const handleAwardPoints = async () => {
     if (!selectedUser) return;
     try {
@@ -718,7 +738,7 @@ export default function AdminDashboardPage() {
                                                         </TableCell>
                                                         <TableCell>
                                                             <div className="flex items-center justify-center">
-                                                                <Switch checked={u.isFeatured} onCheckedChange={(v) => updateDocumentNonBlocking(doc(firestore, 'users', u.id), { isFeatured: v })} className="scale-75 data-[state=checked]:bg-orange-500" />
+                                                                <Switch checked={u.isFeatured} onCheckedChange={(v) => handleToggleFeatured(u.id, v)} className="scale-75 data-[state=checked]:bg-orange-500" />
                                                             </div>
                                                         </TableCell>
                                                         <TableCell className="text-right">
