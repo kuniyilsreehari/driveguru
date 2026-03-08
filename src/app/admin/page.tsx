@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
@@ -9,7 +8,7 @@ import { useUser, useFirestore, useDoc, useMemoFirebase, useAuth, useCollection 
 import { updateDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, UserX, Crown, Sparkles, User as UserIcon, Save, Briefcase, Building, MessageSquare, Search, PlusCircle, Download, ExternalLink, IndianRupee, Upload, HardDriveDownload, Megaphone, Rss, Award, CheckCircle, TrendingUp, PieChart, Activity, Trash, ChevronLeft, ChevronRight, Check, Gift, Phone, Home, Eye, Layout, Hash, AlertCircle } from 'lucide-react';
+import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, UserX, Crown, Sparkles, User as UserIcon, Save, Briefcase, Building, MessageSquare, Search, PlusCircle, Download, ExternalLink, IndianRupee, Upload, HardDriveDownload, Megaphone, Rss, Award, CheckCircle, TrendingUp, PieChart, Activity, Trash, ChevronLeft, ChevronRight, Check, Gift, Phone, Home, Eye, Layout, Hash, AlertCircle, CalendarDays } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -346,8 +345,14 @@ export default function AdminDashboardPage() {
 
   const sanitizePhoneNumber = useCallback((phone?: string) => {
     if (!phone) return 'N/A';
+    // Remove all non-numeric characters to clean it first
     const digits = phone.replace(/\D/g, '');
+    
+    // If the number starts with 91 and has 12 digits total, it already has the country code
+    // Standard Indian number is 10 digits
     const clean = digits.length > 10 ? digits.slice(-10) : digits;
+    
+    // Return a clean formatted version
     return `+91 ${clean.replace(/(\d{5})(\d{5})/, '$1 $2')}`;
   }, []);
 
@@ -455,7 +460,7 @@ export default function AdminDashboardPage() {
 
   const handleExportCSV = () => {
     if (!users) return;
-    const headers = ["ID", "First Name", "Last Name", "Email", "Phone Number", "Role", "Tier", "Verified", "Referral Code", "Points"];
+    const headers = ["ID", "First Name", "Last Name", "Email", "Phone Number", "Role", "Tier", "Verified", "Referral Code", "Points", "Joined"];
     const rows = users.map(u => [
         u.id,
         u.firstName,
@@ -466,7 +471,8 @@ export default function AdminDashboardPage() {
         u.tier || 'Standard',
         u.verified ? 'Yes' : 'No',
         u.referralCode || '',
-        u.referralPoints || 0
+        u.referralPoints || 0,
+        u.createdAt ? format(u.createdAt.toDate(), 'dd-MM-yyyy') : '---'
     ]);
 
     const csvContent = [headers, ...rows].map(e => e.join(",")).join("\n");
@@ -628,6 +634,7 @@ export default function AdminDashboardPage() {
                                             <TableHead className="font-bold text-white text-center text-[10px] uppercase tracking-widest">Tier</TableHead>
                                             <TableHead className="font-bold text-white text-center text-[10px] uppercase tracking-widest">Points</TableHead>
                                             <TableHead className="font-bold text-blue-500 text-center text-[10px] uppercase tracking-widest">Joins</TableHead>
+                                            <TableHead className="font-bold text-center text-white text-[10px] uppercase tracking-widest">Joined</TableHead>
                                             <TableHead className="font-bold text-center text-white text-[10px] uppercase tracking-widest">Verification</TableHead>
                                             <TableHead className="font-bold text-center text-orange-500 text-[10px] uppercase tracking-widest">On Home</TableHead>
                                             <TableHead className="text-right font-bold text-white"></TableHead>
@@ -637,7 +644,7 @@ export default function AdminDashboardPage() {
                                         {(() => {
                                             const paginated = filteredUsers.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
                                             if (paginated.length === 0 && !isUsersLoading) {
-                                                return <TableRow><TableCell colSpan={10} className="text-center py-12 text-muted-foreground italic">No experts found matching your criteria.</TableCell></TableRow>;
+                                                return <TableRow><TableCell colSpan={11} className="text-center py-12 text-muted-foreground italic">No experts found matching your criteria.</TableCell></TableRow>;
                                             }
                                             return paginated.map((u, index) => {
                                                 const globalIndex = (currentPage - 1) * ITEMS_PER_PAGE + index + 1;
@@ -674,6 +681,14 @@ export default function AdminDashboardPage() {
                                                         </TableCell>
                                                         <TableCell className="text-center">
                                                             <span className="font-black text-sm text-blue-500">{referralUsageMap[u.referralCode || ''] || 0}</span>
+                                                        </TableCell>
+                                                        <TableCell className="text-center">
+                                                            <div className="flex flex-col items-center">
+                                                                <CalendarDays className="h-3 w-3 text-muted-foreground mb-1 opacity-30" />
+                                                                <span className="text-[10px] font-bold text-muted-foreground whitespace-nowrap">
+                                                                    {u.createdAt ? format(u.createdAt.toDate(), 'dd-MM-yyyy') : '---'}
+                                                                </span>
+                                                            </div>
                                                         </TableCell>
                                                         <TableCell>
                                                             <div className="flex items-center justify-center">
