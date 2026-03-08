@@ -123,7 +123,7 @@ const createPaymentOrderFlow = ai.defineFlow(
             }
 
             if (link) return { payment_link: link };
-            throw new Error(`Static link for ${input.plan} (${input.billingCycle}) not configured in Admin panel.`);
+            throw new Error(`The link for ${input.plan} (${input.billingCycle}) is not configured in Admin panel.`);
         }
 
         // Handle API Method
@@ -132,12 +132,11 @@ const createPaymentOrderFlow = ai.defineFlow(
         else if (input.plan === 'Premier') amount = appConfig.premierPlanPrices?.[input.billingCycle] || 0;
         else if (input.plan === 'Super Premier') amount = appConfig.superPremierPlanPrices?.[input.billingCycle] || 0;
 
-        if (amount <= 0) throw new Error(`Price for ${input.plan} (${input.billingCycle}) is not configured correctly in Admin panel.`);
+        if (amount <= 0) throw new Error(`Price for ${input.plan} (${input.billingCycle}) is not set correctly in Admin panel.`);
 
         const orderId = `order_${uuidv4()}`;
         const paymentRef = firestore.collection('payments').doc();
         
-        // Use standard Date for Firestore write
         await paymentRef.set({
             id: paymentRef.id,
             userId: input.userId,
@@ -156,7 +155,7 @@ const createPaymentOrderFlow = ai.defineFlow(
 
     } catch (error: any) {
         console.error("Payment Order Flow Failure:", error);
-        return { error: error.message || "An internal error occurred." };
+        return { error: error.message || "Could not retrieve payment settings." };
     }
   }
 );

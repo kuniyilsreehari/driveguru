@@ -22,7 +22,7 @@ export async function getAdminApp(): Promise<App> {
   }
 
   try {
-    // 1. Always attempt standard environment discovery first (most stable in Hosting/Cloud)
+    // 1. Always attempt standard environment discovery first
     const newApp = initializeApp();
     globalWithApp._firebaseAdminApp = newApp;
     return newApp;
@@ -37,7 +37,7 @@ export async function getAdminApp(): Promise<App> {
         return newApp;
     } catch (e: any) {
         console.error("Firebase Admin SDK Initialization Error:", e);
-        throw new Error(`CRITICAL: Backend authentication failed. Error: ${e.message}`);
+        throw new Error(`CRITICAL: Backend authentication failed. Ensure environment is authorized. Error: ${e.message}`);
     }
   }
 }

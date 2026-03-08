@@ -50,14 +50,14 @@ function SuperPremierPaymentPageContent() {
             if (result.payment_link) {
                 window.open(result.payment_link, '_blank');
             } else {
-                throw new Error("Payment link not generated. Please ensure Admin settings are complete.");
+                throw new Error("The secure link for this plan is not currently configured by the admin.");
             }
         } catch (error: any) {
             console.error("Payment initiation failed:", error);
             toast({
                 variant: 'destructive',
                 title: "Action Failed",
-                description: error.message || "Failed to start checkout. Check platform configuration.",
+                description: error.message || "Failed to retrieve the checkout link. Please try again later.",
             });
         } finally {
             setIsCreatingOrder(false);
