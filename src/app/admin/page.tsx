@@ -8,7 +8,7 @@ import { useUser, useFirestore, useDoc, useMemoFirebase, useAuth, useCollection 
 import { updateDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, UserX, Crown, Sparkles, User as UserIcon, Save, Briefcase, Building, MessageSquare, Search, PlusCircle, Download, ExternalLink, IndianRupee, Upload, HardDriveDownload, Megaphone, Rss, Award, CheckCircle, TrendingUp, PieChart, Activity, Trash, ChevronLeft, ChevronRight, Check, Gift, Phone, Home, Eye, Layout, Hash, AlertCircle, CalendarDays, SortAsc, LayoutGrid } from 'lucide-react';
+import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, UserX, Crown, Sparkles, User as UserIcon, Save, Briefcase, Building, MessageSquare, Search, PlusCircle, Download, IndianRupee, Upload, HardDriveDownload, Megaphone, Rss, TrendingUp, PieChart, Activity, ChevronLeft, ChevronRight, Check, Gift, Phone, Eye, Layout, Hash, SortAsc, LayoutGrid } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -37,8 +37,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
-  DialogDescription,
 } from '@/components/ui/dialog';
 import { CreateUserForm } from '@/components/auth/create-user-form';
 import { useToast } from '@/hooks/use-toast';
@@ -54,7 +52,6 @@ import { exportAllData } from '@/ai/flows/export-data-flow';
 import { importUsers } from '@/ai/flows/import-users-flow';
 import { EditProfileForm } from '@/components/auth/edit-profile-form';
 import { cn } from '@/lib/utils';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import type { Vacancy } from '@/app/vacancies/page';
 import { PostVacancyForm } from '@/components/auth/post-vacancy-form';
 import { 
@@ -125,13 +122,11 @@ type Post = {
 };
 
 type AppConfig = {
-    introVideoUrl?: string;
     featuredExpertsLimit?: number;
     announcementText?: string;
     isAnnouncementEnabled?: boolean;
     announcementSpeed?: number;
     isPaymentsEnabled?: boolean;
-    paymentMethod?: 'API' | 'Link';
     publicApiKey?: string;
     referralRewardPoints?: number;
     homepageCategories?: HomepageCategory[];
@@ -139,9 +134,6 @@ type AppConfig = {
     pricingModels?: string[];
     premierPlanPrices?: { daily: number; monthly: number; yearly: number };
     superPremierPlanPrices?: { daily: number; monthly: number; yearly: number };
-    premierPlanLinks?: { daily: string; monthly: string; yearly: string };
-    superPremierPlanLinks?: { daily: string; monthly: string; yearly: string };
-    verificationPaymentLink?: string;
     verificationFee?: number;
     centralContactPhone?: string;
     isRecentProfessionalsEnabled?: boolean;
@@ -176,23 +168,18 @@ export default function AdminDashboardPage() {
   const [paymentPage, setPaymentPage] = useState(1);
   const [feedPage, setFeedPage] = useState(1);
 
-  const [introVideoUrl, setIntroVideoUrl] = useState("");
   const [featuredLimit, setFeaturedLimit] = useState(3);
   const [announcementText, setAnnouncementText] = useState("");
   const [announcementEnabled, setAnnouncementEnabled] = useState(false);
   const [announcementSpeed, setAnnouncementSpeed] = useState(20);
   const [paymentsEnabled, setPaymentsEnabled] = useState(true);
-  const [paymentMethod, setPaymentMethod] = useState<'API' | 'Link'>('API');
   const [publicApiKey, setPublicApiKey] = useState("");
   const [referralPoints, setReferralPoints] = useState(100);
   const [homepageCategories, setHomepageCategories] = useState<HomepageCategory[]>([]);
   const [departments, setDepartments] = useState<string[]>([]);
-  const [verificationPaymentLink, setVerificationPaymentLink] = useState("");
   const [verificationFee, setVerificationFee] = useState(500);
-  const [premierPrices, setPremierPrices] = useState({ daily: 10, monthly: 200, yearly: 2000 });
+  const [premierPrices, setPremierPrices] = useState({ daily: 10, monthly: 200, yearly: 1000 });
   const [superPremierPrices, setSuperPremierPrices] = useState({ daily: 20, monthly: 400, yearly: 2000 });
-  const [premierLinks, setPremierLinks] = useState({ daily: "", monthly: "", yearly: "" });
-  const [superLinks, setSuperLinks] = useState({ daily: "", monthly: "", yearly: "" });
   const [centralContactPhone, setCentralContactPhone] = useState("");
   const [isRecentProfessionalsEnabled, setIsRecentProfessionalsEnabled] = useState(true);
 
@@ -236,25 +223,20 @@ export default function AdminDashboardPage() {
 
   useEffect(() => {
     if (appConfig) {
-      setIntroVideoUrl(appConfig.introVideoUrl || "");
       setFeaturedLimit(appConfig.featuredExpertsLimit || 3);
       setAnnouncementText(appConfig.announcementText || "");
       setAnnouncementEnabled(appConfig.isAnnouncementEnabled || false);
       setAnnouncementSpeed(appConfig.announcementSpeed || 20);
       setPaymentsEnabled(appConfig.isPaymentsEnabled !== false);
-      setPaymentMethod(appConfig.paymentMethod || 'API');
       setPublicApiKey(appConfig.publicApiKey || "");
       setReferralPoints(appConfig.referralRewardPoints || 100);
       setHomepageCategories(appConfig.homepageCategories || []);
       setDepartments(appConfig.departments || []);
-      setVerificationPaymentLink(appConfig.verificationPaymentLink || "");
       setVerificationFee(appConfig.verificationFee || 500);
       setCentralContactPhone(appConfig.centralContactPhone || "");
       setIsRecentProfessionalsEnabled(appConfig.isRecentProfessionalsEnabled !== false);
       if (appConfig.premierPlanPrices) setPremierPrices(appConfig.premierPlanPrices);
       if (appConfig.superPremierPlanPrices) setSuperPremierPrices(appConfig.superPremierPlanPrices);
-      if (appConfig.premierPlanLinks) setPremierLinks(appConfig.premierPlanLinks);
-      if (appConfig.superPremierPlanLinks) setSuperLinks(appConfig.superPremierPlanLinks);
     }
   }, [appConfig]);
 
@@ -349,27 +331,22 @@ export default function AdminDashboardPage() {
     setIsSaving(true);
     try {
       await setDocumentNonBlocking(appConfigDocRef, {
-        introVideoUrl,
         featuredExpertsLimit: featuredLimit,
         announcementText,
         isAnnouncementEnabled: announcementEnabled,
         announcementSpeed,
         isPaymentsEnabled: paymentsEnabled,
-        paymentMethod,
         publicApiKey,
         referralRewardPoints: referralPoints,
         homepageCategories,
         departments,
         premierPlanPrices: premierPrices,
         superPremierPlanPrices: superPremierPrices,
-        premierPlanLinks: premierLinks,
-        superPremierPlanLinks: superLinks,
-        verificationPaymentLink,
         verificationFee,
         centralContactPhone,
         isRecentProfessionalsEnabled,
       }, { merge: true });
-      toast({ title: "Settings Saved" });
+      toast({ title: "Settings Published" });
     } finally {
       setIsSaving(false);
     }
@@ -390,7 +367,7 @@ export default function AdminDashboardPage() {
     if (isNaN(numOrder)) return;
     try {
         await updateDocumentNonBlocking(doc(firestore, 'users', userId), { featuredOrder: numOrder });
-        toast({ title: "Carousel Position Set", description: `Priority updated to ${numOrder}` });
+        toast({ title: "Carousel Position Set" });
     } catch (e) {
         toast({ variant: "destructive", title: "Update Failed" });
     }
@@ -848,7 +825,7 @@ export default function AdminDashboardPage() {
                                                         <div className="flex justify-end gap-2">
                                                             <Button variant="outline" size="sm" className="rounded-lg h-8 px-3 border-green-500/20 text-green-500 hover:bg-green-500/10" onClick={() => updateDocumentNonBlocking(doc(firestore, 'vacancies', v.id), { status: 'Approved' })}><Check className="h-3 w-3" /></Button>
                                                             <Button variant="outline" size="sm" className="rounded-lg h-8 px-3 border-red-500/20 text-red-500 hover:bg-red-500/10" onClick={() => updateDocumentNonBlocking(doc(firestore, 'vacancies', v.id), { status: 'Rejected' })}><Ban className="h-3 w-3" /></Button>
-                                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-white/30 hover:text-red-500" onClick={() => deleteDocumentNonBlocking(doc(firestore, 'vacancies', v.id))}><Trash className="h-4 w-4" /></Button>
+                                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-white/30 hover:text-red-500" onClick={() => deleteDocumentNonBlocking(doc(firestore, 'vacancies', v.id))}><Trash2 className="h-4 w-4" /></Button>
                                                         </div>
                                                     </TableCell>
                                                 </TableRow>
@@ -1068,34 +1045,20 @@ export default function AdminDashboardPage() {
                     <IndianRupee className="h-6 w-6 text-orange-500" />
                     <CardTitle className="text-2xl font-black uppercase italic">Payment Configuration</CardTitle>
                 </div>
-                <CardDescription className="text-muted-foreground">Manage API keys, pricing, and cycle-specific payment links.</CardDescription>
+                <CardDescription className="text-muted-foreground">Manage API keys and pricing cycles for automated upgrades.</CardDescription>
               </CardHeader>
               <CardContent className="p-6 space-y-8">
                 <div className="flex items-center justify-between p-4 bg-background rounded-xl border border-white/5 shadow-inner">
                     <div>
                         <Label className="text-base font-black uppercase italic">Payments Status</Label>
-                        <p className="text-xs text-muted-foreground font-medium">Toggle global payment accessibility.</p>
+                        <p className="text-xs text-muted-foreground font-medium">Toggle global automated payment accessibility.</p>
                     </div>
                     <Switch checked={paymentsEnabled} onCheckedChange={setPaymentsEnabled} className="data-[state=checked]:bg-orange-500" />
                 </div>
 
-                <div className="space-y-4">
-                    <Label className="font-black text-primary text-[10px] uppercase tracking-[0.2em]">Select Preferred Gateway</Label>
-                    <RadioGroup value={paymentMethod} onValueChange={(v: 'API' | 'Link') => setPaymentMethod(v)} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div className={cn("flex items-center space-x-3 p-4 rounded-xl border transition-all cursor-pointer", paymentMethod === 'API' ? "border-orange-500 bg-orange-500/5" : "border-white/5 bg-white/5")} onClick={() => setPaymentMethod('API')}>
-                            <RadioGroupItem value="API" id="method-api" className="border-orange-500 text-orange-500" />
-                            <Label htmlFor="method-api" className="font-black text-sm uppercase italic cursor-pointer">API (Cashfree Direct)</Label>
-                        </div>
-                        <div className={cn("flex items-center space-x-3 p-4 rounded-xl border transition-all cursor-pointer", paymentMethod === 'Link' ? "border-orange-500 bg-orange-500/5" : "border-white/5 bg-white/5")} onClick={() => setPaymentMethod('Link')}>
-                            <RadioGroupItem value="Link" id="method-link" className="border-white/20" />
-                            <Label htmlFor="method-link" className="font-black text-sm uppercase italic cursor-pointer">Static Payment Links</Label>
-                        </div>
-                    </RadioGroup>
-                </div>
-
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 p-6 bg-white/5 rounded-2xl border border-white/5">
                     <div className="space-y-4">
-                        <h4 className="text-sm font-black text-purple-500 uppercase tracking-widest flex items-center gap-2"><Crown className="h-4 w-4" /> Premier Plan Pricing (₹)</h4>
+                        <h4 className="text-sm font-black text-purple-500 uppercase tracking-widest flex items-center gap-2"><Crown className="h-4 w-4" /> Premier Pricing (₱)</h4>
                         <div className="grid grid-cols-3 gap-3">
                             <div className="space-y-1">
                                 <Label className="text-[10px] text-muted-foreground uppercase">Daily</Label>
@@ -1112,7 +1075,7 @@ export default function AdminDashboardPage() {
                         </div>
                     </div>
                     <div className="space-y-4">
-                        <h4 className="text-sm font-black text-blue-500 uppercase tracking-widest flex items-center gap-2"><Sparkles className="h-4 w-4" /> Super Premier Pricing (₹)</h4>
+                        <h4 className="text-sm font-black text-blue-500 uppercase tracking-widest flex items-center gap-2"><Sparkles className="h-4 w-4" /> Super Premier (₱)</h4>
                         <div className="grid grid-cols-3 gap-3">
                             <div className="space-y-1">
                                 <Label className="text-[10px] text-muted-foreground uppercase">Daily</Label>
@@ -1130,60 +1093,13 @@ export default function AdminDashboardPage() {
                     </div>
                 </div>
 
-                {paymentMethod === 'Link' && (
-                    <div className="space-y-8 animate-in fade-in duration-500">
-                        <div className="p-6 bg-white/5 rounded-2xl border border-white/5 border-dashed space-y-6">
-                            <h4 className="text-sm font-black text-purple-500 uppercase tracking-widest flex items-center gap-2"><Crown className="h-4 w-4" /> Premier Plan Links</h4>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <div className="space-y-2">
-                                    <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Daily Link</Label>
-                                    <Input value={premierLinks.daily} onChange={e => setPremierLinks({...premierLinks, daily: e.target.value})} className="bg-background border-none rounded-xl h-11" placeholder="Daily URL..." />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Monthly Link</Label>
-                                    <Input value={premierLinks.monthly} onChange={e => setPremierLinks({...premierLinks, monthly: e.target.value})} className="bg-background border-none rounded-xl h-11" placeholder="Monthly URL..." />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Yearly Link</Label>
-                                    <Input value={premierLinks.yearly} onChange={e => setPremierLinks({...premierLinks, yearly: e.target.value})} className="bg-background border-none rounded-xl h-11" placeholder="Yearly URL..." />
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="p-6 bg-white/5 rounded-2xl border border-white/5 border-dashed space-y-6">
-                            <h4 className="text-sm font-black text-blue-500 uppercase tracking-widest flex items-center gap-2"><Sparkles className="h-4 w-4" /> Super Premier Links</h4>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <div className="space-y-2">
-                                    <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Daily Link</Label>
-                                    <Input value={superLinks.daily} onChange={e => setSuperLinks({...superLinks, daily: e.target.value})} className="bg-background border-none rounded-xl h-11" placeholder="Daily URL..." />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Monthly Link</Label>
-                                    <Input value={superLinks.monthly} onChange={e => setSuperLinks({...superLinks, monthly: e.target.value})} className="bg-background border-none rounded-xl h-11" placeholder="Monthly URL..." />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Yearly Link</Label>
-                                    <Input value={superLinks.yearly} onChange={e => setSuperLinks({...superLinks, yearly: e.target.value})} className="bg-background border-none rounded-xl h-11" placeholder="Yearly URL..." />
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="p-6 bg-white/5 rounded-2xl border border-white/5 border-dashed">
-                            <div className="space-y-2">
-                                <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">One-time Verification Link</Label>
-                                <Input value={verificationPaymentLink} onChange={e => setVerificationPaymentLink(e.target.value)} className="bg-background border-none rounded-xl h-11" placeholder="Verification URL..." />
-                            </div>
-                        </div>
-                    </div>
-                )}
-
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
                         <Label className="font-black text-primary text-[10px] uppercase tracking-[0.2em]">Public API Key / App ID</Label>
                         <Input value={publicApiKey} onChange={e => setPublicApiKey(e.target.value)} className="rounded-xl h-12 bg-background border-none font-mono text-orange-500 shadow-inner" placeholder="Enter Cashfree App ID..." />
                     </div>
                     <div className="space-y-2">
-                        <Label className="font-black text-primary text-[10px] uppercase tracking-[0.2em]">One-time Verification Fee (₹)</Label>
+                        <Label className="font-black text-primary text-[10px] uppercase tracking-[0.2em]">One-time Verification Fee (₱)</Label>
                         <Input type="number" value={verificationFee} onChange={e => setVerificationFee(Number(e.target.value))} className="rounded-xl h-12 bg-background border-none font-black text-white text-xl shadow-inner" />
                     </div>
                 </div>
@@ -1290,30 +1206,30 @@ export default function AdminDashboardPage() {
 
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="max-w-3xl overflow-y-auto max-h-[90vh] rounded-[2rem] border-none bg-background text-white shadow-2xl">
-          <DialogHeader className="mb-4"><DialogTitle className="text-3xl font-black uppercase italic">Modify Expert Profile</DialogTitle></DialogHeader>
+          <DialogHeader className="mb-4"><CardTitle className="text-3xl font-black uppercase italic">Modify Expert Profile</CardTitle></DialogHeader>
           {selectedUser && <EditProfileForm userProfile={selectedUser as any} isAdmin onSuccess={() => setIsEditDialogOpen(false)} />}
         </DialogContent>
       </Dialog>
 
       <Dialog open={isVacancyDialogOpen} onOpenChange={setIsVacancyDialogOpen}>
         <DialogContent className="max-w-3xl overflow-y-auto max-h-[90vh] rounded-[2rem] border-none bg-background text-white shadow-2xl">
-          <DialogHeader className="mb-4"><DialogTitle className="text-3xl font-black uppercase italic">{selectedVacancy ? 'Edit Vacancy' : 'Post Admin Opening'}</DialogTitle></DialogHeader>
+          <DialogHeader className="mb-4"><CardTitle className="text-3xl font-black uppercase italic">{selectedVacancy ? 'Edit Vacancy' : 'Post Admin Opening'}</CardTitle></DialogHeader>
           <PostVacancyForm isAdmin vacancy={selectedVacancy || undefined} onSuccess={() => setIsVacancyDialogOpen(false)} />
         </DialogContent>
       </Dialog>
 
       <Dialog open={isAwardDialogOpen} onOpenChange={setIsAwardDialogOpen}>
         <DialogContent className="rounded-[2rem] border-none bg-background text-white p-8">
-          <DialogHeader className="items-center text-center">
-            <div className="p-4 bg-orange-500/10 rounded-full w-fit mb-4"><PlusCircle className="h-10 w-10 text-orange-500" /></div>
-            <DialogTitle className="text-3xl font-black uppercase italic">Award Credits</DialogTitle>
-            <DialogDescription className="text-muted-foreground font-medium pt-2">Manually grant referral points to {selectedUser?.firstName}.</DialogDescription>
-          </DialogHeader>
+          <div className="items-center text-center">
+            <div className="p-4 bg-orange-500/10 rounded-full w-fit mx-auto mb-4"><PlusCircle className="h-10 w-10 text-orange-500" /></div>
+            <CardTitle className="text-3xl font-black uppercase italic">Award Credits</CardTitle>
+            <CardDescription className="text-muted-foreground font-medium pt-2">Manually grant referral points to {selectedUser?.firstName}.</CardDescription>
+          </div>
           <div className="py-8 space-y-2">
                 <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-[0.2em]">Amount to Grant</Label>
                 <Input type="number" value={awardPoints} onChange={(e) => setAwardPoints(Number(e.target.value))} className="rounded-xl h-14 bg-white/5 border-none font-black text-orange-500 text-2xl text-center shadow-inner" />
           </div>
-          <DialogFooter className="flex-col gap-3 sm:flex-col"><Button onClick={handleAwardPoints} className="w-full h-12 rounded-xl font-black bg-orange-500 hover:bg-orange-600">Apply Reward</Button></DialogFooter>
+          <div className="flex flex-col gap-3"><Button onClick={handleAwardPoints} className="w-full h-12 rounded-xl font-black bg-orange-500 hover:bg-orange-600">Apply Reward</Button></div>
         </DialogContent>
       </Dialog>
 

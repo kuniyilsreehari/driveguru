@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Loader2, ChevronLeft, Sparkles, ExternalLink } from 'lucide-react';
+import { Loader2, ChevronLeft, Sparkles, CheckCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { createPaymentOrder } from '@/ai/flows/payment-flow';
@@ -32,10 +32,15 @@ function SuperPremierPaymentPageContent() {
             return;
         }
 
-        // IMPORTANT: Open the blank window synchronously to prevent popup blocker
-        const checkoutWindow = window.open('', '_blank');
+        // CRITICAL: Initialize the window reference SYNCHRONOUSLY to prevent popup blocking.
+        const checkoutWindow = typeof window !== 'undefined' ? window.open('about:blank', '_blank') : null;
+        
         if (!checkoutWindow) {
-            toast({ variant: 'destructive', title: 'Popup Blocked', description: 'Please allow popups to continue to payment.' });
+            toast({ 
+                variant: 'destructive', 
+                title: 'Popup Blocked', 
+                description: 'Please allow popups for DriveGuru to proceed to the secure payment gateway.' 
+            });
             return;
         }
 
@@ -56,18 +61,19 @@ function SuperPremierPaymentPageContent() {
             }
 
             if (result.payment_link) {
-                // Set the URL of the already-open tab
+                // Securely redirect the pre-opened tab to the checkout URL
                 checkoutWindow.location.href = result.payment_link;
             } else {
                 checkoutWindow.close();
-                throw new Error("The secure link for this plan is not currently configured by the admin.");
+                throw new Error("Automated link generation failed. Please contact support.");
             }
         } catch (error: any) {
             console.error("Payment initiation failed:", error);
+            if (checkoutWindow) checkoutWindow.close();
             toast({
                 variant: 'destructive',
-                title: "Action Failed",
-                description: error.message || "Failed to retrieve the checkout link. Please try again later.",
+                title: "Gateway Error",
+                description: error.message || "Failed to retrieve the secure link. Please try again.",
             });
         } finally {
             setIsCreatingOrder(false);
@@ -78,7 +84,7 @@ function SuperPremierPaymentPageContent() {
         return (
             <div className="flex h-64 w-full flex-col items-center justify-center gap-4">
                 <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
-                <p className="text-sm font-bold text-muted-foreground uppercase tracking-widest">Loading Account...</p>
+                <p className="text-sm font-bold text-muted-foreground uppercase tracking-widest animate-pulse">Syncing Wallet...</p>
             </div>
         );
     }
@@ -87,51 +93,51 @@ function SuperPremierPaymentPageContent() {
 
     return (
         <div className="space-y-6">
-             <Button variant="outline" asChild className="rounded-xl border-white/10 hover:bg-white/5">
+             <Button variant="outline" asChild className="rounded-xl border-white/10 hover:bg-white/5 font-bold uppercase text-[10px] tracking-widest h-10">
                 <Link href={`/dashboard`}><ChevronLeft className="mr-2 h-4 w-4" /> Back to Dashboard</Link>
             </Button>
-            <Card className="border-none bg-[#24262d] shadow-2xl rounded-[2rem] overflow-hidden">
-                <CardHeader className="text-center bg-white/5 border-b border-white/5 pb-8">
-                    <div className="p-4 bg-blue-500/10 rounded-full w-fit mx-auto mb-4">
-                        <Sparkles className="h-12 w-12 text-blue-500" />
+            <Card className="border-none bg-[#24262d] shadow-2xl rounded-[2.5rem] overflow-hidden">
+                <CardHeader className="text-center bg-white/5 border-b border-white/5 pb-10 pt-12">
+                    <div className="p-5 bg-blue-500/10 rounded-full w-fit mx-auto mb-6 shadow-inner">
+                        <Sparkles className="h-14 w-12 text-blue-500" />
                     </div>
-                    <CardTitle className="text-3xl font-black uppercase italic tracking-tighter">Elite Access</CardTitle>
-                    <CardDescription className="text-muted-foreground font-medium pt-2">Unlock full AI suite and maximum platform visibility.</CardDescription>
+                    <CardTitle className="text-4xl font-black uppercase italic tracking-tighter text-white">Elite Access</CardTitle>
+                    <CardDescription className="text-muted-foreground font-medium pt-2 text-base">Full AI suite and maximum platform visibility.</CardDescription>
                 </CardHeader>
-                <CardContent className="p-8 space-y-8">
+                <CardContent className="p-8 sm:p-12 space-y-10">
                    <div className="space-y-6">
-                    <h3 className="text-sm font-black text-muted-foreground uppercase tracking-[0.2em] text-center">Choose Your Billing Cycle</h3>
-                     <RadioGroup value={billingCycle} onValueChange={(value: 'daily' | 'monthly' | 'yearly') => setBillingCycle(value)} className="grid grid-cols-1 gap-3">
-                        <div className={cn("flex items-center justify-between p-5 rounded-2xl border-2 transition-all cursor-pointer", billingCycle === 'daily' ? "bg-blue-500/10 border-blue-500 shadow-lg shadow-blue-500/10" : "bg-white/5 border-white/5 hover:bg-white/10")} onClick={() => setBillingCycle('daily')}>
-                            <div className="flex items-center gap-4">
-                                <RadioGroupItem value="daily" id="daily" className="border-blue-500 text-blue-500 h-5 w-5" />
-                                <Label htmlFor="daily" className="font-black uppercase italic text-sm cursor-pointer">DAILY POWER</Label>
+                    <h3 className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] text-center mb-8">Choose Your Billing Cycle</h3>
+                     <RadioGroup value={billingCycle} onValueChange={(value: 'daily' | 'monthly' | 'yearly') => setBillingCycle(value)} className="grid grid-cols-1 gap-4">
+                        <div className={cn("flex items-center justify-between p-6 rounded-[1.5rem] border-2 transition-all cursor-pointer", billingCycle === 'daily' ? "bg-blue-500/10 border-blue-500 shadow-xl shadow-blue-500/5" : "bg-white/5 border-white/5 hover:bg-white/10")} onClick={() => setBillingCycle('daily')}>
+                            <div className="flex items-center gap-5">
+                                <RadioGroupItem value="daily" id="daily" className="border-blue-500 text-blue-500 h-6 w-6" />
+                                <Label htmlFor="daily" className="font-black uppercase italic text-sm cursor-pointer tracking-tight">DAILY POWER</Label>
                             </div>
-                            <span className="font-black text-blue-500 text-lg">₱{prices.daily}</span>
+                            <span className="font-black text-blue-500 text-2xl">₱{prices.daily}</span>
                         </div>
-                        <div className={cn("flex items-center justify-between p-5 rounded-2xl border-2 transition-all cursor-pointer", billingCycle === 'monthly' ? "bg-blue-500/10 border-blue-500 shadow-lg shadow-blue-500/10" : "bg-white/5 border-white/5 hover:bg-white/10")} onClick={() => setBillingCycle('monthly')}>
-                            <div className="flex items-center gap-4">
-                                <RadioGroupItem value="monthly" id="monthly" className="border-blue-500 text-blue-500 h-5 w-5" />
-                                <Label htmlFor="monthly" className="font-black uppercase italic text-sm cursor-pointer">MONTHLY ELITE</Label>
+                        <div className={cn("flex items-center justify-between p-6 rounded-[1.5rem] border-2 transition-all cursor-pointer", billingCycle === 'monthly' ? "bg-blue-500/10 border-blue-500 shadow-xl shadow-blue-500/5" : "bg-white/5 border-white/5 hover:bg-white/10")} onClick={() => setBillingCycle('monthly')}>
+                            <div className="flex items-center gap-5">
+                                <RadioGroupItem value="monthly" id="monthly" className="border-blue-500 text-blue-500 h-6 w-6" />
+                                <Label htmlFor="monthly" className="font-black uppercase italic text-sm cursor-pointer tracking-tight">MONTHLY ELITE</Label>
                             </div>
-                            <span className="font-black text-blue-500 text-lg">₱{prices.monthly}</span>
+                            <span className="font-black text-blue-500 text-2xl">₱{prices.monthly}</span>
                         </div>
-                        <div className={cn("flex items-center justify-between p-5 rounded-2xl border-2 transition-all cursor-pointer", billingCycle === 'yearly' ? "bg-blue-500/10 border-blue-500 shadow-lg shadow-blue-500/10" : "bg-white/5 border-white/5 hover:bg-white/10")} onClick={() => setBillingCycle('yearly')}>
-                            <div className="flex items-center gap-4">
-                                <RadioGroupItem value="yearly" id="yearly" className="border-blue-500 text-blue-500 h-5 w-5" />
-                                <Label htmlFor="yearly" className="font-black uppercase italic text-sm cursor-pointer">YEARLY LEGEND</Label>
+                        <div className={cn("flex items-center justify-between p-6 rounded-[1.5rem] border-2 transition-all cursor-pointer", billingCycle === 'yearly' ? "bg-blue-500/10 border-blue-500 shadow-xl shadow-blue-500/5" : "bg-white/5 border-white/5 hover:bg-white/10")} onClick={() => setBillingCycle('yearly')}>
+                            <div className="flex items-center gap-5">
+                                <RadioGroupItem value="yearly" id="yearly" className="border-blue-500 text-blue-500 h-6 w-6" />
+                                <Label htmlFor="yearly" className="font-black uppercase italic text-sm cursor-pointer tracking-tight">YEARLY LEGEND</Label>
                             </div>
-                            <span className="font-black text-blue-500 text-lg">₱{prices.yearly}</span>
+                            <span className="font-black text-blue-500 text-2xl">₱{prices.yearly}</span>
                         </div>
                     </RadioGroup>
                    </div>
                 </CardContent>
-                <CardFooter className="bg-white/5 p-8">
-                    <Button onClick={handlePayment} disabled={isCreatingOrder} className="w-full h-16 rounded-2xl font-black text-xl bg-blue-600 hover:bg-blue-700 shadow-xl shadow-orange-500/20 uppercase tracking-widest transition-all active:scale-95">
+                <CardFooter className="bg-white/5 p-8 sm:p-12">
+                    <Button onClick={handlePayment} disabled={isCreatingOrder} className="w-full h-16 rounded-2xl font-black text-xl bg-blue-600 hover:bg-blue-700 shadow-2xl shadow-blue-500/20 uppercase tracking-widest transition-all active:scale-95 group">
                         {isCreatingOrder ? (
-                            <><Loader2 className="mr-3 h-6 w-6 animate-spin" />Processing...</>
+                            <><Loader2 className="mr-3 h-6 w-6 animate-spin" />Securing Session...</>
                         ) : (
-                            <><ExternalLink className="mr-3 h-6 w-6" />PROCEED TO PAYMENT</>
+                            <><CheckCircle className="mr-3 h-6 w-6 group-hover:scale-110 transition-transform" />PROCEED TO PAYMENT</>
                         )}
                     </Button>
                 </CardFooter>

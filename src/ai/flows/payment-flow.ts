@@ -2,8 +2,7 @@
 /**
  * @fileOverview A flow for handling payment gateway integration and verification.
  *
- * - createPaymentOrder: Generates a payment link and session ID for checkout.
- * - verifyPaymentOrder: Securely checks transaction status via Cashfree API.
+ * This flow now exclusively supports the API method for automated processing.
  */
 
 import { ai } from '@/ai/genkit';
@@ -54,7 +53,7 @@ async function createCashfreeOrder(input: CreatePaymentOrderInput & { amount: nu
     
     Cashfree.XClientId = cashfreeAppId;
     Cashfree.XClientSecret = cashfreeSecret;
-    // Switch to production if needed
+    // Environment determined by key or explicitly set
     Cashfree.XEnvironment = Cashfree.Environment.SANDBOX;
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9004';
@@ -111,22 +110,7 @@ const createPaymentOrderFlow = ai.defineFlow(
         
         if (!appConfig.isPaymentsEnabled) throw new Error("Payments are currently disabled by the administrator.");
 
-        // Handle Static Link Method
-        if (appConfig.paymentMethod === 'Link') {
-            let link = '';
-            if (input.plan === 'Verification') {
-                link = appConfig.verificationPaymentLink;
-            } else if (input.plan === 'Premier') {
-                link = appConfig.premierPlanLinks?.[input.billingCycle] || appConfig.premierPaymentLink;
-            } else if (input.plan === 'Super Premier') {
-                link = appConfig.superPremierPlanLinks?.[input.billingCycle] || appConfig.superPremierPaymentLink;
-            }
-
-            if (link) return { payment_link: link };
-            throw new Error(`The link for ${input.plan} (${input.billingCycle}) is not configured in Admin panel.`);
-        }
-
-        // Handle API Method
+        // API Method only - Static links removed per user request
         let amount = 0;
         if (input.plan === 'Verification') amount = appConfig.verificationFee || 0;
         else if (input.plan === 'Premier') amount = appConfig.premierPlanPrices?.[input.billingCycle] || 0;
@@ -155,7 +139,7 @@ const createPaymentOrderFlow = ai.defineFlow(
 
     } catch (error: any) {
         console.error("Payment Order Flow Failure:", error);
-        return { error: error.message || "Could not retrieve payment settings." };
+        return { error: error.message || "Could not retrieve secure payment session." };
     }
   }
 );

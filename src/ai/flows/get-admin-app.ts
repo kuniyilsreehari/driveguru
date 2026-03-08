@@ -1,6 +1,6 @@
 'use server';
 
-import { initializeApp, getApps, App, cert } from 'firebase-admin/app';
+import { initializeApp, getApps, App } from 'firebase-admin/app';
 
 const globalWithApp = global as typeof globalThis & {
   _firebaseAdminApp?: App;
@@ -8,7 +8,7 @@ const globalWithApp = global as typeof globalThis & {
 
 /**
  * Initializes and returns a Firebase Admin App instance using a robust singleton pattern.
- * Prioritizes explicit configuration to avoid metadata refreshing errors in Cloud environments.
+ * Prioritizes environment discovery to avoid token refreshing errors in Cloud environments.
  */
 export async function getAdminApp(): Promise<App> {
   if (globalWithApp._firebaseAdminApp) {
@@ -22,23 +22,22 @@ export async function getAdminApp(): Promise<App> {
   }
 
   try {
-    // In Studio/Workstation environments, explicit config is often required
-    // to prevent the "Could not refresh access token" 500 error.
-    const newApp = initializeApp({
-        projectId: "studio-8621980584-11b8b",
-        storageBucket: "studio-8621980584-11b8b.firebasestorage.app",
-    });
+    // Attempt standard initialization first (best for App Hosting/Cloud Run)
+    const newApp = initializeApp();
     globalWithApp._firebaseAdminApp = newApp;
     return newApp;
   } catch (e: any) {
     try {
-        // Fallback to environment discovery
-        const newApp = initializeApp();
+        // Fallback to explicit config for Studio/Workstation environments
+        const newApp = initializeApp({
+            projectId: "studio-8621980584-11b8b",
+            storageBucket: "studio-8621980584-11b8b.firebasestorage.app",
+        });
         globalWithApp._firebaseAdminApp = newApp;
         return newApp;
     } catch (fallbackError: any) {
         console.error("Firebase Admin SDK Initialization Error:", e);
-        throw new Error(`CRITICAL: Backend authentication failed. Error: ${e.message}`);
+        throw new Error(`CRITICAL: Backend authorization failed. Error: ${e.message}`);
     }
   }
 }
