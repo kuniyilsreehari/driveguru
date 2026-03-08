@@ -395,7 +395,7 @@ export function RegistrationForm() {
         const coords = await getCoordinates(fullAddress);
         
         const newUserDocRef = doc(firestore, "users", newUser.uid);
-        const cleanPhone = sanitizePhone(values.phoneNumber);
+        const cleanPhoneNumber = sanitizePhone(values.phoneNumber);
 
         const userData: any = {
             id: newUser.uid,
@@ -410,7 +410,7 @@ export function RegistrationForm() {
             address: values.address,
             latitude: coords?.lat || null,
             longitude: coords?.lon || null,
-            phoneNumber: `+91 ${cleanPhone}`,
+            phoneNumber: `+91 ${cleanPhoneNumber}`,
             companyName: values.companyName,
             verified: false,
             photoUrl: '',
@@ -448,8 +448,8 @@ export function RegistrationForm() {
         }
     }
 
-    const cleanPhone = sanitizePhone(values.phoneNumber);
-    const fullPhoneNumber = `+91${cleanPhone}`;
+    const cleanPhoneNumber = sanitizePhone(values.phoneNumber);
+    const fullPhoneNumber = `+91${cleanPhoneNumber}`;
     
     setPhoneSignupData({
       phoneNumber: fullPhoneNumber,
@@ -651,7 +651,7 @@ export function RegistrationForm() {
               {(selectedRole === 'Company' || selectedRole === 'Authorized Pro') && (
                 <div className="space-y-4">
                   <FormField control={form.control} name="companyName" render={({ field }) => (<FormItem><FormLabel>Company Name</FormLabel><div className="relative"><Building className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><FormControl><Input placeholder="Company name" {...field} className="pl-10" /></FormControl></div><FormMessage /></FormItem>)} />
-                  <FormField control={form.control} name="department" render={({ field }) => (<FormItem><FormLabel>Department</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Department" /></SelectTrigger></FormControl><SelectContent>{departments.map(dep => <SelectItem key={dep} value={dep}>{dep}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
+                  <FormField control={form.control} name="department" render={({ field }) => (<FormItem><FormLabel>Department</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Department" /></SelectTrigger></FormControl><SelectContent>{departments.map(dep => <SelectItem key={dep} value={dep}>{dep}</SelectItem>)}</Select><FormMessage /></FormItem>)} />
                   <FormField control={form.control} name="address" render={({ field }) => (<FormItem><FormLabel>Address</FormLabel><div className="relative"><Home className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" /><FormControl><Textarea placeholder="Full address" {...field} className="pl-10" /></FormControl></div><FormMessage /></FormItem>)} />
                 </div>
               )}
@@ -681,7 +681,7 @@ export function RegistrationForm() {
                   <FormItem><FormLabel>Referral Code (Optional)</FormLabel><div className="relative"><Gift className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><FormControl><Input placeholder="Referral code" {...field} className="pl-10" disabled={!!searchParams.get('ref')} /></FormControl></div><FormMessage /></FormItem>
               )} />
             <FormField control={phoneForm.control} name="role" render={({ field }) => (
-                <FormItem><FormLabel>Role</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select role" /></SelectTrigger></FormControl><SelectContent>{expertTypes.map(t => <SelectItem key={t.name} value={t.name}>{t.name}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>
+                <FormItem><FormLabel>Role</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select role" /></SelectTrigger></FormControl><SelectContent>{expertTypes.map(t => <SelectItem key={t.name} value={t.name}>{t.name}</SelectItem>)}</Select><FormMessage /></FormItem>
                 )} />
             {selectedPhoneRole === 'Freelancer' && (
                 <div className="grid grid-cols-2 gap-4">

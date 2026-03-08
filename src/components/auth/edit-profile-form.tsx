@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react";
@@ -472,17 +471,23 @@ export function EditProfileForm({ userProfile, onSuccess, isAdmin = false }: Edi
     }
   };
 
+  const sanitizePhone = (num: string) => {
+    const digits = num.replace(/\D/g, '');
+    return digits.length > 10 ? digits.slice(-10) : digits;
+  };
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     if (!firestore || !user) return;
 
     try {
       const userDocRef = doc(firestore, 'users', user.uid);
+      const cleanPhoneNumber = sanitizePhone(values.phoneNumber || '');
+      
       const updatedData: Partial<ExpertUserProfile> = {
         ...values,
         phoneNumber:
-          values.countryCode && values.phoneNumber
-            ? `${values.countryCode} ${values.phoneNumber}`
+          values.countryCode && cleanPhoneNumber
+            ? `${values.countryCode} ${cleanPhoneNumber}`
             : '',
       };
       
@@ -562,11 +567,11 @@ export function EditProfileForm({ userProfile, onSuccess, isAdmin = false }: Edi
               <FormLabel className="text-lg font-black uppercase tracking-widest text-primary">Triple Image Profile Slots</FormLabel>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
                   {[1, 2, 3].map((slot) => {
-                      const currentPhoto = slot === 1 ? photoUrl : slot === 2 ? photoUrl2 : photoUrl3;
-                      const ref = slot === 1 ? fileInputRef1 : slot === 2 ? fileInputRef2 : fileInputRef3;
+                      const currentPhoto = slot === 1 ? photoUrl : slot === 2 ? photoUrl2 : slot === 3 ? photoUrl3 : null;
+                      const ref = slot === 1 ? fileInputRef1 : slot === 2 ? fileInputRef2 : slot === 3 ? fileInputRef3 : null;
                       return (
                           <div key={slot} className="flex flex-col items-center gap-3">
-                              <Avatar className="h-32 w-32 cursor-pointer border-2 border-dashed border-white/10 hover:border-primary/50 transition-all" onClick={() => ref.current?.click()}>
+                              <Avatar className="h-32 w-32 cursor-pointer border-2 border-dashed border-white/10 hover:border-primary/50 transition-all" onClick={() => ref?.current?.click()}>
                                 <AvatarImage src={currentPhoto ? `${currentPhoto}` : undefined} className="object-cover" />
                                 <AvatarFallback className="text-[10px] text-center px-4 font-bold leading-tight bg-white/5">
                                     {uploadingSlot === slot ? (
@@ -576,7 +581,7 @@ export function EditProfileForm({ userProfile, onSuccess, isAdmin = false }: Edi
                                     )}
                                 </AvatarFallback>
                               </Avatar>
-                              <Button type="button" variant="outline" size="sm" className="w-full h-9 rounded-xl border-white/10 bg-white/5 hover:bg-white/10" onClick={() => ref.current?.click()} disabled={uploadingSlot !== null}>
+                              <Button type="button" variant="outline" size="sm" className="w-full h-9 rounded-xl border-white/10 bg-white/5 hover:bg-white/10" onClick={() => ref?.current?.click()} disabled={uploadingSlot !== null}>
                                   {uploadingSlot === slot ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4 mr-2" />}
                                   {slot === 1 ? 'Primary' : `Photo ${slot}`}
                               </Button>
@@ -618,7 +623,7 @@ export function EditProfileForm({ userProfile, onSuccess, isAdmin = false }: Edi
                     {expertTypes.map((type) => (
                       <SelectItem key={type.name} value={type.name}>
                         <div className="flex items-center gap-2">
-                          {React.cloneElement(type.icon, { className: "w-4 h-4" })}
+                          {React.cloneElement(type.icon as React.ReactElement, { className: "w-4 h-4" })}
                           {type.name}
                         </div>
                       </SelectItem>
@@ -1121,7 +1126,7 @@ export function EditProfileForm({ userProfile, onSuccess, isAdmin = false }: Edi
                 <div className="relative">
                   <PenSquare className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <FormControl>
-                    <Textarea placeholder="Describe your professional dreams and aspirations..." {...field} className="pl-10" />
+                    <Textarea placeholder="Describe your professional dreams and aspirations..." {...field} className="pl-10 min-h-[100px]" />
                   </FormControl>
                 </div>
                 <FormMessage />

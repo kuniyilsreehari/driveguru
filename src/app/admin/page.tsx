@@ -904,13 +904,13 @@ export default function AdminDashboardPage() {
           </TabsContent>
 
           <TabsContent value="reports" className="mt-0 space-y-8">
-            {mounted && (
+            {mounted && reportData && (
               <>
                 <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
                     <Card className="border-none bg-card shadow-xl">
                         <CardHeader className="pb-2">
                             <CardDescription className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2"><TrendingUp className="h-3 w-3 text-green-500" /> Platform Revenue</CardDescription>
-                            <CardTitle className="text-3xl font-black text-orange-500">₹{reportData ? reportData.totalRevenue.toLocaleString() : '0'}</CardTitle>
+                            <CardTitle className="text-3xl font-black text-orange-500">₹{reportData.totalRevenue.toLocaleString()}</CardTitle>
                         </CardHeader>
                     </Card>
                     <Card className="border-none bg-card shadow-xl">
@@ -928,7 +928,7 @@ export default function AdminDashboardPage() {
                     <Card className="border-none bg-card shadow-xl">
                         <CardHeader className="pb-2">
                             <CardDescription className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2"><MessageSquare className="h-3 w-3 text-orange-500" /> Community Content</CardDescription>
-                            <CardTitle className="text-3xl font-black">{reportData?.totalPosts || 0} Posts</CardTitle>
+                            <CardTitle className="text-3xl font-black">{reportData.totalPosts} Posts</CardTitle>
                         </CardHeader>
                     </Card>
                 </div>
@@ -940,7 +940,7 @@ export default function AdminDashboardPage() {
                         </CardHeader>
                         <CardContent className="pt-8 h-[300px]">
                             <ResponsiveContainer width="100%" height="100%">
-                                <BarChart data={reportData?.userGrowth || []}>
+                                <BarChart data={reportData.userGrowth}>
                                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#ffffff10" />
                                     <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#8a92a6', fontSize: 12}} />
                                     <YAxis axisLine={false} tickLine={false} tick={{fill: '#8a92a6', fontSize: 12}} />
@@ -959,8 +959,8 @@ export default function AdminDashboardPage() {
                             <div className="w-1/2 h-full">
                                 <ResponsiveContainer width="100%" height="100%">
                                     <RePieChart>
-                                        <Pie data={reportData?.revenueByPlan || []} innerRadius={60} outerRadius={100} paddingAngle={5} dataKey="value">
-                                            {(reportData?.revenueByPlan || []).map((entry, index) => (
+                                        <Pie data={reportData.revenueByPlan} innerRadius={60} outerRadius={100} paddingAngle={5} dataKey="value">
+                                            {reportData.revenueByPlan.map((entry, index) => (
                                                 <Cell key={`cell-${index}`} fill={entry.color} />
                                             ))}
                                         </Pie>
@@ -969,7 +969,7 @@ export default function AdminDashboardPage() {
                                 </ResponsiveContainer>
                             </div>
                             <div className="w-1/2 space-y-4">
-                                {(reportData?.revenueByPlan || []).map((item, i) => (
+                                {reportData.revenueByPlan.map((item, i) => (
                                     <div key={i} className="flex items-center justify-between">
                                         <div className="flex items-center gap-2">
                                             <div className="h-3 w-3 rounded-full" style={{backgroundColor: item.color}} />
