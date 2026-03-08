@@ -32,6 +32,13 @@ function PremierPaymentPageContent() {
             return;
         }
 
+        // IMPORTANT: Open the blank window synchronously to prevent popup blocker
+        const checkoutWindow = window.open('', '_blank');
+        if (!checkoutWindow) {
+            toast({ variant: 'destructive', title: 'Popup Blocked', description: 'Please allow popups to continue to payment.' });
+            return;
+        }
+
         setIsCreatingOrder(true);
         try {
             const result = await createPaymentOrder({
@@ -44,13 +51,15 @@ function PremierPaymentPageContent() {
             });
 
             if (result.error) {
+                checkoutWindow.close();
                 throw new Error(result.error);
             }
 
             if (result.payment_link) {
-                // Ensure the link is opened in a new tab
-                window.open(result.payment_link, '_blank');
+                // Set the URL of the already-open tab
+                checkoutWindow.location.href = result.payment_link;
             } else {
+                checkoutWindow.close();
                 throw new Error("The secure link for this plan is not currently configured by the admin.");
             }
         } catch (error: any) {
