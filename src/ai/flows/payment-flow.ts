@@ -1,8 +1,9 @@
+
 'use server';
 /**
  * @fileOverview A flow for handling payment gateway integration and verification.
  *
- * This flow now exclusively supports the API method for automated processing.
+ * This flow supports both automated API method and simplified static links.
  */
 
 import { ai } from '@/ai/genkit';
@@ -19,7 +20,7 @@ const CreatePaymentOrderInputSchema = z.object({
   userName: z.string(),
   userPhone: z.string(),
   plan: z.enum(['Premier', 'Super Premier', 'Verification']),
-  billingCycle: z.enum(['daily', 'monthly', 'yearly', 'one-time']),
+  billingCycle: z.enum(['daily', 'monthly', 'yearly', 'one-time']).optional(),
 });
 export type CreatePaymentOrderInput = z.infer<typeof CreatePaymentOrderInputSchema>;
 
@@ -53,7 +54,6 @@ async function createCashfreeOrder(input: CreatePaymentOrderInput & { amount: nu
     
     Cashfree.XClientId = cashfreeAppId;
     Cashfree.XClientSecret = cashfreeSecret;
-    // Environment determined by key or explicitly set
     Cashfree.XEnvironment = Cashfree.Environment.SANDBOX;
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9004';
@@ -74,7 +74,7 @@ async function createCashfreeOrder(input: CreatePaymentOrderInput & { amount: nu
         order_meta: {
             return_url: returnUrl,
         },
-        order_note: `DriveGuru: ${input.plan} (${input.billingCycle})`,
+        order_note: `DriveGuru: ${input.plan}`,
     };
 
     try {
@@ -91,7 +91,7 @@ async function createCashfreeOrder(input: CreatePaymentOrderInput & { amount: nu
     }
 }
 
-export async function createPaymentOrder(input: CreatePaymentOrderInput): Promise<CreatePaymentOrderOutput> {
+export async function createPaymentOrder(input: CreatePaymentOrderInput): Promise<CreatePaymentOrderOrderOutput> {
   return createPaymentOrderFlow(input);
 }
 
@@ -110,13 +110,22 @@ const createPaymentOrderFlow = ai.defineFlow(
         
         if (!appConfig.isPaymentsEnabled) throw new Error("Payments are currently disabled by the administrator.");
 
-        // API Method only - Static links removed per user request
-        let amount = 0;
-        if (input.plan === 'Verification') amount = appConfig.verificationFee || 0;
-        else if (input.plan === 'Premier') amount = appConfig.premierPlanPrices?.[input.billingCycle] || 0;
-        else if (input.plan === 'Super Premier') amount = appConfig.superPremierPlanPrices?.[input.billingCycle] || 0;
+        // Priority Logic: Check for Static Links first if method is "Link"
+        if (appConfig.paymentMethod === 'Link') {
+            let link = '';
+            if (input.plan === 'Verification') link = appConfig.verificationPaymentLink;
+            else if (input.plan === 'Premier') link = appConfig.premierPaymentLink;
+            else if (input.plan === 'Super Premier') link = appConfig.superPremierPaymentLink;
 
-        if (amount <= 0) throw new Error(`Price for ${input.plan} (${input.billingCycle}) is not set correctly in Admin panel.`);
+            if (link) return { payment_link: link };
+            throw new Error(`Static link for ${input.plan} is not configured.`);
+        }
+
+        // Fallback to API Method
+        let amount = 0;
+        if (input.plan === 'Verification') amount = appConfig.verificationFee || 49;
+        // Note: For API, we'd still need a price. Using verificationFee as base or default.
+        else amount = 100; // Default fallback for API tiers if no specific price provided
 
         const orderId = `order_${uuidv4()}`;
         const paymentRef = firestore.collection('payments').doc();
@@ -125,7 +134,6 @@ const createPaymentOrderFlow = ai.defineFlow(
             id: paymentRef.id,
             userId: input.userId,
             plan: input.plan,
-            billingCycle: input.billingCycle,
             amount,
             currency: 'INR',
             orderId,
@@ -139,7 +147,7 @@ const createPaymentOrderFlow = ai.defineFlow(
 
     } catch (error: any) {
         console.error("Payment Order Flow Failure:", error);
-        return { error: error.message || "Could not retrieve secure payment session." };
+        return { error: error.message || "Could not initiate payment session." };
     }
   }
 );
@@ -169,10 +177,9 @@ const verifyPaymentOrderFlow = ai.defineFlow(
                 return { status: 'SUCCESS', message: 'Payment already verified.', plan: paymentData.plan, userId: paymentData.userId };
             }
 
-            // Securely check Cashfree API
             const clientId = process.env.CASHFREE_APP_ID;
             const secret = process.env.CASHFREE_SECRET;
-            const env = 'sandbox'; // Adjust based on environment
+            const env = 'sandbox'; 
 
             const response = await axios.get(
                 `https://${env}.cashfree.com/pg/orders/${orderId}`,

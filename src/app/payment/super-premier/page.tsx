@@ -1,29 +1,21 @@
+
 'use client';
 
 import { Suspense, useState } from 'react';
 import Link from 'next/link';
-import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
+import { useUser } from '@/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Loader2, ChevronLeft, Sparkles, CheckCircle } from 'lucide-react';
+import { Loader2, ChevronLeft, Sparkles, CheckCircle, Crown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { createPaymentOrder } from '@/ai/flows/payment-flow';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Label } from '@/components/ui/label';
-import { doc } from 'firebase/firestore';
-import { cn } from '@/lib/utils';
 
 function SuperPremierPaymentPageContent() {
     const { user, isUserLoading } = useUser();
-    const firestore = useFirestore();
     const [isCreatingOrder, setIsCreatingOrder] = useState(false);
-    const [billingCycle, setBillingCycle] = useState<'daily' | 'monthly' | 'yearly'>('monthly');
     const { toast } = useToast();
     const router = useRouter();
-
-    const appConfigDocRef = useMemoFirebase(() => doc(firestore, 'app_config', 'homepage'), [firestore]);
-    const { data: appConfig } = useDoc<any>(appConfigDocRef);
 
     const handlePayment = async () => {
         if (!user) {
@@ -32,7 +24,6 @@ function SuperPremierPaymentPageContent() {
             return;
         }
 
-        // CRITICAL: Initialize the window reference SYNCHRONOUSLY to prevent popup blocking.
         const checkoutWindow = typeof window !== 'undefined' ? window.open('about:blank', '_blank') : null;
         
         if (!checkoutWindow) {
@@ -52,7 +43,6 @@ function SuperPremierPaymentPageContent() {
                 userName: user.displayName || 'Expert User',
                 userPhone: user.phoneNumber || '',
                 plan: 'Super Premier',
-                billingCycle: billingCycle,
             });
 
             if (result.error) {
@@ -61,7 +51,6 @@ function SuperPremierPaymentPageContent() {
             }
 
             if (result.payment_link) {
-                // Securely redirect the pre-opened tab to the checkout URL
                 checkoutWindow.location.href = result.payment_link;
             } else {
                 checkoutWindow.close();
@@ -73,7 +62,7 @@ function SuperPremierPaymentPageContent() {
             toast({
                 variant: 'destructive',
                 title: "Gateway Error",
-                description: error.message || "Failed to retrieve the secure link. Please try again.",
+                description: error.message || "Failed to retrieve the secure link.",
             });
         } finally {
             setIsCreatingOrder(false);
@@ -88,8 +77,6 @@ function SuperPremierPaymentPageContent() {
             </div>
         );
     }
-
-    const prices = appConfig?.superPremierPlanPrices || { daily: 20, monthly: 400, yearly: 2000 };
 
     return (
         <div className="space-y-6">
@@ -106,30 +93,26 @@ function SuperPremierPaymentPageContent() {
                 </CardHeader>
                 <CardContent className="p-8 sm:p-12 space-y-10">
                    <div className="space-y-6">
-                    <h3 className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] text-center mb-8">Choose Your Billing Cycle</h3>
-                     <RadioGroup value={billingCycle} onValueChange={(value: 'daily' | 'monthly' | 'yearly') => setBillingCycle(value)} className="grid grid-cols-1 gap-4">
-                        <div className={cn("flex items-center justify-between p-6 rounded-[1.5rem] border-2 transition-all cursor-pointer", billingCycle === 'daily' ? "bg-blue-500/10 border-blue-500 shadow-xl shadow-blue-500/5" : "bg-white/5 border-white/5 hover:bg-white/10")} onClick={() => setBillingCycle('daily')}>
-                            <div className="flex items-center gap-5">
-                                <RadioGroupItem value="daily" id="daily" className="border-blue-500 text-blue-500 h-6 w-6" />
-                                <Label htmlFor="daily" className="font-black uppercase italic text-sm cursor-pointer tracking-tight">DAILY POWER</Label>
-                            </div>
-                            <span className="font-black text-blue-500 text-2xl">₱{prices.daily}</span>
+                        <div className="bg-white/5 border-2 border-blue-500/20 p-8 rounded-[2rem] text-center shadow-inner group hover:bg-blue-500/5 transition-colors">
+                            <Crown className="h-10 w-10 text-blue-500 mx-auto mb-4 opacity-50" />
+                            <h3 className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] mb-2">ACCESS MODEL</h3>
+                            <p className="text-4xl font-black text-white italic">SUPER PREMIER</p>
+                            <p className="text-xs text-muted-foreground mt-4 font-medium uppercase tracking-widest">Maximum Platform Influence</p>
                         </div>
-                        <div className={cn("flex items-center justify-between p-6 rounded-[1.5rem] border-2 transition-all cursor-pointer", billingCycle === 'monthly' ? "bg-blue-500/10 border-blue-500 shadow-xl shadow-blue-500/5" : "bg-white/5 border-white/5 hover:bg-white/10")} onClick={() => setBillingCycle('monthly')}>
-                            <div className="flex items-center gap-5">
-                                <RadioGroupItem value="monthly" id="monthly" className="border-blue-500 text-blue-500 h-6 w-6" />
-                                <Label htmlFor="monthly" className="font-black uppercase italic text-sm cursor-pointer tracking-tight">MONTHLY ELITE</Label>
-                            </div>
-                            <span className="font-black text-blue-500 text-2xl">₱{prices.monthly}</span>
-                        </div>
-                        <div className={cn("flex items-center justify-between p-6 rounded-[1.5rem] border-2 transition-all cursor-pointer", billingCycle === 'yearly' ? "bg-blue-500/10 border-blue-500 shadow-xl shadow-blue-500/5" : "bg-white/5 border-white/5 hover:bg-white/10")} onClick={() => setBillingCycle('yearly')}>
-                            <div className="flex items-center gap-5">
-                                <RadioGroupItem value="yearly" id="yearly" className="border-blue-500 text-blue-500 h-6 w-6" />
-                                <Label htmlFor="yearly" className="font-black uppercase italic text-sm cursor-pointer tracking-tight">YEARLY LEGEND</Label>
-                            </div>
-                            <span className="font-black text-blue-500 text-2xl">₱{prices.yearly}</span>
-                        </div>
-                    </RadioGroup>
+                        <ul className="space-y-4 px-2">
+                            <li className="flex items-center gap-3 text-sm font-bold text-white/70 uppercase tracking-tight">
+                                <CheckCircle className="h-5 w-5 text-green-500" />
+                                Homepage Carousel Placement
+                            </li>
+                            <li className="flex items-center gap-3 text-sm font-bold text-white/70 uppercase tracking-tight">
+                                <CheckCircle className="h-5 w-5 text-green-500" />
+                                AI Natural Language Search Tools
+                            </li>
+                            <li className="flex items-center gap-3 text-sm font-bold text-white/70 uppercase tracking-tight">
+                                <CheckCircle className="h-5 w-5 text-green-500" />
+                                Elite Blue Sparkle Badge
+                            </li>
+                        </ul>
                    </div>
                 </CardContent>
                 <CardFooter className="bg-white/5 p-8 sm:p-12">

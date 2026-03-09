@@ -9,7 +9,7 @@ import { useUser, useFirestore, useDoc, useMemoFirebase, useAuth, useCollection 
 import { updateDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, UserX, Crown, Sparkles, User as UserIcon, Save, Briefcase, Building, MessageSquare, Search, PlusCircle, Download, IndianRupee, Upload, HardDriveDownload, Megaphone, Rss, TrendingUp, PieChart, Activity, ChevronLeft, ChevronRight, Check, Gift, Phone, Eye, Layout, Hash, SortAsc, LayoutGrid, CheckCircle2, ShieldAlert } from 'lucide-react';
+import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, UserX, Crown, Sparkles, User as UserIcon, Save, Briefcase, Building, MessageSquare, Search, PlusCircle, Download, IndianRupee, Upload, HardDriveDownload, Megaphone, Rss, TrendingUp, PieChart, Activity, ChevronLeft, ChevronRight, Check, Gift, Phone, Eye, Layout, Hash, SortAsc, LayoutGrid, CheckCircle2, ShieldAlert, Link as LinkIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -128,16 +128,18 @@ type AppConfig = {
     isAnnouncementEnabled?: boolean;
     announcementSpeed?: number;
     isPaymentsEnabled?: boolean;
+    paymentMethod?: 'API' | 'Link';
     publicApiKey?: string;
     referralRewardPoints?: number;
     homepageCategories?: HomepageCategory[];
     departments?: string[];
     pricingModels?: string[];
-    premierPlanPrices?: { daily: number; monthly: number; yearly: number };
-    superPremierPlanPrices?: { daily: number; monthly: number; yearly: number };
     verificationFee?: number;
     centralContactPhone?: string;
     isRecentProfessionalsEnabled?: boolean;
+    verificationPaymentLink?: string;
+    premierPaymentLink?: string;
+    superPremierPaymentLink?: string;
 };
 
 export default function AdminDashboardPage() {
@@ -169,20 +171,23 @@ export default function AdminDashboardPage() {
   const [paymentPage, setPaymentPage] = useState(1);
   const [feedPage, setFeedPage] = useState(1);
 
+  // App Config States
   const [featuredLimit, setFeaturedLimit] = useState(3);
   const [announcementText, setAnnouncementText] = useState("");
   const [announcementEnabled, setAnnouncementEnabled] = useState(false);
   const [announcementSpeed, setAnnouncementSpeed] = useState(20);
   const [paymentsEnabled, setPaymentsEnabled] = useState(true);
+  const [paymentMethod, setPaymentMethod] = useState<'API' | 'Link'>('Link');
+  const [verificationFee, setVerificationFee] = useState(49);
+  const [verificationLink, setVerificationLink] = useState("");
+  const [premierLink, setPremierLink] = useState("");
+  const [superPremierLink, setSuperPremierLink] = useState("");
+  const [centralContactPhone, setCentralContactPhone] = useState("");
+  const [isRecentProfessionalsEnabled, setIsRecentProfessionalsEnabled] = useState(true);
   const [publicApiKey, setPublicApiKey] = useState("");
   const [referralPoints, setReferralPoints] = useState(100);
   const [homepageCategories, setHomepageCategories] = useState<HomepageCategory[]>([]);
   const [departments, setDepartments] = useState<string[]>([]);
-  const [verificationFee, setVerificationFee] = useState(49);
-  const [premierPrices, setPremierPrices] = useState({ daily: 10, monthly: 200, yearly: 1000 });
-  const [superPremierPrices, setSuperPremierPrices] = useState({ daily: 20, monthly: 400, yearly: 2000 });
-  const [centralContactPhone, setCentralContactPhone] = useState("");
-  const [isRecentProfessionalsEnabled, setIsRecentProfessionalsEnabled] = useState(true);
 
   const [hasSuperAdminClaim, setHasSuperAdminClaim] = useState(false);
 
@@ -229,15 +234,17 @@ export default function AdminDashboardPage() {
       setAnnouncementEnabled(appConfig.isAnnouncementEnabled || false);
       setAnnouncementSpeed(appConfig.announcementSpeed || 20);
       setPaymentsEnabled(appConfig.isPaymentsEnabled !== false);
+      setPaymentMethod(appConfig.paymentMethod || 'Link');
+      setVerificationFee(appConfig.verificationFee || 49);
+      setVerificationLink(appConfig.verificationPaymentLink || "");
+      setPremierLink(appConfig.premierPaymentLink || "");
+      setSuperPremierLink(appConfig.superPremierPaymentLink || "");
+      setCentralContactPhone(appConfig.centralContactPhone || "");
+      setIsRecentProfessionalsEnabled(appConfig.isRecentProfessionalsEnabled !== false);
       setPublicApiKey(appConfig.publicApiKey || "");
       setReferralPoints(appConfig.referralRewardPoints || 100);
       setHomepageCategories(appConfig.homepageCategories || []);
       setDepartments(appConfig.departments || []);
-      setVerificationFee(appConfig.verificationFee || 49);
-      setCentralContactPhone(appConfig.centralContactPhone || "");
-      setIsRecentProfessionalsEnabled(appConfig.isRecentProfessionalsEnabled !== false);
-      if (appConfig.premierPlanPrices) setPremierPrices(appConfig.premierPlanPrices);
-      if (appConfig.superPremierPlanPrices) setSuperPremierPrices(appConfig.superPremierPlanPrices);
     }
   }, [appConfig]);
 
@@ -337,15 +344,17 @@ export default function AdminDashboardPage() {
         isAnnouncementEnabled: announcementEnabled,
         announcementSpeed,
         isPaymentsEnabled: paymentsEnabled,
+        paymentMethod,
+        verificationFee,
+        verificationPaymentLink: verificationLink,
+        premierPaymentLink: premierLink,
+        superPremierPaymentLink: superPremierLink,
+        centralContactPhone,
+        isRecentProfessionalsEnabled,
         publicApiKey,
         referralRewardPoints: referralPoints,
         homepageCategories,
         departments,
-        premierPlanPrices: premierPrices,
-        superPremierPlanPrices: superPremierPrices,
-        verificationFee,
-        centralContactPhone,
-        isRecentProfessionalsEnabled,
       }, { merge: true });
       toast({ title: "Settings Published" });
     } finally {
@@ -1047,71 +1056,73 @@ export default function AdminDashboardPage() {
               <CardHeader className="bg-white/5 border-b border-white/5 pb-6">
                 <div className="flex items-center gap-3">
                     <IndianRupee className="h-6 w-6 text-orange-500" />
-                    <CardTitle className="text-2xl font-black uppercase italic">Payment Configuration</CardTitle>
+                    <CardTitle className="text-2xl font-black uppercase italic">Payment Architecture</CardTitle>
                 </div>
-                <CardDescription className="text-muted-foreground">Manage API keys and pricing cycles for automated upgrades.</CardDescription>
+                <CardDescription className="text-muted-foreground">Choose between automated API processing or simplified static links.</CardDescription>
               </CardHeader>
               <CardContent className="p-6 space-y-8">
-                <div className="flex items-center justify-between p-4 bg-background rounded-xl border border-white/5 shadow-inner">
-                    <div>
-                        <Label className="text-base font-black uppercase italic">Payments Status</Label>
-                        <p className="text-xs text-muted-foreground font-medium">Toggle global automated payment accessibility.</p>
-                    </div>
-                    <Switch checked={paymentsEnabled} onCheckedChange={setPaymentsEnabled} className="data-[state=checked]:bg-orange-500" />
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 p-6 bg-white/5 rounded-2xl border border-white/5">
-                    <div className="space-y-4">
-                        <h4 className="text-sm font-black text-purple-500 uppercase tracking-widest flex items-center gap-2"><Crown className="h-4 w-4" /> Premier Pricing (₱)</h4>
-                        <div className="grid grid-cols-3 gap-3">
-                            <div className="space-y-1">
-                                <Label className="text-[10px] text-muted-foreground uppercase">Daily</Label>
-                                <Input type="number" value={premierPrices.daily} onChange={e => setPremierPrices({...premierPrices, daily: Number(e.target.value)})} className="bg-background border-none h-10" />
-                            </div>
-                            <div className="space-y-1">
-                                <Label className="text-[10px] text-muted-foreground uppercase">Monthly</Label>
-                                <Input type="number" value={premierPrices.monthly} onChange={e => setPremierPrices({...premierPrices, monthly: Number(e.target.value)})} className="bg-background border-none h-10" />
-                            </div>
-                            <div className="space-y-1">
-                                <Label className="text-[10px] text-muted-foreground uppercase">Yearly</Label>
-                                <Input type="number" value={premierPrices.yearly} onChange={e => setPremierPrices({...premierPrices, yearly: Number(e.target.value)})} className="bg-background border-none h-10" />
-                            </div>
-                        </div>
-                    </div>
-                    <div className="space-y-4">
-                        <h4 className="text-sm font-black text-blue-500 uppercase tracking-widest flex items-center gap-2"><Sparkles className="h-4 w-4" /> Super Premier (₱)</h4>
-                        <div className="grid grid-cols-3 gap-3">
-                            <div className="space-y-1">
-                                <Label className="text-[10px] text-muted-foreground uppercase">Daily</Label>
-                                <Input type="number" value={superPremierPrices.daily} onChange={e => setSuperPremierPrices({...superPremierPrices, daily: Number(e.target.value)})} className="bg-background border-none h-10" />
-                            </div>
-                            <div className="space-y-1">
-                                <Label className="text-[10px] text-muted-foreground uppercase">Monthly</Label>
-                                <Input type="number" value={superPremierPrices.monthly} onChange={e => setSuperPremierPrices({...superPremierPrices, monthly: Number(e.target.value)})} className="bg-background border-none h-10" />
-                            </div>
-                            <div className="space-y-1">
-                                <Label className="text-[10px] text-muted-foreground uppercase">Yearly</Label>
-                                <Input type="number" value={superPremierPrices.yearly} onChange={e => setSuperPremierPrices({...superPremierPrices, yearly: Number(e.target.value)})} className="bg-background border-none h-10" />
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                        <Label className="font-black text-primary text-[10px] uppercase tracking-[0.2em]">Public API Key / App ID</Label>
-                        <Input value={publicApiKey} onChange={e => setPublicApiKey(e.target.value)} className="rounded-xl h-12 bg-background border-none font-mono text-orange-500 shadow-inner" placeholder="Enter Cashfree App ID..." />
+                    <div className="flex items-center justify-between p-4 bg-background rounded-xl border border-white/5 shadow-inner">
+                        <div>
+                            <Label className="text-base font-black uppercase italic">Global Payments</Label>
+                            <p className="text-xs text-muted-foreground font-medium">Enable or disable entire transaction system.</p>
+                        </div>
+                        <Switch checked={paymentsEnabled} onCheckedChange={setPaymentsEnabled} className="data-[state=checked]:bg-orange-500" />
                     </div>
                     <div className="space-y-2">
-                        <Label className="font-black text-primary text-[10px] uppercase tracking-[0.2em]">One-time Verification Fee (₱)</Label>
-                        <Input type="number" value={verificationFee} onChange={e => setVerificationFee(Number(e.target.value))} className="rounded-xl h-12 bg-background border-none font-black text-white text-xl shadow-inner" />
+                        <Label className="font-black text-primary text-[10px] uppercase tracking-widest">Selected Gateway Method</Label>
+                        <Select value={paymentMethod} onValueChange={(v: 'API' | 'Link') => setPaymentMethod(v)}>
+                            <SelectTrigger className="rounded-xl h-14 bg-background border-none font-bold">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="API">Automated API (Cashfree Direct)</SelectItem>
+                                <SelectItem value="Link">Static Links (Manual Approval)</SelectItem>
+                            </SelectContent>
+                        </Select>
                     </div>
+                </div>
+
+                {paymentMethod === 'Link' ? (
+                    <div className="space-y-6 p-6 bg-white/5 rounded-2xl border border-white/5 animate-in fade-in slide-in-from-top-4 duration-500">
+                        <h4 className="text-sm font-black text-orange-500 uppercase tracking-widest flex items-center gap-2"><LinkIcon className="h-4 w-4" /> Three-Model Static Links</h4>
+                        <div className="grid grid-cols-1 gap-4">
+                            <div className="space-y-2">
+                                <Label className="text-[10px] text-muted-foreground uppercase font-black">Verification Payment Link</Label>
+                                <Input value={verificationLink} onChange={e => setVerificationLink(e.target.value)} className="bg-background border-none h-12 font-mono text-xs" placeholder="https://..." />
+                            </div>
+                            <div className="space-y-2">
+                                <Label className="text-[10px] text-muted-foreground uppercase font-black">Premier Plan Link</Label>
+                                <Input value={premierLink} onChange={e => setPremierLink(e.target.value)} className="bg-background border-none h-12 font-mono text-xs" placeholder="https://..." />
+                            </div>
+                            <div className="space-y-2">
+                                <Label className="text-[10px] text-muted-foreground uppercase font-black">Super Premier Link</Label>
+                                <Input value={superPremierLink} onChange={e => setSuperPremierLink(e.target.value)} className="bg-background border-none h-12 font-mono text-xs" placeholder="https://..." />
+                            </div>
+                        </div>
+                    </div>
+                ) : (
+                    <div className="space-y-6 p-6 bg-white/5 rounded-2xl border border-white/5 animate-in fade-in slide-in-from-top-4 duration-500">
+                        <h4 className="text-sm font-black text-blue-500 uppercase tracking-widest flex items-center gap-2"><Activity className="h-4 w-4" /> API Configuration (Automation)</h4>
+                        <div className="space-y-4">
+                            <div className="space-y-2">
+                                <Label className="font-black text-primary text-[10px] uppercase tracking-[0.2em]">Cashfree App ID (Public)</Label>
+                                <Input value={publicApiKey} onChange={e => setPublicApiKey(e.target.value)} className="rounded-xl h-12 bg-background border-none font-mono text-orange-500 shadow-inner" placeholder="Enter Cashfree App ID..." />
+                            </div>
+                            <p className="text-[10px] text-muted-foreground italic">Note: API method requires matching backend credentials in the .env file.</p>
+                        </div>
+                    </div>
+                )}
+
+                <div className="space-y-2 max-w-xs">
+                    <Label className="font-black text-primary text-[10px] uppercase tracking-[0.2em]">Expert Verification Fee (₱)</Label>
+                    <Input type="number" value={verificationFee} onChange={e => setVerificationFee(Number(e.target.value))} className="rounded-xl h-12 bg-background border-none font-black text-white text-xl shadow-inner" />
                 </div>
               </CardContent>
               <CardFooter className="bg-white/5 p-6">
                 <Button onClick={handleSaveSettings} disabled={isSaving} className="w-full h-14 rounded-2xl font-black text-lg bg-orange-500 hover:bg-orange-600 shadow-xl shadow-orange-500/20 uppercase tracking-widest transition-all active:scale-95">
                     {isSaving ? <Loader className="animate-spin h-5 w-5 mr-2" /> : <Save className="mr-2 h-5 w-5" />} 
-                    Publish Platform Settings
+                    Save & Publish Settings
                 </Button>
               </CardFooter>
             </Card>
@@ -1123,7 +1134,7 @@ export default function AdminDashboardPage() {
                             <Layout className="h-6 w-6 text-orange-500" />
                             <CardTitle className="text-xl font-black uppercase italic">Homepage Modules</CardTitle>
                         </div>
-                        <CardDescription className="text-muted-foreground">Manage the display of core homepage sections.</CardDescription>
+                        <CardDescription className="text-muted-foreground">Manage the visibility of core sections.</CardDescription>
                     </CardHeader>
                     <CardContent className="p-6 space-y-6">
                         <div className="space-y-2">
@@ -1132,8 +1143,8 @@ export default function AdminDashboardPage() {
                         </div>
                         <div className="flex items-center justify-between p-4 bg-background rounded-xl border border-white/5 shadow-inner">
                             <div>
-                                <Label className="text-base font-black uppercase italic">Recent Professionals Grid</Label>
-                                <p className="text-xs text-muted-foreground font-medium">Show or hide the secondary grid section.</p>
+                                <Label className="text-base font-black uppercase italic">Recent Grid</Label>
+                                <p className="text-xs text-muted-foreground font-medium">Toggle the 'Recent Professionals' section.</p>
                             </div>
                             <Switch checked={isRecentProfessionalsEnabled} onCheckedChange={setIsRecentProfessionalsEnabled} className="data-[state=checked]:bg-blue-500" />
                         </div>
@@ -1256,7 +1267,7 @@ export default function AdminDashboardPage() {
           <AlertDialogHeader className="items-center text-center">
             <div className="p-4 bg-red-500/10 rounded-full w-fit mb-4"><UserX className="h-10 w-10 text-red-500" /></div>
             <AlertDialogTitle className="text-2xl font-black uppercase italic">Purge User Account?</AlertDialogTitle>
-            <AlertDialogDescription className="text-muted-foreground font-medium">This action is irreversible and will remove all profile data, history, and login access for this expert.</AlertDialogDescription>
+            <AlertDialogDescription className="text-muted-foreground font-medium">Irreversible removal of all profile data, history, and login access.</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="flex-col gap-2 sm:flex-col pt-4">
             <AlertDialogAction onClick={handleDeleteUser} className="w-full h-12 bg-red-500 hover:bg-red-600 font-black rounded-xl border-none">Permanently Delete</AlertDialogAction>
