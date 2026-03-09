@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
@@ -8,7 +9,7 @@ import { useUser, useFirestore, useDoc, useMemoFirebase, useAuth, useCollection 
 import { updateDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, UserX, Crown, Sparkles, User as UserIcon, Save, Briefcase, Building, MessageSquare, Search, PlusCircle, Download, IndianRupee, Upload, HardDriveDownload, Megaphone, Rss, TrendingUp, PieChart, Activity, ChevronLeft, ChevronRight, Check, Gift, Phone, Eye, Layout, Hash, SortAsc, LayoutGrid } from 'lucide-react';
+import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, UserX, Crown, Sparkles, User as UserIcon, Save, Briefcase, Building, MessageSquare, Search, PlusCircle, Download, IndianRupee, Upload, HardDriveDownload, Megaphone, Rss, TrendingUp, PieChart, Activity, ChevronLeft, ChevronRight, Check, Gift, Phone, Eye, Layout, Hash, SortAsc, LayoutGrid, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -1079,15 +1080,15 @@ export default function AdminDashboardPage() {
                         <div className="grid grid-cols-3 gap-3">
                             <div className="space-y-1">
                                 <Label className="text-[10px] text-muted-foreground uppercase">Daily</Label>
-                                <Input type="number" value={superPremierPrices.daily} onChange={e => setSuperPremierPrices({...superPremierPrices, daily: Number(e.target.value)})} className="bg-background border-none h-10" />
+                                <Input type="number" value={superPremierPrices.daily} onChange={e => setInternalSuperPremierPrices({...superPremierPrices, daily: Number(e.target.value)})} className="bg-background border-none h-10" />
                             </div>
                             <div className="space-y-1">
                                 <Label className="text-[10px] text-muted-foreground uppercase">Monthly</Label>
-                                <Input type="number" value={superPremierPrices.monthly} onChange={e => setSuperPremierPrices({...superPremierPrices, monthly: Number(e.target.value)})} className="bg-background border-none h-10" />
+                                <Input type="number" value={superPremierPrices.monthly} onChange={e => setInternalSuperPremierPrices({...superPremierPrices, monthly: Number(e.target.value)})} className="bg-background border-none h-10" />
                             </div>
                             <div className="space-y-1">
                                 <Label className="text-[10px] text-muted-foreground uppercase">Yearly</Label>
-                                <Input type="number" value={superPremierPrices.yearly} onChange={e => setSuperPremierPrices({...superPremierPrices, yearly: Number(e.target.value)})} className="bg-background border-none h-10" />
+                                <Input type="number" value={superPremierPrices.yearly} onChange={e => setInternalSuperPremierPrices({...superPremierPrices, yearly: Number(e.target.value)})} className="bg-background border-none h-10" />
                             </div>
                         </div>
                     </div>

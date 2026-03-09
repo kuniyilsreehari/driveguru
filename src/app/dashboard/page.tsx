@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
@@ -7,7 +8,7 @@ import { signOut } from 'firebase/auth';
 import { useUser, useAuth, useFirestore, useDoc, useMemoFirebase, useCollection } from '@/firebase';
 import { updateDocumentNonBlocking, addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Button } from '@/components/ui/button';
-import { LogOut, Loader, Edit, UserCheck, User as UserIcon, MessageSquare, Gift, Info, Book, Pen, PlusCircle, MapPin, IndianRupee, Calendar, GraduationCap, School, Building, Home, Rss, Users, Link as LinkIcon, AlertCircle, CheckCircle, Eye, EyeOff, Clock, Crown, Sparkles, ChevronUp, ChevronDown, Shield } from 'lucide-react';
+import { LogOut, Loader, Edit, UserCheck, User as UserIcon, MessageSquare, Gift, Info, Book, Pen, PlusCircle, MapPin, IndianRupee, Calendar, GraduationCap, School, Building, Home, Rss, Users, Link as LinkIcon, AlertCircle, CheckCircle, Eye, EyeOff, Clock, Crown, Sparkles, ChevronUp, ChevronDown, Shield, CheckCircle2 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription as UiDialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { EditProfileForm } from '@/components/auth/edit-profile-form';
@@ -257,10 +258,10 @@ export default function ExpertDashboardPage() {
                     <div className="flex items-center gap-3">
                       <h2 className="text-3xl font-black text-white tracking-tight uppercase italic">{userProfile.companyName || userProfile.firstName}!</h2>
                       <div className="flex items-center gap-2">
-                        {userProfile.verified && <div className="bg-green-500 p-1 rounded-full"><UserCheck className="h-3.5 w-3.5 text-white" /></div>}
-                        {userProfile.tier === 'Premier' && <Crown className="h-5 w-5 text-purple-500 fill-purple-500" />}
-                        {userProfile.tier === 'Super Premier' && <Sparkles className="h-5 w-5 text-blue-500 fill-blue-500" />}
-                        <div className="flex gap-1">
+                        {userProfile.verified && <CheckCircle2 className="h-6 w-6 text-green-500 fill-green-500/10" />}
+                        {userProfile.tier === 'Premier' && <Crown className="h-6 w-6 text-purple-500 fill-purple-500" />}
+                        {userProfile.tier === 'Super Premier' && <Sparkles className="h-6 w-6 text-blue-500 fill-blue-500" />}
+                        <div className="flex gap-1 ml-2">
                           <Button variant="ghost" size="icon" onClick={() => setIsEditDialogOpen(true)} className="h-8 w-8 text-muted-foreground hover:text-white">
                               <Edit className="h-4 w-4" />
                           </Button>
