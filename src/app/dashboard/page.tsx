@@ -258,7 +258,7 @@ export default function ExpertDashboardPage() {
                     <div className="flex items-center gap-3">
                       <h2 className="text-3xl font-black text-white tracking-tight uppercase italic">{userProfile.companyName || userProfile.firstName}!</h2>
                       <div className="flex items-center gap-2">
-                        {userProfile.verified ? <CheckCircle2 className="h-6 w-6 text-green-500 fill-green-500/10" /> : <ShieldAlert className="h-6 w-6 text-muted-foreground/40" />}
+                        {userProfile.verified ? <CheckCircle2 className="h-6 w-6 text-green-500 fill-green-500/10" /> : <ShieldAlert className="h-6 w-6 text-orange-500/40" />}
                         {userProfile.tier === 'Premier' && <Crown className="h-6 w-6 text-purple-500 fill-purple-500" />}
                         {userProfile.tier === 'Super Premier' && <Sparkles className="h-6 w-6 text-blue-500 fill-blue-500" />}
                         <div className="flex gap-1 ml-2">
@@ -327,19 +327,19 @@ export default function ExpertDashboardPage() {
                   </div>
 
                   {!userProfile.verified && (
-                    <div className="p-6 rounded-2xl border-2 border-blue-500/30 bg-blue-500/5 flex flex-col sm:flex-row items-center justify-between gap-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
-                        <div className="flex items-center gap-4 text-center sm:text-left">
-                            <div className="p-3 bg-blue-500/10 rounded-xl">
-                                <Shield className="h-8 w-8 text-blue-500" />
+                    <div className="p-6 rounded-[2rem] border-2 border-white/10 bg-[#24262d] flex flex-col md:flex-row items-center justify-between gap-6 animate-in fade-in slide-in-from-bottom-4 duration-700 shadow-2xl">
+                        <div className="flex items-center gap-5">
+                            <div className="p-4 bg-white/5 rounded-2xl shadow-inner">
+                                <Shield className="h-10 w-10 text-blue-500" strokeWidth={1.5} />
                             </div>
-                            <div>
-                                <h4 className="font-black text-white text-lg uppercase italic tracking-tight">Become a Verified Expert</h4>
-                                <p className="text-sm text-muted-foreground font-medium">Unlock contact features and gain client trust. Verify your profile for a one-time fee of ₱49.</p>
+                            <div className="space-y-1">
+                                <h4 className="font-black text-white text-xl uppercase italic tracking-tighter">BECOME A VERIFIED EXPERT</h4>
+                                <p className="text-sm text-muted-foreground font-medium max-w-sm">Unlock contact features and gain client trust. Verify your profile for a one-time fee of ₱49.</p>
                             </div>
                         </div>
-                        <Button asChild className="w-full sm:w-auto h-14 rounded-xl bg-green-600 hover:bg-green-700 text-white font-black px-8 shadow-xl shadow-green-600/20 uppercase tracking-widest transition-all active:scale-95 group">
+                        <Button asChild className="w-full md:w-auto h-16 rounded-2xl bg-[#16a34a] hover:bg-[#15803d] text-white font-black px-10 shadow-xl shadow-[#16a34a]/20 uppercase tracking-widest transition-all active:scale-95 group">
                             <Link href="/payment/verification">
-                                <ShieldCheck className="mr-2 h-5 w-5 group-hover:scale-110 transition-transform" /> Get Verified for ₱49
+                                <ShieldCheck className="mr-3 h-6 w-6 group-hover:scale-110 transition-transform" /> GET VERIFIED FOR ₱49
                             </Link>
                         </Button>
                     </div>

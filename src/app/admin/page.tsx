@@ -681,7 +681,7 @@ export default function AdminDashboardPage() {
                                                                 <div className="space-y-0.5">
                                                                     <div className="flex items-center gap-1.5">
                                                                         <div className="font-black text-sm text-white">{u.firstName} {u.lastName}</div>
-                                                                        {!u.verified && <ShieldAlert className="h-3.5 w-3.5 text-muted-foreground/40" />}
+                                                                        {!u.verified && <ShieldAlert className="h-3.5 w-3.5 text-orange-500/40" />}
                                                                     </div>
                                                                     <div className="text-[10px] text-muted-foreground uppercase tracking-widest truncate max-w-[150px]">{u.profession || u.role}</div>
                                                                 </div>
