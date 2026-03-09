@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Suspense, useState, useEffect, useMemo } from 'react';
@@ -6,7 +5,7 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { doc, arrayUnion, arrayRemove, collection, serverTimestamp } from 'firebase/firestore';
 import { useFirestore, useDoc, useMemoFirebase, useUser, updateDocumentNonBlocking, addDocumentNonBlocking } from '@/firebase';
-import { Loader2, ChevronLeft, MapPin, IndianRupee, Briefcase, Calendar, Info, Book, GraduationCap, School, User as UserIcon, UserCheck, XCircle, Crown, Sparkles, LogIn, Lock, Building, Home, MessageSquare, PenSquare, Factory, Linkedin, Twitter, Github, Globe, UserPlus, UserMinus, Phone, Youtube, Share2, Rss, Fingerprint, ImageIcon, List } from 'lucide-react';
+import { Loader2, ChevronLeft, MapPin, IndianRupee, Briefcase, Calendar, Info, Book, GraduationCap, School, User as UserIcon, UserCheck, XCircle, Crown, Sparkles, LogIn, Lock, Building, Home, MessageSquare, PenSquare, Factory, Linkedin, Twitter, Github, Globe, UserPlus, UserMinus, Phone, Youtube, Share2, Rss, Fingerprint, ImageIcon, List, CheckCircle2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardFooter } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -306,6 +305,11 @@ function ExpertProfileContent() {
                                 <div className="flex items-center justify-between mb-1">
                                     <div className="flex items-center gap-3">
                                         <h1 className="text-4xl font-bold">{displayName}</h1>
+                                        <div className="flex items-center gap-1.5">
+                                            {expert.verified && <CheckCircle2 className="h-6 w-6 text-green-500 fill-green-500/10" />}
+                                            {expert.tier === 'Premier' && <Crown className="h-6 w-6 text-purple-500 fill-purple-500" />}
+                                            {expert.tier === 'Super Premier' && <Sparkles className="h-6 w-6 text-blue-500 fill-blue-500" />}
+                                        </div>
                                         <Badge variant="outline" className="font-mono text-[10px] uppercase border-primary/30 bg-primary/5 text-primary px-2">
                                             <Fingerprint className="h-3 w-3 mr-1" /> {dgId}
                                         </Badge>
@@ -319,19 +323,8 @@ function ExpertProfileContent() {
                                 {expert.profession && <p className="text-lg font-semibold text-primary">{expert.profession}</p>}
                                 <FollowerStats expert={expert} />
                                 <div className="flex items-center gap-2 mt-3 flex-wrap">
-                                    {expert.verified ? (
-                                        <Badge variant="outline" className="border-green-500 text-green-500">
-                                            <UserCheck className="mr-1 h-3 w-3" />
-                                            Verified
-                                        </Badge>
-                                    ) : (
-                                        <Badge variant="destructive">
-                                            <XCircle className="mr-1 h-3 w-3" />
-                                            Not Verified
-                                        </Badge>
-                                    )}
                                     <Badge variant="secondary" className={cn(
-                                        "text-white border-none",
+                                        "text-white border-none rounded-full px-4 py-1 font-black text-[10px] uppercase tracking-widest",
                                         expert.role === 'Freelancer' ? "bg-blue-600" :
                                         expert.role === 'Company' ? "bg-indigo-600" :
                                         expert.role === 'Authorized Pro' ? "bg-emerald-600" :
@@ -339,8 +332,6 @@ function ExpertProfileContent() {
                                     )}>{expert.role}</Badge>
                                     {expert.category && <Badge variant="secondary" className="bg-white/5 border border-white/10 text-muted-foreground"><List className="mr-1 h-3 w-3" />{expert.category}</Badge>}
                                     {expert.department && <Badge variant="secondary">{expert.department}</Badge>}
-                                    {expert.tier === 'Premier' && <Badge variant="outline" className="border-purple-500 text-purple-500"><Crown className="mr-1 h-3 w-3" /> Premier</Badge>}
-                                    {expert.tier === 'Super Premier' && <Badge variant="outline" className="border-blue-500 text-blue-500"><Sparkles className="mr-1 h-3 w-3" /> Super Premier</Badge>}
                                 </div>
                                 <div className="flex items-center gap-3 mt-4">
                                   {expert.portfolioUrl && <a href={expert.portfolioUrl} target="_blank" rel="noopener noreferrer"><Globe className="h-5 w-5 text-muted-foreground hover:text-primary"/></a>}

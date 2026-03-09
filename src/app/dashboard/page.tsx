@@ -256,15 +256,20 @@ export default function ExpertDashboardPage() {
                   <div className="flex-1 space-y-1">
                     <div className="flex items-center gap-3">
                       <h2 className="text-3xl font-black text-white tracking-tight uppercase italic">{userProfile.companyName || userProfile.firstName}!</h2>
-                      <div className="flex gap-1">
-                        <Button variant="ghost" size="icon" onClick={() => setIsEditDialogOpen(true)} className="h-8 w-8 text-muted-foreground hover:text-white">
-                            <Edit className="h-4 w-4" />
-                        </Button>
-                        <CollapsibleTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-white">
-                            {isProfileExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                      <div className="flex items-center gap-2">
+                        {userProfile.verified && <div className="bg-green-500 p-1 rounded-full"><UserCheck className="h-3.5 w-3.5 text-white" /></div>}
+                        {userProfile.tier === 'Premier' && <Crown className="h-5 w-5 text-purple-500 fill-purple-500" />}
+                        {userProfile.tier === 'Super Premier' && <Sparkles className="h-5 w-5 text-blue-500 fill-blue-500" />}
+                        <div className="flex gap-1">
+                          <Button variant="ghost" size="icon" onClick={() => setIsEditDialogOpen(true)} className="h-8 w-8 text-muted-foreground hover:text-white">
+                              <Edit className="h-4 w-4" />
                           </Button>
-                        </CollapsibleTrigger>
+                          <CollapsibleTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-white">
+                              {isProfileExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                            </Button>
+                          </CollapsibleTrigger>
+                        </div>
                       </div>
                     </div>
                     <div className="flex flex-wrap items-center gap-4 text-xs font-black uppercase tracking-widest text-muted-foreground">
@@ -272,15 +277,12 @@ export default function ExpertDashboardPage() {
                       <span className="flex items-center gap-1.5"><Users className="h-3.5 w-3.5 text-orange-500" /> {userProfile.following?.length || 0} Following</span>
                     </div>
                     <div className="flex wrap gap-2 mt-3">
-                      {userProfile.verified && <Badge className="bg-green-500 text-white border-none font-black text-[10px] uppercase h-6 px-3"><UserCheck className="h-3 w-3 mr-1" /> Verified</Badge>}
-                      {userProfile.tier === 'Super Premier' && <Badge className="bg-blue-600 text-white border-none font-black text-[10px] uppercase h-6 px-3 flex items-center gap-1"><Sparkles className="h-3 w-3" /> Super Premier</Badge>}
-                      {userProfile.tier === 'Premier' && <Badge className="bg-purple-600 text-white border-none font-black text-[10px] uppercase h-6 px-3 flex items-center gap-1"><Crown className="h-3 w-3" /> Premier</Badge>}
-                      <Badge variant="secondary" className="font-black bg-white/10 text-white border-none text-[10px] uppercase tracking-widest">{userProfile.role}</Badge>
+                      <Badge variant="secondary" className="font-black bg-white/10 text-white border-none text-[10px] uppercase tracking-widest px-4 py-1 rounded-full">{userProfile.role}</Badge>
                     </div>
                   </div>
                   <div className="flex flex-col gap-2 w-full md:w-auto">
-                      <Button onClick={() => setIsEditDialogOpen(true)} className="w-full bg-orange-500 hover:bg-orange-600 text-white font-black rounded-xl h-12 shadow-xl shadow-orange-500/20 uppercase tracking-widest">
-                          <Edit className="mr-2 h-4 w-4" /> Update Profile
+                      <Button onClick={() => setIsEditDialogOpen(true)} className="w-full bg-orange-500 hover:bg-orange-600 text-white font-black rounded-xl h-14 px-8 shadow-xl shadow-orange-500/20 uppercase tracking-widest">
+                          <Edit className="mr-2 h-5 w-5" /> Update Profile
                       </Button>
                   </div>
                 </CardHeader>

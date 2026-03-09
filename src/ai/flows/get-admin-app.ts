@@ -23,6 +23,7 @@ export async function getAdminApp(): Promise<App> {
 
   try {
     // Attempt standard initialization first (best for App Hosting/Cloud Run)
+    // This allows the SDK to automatically discover service account credentials.
     const newApp = initializeApp();
     globalWithApp._firebaseAdminApp = newApp;
     return newApp;

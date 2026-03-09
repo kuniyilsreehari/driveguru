@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { Star, IndianRupee, Briefcase, Calendar, Phone, MessageSquare, UserCheck, Crown, Sparkles, MapPin, Lock, List, Share2, Fingerprint } from 'lucide-react';
+import { Star, IndianRupee, Briefcase, Calendar, Phone, MessageSquare, UserCheck, Crown, Sparkles, MapPin, Lock, List, Share2, Fingerprint, CheckCircle2 } from 'lucide-react';
 import { useUser, useFirestore, updateDocumentNonBlocking } from '@/firebase';
 import { FollowerStats } from './follower-stats';
 import { useToast } from '@/hooks/use-toast';
@@ -73,7 +73,6 @@ export function ExpertCard({ expert }: ExpertCardProps) {
     }
 
     const dgId = `DG-${expert.id.substring(0, 8).toUpperCase()}`;
-    const locationString = [expert.city, expert.state, expert.pincode].filter(Boolean).join(', ');
     
     // Determine if contact actions should be shown
     const canShowContactActions = expert.verified && expert.showPhoneNumberOnProfile && expert.phoneNumber;
@@ -100,6 +99,11 @@ export function ExpertCard({ expert }: ExpertCardProps) {
                             <Link href={`/expert/${expert.id}`} className="block cursor-pointer flex-1">
                                 <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                                     <h3 className="text-xl font-black text-white group-hover:text-orange-500 transition-colors uppercase italic">{getDisplayName(expert)}</h3>
+                                    <div className="flex items-center gap-1">
+                                        {expert.verified && <CheckCircle2 className="h-4 w-4 text-green-500 fill-green-500/10" />}
+                                        {expert.tier === 'Premier' && <Crown className="h-4 w-4 text-purple-500 fill-purple-500" />}
+                                        {expert.tier === 'Super Premier' && <Sparkles className="h-4 w-4 text-blue-500 fill-blue-500" />}
+                                    </div>
                                     {expert.isAvailable && (
                                         <Badge className="bg-green-500 text-white rounded-full px-3 text-[9px] font-black h-5 uppercase tracking-tighter">Available</Badge>
                                     )}
@@ -117,16 +121,8 @@ export function ExpertCard({ expert }: ExpertCardProps) {
                                     <FollowerStats expert={expert} />
                                 </div>
                                 <div className="flex flex-wrap items-center gap-2 mt-3">
-                                    {expert.verified ? (
-                                        <Badge variant="outline" className="border-green-500/30 bg-green-500/5 text-green-500 text-[9px] font-black uppercase">
-                                            <UserCheck className="mr-1 h-3 w-3" />
-                                            Verified
-                                        </Badge>
-                                    ) : (
-                                        <Badge variant="destructive" className="text-[9px] font-black uppercase">Not Verified</Badge>
-                                    )}
                                     <Badge variant="secondary" className={cn(
-                                        "text-white border-none text-[9px] font-black uppercase tracking-widest",
+                                        "text-white border-none text-[9px] font-black uppercase tracking-widest rounded-full px-3",
                                         expert.role === 'Freelancer' ? "bg-blue-600" :
                                         expert.role === 'Company' ? "bg-indigo-600" :
                                         expert.role === 'Authorized Pro' ? "bg-emerald-600" :
