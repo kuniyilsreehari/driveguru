@@ -793,10 +793,9 @@ export default function AdminDashboardPage() {
                                     <Button variant="outline" size="sm" onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} disabled={currentPage === 1} className="rounded-xl h-9 border-white/10 bg-transparent text-white font-bold"><ChevronLeft className="h-4 w-4" /></Button>
                                     <Button variant="outline" size="sm" onClick={() => setCurrentPage(prev => prev + 1)} disabled={currentPage >= Math.ceil(filteredUsers.length / ITEMS_PER_PAGE)} className="rounded-xl h-9 border-white/10 bg-transparent text-white font-bold"><ChevronRight className="h-4 w-4" /></Button>
                                 </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </TabsContent>
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
 
                 <TabsContent value="vacancies">
                     <Card className="border-none bg-card rounded-2xl overflow-hidden shadow-2xl">

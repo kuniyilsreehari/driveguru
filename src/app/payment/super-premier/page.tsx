@@ -54,7 +54,7 @@ function SuperPremierPaymentPageContent() {
                 checkoutWindow.location.href = result.payment_link;
             } else {
                 checkoutWindow.close();
-                throw new Error("Automated link generation failed. Please contact support.");
+                throw new Error("Automated link generation failed.");
             }
         } catch (error: any) {
             console.error("Payment initiation failed:", error);

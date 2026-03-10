@@ -91,7 +91,7 @@ async function createCashfreeOrder(input: CreatePaymentOrderInput & { amount: nu
     }
 }
 
-export async function createPaymentOrder(input: CreatePaymentOrderInput): Promise<CreatePaymentOrderOrderOutput> {
+export async function createPaymentOrder(input: CreatePaymentOrderInput): Promise<CreatePaymentOrderOutput> {
   return createPaymentOrderFlow(input);
 }
 
@@ -124,8 +124,7 @@ const createPaymentOrderFlow = ai.defineFlow(
         // Fallback to API Method
         let amount = 0;
         if (input.plan === 'Verification') amount = appConfig.verificationFee || 49;
-        // Note: For API, we'd still need a price. Using verificationFee as base or default.
-        else amount = 100; // Default fallback for API tiers if no specific price provided
+        else amount = 100; // Default fallback for API tiers
 
         const orderId = `order_${uuidv4()}`;
         const paymentRef = firestore.collection('payments').doc();

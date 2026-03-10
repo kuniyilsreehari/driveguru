@@ -24,7 +24,6 @@ function PremierPaymentPageContent() {
             return;
         }
 
-        // CRITICAL: Initialize the window reference SYNCHRONOUSLY to prevent popup blocking.
         const checkoutWindow = typeof window !== 'undefined' ? window.open('about:blank', '_blank') : null;
         
         if (!checkoutWindow) {
@@ -55,7 +54,7 @@ function PremierPaymentPageContent() {
                 checkoutWindow.location.href = result.payment_link;
             } else {
                 checkoutWindow.close();
-                throw new Error("Automated link generation failed. Please contact support.");
+                throw new Error("Automated link generation failed.");
             }
         } catch (error: any) {
             console.error("Payment initiation failed:", error);
