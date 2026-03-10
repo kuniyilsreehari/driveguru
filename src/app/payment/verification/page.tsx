@@ -63,7 +63,7 @@ function VerificationPaymentPageContent() {
                 checkoutWindow.location.href = result.payment_link;
             } else {
                 checkoutWindow.close();
-                throw new Error("Automated link generation failed.");
+                throw new Error("Checkout link not configured.");
             }
         } catch (error: any) {
             console.error("Verification initiation failed:", error);

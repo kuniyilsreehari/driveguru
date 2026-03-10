@@ -1,6 +1,6 @@
 'use server';
 
-import { initializeApp, getApps, App } from 'firebase-admin/app';
+import { initializeApp, getApps, App, cert } from 'firebase-admin/app';
 
 const globalWithApp = global as typeof globalThis & {
   _firebaseAdminApp?: App;
@@ -9,7 +9,7 @@ const globalWithApp = global as typeof globalThis & {
 /**
  * Initializes and returns a Firebase Admin App instance.
  * Uses a singleton pattern to prevent multiple initializations.
- * Resolves token refresh issues in Studio/App Hosting environments.
+ * Explicitly handles configuration for the Studio/App Hosting environments.
  */
 export async function getAdminApp(): Promise<App> {
   if (globalWithApp._firebaseAdminApp) {
@@ -29,12 +29,19 @@ export async function getAdminApp(): Promise<App> {
   };
 
   try {
-    // Attempt standard initialization
+    // In local development or Studio with ADC, initializeApp() without args often works
+    // but providing explicit config is more reliable for token refreshes.
     const newApp = initializeApp(config);
     globalWithApp._firebaseAdminApp = newApp;
     return newApp;
   } catch (e: any) {
+    // Fallback if the default initialization fails (e.g. app already exists)
+    const apps = getApps();
+    if (apps.length > 0) {
+        globalWithApp._firebaseAdminApp = apps[0];
+        return apps[0];
+    }
     console.error("Firebase Admin SDK Initialization Error:", e);
-    throw new Error(`CRITICAL: Backend authorization failed. Please ensure environment variables are set. ${e.message}`);
+    throw new Error(`CRITICAL: Backend authorization failed. ${e.message}`);
   }
 }
