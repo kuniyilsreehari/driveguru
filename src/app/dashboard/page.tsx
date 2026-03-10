@@ -26,6 +26,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { UserList } from '@/components/user-list';
 import { Separator } from '@/components/ui/separator';
 import { ProfileCompletionWizard } from '@/components/profile-completion-wizard';
+import { createPaymentOrder } from '@/ai/flows/payment-flow';
 import {
   Collapsible,
   CollapsibleContent,
@@ -84,6 +85,7 @@ export default function ExpertDashboardPage() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isWizardOpen, setIsWizardOpen] = useState(false);
   const [isSubmittingPost, setIsSubmittingPost] = useState(false);
+  const [isProcessingVerify, setIsProcessingVerify] = useState(false);
   const [showPostForm, setShowPostForm] = useState(false);
   const [isProfileExpanded, setIsProfileExpanded] = useState(true);
   const [isHideDialogOpen, setIsHideDialogOpen] = useState(false);
@@ -166,6 +168,41 @@ export default function ExpertDashboardPage() {
     updateDocumentNonBlocking(userDocRef, { hiddenUntil: null });
     toast({ title: "Profile Visible", description: "Your profile is now visible to everyone." });
   }
+
+  const handleDirectVerify = async () => {
+    if (!user) return;
+    
+    const checkoutWindow = window.open('', '_blank');
+    if (!checkoutWindow) {
+        toast({ variant: 'destructive', title: 'Popup Blocked', description: 'Please allow popups to proceed to verification.' });
+        return;
+    }
+
+    checkoutWindow.document.write('<html><body style="background:#1a1c23;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;color:white;font-family:sans-serif;text-align:center;"><div><h2 style="font-style:italic;font-weight:900;">CONNECTING...</h2><p style="opacity:0.6;">Securing your verification session.</p></div></body></html>');
+
+    setIsProcessingVerify(true);
+    try {
+        const result = await createPaymentOrder({
+            userId: user.uid,
+            userEmail: user.email || '',
+            userName: `${userProfile?.firstName} ${userProfile?.lastName}` || 'Expert User',
+            userPhone: userProfile?.phoneNumber || '',
+            plan: 'Verification',
+        });
+
+        if (result.payment_link) {
+            checkoutWindow.location.href = result.payment_link;
+        } else {
+            checkoutWindow.close();
+            toast({ variant: 'destructive', title: 'Link Not Found', description: result.error || 'Verification link is not configured.' });
+        }
+    } catch (e: any) {
+        checkoutWindow.close();
+        toast({ variant: 'destructive', title: 'Error', description: 'Failed to initiate verification.' });
+    } finally {
+        setIsProcessingVerify(false);
+    }
+  };
 
   async function onPostSubmit(values: z.infer<typeof postFormSchema>) {
     if (!firestore || !user) return;
@@ -336,10 +373,9 @@ export default function ExpertDashboardPage() {
                                 <p className="text-sm text-muted-foreground font-medium max-w-sm">Unlock contact features and gain client trust. Verify your profile for a one-time fee of ₱49.</p>
                             </div>
                         </div>
-                        <Button asChild className="w-full md:w-auto h-16 rounded-2xl bg-[#16a34a] hover:bg-[#15803d] text-white font-black px-10 shadow-xl shadow-[#16a34a]/20 uppercase tracking-widest transition-all active:scale-95 group">
-                            <Link href="/payment/verification">
-                                <ShieldCheck className="mr-3 h-6 w-6 group-hover:scale-110 transition-transform" /> GET VERIFIED FOR ₱49
-                            </Link>
+                        <Button onClick={handleDirectVerify} disabled={isProcessingVerify} className="w-full md:w-auto h-16 rounded-2xl bg-[#16a34a] hover:bg-[#15803d] text-white font-black px-10 shadow-xl shadow-[#16a34a]/20 uppercase tracking-widest transition-all active:scale-95 group">
+                            {isProcessingVerify ? <Loader className="mr-3 h-6 w-6 animate-spin" /> : <ShieldCheck className="mr-3 h-6 w-6 group-hover:scale-110 transition-transform" />}
+                            GET VERIFIED FOR ₱49
                         </Button>
                     </div>
                   )}
