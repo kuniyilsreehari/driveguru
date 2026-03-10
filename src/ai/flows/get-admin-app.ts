@@ -8,7 +8,7 @@ const globalWithApp = global as typeof globalThis & {
 
 /**
  * Initializes and returns a Firebase Admin App instance.
- * Optimized for Studio/App Hosting environments to prevent token refresh errors.
+ * Optimized for Studio environment to prevent token refresh errors.
  */
 export async function getAdminApp(): Promise<App> {
   if (globalWithApp._firebaseAdminApp) {

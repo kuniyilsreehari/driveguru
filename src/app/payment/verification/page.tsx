@@ -72,7 +72,6 @@ function VerificationPaymentPageContent() {
                 title: "Gateway Error",
                 description: error.message || "Failed to retrieve the secure link.",
             });
-            // Ensure the window doesn't stay open at "CONNECTING" if there's an error
             if (checkoutWindow && !checkoutWindow.closed) {
                 checkoutWindow.close();
             }

@@ -761,7 +761,7 @@ export default function AdminDashboardPage() {
                                                                     <DropdownMenuItem onClick={() => { setSelectedUser(u); setIsEditDialogOpen(true); }} className="rounded-lg h-10"><Edit className="mr-2 h-4 w-4" /> Edit Profile</DropdownMenuItem>
                                                                     <DropdownMenuItem onClick={() => { setSelectedUser(u); setIsAwardDialogOpen(true); }} className="rounded-lg h-10 text-orange-500"><Gift className="mr-2 h-4 w-4" /> Award Points</DropdownMenuItem>
                                                                     {!u.referralCode && (
-                                                                        <DropdownMenuItem onClick={() => handleGenerateReferralCode(u.id)} className="rounded-lg h-10 text-orange-500"><Hash className="mr-2 h-4 w-4" /> Generate Code</DropdownMenuItem>
+                                                                        <DropdownMenuItem onClick={() => handleUpdateUserTier(u.id, 'Standard')} className="rounded-lg h-10 text-orange-500"><Hash className="mr-2 h-4 w-4" /> Generate Code</DropdownMenuItem>
                                                                     )}
                                                                     <DropdownMenuSub>
                                                                         <DropdownMenuSubTrigger className="rounded-lg h-10"><Crown className="mr-2 h-4 w-4" /> Change Tier</DropdownMenuSubTrigger>
@@ -1089,25 +1089,25 @@ export default function AdminDashboardPage() {
                     </div>
                 </div>
 
-                {paymentMethod === 'Link' ? (
-                    <div className="space-y-6 p-6 bg-white/5 rounded-2xl border border-white/5 animate-in fade-in slide-in-from-top-4 duration-500">
-                        <h4 className="text-sm font-black text-orange-500 uppercase tracking-widest flex items-center gap-2"><LinkIcon className="h-4 w-4" /> Three-Model Static Links</h4>
-                        <div className="grid grid-cols-1 gap-4">
-                            <div className="space-y-2">
-                                <Label className="text-[10px] text-muted-foreground uppercase font-black">Verification Payment Link</Label>
-                                <Input value={verificationLink} onChange={e => setVerificationLink(e.target.value)} className="bg-background border-none h-12 font-mono text-xs" placeholder="https://..." />
-                            </div>
-                            <div className="space-y-2">
-                                <Label className="text-[10px] text-muted-foreground uppercase font-black">Premier Plan Link</Label>
-                                <Input value={premierLink} onChange={e => setPremierLink(e.target.value)} className="bg-background border-none h-12 font-mono text-xs" placeholder="https://..." />
-                            </div>
-                            <div className="space-y-2">
-                                <Label className="text-[10px] text-muted-foreground uppercase font-black">Super Premier Link</Label>
-                                <Input value={superPremierLink} onChange={e => setSuperPremierLink(e.target.value)} className="bg-background border-none h-12 font-mono text-xs" placeholder="https://..." />
-                            </div>
+                <div className="space-y-6 p-6 bg-white/5 rounded-2xl border border-white/5 animate-in fade-in slide-in-from-top-4 duration-500">
+                    <h4 className="text-sm font-black text-orange-500 uppercase tracking-widest flex items-center gap-2"><LinkIcon className="h-4 w-4" /> Three-Model Static Links</h4>
+                    <div className="grid grid-cols-1 gap-4">
+                        <div className="space-y-2">
+                            <Label className="text-[10px] text-muted-foreground uppercase font-black">Verification Payment Link</Label>
+                            <Input value={verificationLink} onChange={e => setVerificationLink(e.target.value)} className="bg-background border-none h-12 font-mono text-xs" placeholder="https://..." />
+                        </div>
+                        <div className="space-y-2">
+                            <Label className="text-[10px] text-muted-foreground uppercase font-black">Premier Plan Link</Label>
+                            <Input value={premierLink} onChange={e => setPremierLink(e.target.value)} className="bg-background border-none h-12 font-mono text-xs" placeholder="https://..." />
+                        </div>
+                        <div className="space-y-2">
+                            <Label className="text-[10px] text-muted-foreground uppercase font-black">Super Premier Link</Label>
+                            <Input value={superPremierLink} onChange={e => setSuperPremierLink(e.target.value)} className="bg-background border-none h-12 font-mono text-xs" placeholder="https://..." />
                         </div>
                     </div>
-                ) : (
+                </div>
+
+                {paymentMethod === 'API' && (
                     <div className="space-y-6 p-6 bg-white/5 rounded-2xl border border-white/5 animate-in fade-in slide-in-from-top-4 duration-500">
                         <h4 className="text-sm font-black text-blue-500 uppercase tracking-widest flex items-center gap-2"><Activity className="h-4 w-4" /> API Configuration (Automation)</h4>
                         <div className="space-y-4">
