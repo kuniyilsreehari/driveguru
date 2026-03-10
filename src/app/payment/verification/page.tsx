@@ -28,21 +28,6 @@ function VerificationPaymentPageContent() {
             return;
         }
 
-        // Open window immediately to prevent browser popup blockers
-        const checkoutWindow = window.open('', '_blank');
-        
-        if (!checkoutWindow) {
-            toast({ 
-                variant: 'destructive', 
-                title: 'Popup Blocked', 
-                description: 'Please allow popups for DriveGuru to proceed to the secure payment gateway.' 
-            });
-            return;
-        }
-
-        // Show a placeholder in the new tab
-        checkoutWindow.document.write('<html><body style="background:#1a1c23;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;color:white;font-family:sans-serif;text-align:center;"><div><h2 style="font-style:italic;font-weight:900;">CONNECTING...</h2><p style="opacity:0.6;">Securing your lifetime verification session.</p></div></body></html>');
-
         setIsCreatingOrder(true);
         try {
             const result = await createPaymentOrder({
@@ -54,15 +39,13 @@ function VerificationPaymentPageContent() {
             });
 
             if (result.error) {
-                checkoutWindow.document.body.innerHTML = `<div style="background:#1a1c23;color:white;display:flex;align-items:center;justify-content:center;height:100vh;flex-direction:column;font-family:sans-serif;"><h2>Access Denied</h2><p>${result.error}</p></div>`;
-                setTimeout(() => checkoutWindow.close(), 3000);
                 throw new Error(result.error);
             }
 
             if (result.payment_link) {
-                checkoutWindow.location.href = result.payment_link;
+                // Use same tab to support BACK button
+                window.location.href = result.payment_link;
             } else {
-                checkoutWindow.close();
                 throw new Error("Checkout link not configured.");
             }
         } catch (error: any) {
@@ -72,9 +55,6 @@ function VerificationPaymentPageContent() {
                 title: "Gateway Error",
                 description: error.message || "Failed to retrieve the secure link.",
             });
-            if (checkoutWindow && !checkoutWindow.closed) {
-                checkoutWindow.close();
-            }
         } finally {
             setIsCreatingOrder(false);
         }
