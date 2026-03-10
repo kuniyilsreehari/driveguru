@@ -39,6 +39,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { CreateUserForm } from '@/components/auth/create-user-form';
 import { useToast } from '@/hooks/use-toast';
 import { Switch } from '@/components/ui/switch';
