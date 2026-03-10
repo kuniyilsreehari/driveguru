@@ -1,7 +1,7 @@
 'use server';
 /**
  * @fileOverview A flow for handling payment gateway integration and verification.
- * Supports both automated API method and simplified single-link models for 3 tiers.
+ * Simplified to a 3-tier model: Verified, Premier, Super Premier.
  */
 
 import { ai } from '@/ai/genkit';
@@ -46,7 +46,7 @@ async function createCashfreeOrder(input: CreatePaymentOrderInput & { amount: nu
     const cashfreeSecret = process.env.CASHFREE_SECRET;
 
     if (!cashfreeAppId || !cashfreeSecret) {
-        throw new Error('Cashfree credentials not configured.');
+        throw new Error('Cashfree API credentials not found in environment.');
     }
     
     Cashfree.XClientId = cashfreeAppId;
@@ -82,7 +82,7 @@ async function createCashfreeOrder(input: CreatePaymentOrderInput & { amount: nu
                 payment_session_id: response.data.payment_session_id 
             };
         }
-        throw new Error('Session ID missing in Cashfree response');
+        throw new Error('Session ID missing in response');
     } catch (error: any) {
         throw new Error(error.response?.data?.message || error.message || 'Cashfree API Error');
     }
@@ -107,7 +107,7 @@ const createPaymentOrderFlow = ai.defineFlow(
         
         if (appConfig.isPaymentsEnabled === false) throw new Error("Payments are currently disabled.");
 
-        // Priority: Three-Model Link Method
+        // Priority: Link Method (The 3-Link model requested)
         if (appConfig.paymentMethod === 'Link') {
             let link = '';
             if (input.plan === 'Verification') link = appConfig.verificationPaymentLink;
@@ -115,13 +115,13 @@ const createPaymentOrderFlow = ai.defineFlow(
             else if (input.plan === 'Super Premier') link = appConfig.superPremierPaymentLink;
 
             if (link) return { payment_link: link };
-            throw new Error(`Checkout link for ${input.plan} is not configured.`);
+            throw new Error(`Checkout link for ${input.plan} is not configured in Admin.`);
         }
 
         // Automated API Method
         let amount = 0;
         if (input.plan === 'Verification') amount = appConfig.verificationFee || 49;
-        else if (input.plan === 'Premier') amount = 499;
+        else if (input.plan === 'Premier') amount = 499; // Default if API is used
         else amount = 999;
 
         const orderId = `order_${uuidv4()}`;

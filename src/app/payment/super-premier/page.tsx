@@ -36,7 +36,7 @@ function SuperPremierPaymentPageContent() {
         }
 
         // Show a placeholder while fetching
-        checkoutWindow.document.write('<html><body style="background:#1a1c23;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;color:white;font-family:sans-serif;"><div>Connecting to secure payment gateway...</div></body></html>');
+        checkoutWindow.document.write('<html><body style="background:#1a1c23;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;color:white;font-family:sans-serif;text-align:center;"><div><h2 style="font-style:italic;font-weight:900;">CONNECTING...</h2><p style="opacity:0.6;">Securing your elite access session.</p></div></body></html>');
 
         setIsCreatingOrder(true);
         try {
@@ -49,7 +49,8 @@ function SuperPremierPaymentPageContent() {
             });
 
             if (result.error) {
-                checkoutWindow.close();
+                checkoutWindow.document.body.innerHTML = `<div style="background:#1a1c23;color:white;display:flex;align-items:center;justify-content:center;height:100vh;flex-direction:column;font-family:sans-serif;"><h2>Access Denied</h2><p>${result.error}</p></div>`;
+                setTimeout(() => checkoutWindow.close(), 3000);
                 throw new Error(result.error);
             }
 
@@ -61,7 +62,6 @@ function SuperPremierPaymentPageContent() {
             }
         } catch (error: any) {
             console.error("Payment initiation failed:", error);
-            if (checkoutWindow) checkoutWindow.close();
             toast({
                 variant: 'destructive',
                 title: "Gateway Error",

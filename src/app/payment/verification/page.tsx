@@ -40,8 +40,8 @@ function VerificationPaymentPageContent() {
             return;
         }
 
-        // Show a placeholder in the new tab while we fetch the link
-        checkoutWindow.document.write('<html><body style="background:#1a1c23;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;color:white;font-family:sans-serif;"><div>Connecting to secure verification gateway...</div></body></html>');
+        // Show a placeholder in the new tab
+        checkoutWindow.document.write('<html><body style="background:#1a1c23;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;color:white;font-family:sans-serif;text-align:center;"><div><h2 style="font-style:italic;font-weight:900;">CONNECTING...</h2><p style="opacity:0.6;">Securing your lifetime verification session.</p></div></body></html>');
 
         setIsCreatingOrder(true);
         try {
@@ -51,11 +51,11 @@ function VerificationPaymentPageContent() {
                 userName: user.displayName || 'Expert User',
                 userPhone: user.phoneNumber || '',
                 plan: 'Verification',
-                billingCycle: 'one-time',
             });
 
             if (result.error) {
-                checkoutWindow.close();
+                checkoutWindow.document.body.innerHTML = `<div style="background:#1a1c23;color:white;display:flex;align-items:center;justify-content:center;height:100vh;flex-direction:column;font-family:sans-serif;"><h2>Access Denied</h2><p>${result.error}</p></div>`;
+                setTimeout(() => checkoutWindow.close(), 3000);
                 throw new Error(result.error);
             }
 
@@ -67,7 +67,6 @@ function VerificationPaymentPageContent() {
             }
         } catch (error: any) {
             console.error("Verification initiation failed:", error);
-            if (checkoutWindow) checkoutWindow.close();
             toast({
                 variant: 'destructive',
                 title: "Gateway Error",
@@ -87,25 +86,6 @@ function VerificationPaymentPageContent() {
         );
     }
     
-    if (user?.emailVerified) {
-         return (
-            <div className="space-y-6">
-                 <Button variant="outline" asChild className="rounded-xl border-white/10 hover:bg-white/5 font-bold uppercase text-[10px] tracking-widest h-10">
-                    <Link href={`/dashboard`}><ChevronLeft className="mr-2 h-4 w-4" /> Back to Dashboard</Link>
-                </Button>
-                <Card className="border-none bg-[#24262d] shadow-2xl rounded-[2.5rem] overflow-hidden">
-                    <CardHeader className="text-center pt-12">
-                         <div className="p-5 bg-green-500/10 rounded-full w-fit mx-auto mb-6 shadow-inner">
-                            <CheckCircle className="h-14 w-12 text-green-500" />
-                        </div>
-                        <CardTitle className="text-3xl font-black uppercase italic tracking-tighter text-white">Already Verified</CardTitle>
-                        <CardDescription className="text-muted-foreground font-medium pt-2">Your profile is already active with full contact features.</CardDescription>
-                    </CardHeader>
-                </Card>
-            </div>
-        );
-    }
-
     const fee = appConfig?.verificationFee || 49;
 
     return (
