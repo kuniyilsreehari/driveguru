@@ -7,7 +7,7 @@ import { signOut } from 'firebase/auth';
 import { useUser, useAuth, useFirestore, useDoc, useMemoFirebase, useCollection } from '@/firebase';
 import { updateDocumentNonBlocking, addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Button } from '@/components/ui/button';
-import { LogOut, Loader, Edit, UserCheck, User as UserIcon, MessageSquare, Gift, Info, Book, Pen, PlusCircle, MapPin, IndianRupee, Calendar, GraduationCap, School, Building, Home, Rss, Users, Link as LinkIcon, AlertCircle, CheckCircle, Eye, EyeOff, Clock, Crown, Sparkles, ChevronUp, ChevronDown, Shield, CheckCircle2, ShieldAlert, ShieldCheck } from 'lucide-react';
+import { LogOut, Loader, Edit, UserCheck, User as UserIcon, MessageSquare, Gift, Info, Book, Pen, PlusCircle, MapPin, IndianRupee, Calendar, GraduationCap, School, Building, Home, Rss, Users, Link as LinkIcon, AlertCircle, CheckCircle, Eye, EyeOff, Clock, Crown, Sparkles, ChevronUp, ChevronDown, Shield, CheckCircle2, ShieldAlert, ShieldCheck, ArrowRight } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription as UiDialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { EditProfileForm } from '@/components/auth/edit-profile-form';
@@ -88,6 +88,7 @@ export default function ExpertDashboardPage() {
   const [showPostForm, setShowPostForm] = useState(false);
   const [isProfileExpanded, setIsProfileExpanded] = useState(true);
   const [isHideDialogOpen, setIsHideDialogOpen] = useState(false);
+  const [isSubmittingPost, setIsSubmittingPost] = useState(false);
 
   const userDocRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
   const { data: userProfile, isLoading: isProfileLoading } = useDoc<ExpertUserProfile>(userDocRef);
@@ -178,7 +179,6 @@ export default function ExpertDashboardPage() {
     const method = appConfig?.paymentMethod || 'Link';
 
     if (method === 'Link' && configuredLink) {
-        // Use window.location.href to support the BACK button
         window.location.href = configuredLink;
         return;
     }
@@ -364,17 +364,18 @@ export default function ExpertDashboardPage() {
                   </div>
 
                   {!userProfile.verified && (
-                    <div className="p-6 rounded-[2rem] border-2 border-white/10 bg-[#24262d] flex flex-col md:flex-row items-center justify-between gap-6 animate-in fade-in slide-in-from-bottom-4 duration-700 shadow-2xl">
-                        <div className="flex items-center gap-5">
-                            <div className="p-4 bg-white/5 rounded-2xl shadow-inner">
-                                <Shield className="h-10 w-10 text-blue-500" strokeWidth={1.5} />
+                    <div className="p-8 rounded-[2.5rem] border-2 border-primary/20 bg-[#24262d] flex flex-col md:flex-row items-center justify-between gap-8 animate-in fade-in slide-in-from-bottom-4 duration-700 shadow-2xl relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -mr-16 -mt-16 group-hover:scale-110 transition-transform duration-700" />
+                        <div className="flex items-center gap-6 relative z-10">
+                            <div className="p-5 bg-white/5 rounded-2xl shadow-inner border border-white/5">
+                                <ShieldCheck className="h-12 w-12 text-primary" strokeWidth={1.5} />
                             </div>
                             <div className="space-y-1">
-                                <h4 className="font-black text-white text-xl uppercase italic tracking-tighter">BECOME A VERIFIED EXPERT</h4>
-                                <p className="text-sm text-muted-foreground font-medium max-w-sm">Unlock contact features and gain client trust. Verify your profile for a one-time fee of ₱49.</p>
+                                <h4 className="font-black text-white text-2xl uppercase italic tracking-tighter">BECOME A VERIFIED EXPERT</h4>
+                                <p className="text-[11px] text-muted-foreground font-black uppercase tracking-widest max-w-sm">Unlock contact features and gain client trust instantly.</p>
                             </div>
                         </div>
-                        <Button onClick={handleDirectVerify} disabled={isProcessingVerify} className="w-full md:w-auto h-16 rounded-2xl bg-[#16a34a] hover:bg-[#15803d] text-white font-black px-10 shadow-xl shadow-[#16a34a]/20 uppercase tracking-widest transition-all active:scale-95 group">
+                        <Button onClick={handleDirectVerify} disabled={isProcessingVerify} className="w-full md:w-auto h-16 rounded-2xl bg-[#16a34a] hover:bg-[#15803d] text-white font-black px-12 shadow-xl shadow-[#16a34a]/20 uppercase tracking-[0.2em] transition-all active:scale-95 group relative z-10">
                             {isProcessingVerify ? <Loader className="mr-3 h-6 w-6 animate-spin" /> : <ShieldCheck className="mr-3 h-6 w-6 group-hover:scale-110 transition-transform" />}
                             GET VERIFIED FOR ₱49
                         </Button>
@@ -573,49 +574,51 @@ export default function ExpertDashboardPage() {
           </TabsContent>
 
           <TabsContent value="plans" className="mt-0">
-            <Card className="border-none bg-[#24262d] rounded-3xl overflow-hidden shadow-2xl">
-              <CardHeader className="bg-white/5 border-b border-white/5 pb-6">
-                <CardTitle className="text-2xl font-black text-white uppercase italic">Subscription Matrix</CardTitle>
-                <CardDescription className="text-muted-foreground font-medium">Unlock priority placement and AI-powered networking tools.</CardDescription>
+            <Card className="border-none bg-[#24262d] rounded-[3rem] overflow-hidden shadow-2xl p-4 sm:p-10">
+              <CardHeader className="text-center pb-12">
+                <CardTitle className="text-4xl font-black text-white uppercase italic tracking-tighter">Professional Tiers</CardTitle>
+                <CardDescription className="text-muted-foreground font-medium text-lg pt-2">Choose the path that maximizes your professional influence.</CardDescription>
               </CardHeader>
-              <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-6 p-8">
+              <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-8 p-0">
                 {/* Standard Plan */}
-                <div className={cn("relative flex flex-col items-center p-8 rounded-3xl border-2 transition-all duration-500", (userProfile.tier === 'Standard' || !userProfile.tier) ? "border-orange-500 bg-orange-500/5 shadow-2xl" : "border-white/5 bg-[#1a1c23] opacity-60")}>
-                  <div className="bg-white/5 p-4 rounded-full mb-4"><UserIcon className="h-8 w-8 text-muted-foreground" /></div>
-                  <h3 className="text-2xl font-black text-white mb-1 uppercase tracking-tighter italic">Standard</h3>
-                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-8">Base Tier</p>
-                  <ul className="w-full space-y-4 mb-10">
-                    <li className="flex items-center gap-2 text-xs font-black text-white/70 uppercase"><CheckCircle className="h-4 w-4 text-green-500" /> Basic Profile Listing</li>
-                    <li className="flex items-center gap-2 text-xs font-black text-white/70 uppercase"><CheckCircle className="h-4 w-4 text-green-500" /> Standard Search Ranking</li>
-                    <li className="flex items-center gap-2 text-xs font-black text-white/70 uppercase"><CheckCircle className="h-4 w-4 text-green-500" /> Referral Rewards Program</li>
+                <div className={cn("relative flex flex-col items-center p-10 rounded-[2.5rem] border-2 transition-all duration-500", (userProfile.tier === 'Standard' || !userProfile.tier) ? "border-orange-500 bg-orange-500/[0.03] shadow-2xl" : "border-white/5 bg-[#1a1c23] opacity-60")}>
+                  <div className="bg-white/5 p-5 rounded-full mb-6 border border-white/5"><UserIcon className="h-10 w-10 text-muted-foreground" /></div>
+                  <h3 className="text-3xl font-black text-white mb-1 uppercase tracking-tighter italic">Standard</h3>
+                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground mb-10">ENTRY LEVEL</p>
+                  <ul className="w-full space-y-5 mb-12">
+                    <li className="flex items-center gap-3 text-[11px] font-black text-white/70 uppercase tracking-tight"><CheckCircle2 className="h-5 w-5 text-green-500" /> Basic Profile Listing</li>
+                    <li className="flex items-center gap-3 text-[11px] font-black text-white/70 uppercase tracking-tight"><CheckCircle2 className="h-5 w-5 text-green-500" /> Search Visibility</li>
+                    <li className="flex items-center gap-3 text-[11px] font-black text-white/70 uppercase tracking-tight"><CheckCircle2 className="h-5 w-5 text-green-500" /> Referral Program</li>
                   </ul>
-                  {(userProfile.tier === 'Standard' || !userProfile.tier) ? <Button disabled className="w-full h-12 rounded-xl bg-white/10 text-muted-foreground font-black uppercase tracking-widest text-[10px]">Active</Button> : <Button variant="outline" className="w-full h-12 rounded-xl border-white/10 font-black uppercase tracking-widest text-[10px]" asChild><Link href="/dashboard">Selected</Link></Button>}
+                  {(userProfile.tier === 'Standard' || !userProfile.tier) ? <Button disabled className="w-full h-14 rounded-2xl bg-white/10 text-muted-foreground font-black uppercase tracking-widest text-xs">Currently Active</Button> : <Button variant="outline" className="w-full h-14 rounded-2xl border-white/10 font-black uppercase tracking-widest text-xs" asChild><Link href="/dashboard">View My Profile</Link></Button>}
                 </div>
+
                 {/* Premier Plan */}
-                <div className={cn("relative flex flex-col items-center p-8 rounded-3xl border-2 transition-all duration-500", userProfile.tier === 'Premier' ? "border-orange-500 bg-orange-500/5 shadow-2xl scale-105" : "border-white/5 bg-[#1a1c23]")}>
-                  <div className="bg-orange-500/10 p-4 rounded-full mb-4"><Crown className="h-8 w-8 text-orange-500" /></div>
-                  <h3 className="text-2xl font-black text-white mb-1 uppercase tracking-tighter italic">Premier</h3>
-                  <p className="text-[10px] font-black uppercase tracking-widest text-orange-500 mb-8">Power Professional</p>
-                  <ul className="w-full space-y-4 mb-10">
-                    <li className="flex items-center gap-2 text-xs font-black text-white/70 uppercase"><CheckCircle className="h-4 w-4 text-green-500" /> High Priority Search Ranking</li>
-                    <li className="flex items-center gap-2 text-xs font-black text-white/70 uppercase"><CheckCircle className="h-4 w-4 text-green-500" /> AI Bio & Profile Generator</li>
-                    <li className="flex items-center gap-2 text-xs font-black text-white/70 uppercase"><CheckCircle className="h-4 w-4 text-green-500" /> Smart Skills Suggestions</li>
-                    <li className="flex items-center gap-2 text-xs font-black text-white/70 uppercase"><CheckCircle className="h-4 w-4 text-green-500" /> Featured Purple Badge</li>
+                <div className={cn("relative flex flex-col items-center p-10 rounded-[2.5rem] border-2 transition-all duration-500", userProfile.tier === 'Premier' ? "border-orange-500 bg-orange-500/5 shadow-2xl scale-105" : "border-white/5 bg-[#1a1c23]")}>
+                  <div className="bg-orange-500/10 p-5 rounded-full mb-6 border border-orange-500/20"><Crown className="h-10 w-10 text-orange-500" /></div>
+                  <h3 className="text-3xl font-black text-white mb-1 uppercase tracking-tighter italic">Premier</h3>
+                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-orange-500 mb-10">POWER PROFESSIONAL</p>
+                  <ul className="w-full space-y-5 mb-12">
+                    <li className="flex items-center gap-3 text-[11px] font-black text-white uppercase tracking-tight"><CheckCircle2 className="h-5 w-5 text-green-500" /> High Priority Search Ranking</li>
+                    <li className="flex items-center gap-3 text-[11px] font-black text-white uppercase tracking-tight"><CheckCircle2 className="h-5 w-5 text-green-500" /> AI Bio & Profile Generator</li>
+                    <li className="flex items-center gap-3 text-[11px] font-black text-white uppercase tracking-tight"><CheckCircle2 className="h-5 w-5 text-green-500" /> Smart Skills Suggestions</li>
+                    <li className="flex items-center gap-3 text-[11px] font-black text-white uppercase tracking-tight"><CheckCircle2 className="h-5 w-5 text-green-500" /> Featured Purple Badge</li>
                   </ul>
-                  {userProfile.tier === 'Premier' ? <Button disabled className="w-full h-12 rounded-xl bg-white/10 text-muted-foreground font-black uppercase tracking-widest text-[10px]">Active</Button> : <Button className="w-full h-12 rounded-xl bg-orange-500 hover:bg-orange-600 font-black uppercase tracking-widest text-[10px] shadow-xl" asChild><Link href="/payment/premier">Upgrade Now</Link></Button>}
+                  {userProfile.tier === 'Premier' ? <Button disabled className="w-full h-14 rounded-2xl bg-white/10 text-muted-foreground font-black uppercase tracking-widest text-xs">Active Tier</Button> : <Button className="w-full h-14 rounded-2xl bg-orange-500 hover:bg-orange-600 text-white font-black uppercase tracking-widest text-xs shadow-xl shadow-orange-500/20" asChild><Link href="/payment/premier">Upgrade Now</Link></Button>}
                 </div>
+
                 {/* Super Premier Plan */}
-                <div className={cn("relative flex flex-col items-center p-8 rounded-3xl border-2 transition-all duration-500", userProfile.tier === 'Super Premier' ? "border-orange-500 bg-orange-500/5 shadow-2xl scale-105" : "border-white/5 bg-[#1a1c23]")}>
-                  <div className="bg-blue-500/10 p-4 rounded-full mb-4"><Sparkles className="h-8 w-8 text-blue-500" /></div>
-                  <h3 className="text-2xl font-black text-white mb-1 uppercase tracking-tighter italic">Super</h3>
-                  <p className="text-[10px] font-black uppercase tracking-widest text-blue-500 mb-8">Elite Executive</p>
-                  <ul className="w-full space-y-4 mb-10">
-                    <li className="flex items-center gap-2 text-xs font-black text-white/70 uppercase"><CheckCircle className="h-4 w-4 text-green-500" /> Maximum Search Visibility</li>
-                    <li className="flex items-center gap-2 text-xs font-black text-white/70 uppercase"><CheckCircle className="h-4 w-4 text-green-500" /> AI Natural Language Search</li>
-                    <li className="flex items-center gap-2 text-xs font-black text-white/70 uppercase"><CheckCircle className="h-4 w-4 text-green-500" /> Featured on Homepage Carousel</li>
-                    <li className="flex items-center gap-2 text-xs font-black text-white/70 uppercase"><CheckCircle className="h-4 w-4 text-green-500" /> Elite Blue Verification Badge</li>
+                <div className={cn("relative flex flex-col items-center p-10 rounded-[2.5rem] border-2 transition-all duration-500", userProfile.tier === 'Super Premier' ? "border-blue-500 bg-blue-500/5 shadow-2xl scale-105" : "border-white/5 bg-[#1a1c23]")}>
+                  <div className="bg-blue-500/10 p-5 rounded-full mb-6 border border-blue-500/20"><Sparkles className="h-10 w-10 text-blue-500" /></div>
+                  <h3 className="text-3xl font-black text-white mb-1 uppercase tracking-tighter italic">Super</h3>
+                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-500 mb-10">ELITE EXECUTIVE</p>
+                  <ul className="w-full space-y-5 mb-12">
+                    <li className="flex items-center gap-3 text-[11px] font-black text-white uppercase tracking-tight"><CheckCircle2 className="h-5 w-5 text-green-500" /> Maximum Search Visibility</li>
+                    <li className="flex items-center gap-3 text-[11px] font-black text-white uppercase tracking-tight"><CheckCircle2 className="h-5 w-5 text-green-500" /> AI Natural Language Search</li>
+                    <li className="flex items-center gap-3 text-[11px] font-black text-white uppercase tracking-tight"><CheckCircle2 className="h-5 w-5 text-green-500" /> Homepage Carousel Spot</li>
+                    <li className="flex items-center gap-3 text-[11px] font-black text-white uppercase tracking-tight"><CheckCircle2 className="h-5 w-5 text-green-500" /> Elite Blue Verification Badge</li>
                   </ul>
-                  {userProfile.tier === 'Super Premier' ? <Button disabled className="w-full h-12 rounded-xl bg-white/10 text-muted-foreground font-black uppercase tracking-widest text-[10px]">Active</Button> : <Button className="w-full h-12 rounded-xl bg-blue-600 hover:bg-blue-700 font-black uppercase tracking-widest text-[10px] shadow-xl" asChild><Link href="/payment/super-premier">Unlock Elite Access</Link></Button>}
+                  {userProfile.tier === 'Super Premier' ? <Button disabled className="w-full h-14 rounded-2xl bg-white/10 text-muted-foreground font-black uppercase tracking-widest text-xs">Active Tier</Button> : <Button className="w-full h-14 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-black uppercase tracking-widest text-xs shadow-xl shadow-blue-500/20" asChild><Link href="/payment/super-premier">Unlock Elite Access</Link></Button>}
                 </div>
               </CardContent>
             </Card>

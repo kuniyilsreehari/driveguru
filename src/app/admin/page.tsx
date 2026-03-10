@@ -1170,7 +1170,7 @@ export default function AdminDashboardPage() {
                         </div>
                         <Textarea value={announcementText} onChange={(e) => setAnnouncementText(e.target.value)} className="bg-background border-none rounded-xl min-h-[80px]" placeholder="Breaking news text here..." />
                     </CardContent>
-                </Card>
+                </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
