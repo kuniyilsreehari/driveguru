@@ -191,7 +191,7 @@ function HomePageContent() {
         });
     };
 
-    const handleSearch = () => {
+    const handleSearch = async () => {
         const queryParams = new URLSearchParams();
         if (searchQuery) queryParams.set('q', searchQuery);
         if (city) queryParams.set('city', city);
@@ -201,6 +201,9 @@ function HomePageContent() {
         if (showVerifiedOnly) queryParams.set('verified', 'true');
         if (showAvailableOnly) queryParams.set('available', 'true');
         if (maxRate !== null) queryParams.set('maxRate', maxRate.toString());
+        
+        // If we have a pincode or city/state, let the search page handle geocoding for radius if radius is implied
+        // For manual search, we'll use string matching unless the user used "Auto-Detect"
         
         router.push(`/search?${queryParams.toString()}`);
     };
@@ -248,6 +251,7 @@ function HomePageContent() {
                      const position = await getCurrentPosition();
                      queryParams.set('lat', position.coords.latitude.toString());
                      queryParams.set('lon', position.coords.longitude.toString());
+                     queryParams.set('radius', '20'); // Default radius for "near me"
                 }
             } catch (e) {
                 console.error("AI search parsing failed", e);

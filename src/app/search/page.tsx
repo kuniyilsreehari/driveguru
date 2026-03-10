@@ -65,7 +65,12 @@ function SearchResults() {
             }
 
             const locationString = locationQuery || [city, state, pincode].filter(Boolean).join(', ');
-            if (!locationString || !radius) return;
+            
+            // Only geocode if we HAVE a radius and a location string
+            if (!locationString || !radius) {
+                setSearchCenter(null);
+                return;
+            }
 
             setIsGeocoding(true);
             try {
@@ -135,46 +140,33 @@ function SearchResults() {
             return (e.hiddenUntil as any).toDate() < new Date();
         });
 
-        // Filter by search query with AND logic for multiple keywords
+        // 1. PINCODE FILTER (Highest Priority)
+        // If a 6-digit pincode is provided, we strictly match it first
+        if (pincode && pincode.length === 6) {
+            const matchedInZip = experts.filter(e => e.pincode === pincode);
+            if (matchedInZip.length > 0) {
+                experts = matchedInZip;
+            }
+        }
+
+        // 2. KEYWORD FILTER (Name, Profession, Skill)
         if (searchQueryParam) {
             const keywords = searchQueryParam.toLowerCase().split(' ').filter(kw => kw);
             experts = experts.filter(expert => {
-                // All keywords must be found in the expert's profile
                 return keywords.every(keyword => {
-                    const name = `${expert.firstName || ''} ${expert.lastName || ''}`.toLowerCase();
-                    const joinedName = `${expert.firstName || ''}${expert.lastName || ''}`.toLowerCase();
-                    const company = expert.companyName?.toLowerCase() || '';
-                    const role = expert.role?.toLowerCase() || '';
-                    const skills = expert.skills?.toLowerCase() || '';
-                    const qualification = expert.qualification?.toLowerCase() || '';
-                    const category = expert.category?.toLowerCase() || '';
-                    const profession = expert.profession?.toLowerCase() || '';
-                    const city = expert.city?.toLowerCase() || '';
-                    const state = expert.state?.toLowerCase() || '';
-                    const pincode = expert.pincode?.toLowerCase() || '';
-                    const address = expert.address?.toLowerCase() || '';
-                    const tier = expert.tier?.toLowerCase() || '';
-                    const expertIsVerified = expert.verified ? 'verified' : '';
-
-                    return name.includes(keyword) ||
-                           joinedName.includes(keyword) ||
-                           company.includes(keyword) ||
-                           role.includes(keyword) ||
-                           skills.includes(keyword) ||
-                           qualification.includes(keyword) ||
-                           category.includes(keyword) ||
-                           profession.includes(keyword) ||
-                           city.includes(keyword) ||
-                           state.includes(keyword) ||
-                           pincode.includes(keyword) ||
-                           address.includes(keyword) ||
-                           tier.replace(' ', '').includes(keyword.replace(' ', '')) ||
-                           expertIsVerified.includes(keyword);
+                    const searchable = [
+                        expert.firstName, expert.lastName, expert.companyName, 
+                        expert.role, expert.skills, expert.qualification,
+                        expert.category, expert.profession, expert.city,
+                        expert.state, expert.pincode, expert.address
+                    ].map(v => (v || '').toLowerCase()).join(' ');
+                    
+                    return searchable.includes(keyword);
                 });
             });
         }
         
-        // Filter by distance if radius and center are set
+        // 3. DISTANCE FILTER (If radius and center are set)
         if (radius && searchCenter) {
              experts = experts.filter(expert => {
                 if (expert.latitude && expert.longitude) {
@@ -184,64 +176,55 @@ function SearchResults() {
                 return false;
             });
         } else {
-            // Fallback to text-based location filtering if no radius search
+            // Text-based fallback location filtering
             if (city) {
-                const lowercased = city.toLowerCase();
-                experts = experts.filter(expert => expert.city?.toLowerCase().includes(lowercased));
+                const lowCity = city.toLowerCase();
+                experts = experts.filter(e => (e.city || '').toLowerCase().includes(lowCity));
             }
             if (state) {
-                const lowercased = state.toLowerCase();
-                experts = experts.filter(expert => expert.state?.toLowerCase().includes(lowercased));
-            }
-            if (pincode) {
-                const lowercased = pincode.toLowerCase();
-                experts = experts.filter(expert => expert.pincode?.toLowerCase().includes(lowercased));
+                const lowState = state.toLowerCase();
+                experts = experts.filter(e => (e.state || '').toLowerCase().includes(lowState));
             }
              if (locationQuery) {
-                const lowercased = locationQuery.toLowerCase();
-                experts = experts.filter(expert => 
-                    expert.city?.toLowerCase().includes(lowercased) ||
-                    expert.state?.toLowerCase().includes(lowercased) ||
-                    expert.address?.toLowerCase().includes(lowercased)
+                const lowLoc = locationQuery.toLowerCase();
+                experts = experts.filter(e => 
+                    (e.city || '').toLowerCase().includes(lowLoc) ||
+                    (e.state || '').toLowerCase().includes(lowLoc) ||
+                    (e.address || '').toLowerCase().includes(lowLoc)
                 );
             }
         }
         
-        // Filter by max rate
+        // 4. BUDGET FILTER
         if (maxRate !== null) {
             experts = experts.filter(expert =>
                 expert.pricingValue !== undefined && expert.pricingValue <= maxRate
             );
         }
         
-        // Sort experts by Tier First
+        // SORTING: Tier (Elite first) -> Verified -> Recent
         experts.sort((a, b) => {
             const tierOrder = { 'Super Premier': 0, 'Premier': 1, 'Standard': 2 };
             const aTier = a.tier || 'Standard';
             const bTier = b.tier || 'Standard';
 
-            if (tierOrder[aTier] !== tierOrder[bTier]) {
-                return tierOrder[aTier] - tierOrder[bTier];
-            }
-
-            if (a.verified !== b.verified) {
-                return a.verified ? -1 : 1;
-            }
-
+            if (tierOrder[aTier] !== tierOrder[bTier]) return tierOrder[aTier] - tierOrder[bTier];
+            if (a.verified !== b.verified) return a.verified ? -1 : 1;
             return 0;
         });
 
-        // Search Limits Removed per user request
         return experts;
 
-    }, [allExperts, searchQueryParam, city, state, pincode, maxRate, radius, searchCenter, isGeocoding, locationQuery, appConfig]);
+    }, [allExperts, searchQueryParam, city, state, pincode, maxRate, radius, searchCenter, isGeocoding, locationQuery]);
 
 
     if (isLoading || isGeocoding || filteredExperts === null) {
         return (
-            <div className="flex h-64 w-full items-center justify-center">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                <p className="ml-4 text-muted-foreground">Searching for experts...</p>
+            <div className="flex h-64 w-full flex-col items-center justify-center gap-4">
+                <Loader2 className="h-12 w-12 animate-spin text-orange-500" />
+                <p className="text-white font-black uppercase tracking-[0.3em] text-[10px] animate-pulse">
+                    {isGeocoding ? 'Calculating Coordinates...' : 'Filtering Professionals...'}
+                </p>
             </div>
         );
     }
@@ -250,20 +233,20 @@ function SearchResults() {
 
     if (experts.length === 0) {
         return (
-            <Card className="w-full text-center p-8 sm:p-12">
+            <Card className="w-full text-center p-12 bg-[#24262d] border-none rounded-[2.5rem] shadow-2xl">
                 <CardHeader>
-                    <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-secondary mb-4">
-                        <SearchX className="h-8 w-8 text-secondary-foreground" />
+                    <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-white/5 mb-6">
+                        <SearchX className="h-10 w-10 text-orange-500/20" />
                     </div>
-                    <CardTitle className="text-2xl font-semibold">No Experts Found</CardTitle>
+                    <CardTitle className="text-3xl font-black text-white uppercase italic">Zero Matches Found</CardTitle>
                 </CardHeader>
-                <CardContent>
-                    <p className="text-muted-foreground">
-                        We couldn&apos;t find any experts matching your search criteria.
+                <CardContent className="space-y-4">
+                    <p className="text-muted-foreground font-medium max-w-sm mx-auto">
+                        No professionals matched your exact criteria. Try broadening your location or budget range.
                     </p>
-                    <p className="text-muted-foreground mt-2">
-                        Try adjusting your filters or broadening your search query.
-                    </p>
+                    <Button variant="link" className="text-orange-500 font-black uppercase tracking-widest text-[10px]" onClick={() => router.push('/')}>
+                        Reset all filters
+                    </Button>
                 </CardContent>
             </Card>
         );
@@ -281,11 +264,11 @@ function SearchResults() {
         }
         
         if (roleQuery && roleQuery !== 'all') {
-            titleParts.push(<span key="role" className="text-primary">{roleQuery}s</span>);
+            titleParts.push(<span key="role" className="text-orange-500">{roleQuery}s</span>);
         } else if (searchQueryParam) {
-             titleParts.push(<span key="query">Results for &quot;<span className="text-primary">{searchQueryParam}</span>&quot;</span>);
+             titleParts.push(<span key="query">Matches for &quot;<span className="text-orange-500">{searchQueryParam}</span>&quot;</span>);
         } else {
-             titleParts.push(<span key="all">Showing all subscribed experts</span>);
+             titleParts.push(<span key="all">Registry Result</span>);
         }
 
         if (radius) {
@@ -294,7 +277,7 @@ function SearchResults() {
 
 
         if (locationParts.length > 0) {
-            titleParts.push(<span key="locationName"> in <span className="text-primary">{locationParts.join(', ')}</span></span>);
+            titleParts.push(<span key="locationName"> in <span className="text-orange-500">{locationParts.join(', ')}</span></span>);
         } else if (latParam && lonParam) {
             titleParts.push(<span key="locationName"> near your location</span>);
         }
@@ -303,14 +286,16 @@ function SearchResults() {
     }
 
     return (
-        <div className="space-y-6">
-            <div className='flex items-center justify-between'>
-                 <h2 className="text-2xl font-bold">
+        <div className="space-y-8">
+            <div className='flex items-center justify-between bg-white/5 p-6 rounded-2xl border border-white/5'>
+                 <h2 className="text-xl font-black text-white uppercase italic tracking-tight">
                     {searchTitle()}
                 </h2>
-                <p className="text-muted-foreground">{experts.length} result{experts.length === 1 ? '' : 's'} found.</p>
+                <Badge variant="secondary" className="bg-orange-500/10 text-orange-500 border-none font-black h-8 px-4 rounded-xl uppercase text-[10px]">
+                    {experts.length} Professional{experts.length === 1 ? '' : 's'}
+                </Badge>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 {experts.map(expert => (
                     <ExpertCard key={expert.id} expert={expert} />
                 ))}
@@ -322,17 +307,17 @@ function SearchResults() {
 
 export default function SearchPage() {
     return (
-        <div className="min-h-screen bg-background p-4 sm:p-8">
+        <div className="min-h-screen bg-[#1a1c23] p-4 sm:p-8">
             <div className="mx-auto max-w-5xl">
                 <header className="pb-8">
-                    <Button variant="outline" asChild className="mb-4">
-                        <Link href="/"><ChevronLeft className="mr-2 h-4 w-4" /> Back to Home</Link>
+                    <Button variant="outline" asChild className="rounded-xl border-white/10 bg-transparent text-white font-black h-10 px-6 uppercase text-[10px] tracking-widest hover:bg-white/5">
+                        <Link href="/"><ChevronLeft className="mr-2 h-4 w-4" /> Return to Home</Link>
                     </Button>
                 </header>
                 <main>
                     <Suspense fallback={
                         <div className="flex h-64 w-full items-center justify-center">
-                            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                            <Loader2 className="h-12 w-12 animate-spin text-orange-500" />
                         </div>
                     }>
                         <SearchResults />
