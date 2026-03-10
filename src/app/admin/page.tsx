@@ -52,7 +52,6 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import { format, eachMonthOfInterval, subMonths, isSameMonth } from 'date-fns';
 import { exportAllData } from '@/ai/flows/export-data-flow';

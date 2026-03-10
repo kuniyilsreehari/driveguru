@@ -21,7 +21,7 @@ export async function getAdminApp(): Promise<App> {
     return apps[0];
   }
 
-  // Use the specific Project ID for the Studio environment to stabilize authorization
+  // Use explicit configuration to stabilize authorization in the Studio environment
   const config = {
     projectId: "studio-8621980584-11b8b",
     storageBucket: "studio-8621980584-11b8b.firebasestorage.app",

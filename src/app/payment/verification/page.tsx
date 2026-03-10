@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Loader2, ChevronLeft, ShieldCheck, CheckCircle, XCircle } from 'lucide-react';
+import { Loader2, ChevronLeft, ShieldCheck, CheckCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { createPaymentOrder } from '@/ai/flows/payment-flow';
