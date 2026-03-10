@@ -35,7 +35,7 @@ function SuperPremierPaymentPageContent() {
             return;
         }
 
-        // Show a placeholder in the new tab while we fetch the link
+        // Show a placeholder while fetching
         checkoutWindow.document.write('<html><body style="background:#1a1c23;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;color:white;font-family:sans-serif;"><div>Connecting to secure payment gateway...</div></body></html>');
 
         setIsCreatingOrder(true);

@@ -1,9 +1,7 @@
-
 'use server';
 /**
  * @fileOverview A flow for handling payment gateway integration and verification.
- *
- * This flow supports both automated API method and simplified static links.
+ * Supports both automated API method and simplified single-link models for 3 tiers.
  */
 
 import { ai } from '@/ai/genkit';
@@ -20,7 +18,6 @@ const CreatePaymentOrderInputSchema = z.object({
   userName: z.string(),
   userPhone: z.string(),
   plan: z.enum(['Premier', 'Super Premier', 'Verification']),
-  billingCycle: z.enum(['daily', 'monthly', 'yearly', 'one-time']).optional(),
 });
 export type CreatePaymentOrderInput = z.infer<typeof CreatePaymentOrderInputSchema>;
 
@@ -49,7 +46,7 @@ async function createCashfreeOrder(input: CreatePaymentOrderInput & { amount: nu
     const cashfreeSecret = process.env.CASHFREE_SECRET;
 
     if (!cashfreeAppId || !cashfreeSecret) {
-        throw new Error('Cashfree credentials not configured in environment variables.');
+        throw new Error('Cashfree credentials not configured.');
     }
     
     Cashfree.XClientId = cashfreeAppId;
@@ -74,7 +71,7 @@ async function createCashfreeOrder(input: CreatePaymentOrderInput & { amount: nu
         order_meta: {
             return_url: returnUrl,
         },
-        order_note: `DriveGuru: ${input.plan}`,
+        order_note: `DriveGuru Upgrade: ${input.plan}`,
     };
 
     try {
@@ -108,9 +105,9 @@ const createPaymentOrderFlow = ai.defineFlow(
         const appConfigSnap = await firestore.doc('app_config/homepage').get();
         const appConfig = appConfigSnap.data() || {};
         
-        if (!appConfig.isPaymentsEnabled) throw new Error("Payments are currently disabled by the administrator.");
+        if (appConfig.isPaymentsEnabled === false) throw new Error("Payments are currently disabled.");
 
-        // Priority Logic: Check for Static Links first if method is "Link"
+        // Priority: Three-Model Link Method
         if (appConfig.paymentMethod === 'Link') {
             let link = '';
             if (input.plan === 'Verification') link = appConfig.verificationPaymentLink;
@@ -118,13 +115,14 @@ const createPaymentOrderFlow = ai.defineFlow(
             else if (input.plan === 'Super Premier') link = appConfig.superPremierPaymentLink;
 
             if (link) return { payment_link: link };
-            throw new Error(`Static link for ${input.plan} is not configured.`);
+            throw new Error(`Checkout link for ${input.plan} is not configured.`);
         }
 
-        // Fallback to API Method
+        // Automated API Method
         let amount = 0;
         if (input.plan === 'Verification') amount = appConfig.verificationFee || 49;
-        else amount = 100; // Default fallback for API tiers
+        else if (input.plan === 'Premier') amount = 499;
+        else amount = 999;
 
         const orderId = `order_${uuidv4()}`;
         const paymentRef = firestore.collection('payments').doc();
@@ -178,10 +176,9 @@ const verifyPaymentOrderFlow = ai.defineFlow(
 
             const clientId = process.env.CASHFREE_APP_ID;
             const secret = process.env.CASHFREE_SECRET;
-            const env = 'sandbox'; 
 
             const response = await axios.get(
-                `https://${env}.cashfree.com/pg/orders/${orderId}`,
+                `https://sandbox.cashfree.com/pg/orders/${orderId}`,
                 {
                     headers: {
                         'x-client-id': clientId,
