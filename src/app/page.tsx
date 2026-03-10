@@ -603,7 +603,9 @@ function HomePageContent() {
                         <div className="mt-16">
                             <div className="flex items-center justify-between mb-8">
                                 <h2 className="text-3xl font-black text-white">Recent Professionals</h2>
-                                <Button variant="link" className="text-orange-500 font-bold" asChild><Link href="/search">View All <ChevronRight className="ml-1 h-4 w-4"/></Link></Button>
+                                <Button variant="outline" className="rounded-xl border-white/10 bg-white/5 hover:bg-white/10 text-orange-500 font-black uppercase text-[10px] tracking-widest h-9 px-4 transition-all" asChild>
+                                    <Link href="/search">View All <ChevronRight className="ml-1 h-3.5 w-3.5"/></Link>
+                                </Button>
                             </div>
                             {isLoadingExperts ? (
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
