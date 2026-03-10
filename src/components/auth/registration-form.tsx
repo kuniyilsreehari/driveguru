@@ -626,7 +626,18 @@ export function RegistrationForm() {
                   <FormLabel>Phone Number</FormLabel>
                   <div className="flex items-center gap-2">
                       <FormField control={form.control} name="countryCode" render={({ field: codeField }) => (
-                          <Select onValueChange={codeField.onChange} defaultValue={codeField.value}><FormControl><SelectTrigger className="w-[80px] h-12 rounded-xl"><SelectValue placeholder="Code" /></SelectTrigger></FormControl><SelectContent><SelectItem value="+91">IN</SelectItem><SelectItem value="+1">USA</SelectItem><SelectItem value="+44">UK</SelectItem></SelectContent></Select>
+                          <Select onValueChange={codeField.onChange} defaultValue={codeField.value}>
+                            <FormControl>
+                              <SelectTrigger className="w-[80px] h-12 rounded-xl">
+                                <SelectValue placeholder="Code" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="+91">IN</SelectItem>
+                              <SelectItem value="+1">USA</SelectItem>
+                              <SelectItem value="+44">UK</SelectItem>
+                            </SelectContent>
+                          </Select>
                       )} />
                       <FormField control={form.control} name="phoneNumber" render={({ field }) => (
                           <div className="relative flex-grow"><FormControl><Input placeholder="9876543210" {...field} className="h-12 rounded-xl" /></FormControl></div>
@@ -696,7 +707,7 @@ export function RegistrationForm() {
                   <FormItem><FormLabel>Referral Code (Optional)</FormLabel><div className="relative"><Gift className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><FormControl><Input placeholder="Referral code" {...field} className="pl-10 h-12 rounded-xl" disabled={!!searchParams.get('ref')} /></FormControl></div><FormMessage /></FormItem>
               )} />
             <FormField control={phoneForm.control} name="role" render={({ field }) => (
-                <FormItem><FormLabel>Role</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger className="h-12 rounded-xl"><SelectValue placeholder="Select role" /></SelectTrigger></FormControl><SelectContent>{expertTypes.map(t => <SelectItem key={t.name} value={t.name}>{t.name}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>
+                <FormItem><FormLabel>Role</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger className="h-12 rounded-xl"><SelectValue placeholder="Select role" /></SelectTrigger></FormControl><SelectContent>{expertTypes.map(t => <SelectItem key={t.name} value={t.name}>{t.name}</SelectItem>)}</Select><FormMessage /></FormItem>
                 )} />
             {selectedPhoneRole === 'Freelancer' && (
                 <div className="grid grid-cols-2 gap-4">

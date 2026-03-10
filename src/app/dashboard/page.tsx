@@ -7,7 +7,7 @@ import { signOut } from 'firebase/auth';
 import { useUser, useAuth, useFirestore, useDoc, useMemoFirebase, useCollection } from '@/firebase';
 import { updateDocumentNonBlocking, addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Button } from '@/components/ui/button';
-import { LogOut, Loader, Edit, UserCheck, User as UserIcon, MessageSquare, Gift, Info, Book, Pen, PlusCircle, MapPin, IndianRupee, Calendar, GraduationCap, School, Building, Home, Rss, Users, Link as LinkIcon, AlertCircle, CheckCircle, Eye, EyeOff, Clock, Crown, Sparkles, ChevronUp, ChevronDown, Shield, CheckCircle2, ShieldAlert, ShieldCheck, ArrowRight } from 'lucide-react';
+import { LogOut, Loader, Edit, UserCheck, User as UserIcon, MessageSquare, Gift, Info, Book, Pen, PlusCircle, MapPin, IndianRupee, Calendar, GraduationCap, School, Building, Home, Rss, Users, Link as LinkIcon, AlertCircle, CheckCircle, Eye, EyeOff, Clock, Crown, Sparkles, ChevronUp, ChevronDown, Shield, CheckCircle2, ShieldAlert, ShieldCheck, ArrowRight, Type, List, Briefcase } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription as UiDialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { EditProfileForm } from '@/components/auth/edit-profile-form';
@@ -68,6 +68,7 @@ type ExpertUserProfile = {
     associatedProjectsName?: string;
     gender?: string;
     phoneNumber?: string;
+    businessDescription?: string;
 };
 
 const postFormSchema = z.object({
@@ -291,12 +292,10 @@ export default function ExpertDashboardPage() {
                   </Avatar>
                   <div className="flex-1 space-y-1">
                     <div className="flex items-center gap-3">
-                      <h2 className="text-3xl font-black text-white tracking-tight uppercase italic">{userProfile.companyName || userProfile.firstName}!</h2>
+                      <h2 className="text-4xl font-black text-white tracking-tighter uppercase italic">{userProfile.companyName || userProfile.firstName}!</h2>
                       <div className="flex items-center gap-2">
                         {userProfile.verified ? <CheckCircle2 className="h-6 w-6 text-green-500 fill-green-500/10" /> : <ShieldAlert className="h-6 w-6 text-orange-500/40" />}
-                        {userProfile.tier === 'Premier' && <Crown className="h-6 w-6 text-purple-500 fill-purple-500" />}
-                        {userProfile.tier === 'Super Premier' && <Sparkles className="h-6 w-6 text-blue-500 fill-blue-500" />}
-                        <div className="flex gap-1 ml-2">
+                        <div className="flex gap-1">
                           <Button variant="ghost" size="icon" onClick={() => setIsEditDialogOpen(true)} className="h-8 w-8 text-muted-foreground hover:text-white">
                               <Edit className="h-4 w-4" />
                           </Button>
@@ -308,24 +307,41 @@ export default function ExpertDashboardPage() {
                         </div>
                       </div>
                     </div>
-                    <div className="flex flex-wrap items-center gap-4 text-xs font-black uppercase tracking-widest text-muted-foreground">
-                      <span className="flex items-center gap-1.5"><Users className="h-3.5 w-3.5 text-orange-500" /> {myFollowers?.length || 0} Followers</span>
-                      <span className="flex items-center gap-1.5"><Users className="h-3.5 w-3.5 text-orange-500" /> {userProfile.following?.length || 0} Following</span>
+                    <div className="flex flex-wrap items-center gap-4 text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">
+                      <span className="flex items-center gap-1.5"><Users className="h-3.5 w-3.5 text-orange-500" /> {myFollowers?.length || 0} FOLLOWERS</span>
+                      <span className="flex items-center gap-1.5"><Users className="h-3.5 w-3.5 text-orange-500" /> {userProfile.following?.length || 0} FOLLOWING</span>
                     </div>
-                    <div className="flex wrap gap-2 mt-3">
-                      <Badge variant="secondary" className="font-black bg-white/10 text-white border-none text-[10px] uppercase tracking-widest px-4 py-1 rounded-full">{userProfile.role}</Badge>
+                    <div className="pt-2">
+                      <Badge variant="secondary" className="font-black bg-white/10 text-white border-none text-[10px] uppercase tracking-[0.3em] px-4 py-1.5 rounded-full">{userProfile.role}</Badge>
+                    </div>
+                    
+                    <div className="pt-4 space-y-2">
+                        {userProfile.profession && (
+                            <p className="text-sm font-black text-orange-500 uppercase italic tracking-tighter flex items-center gap-2">
+                                <Briefcase className="h-3.5 w-3.5" /> {userProfile.profession}
+                            </p>
+                        )}
+                        {userProfile.category && (
+                            <p className="text-[10px] font-black text-white/60 uppercase tracking-widest flex items-center gap-2">
+                                <List className="h-3 w-3" /> {userProfile.category}
+                            </p>
+                        )}
+                        {userProfile.businessDescription && (
+                            <p className="text-xs font-medium text-muted-foreground italic leading-relaxed max-w-lg">
+                                "{userProfile.businessDescription}"
+                            </p>
+                        )}
                     </div>
                   </div>
                   <div className="flex flex-col gap-2 w-full md:w-auto">
-                      <Button onClick={() => setIsEditDialogOpen(true)} className="w-full bg-orange-500 hover:bg-orange-600 text-white font-black rounded-xl h-14 px-8 shadow-xl shadow-orange-500/20 uppercase tracking-widest">
-                          <Edit className="mr-2 h-5 w-5" /> Update Profile
+                      <Button onClick={() => setIsEditDialogOpen(true)} className="w-full bg-orange-500 hover:bg-orange-600 text-white font-black rounded-xl h-16 px-10 shadow-xl shadow-orange-500/20 uppercase tracking-[0.2em] transition-all active:scale-95 group">
+                          <Edit className="mr-3 h-6 w-6 group-hover:scale-110 transition-transform" /> UPDATE PROFILE
                       </Button>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-6 pt-6">
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {/* REDESIGNED HIRING STATUS COMPONENT */}
                       <div className="bg-[#1a1c23] p-6 rounded-[1.5rem] flex items-center justify-between border border-white/5 shadow-inner transition-all hover:border-green-500/20">
                           <div className="flex items-center gap-4">
                               <Switch 
