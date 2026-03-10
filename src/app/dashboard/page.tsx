@@ -84,7 +84,6 @@ export default function ExpertDashboardPage() {
   const { toast } = useToast();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isWizardOpen, setIsWizardOpen] = useState(false);
-  const [isSubmittingPost, setIsSubmittingPost] = useState(false);
   const [isProcessingVerify, setIsProcessingVerify] = useState(false);
   const [showPostForm, setShowPostForm] = useState(false);
   const [isProfileExpanded, setIsProfileExpanded] = useState(true);
@@ -175,23 +174,14 @@ export default function ExpertDashboardPage() {
   const handleDirectVerify = async () => {
     if (!user) return;
     
-    // Performance: If using Link method and URL is already loaded, open directly
     const configuredLink = appConfig?.verificationPaymentLink;
     const method = appConfig?.paymentMethod || 'Link';
 
     if (method === 'Link' && configuredLink) {
-        window.open(configuredLink, '_blank');
+        // Use window.location.href to support the BACK button
+        window.location.href = configuredLink;
         return;
     }
-
-    // Fallback: Dynamic session generation
-    const checkoutWindow = window.open('', '_blank');
-    if (!checkoutWindow) {
-        toast({ variant: 'destructive', title: 'Popup Blocked', description: 'Please allow popups to proceed to verification.' });
-        return;
-    }
-
-    checkoutWindow.document.write('<html><body style="background:#1a1c23;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;color:white;font-family:sans-serif;text-align:center;"><div><h2 style="font-style:italic;font-weight:900;">CONNECTING...</h2><p style="opacity:0.6;">Securing your verification session.</p></div></body></html>');
 
     setIsProcessingVerify(true);
     try {
@@ -204,13 +194,11 @@ export default function ExpertDashboardPage() {
         });
 
         if (result.payment_link) {
-            checkoutWindow.location.href = result.payment_link;
+            window.location.href = result.payment_link;
         } else {
-            checkoutWindow.close();
             toast({ variant: 'destructive', title: 'Link Not Found', description: result.error || 'Verification link is not configured.' });
         }
     } catch (e: any) {
-        checkoutWindow.close();
         toast({ variant: 'destructive', title: 'Error', description: 'Failed to initiate verification.' });
     } finally {
         setIsProcessingVerify(false);
