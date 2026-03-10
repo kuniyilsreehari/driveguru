@@ -2,8 +2,8 @@
 
 import { Suspense, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { collection, query, orderBy, where, Timestamp } from 'firebase/firestore';
-import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { collection, query, orderBy, where, Timestamp, doc } from 'firebase/firestore';
+import { useFirestore, useCollection, useMemoFirebase, useUser, useDoc } from '@/firebase';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -33,6 +33,40 @@ export type Vacancy = {
 };
 
 function VacancyCard({ vacancy }: { vacancy: Vacancy }) {
+    const { user } = useUser();
+    const firestore = useFirestore();
+    const userDocRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
+    const { data: profile } = useDoc<any>(userDocRef);
+
+    const generateMailto = () => {
+        const subject = encodeURIComponent(`Application: ${vacancy.title} via DriveGuru`);
+        
+        let body = `Hello ${vacancy.companyName} Team,\n\nI am writing to express my interest in the ${vacancy.title} position posted on DriveGuru.\n\n`;
+        
+        if (profile) {
+            const fullName = `${profile.firstName} ${profile.lastName}`;
+            const location = [profile.city, profile.state].filter(Boolean).join(', ') || 'Not specified';
+            const email = profile.email || user?.email || 'Not specified';
+            const dgId = `DG-${profile.id?.substring(0, 8).toUpperCase()}`;
+            
+            body += `*CANDIDATE DETAILS*\n`;
+            body += `NAME: ${fullName}\n`;
+            body += `PLACE: ${location}\n`;
+            body += `CONTACT EMAIL: ${email}\n`;
+            body += `DRIVEGURU ID: ${dgId}\n`;
+            body += `TIER: ${profile.tier || 'Standard'}\n\n`;
+            body += `I have attached my details and look forward to hearing from you.\n\nBest regards,\n${fullName}`;
+        } else {
+            body += `I would like to apply for this position. Please find my professional details below:\n\n`;
+            body += `NAME: \n`;
+            body += `PLACE: \n`;
+            body += `CONTACT EMAIL: \n`;
+            body += `\nThank you.`;
+        }
+        
+        return `mailto:${vacancy.companyEmail}?subject=${subject}&body=${encodeURIComponent(body)}`;
+    };
+
     return (
         <Card className="group overflow-hidden border-none bg-[#24262d] rounded-[2rem] shadow-2xl transition-all hover:scale-[1.02] hover:shadow-orange-500/5">
             <CardHeader className="bg-white/5 border-b border-white/5 pb-6">
@@ -97,13 +131,13 @@ function VacancyCard({ vacancy }: { vacancy: Vacancy }) {
             </CardContent>
             <CardFooter className="bg-white/5 border-t border-white/5 p-6 flex items-center gap-3">
                 <Button className="flex-1 h-16 rounded-2xl bg-orange-500 hover:bg-orange-600 text-white font-black text-xl shadow-2xl shadow-orange-500/30 uppercase tracking-[0.2em] transition-all active:scale-95 group" asChild>
-                    <a href={`mailto:${vacancy.companyEmail}?subject=Application: ${vacancy.title}`}>
+                    <a href={generateMailto()}>
                         APPLY NOW
                     </a>
                 </Button>
                 {vacancy.contactPhone && (
                     <Button variant="outline" className="h-16 w-16 px-0 border-white/10 bg-white/5 text-white font-black rounded-2xl hover:bg-white/10 shadow-lg flex items-center justify-center shrink-0" asChild>
-                        <a href={`tel:${vacancy.contactPhone}`}>
+                        <a href={`tel:${vacancy.contactPhone.replace(/\s+/g, '')}`}>
                             <Phone className="h-6 w-6" />
                         </a>
                     </Button>
