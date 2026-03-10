@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Loader2, ChevronLeft, Briefcase, MapPin, Calendar, Search, Mail, Phone, Users, CheckCircle2, Crown, Sparkles, Building, Filter, ExternalLink } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { ShareDialog } from '@/components/share-dialog';
+import { ApplyNowDialog } from '@/components/apply-now-dialog';
 import { cn } from '@/lib/utils';
 
 export type Vacancy = {
@@ -33,117 +34,89 @@ export type Vacancy = {
 };
 
 function VacancyCard({ vacancy }: { vacancy: Vacancy }) {
-    const { user } = useUser();
-    const firestore = useFirestore();
-    const userDocRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
-    const { data: profile } = useDoc<any>(userDocRef);
-
-    const generateMailto = () => {
-        const subject = encodeURIComponent(`Application: ${vacancy.title} via DriveGuru`);
-        
-        let body = `Hello ${vacancy.companyName} Team,\n\nI am writing to express my interest in the ${vacancy.title} position posted on DriveGuru.\n\n`;
-        
-        if (profile) {
-            const fullName = `${profile.firstName} ${profile.lastName}`;
-            const location = [profile.city, profile.state].filter(Boolean).join(', ') || 'Not specified';
-            const email = profile.email || user?.email || 'Not specified';
-            const dgId = `DG-${profile.id?.substring(0, 8).toUpperCase()}`;
-            
-            body += `*CANDIDATE DETAILS*\n`;
-            body += `NAME: ${fullName}\n`;
-            body += `PLACE: ${location}\n`;
-            body += `CONTACT EMAIL: ${email}\n`;
-            body += `DRIVEGURU ID: ${dgId}\n`;
-            body += `TIER: ${profile.tier || 'Standard'}\n\n`;
-            body += `I have attached my details and look forward to hearing from you.\n\nBest regards,\n${fullName}`;
-        } else {
-            body += `I would like to apply for this position. Please find my professional details below:\n\n`;
-            body += `NAME: \n`;
-            body += `PLACE: \n`;
-            body += `CONTACT EMAIL: \n`;
-            body += `\nThank you.`;
-        }
-        
-        return `mailto:${vacancy.companyEmail}?subject=${subject}&body=${encodeURIComponent(body)}`;
-    };
+    const [isApplyOpen, setIsApplyOpen] = useState(false);
 
     return (
-        <Card className="group overflow-hidden border-none bg-[#24262d] rounded-[2rem] shadow-2xl transition-all hover:scale-[1.02] hover:shadow-orange-500/5">
-            <CardHeader className="bg-white/5 border-b border-white/5 pb-6">
-                <div className="flex justify-between items-start">
-                    <div className="space-y-1">
-                        <div className="flex items-center gap-2 mb-1">
-                            <Badge variant="outline" className="h-5 px-2 rounded-md border-orange-500/30 bg-orange-500/5 text-orange-500 text-[10px] font-black uppercase tracking-[0.2em]">
-                                {vacancy.employmentType}
-                            </Badge>
-                            {vacancy.isImmediate && (
-                                <Badge className="h-5 px-2 rounded-md bg-green-500 text-white text-[10px] font-black uppercase tracking-[0.2em]">
-                                    Immediate
+        <>
+            <Card className="group overflow-hidden border-none bg-[#24262d] rounded-[2rem] shadow-2xl transition-all hover:scale-[1.02] hover:shadow-orange-500/5">
+                <CardHeader className="bg-white/5 border-b border-white/5 pb-6">
+                    <div className="flex justify-between items-start">
+                        <div className="space-y-1">
+                            <div className="flex items-center gap-2 mb-1">
+                                <Badge variant="outline" className="h-5 px-2 rounded-md border-orange-500/30 bg-orange-500/5 text-orange-500 text-[10px] font-black uppercase tracking-[0.2em]">
+                                    {vacancy.employmentType}
                                 </Badge>
-                            )}
-                        </div>
-                        <CardTitle className="text-xl font-black text-orange-500 group-hover:text-orange-400 transition-colors uppercase italic tracking-tight">
-                            {vacancy.title}
-                        </CardTitle>
-                        <div className="flex items-center gap-2 text-sm font-bold text-white/70">
-                            <Building className="h-4 w-4 text-orange-500" />
-                            {vacancy.companyName}
-                            <div className="flex gap-1 ml-1">
-                                {vacancy.isCompanyVerified && <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />}
-                                {vacancy.companyTier === 'Premier' && <Crown className="h-3.5 w-3.5 text-purple-500" />}
-                                {vacancy.companyTier === 'Super Premier' && <Sparkles className="h-3.5 w-3.5 text-blue-500" />}
+                                {vacancy.isImmediate && (
+                                    <Badge className="h-5 px-2 rounded-md bg-green-500 text-white text-[10px] font-black uppercase tracking-[0.2em]">
+                                        Immediate
+                                    </Badge>
+                                )}
+                            </div>
+                            <CardTitle className="text-xl font-black text-orange-500 group-hover:text-orange-400 transition-colors uppercase italic tracking-tight">
+                                {vacancy.title}
+                            </CardTitle>
+                            <div className="flex items-center gap-2 text-sm font-bold text-white/70">
+                                <Building className="h-4 w-4 text-orange-500" />
+                                {vacancy.companyName}
+                                <div className="flex gap-1 ml-1">
+                                    {vacancy.isCompanyVerified && <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />}
+                                    {vacancy.companyTier === 'Premier' && <Crown className="h-3.5 w-3.5 text-purple-500" />}
+                                    {vacancy.companyTier === 'Super Premier' && <Sparkles className="h-3.5 w-3.5 text-blue-500" />}
+                                </div>
                             </div>
                         </div>
+                        <ShareDialog shareDetails={{ type: 'vacancy', vacancyId: vacancy.id, vacancyTitle: vacancy.title, companyName: vacancy.companyName }}>
+                            <Button variant="ghost" size="icon" className="rounded-full hover:bg-white/10 h-10 w-10">
+                                <ExternalLink className="h-5 w-5 text-muted-foreground" />
+                            </Button>
+                        </ShareDialog>
                     </div>
-                    <ShareDialog shareDetails={{ type: 'vacancy', vacancyId: vacancy.id, vacancyTitle: vacancy.title, companyName: vacancy.companyName }}>
-                        <Button variant="ghost" size="icon" className="rounded-full hover:bg-white/10 h-10 w-10">
-                            <ExternalLink className="h-5 w-5 text-muted-foreground" />
-                        </Button>
-                    </ShareDialog>
-                </div>
-            </CardHeader>
-            <CardContent className="pt-6 space-y-4">
-                <div className="flex flex-wrap gap-4 text-sm font-black uppercase tracking-widest text-muted-foreground">
-                    <div className="flex items-center gap-1.5 bg-white/5 px-3 py-1.5 rounded-xl border border-white/5">
-                        <MapPin className="h-4 w-4 text-orange-500" />
-                        {vacancy.location}
+                </CardHeader>
+                <CardContent className="pt-6 space-y-4">
+                    <div className="flex flex-wrap gap-4 text-sm font-black uppercase tracking-widest text-muted-foreground">
+                        <div className="flex items-center gap-1.5 bg-white/5 px-3 py-1.5 rounded-xl border border-white/5">
+                            <MapPin className="h-4 w-4 text-orange-500" />
+                            {vacancy.location}
+                        </div>
+                        <div className="flex items-center gap-1.5 bg-white/5 px-3 py-1.5 rounded-xl border border-white/5">
+                            <Users className="h-4 w-4 text-orange-500" />
+                            {vacancy.positionsAvailable} Spots
+                        </div>
                     </div>
-                    <div className="flex items-center gap-1.5 bg-white/5 px-3 py-1.5 rounded-xl border border-white/5">
-                        <Users className="h-4 w-4 text-orange-500" />
-                        {vacancy.positionsAvailable} Spots
-                    </div>
-                </div>
-                
-                <p className="text-sm text-white/60 line-clamp-3 leading-relaxed font-medium">
-                    {vacancy.description}
-                </p>
+                    
+                    <p className="text-sm text-white/60 line-clamp-3 leading-relaxed font-medium">
+                        {vacancy.description}
+                    </p>
 
-                <div className="pt-2">
-                    <p className="text-[9px] font-black uppercase tracking-[0.2em] text-orange-500/50 mb-2">Technical Skills</p>
-                    <div className="flex flex-wrap gap-2">
-                        {vacancy.skillsRequired.split(',').map((skill, i) => (
-                            <Badge key={i} variant="secondary" className="bg-white/10 border-none text-white font-bold text-[10px] px-2.5 py-1 rounded-lg">
-                                {skill.trim()}
-                            </Badge>
-                        ))}
+                    <div className="pt-2">
+                        <p className="text-[9px] font-black uppercase tracking-[0.2em] text-orange-500/50 mb-2">Technical Skills</p>
+                        <div className="flex flex-wrap gap-2">
+                            {vacancy.skillsRequired.split(',').map((skill, i) => (
+                                <Badge key={i} variant="secondary" className="bg-white/10 border-none text-white font-bold text-[10px] px-2.5 py-1 rounded-lg">
+                                    {skill.trim()}
+                                </Badge>
+                            ))}
+                        </div>
                     </div>
-                </div>
-            </CardContent>
-            <CardFooter className="bg-white/5 border-t border-white/5 p-6 flex items-center gap-3">
-                <Button className="flex-1 h-16 rounded-2xl bg-orange-500 hover:bg-orange-600 text-white font-black text-xl shadow-2xl shadow-orange-500/30 uppercase tracking-[0.2em] transition-all active:scale-95 group" asChild>
-                    <a href={generateMailto()}>
+                </CardContent>
+                <CardFooter className="bg-white/5 border-t border-white/5 p-6 flex items-center gap-3">
+                    <Button 
+                        onClick={() => setIsApplyOpen(true)}
+                        className="flex-1 h-16 rounded-2xl bg-orange-500 hover:bg-orange-600 text-white font-black text-xl shadow-2xl shadow-orange-500/30 uppercase tracking-[0.2em] transition-all active:scale-95 group"
+                    >
                         APPLY NOW
-                    </a>
-                </Button>
-                {vacancy.contactPhone && (
-                    <Button variant="outline" className="h-16 w-16 px-0 border-white/10 bg-white/5 text-white font-black rounded-2xl hover:bg-white/10 shadow-lg flex items-center justify-center shrink-0" asChild>
-                        <a href={`tel:${vacancy.contactPhone.replace(/\s+/g, '')}`}>
-                            <Phone className="h-6 w-6" />
-                        </a>
                     </Button>
-                )}
-            </CardFooter>
-        </Card>
+                    {vacancy.contactPhone && (
+                        <Button variant="outline" className="h-16 w-16 px-0 border-white/10 bg-white/5 text-white font-black rounded-2xl hover:bg-white/10 shadow-lg flex items-center justify-center shrink-0" asChild>
+                            <a href={`tel:${vacancy.contactPhone.replace(/\s+/g, '')}`}>
+                                <Phone className="h-6 w-6" />
+                            </a>
+                        </Button>
+                    )}
+                </CardFooter>
+            </Card>
+            <ApplyNowDialog vacancy={vacancy} isOpen={isApplyOpen} onOpenChange={setIsApplyOpen} />
+        </>
     );
 }
 
