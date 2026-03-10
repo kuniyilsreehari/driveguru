@@ -176,9 +176,7 @@ export default function ExpertDashboardPage() {
     if (!user) return;
     
     const configuredLink = appConfig?.verificationPaymentLink;
-    const method = appConfig?.paymentMethod || 'Link';
-
-    if (method === 'Link' && configuredLink) {
+    if (configuredLink) {
         window.location.href = configuredLink;
         return;
     }
@@ -196,7 +194,7 @@ export default function ExpertDashboardPage() {
         if (result.payment_link) {
             window.location.href = result.payment_link;
         } else {
-            toast({ variant: 'destructive', title: 'Link Not Found', description: result.error || 'Verification link is not configured.' });
+            toast({ variant: 'destructive', title: 'Link Not Found', description: 'Verification link is not configured.' });
         }
     } catch (e: any) {
         toast({ variant: 'destructive', title: 'Error', description: 'Failed to initiate verification.' });
@@ -368,7 +366,7 @@ export default function ExpertDashboardPage() {
                         <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -mr-16 -mt-16 group-hover:scale-110 transition-transform duration-700" />
                         <div className="flex items-center gap-6 relative z-10">
                             <div className="p-5 bg-white/5 rounded-2xl shadow-inner border border-white/5">
-                                <ShieldCheck className="h-12 w-12 text-primary" strokeWidth={1.5} />
+                                <ShieldCheck className="h-12 w-12 text-[#16a34a]" strokeWidth={1.5} />
                             </div>
                             <div className="space-y-1">
                                 <h4 className="font-black text-white text-2xl uppercase italic tracking-tighter">BECOME A VERIFIED EXPERT</h4>
@@ -601,8 +599,8 @@ export default function ExpertDashboardPage() {
                   <ul className="w-full space-y-5 mb-12">
                     <li className="flex items-center gap-3 text-[11px] font-black text-white uppercase tracking-tight"><CheckCircle2 className="h-5 w-5 text-green-500" /> High Priority Search Ranking</li>
                     <li className="flex items-center gap-3 text-[11px] font-black text-white uppercase tracking-tight"><CheckCircle2 className="h-5 w-5 text-green-500" /> AI Bio & Profile Generator</li>
-                    <li className="flex items-center gap-3 text-[11px] font-black text-white uppercase tracking-tight"><CheckCircle2 className="h-5 w-5 text-green-500" /> Smart Skills Suggestions</li>
-                    <li className="flex items-center gap-3 text-[11px] font-black text-white uppercase tracking-tight"><CheckCircle2 className="h-5 w-5 text-green-500" /> Featured Purple Badge</li>
+                    <li className="flex items-center gap-3 text-[11px] font-black text-white uppercase tracking-tight"><CheckCircle2 className="h-5 w-5 text-green-500" /> SMART SKILLS SUGGESTIONS</li>
+                    <li className="flex items-center gap-3 text-[11px] font-black text-white uppercase tracking-tight"><CheckCircle2 className="h-5 w-5 text-green-500" /> FEATURED PURPLE BADGE</li>
                   </ul>
                   {userProfile.tier === 'Premier' ? <Button disabled className="w-full h-14 rounded-2xl bg-white/10 text-muted-foreground font-black uppercase tracking-widest text-xs">Active Tier</Button> : <Button className="w-full h-14 rounded-2xl bg-orange-500 hover:bg-orange-600 text-white font-black uppercase tracking-widest text-xs shadow-xl shadow-orange-500/20" asChild><Link href="/payment/premier">Upgrade Now</Link></Button>}
                 </div>
@@ -614,9 +612,9 @@ export default function ExpertDashboardPage() {
                   <p className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-500 mb-10">ELITE EXECUTIVE</p>
                   <ul className="w-full space-y-5 mb-12">
                     <li className="flex items-center gap-3 text-[11px] font-black text-white uppercase tracking-tight"><CheckCircle2 className="h-5 w-5 text-green-500" /> Maximum Search Visibility</li>
-                    <li className="flex items-center gap-3 text-[11px] font-black text-white uppercase tracking-tight"><CheckCircle2 className="h-5 w-5 text-green-500" /> AI Natural Language Search</li>
-                    <li className="flex items-center gap-3 text-[11px] font-black text-white uppercase tracking-tight"><CheckCircle2 className="h-5 w-5 text-green-500" /> Homepage Carousel Spot</li>
-                    <li className="flex items-center gap-3 text-[11px] font-black text-white uppercase tracking-tight"><CheckCircle2 className="h-5 w-5 text-green-500" /> Elite Blue Verification Badge</li>
+                    <li className="flex items-center gap-3 text-[11px] font-black text-white uppercase tracking-tight"><CheckCircle2 className="h-5 w-5 text-green-500" /> AI NATURAL LANGUAGE SEARCH</li>
+                    <li className="flex items-center gap-3 text-[11px] font-black text-white uppercase tracking-tight"><CheckCircle2 className="h-5 w-5 text-green-500" /> HOMEPAGE CAROUSEL SPOT</li>
+                    <li className="flex items-center gap-3 text-[11px] font-black text-white uppercase tracking-tight"><CheckCircle2 className="h-5 w-5 text-green-500" /> ELITE BLUE VERIFICATION BADGE</li>
                   </ul>
                   {userProfile.tier === 'Super Premier' ? <Button disabled className="w-full h-14 rounded-2xl bg-white/10 text-muted-foreground font-black uppercase tracking-widest text-xs">Active Tier</Button> : <Button className="w-full h-14 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-black uppercase tracking-widest text-xs shadow-xl shadow-blue-500/20" asChild><Link href="/payment/super-premier">Unlock Elite Access</Link></Button>}
                 </div>

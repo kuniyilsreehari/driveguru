@@ -2,12 +2,13 @@
 
 import { Suspense, useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { Briefcase, Building, ChevronDown, LocateIcon, MapPin, Search, Loader2, UserCheck, Crown, Sparkles, Bot, Lock, Users, User, Check, GraduationCap, UserPlus, ChevronLeft, ChevronRight, Filter } from "lucide-react"
+import { Briefcase, Building, ChevronDown, LocateIcon, MapPin, Search, Loader2, UserCheck, Crown, Sparkles, Bot, Lock, Users, User, Check, GraduationCap, UserPlus, ChevronLeft, ChevronRight, Filter, ShieldAlert } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Slider } from "@/components/ui/slider"
+import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Icons } from "@/components/icons"
 import { useToast } from '@/hooks/use-toast';
@@ -349,9 +350,13 @@ function HomePageContent() {
                                                         {expert.firstName?.[0]}
                                                     </AvatarFallback>
                                                 </Avatar>
-                                                {expert.verified && (
+                                                {expert.verified ? (
                                                     <div className="absolute -bottom-1 -right-1 bg-green-500 p-1.5 rounded-full border-4 border-[#1a1c23] shadow-lg">
                                                         <UserCheck className="h-3 w-3 text-white" />
+                                                    </div>
+                                                ) : (
+                                                    <div className="absolute -bottom-1 -right-1 bg-orange-500 p-1.5 rounded-full border-4 border-[#1a1c23] shadow-lg">
+                                                        <ShieldAlert className="h-3 w-3 text-white" />
                                                     </div>
                                                 )}
                                             </div>
@@ -486,12 +491,12 @@ function HomePageContent() {
                         </div>
                     </div>
 
-                    {/* Manual Search Filters - Redesigned to match the model */}
+                    {/* Manual Search Filters */}
                     <Card className="rounded-[2.5rem] p-6 sm:p-10 bg-[#24262d] border-none shadow-2xl relative overflow-hidden border border-white/5">
                         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-orange-500/20 to-transparent" />
                         <CardContent className="p-0 space-y-10">
                              <div className="space-y-3">
-                                <Label htmlFor="search" className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 ml-1">I&apos;m Looking For...</Label>
+                                <Label htmlFor="search" className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 ml-1">I&apos;M LOOKING FOR...</Label>
                                 <div className="relative group">
                                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground group-focus-within:text-orange-500 transition-colors" />
                                     <Input
@@ -506,7 +511,7 @@ function HomePageContent() {
                             
                             <div className="space-y-4">
                                 <div className="flex items-center justify-between mb-1">
-                                    <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 ml-1">Location Filtering</Label>
+                                    <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 ml-1">LOCATION FILTERING</Label>
                                     <Button variant="ghost" size="sm" onClick={handleDetectLocation} disabled={isDetectingLocation} className="text-orange-500 font-black uppercase text-[10px] tracking-widest hover:bg-orange-500/5 h-8 rounded-xl px-4 group">
                                         {isDetectingLocation ? <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> : <LocateIcon className="mr-2 h-3.5 w-3.5 group-hover:scale-110 transition-transform" />}
                                         Auto-Detect
@@ -521,7 +526,7 @@ function HomePageContent() {
                             
                             <div className="space-y-6">
                                 <div className="flex items-center justify-between">
-                                    <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 ml-1">Budget Range</Label>
+                                    <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 ml-1">BUDGET RANGE</Label>
                                     <div className="flex items-center gap-3">
                                         <span className="text-[10px] font-black text-white uppercase tracking-wider">Max Hourly Rate</span>
                                         <Badge className={cn("rounded-full px-4 h-7 text-[10px] font-black uppercase tracking-widest border-none transition-all", maxRate ? "bg-orange-500 text-white" : "bg-white/5 text-orange-500/50")}>
@@ -596,8 +601,8 @@ function HomePageContent() {
                                     <h2 className="text-3xl font-black text-white uppercase italic">Fresh Talent</h2>
                                     <p className="text-[10px] font-black uppercase tracking-[0.3em] text-orange-500/50">NEWLY JOINED PROFESSIONALS</p>
                                 </div>
-                                <Button variant="outline" className="rounded-2xl border-white/10 bg-white/5 hover:bg-white/10 text-orange-500 font-black uppercase text-[11px] tracking-widest h-12 px-8 transition-all shadow-xl active:scale-95" asChild>
-                                    <Link href="/search">Registry <ChevronRight className="ml-2 h-4 w-4"/></Link>
+                                <Button className="rounded-2xl bg-orange-500 hover:bg-orange-600 text-white font-black uppercase text-[11px] tracking-widest h-12 px-8 transition-all shadow-xl active:scale-95 shadow-orange-500/20" asChild>
+                                    <Link href="/search">VIEW REGISTRY <ChevronRight className="ml-2 h-4 w-4"/></Link>
                                 </Button>
                             </div>
                             {isLoadingExperts ? (
