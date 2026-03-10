@@ -1213,7 +1213,8 @@ export default function AdminDashboardPage() {
                             {isExporting ? <Loader className="animate-spin mr-2 h-4 w-4" /> : <HardDriveDownload className="mr-2 h-4 w-4" />} Full Data Backup (JSON)
                         </Button>
                     </CardContent>
-                </div>
+                </Card>
+            </div>
 
             <Card className="border-none bg-card rounded-2xl overflow-hidden shadow-xl">
               <CardHeader className="bg-white/5 border-b border-white/5 pb-6"><CardTitle className="font-black uppercase italic">Manual User Provisioning</CardTitle></CardHeader>

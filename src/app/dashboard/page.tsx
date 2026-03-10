@@ -93,6 +93,9 @@ export default function ExpertDashboardPage() {
   const userDocRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
   const { data: userProfile, isLoading: isProfileLoading } = useDoc<ExpertUserProfile>(userDocRef);
 
+  const appConfigDocRef = useMemoFirebase(() => doc(firestore, 'app_config', 'homepage'), [firestore]);
+  const { data: appConfig } = useDoc<any>(appConfigDocRef);
+
   const superAdminDocRef = useMemoFirebase(() => user ? doc(firestore, 'roles_super_admin', user.uid) : null, [firestore, user]);
   const { data: superAdminData, isLoading: isRoleLoading } = useDoc(superAdminDocRef);
   const isSuperAdmin = !!superAdminData;
@@ -172,6 +175,16 @@ export default function ExpertDashboardPage() {
   const handleDirectVerify = async () => {
     if (!user) return;
     
+    // Performance: If using Link method and URL is already loaded, open directly
+    const configuredLink = appConfig?.verificationPaymentLink;
+    const method = appConfig?.paymentMethod || 'Link';
+
+    if (method === 'Link' && configuredLink) {
+        window.open(configuredLink, '_blank');
+        return;
+    }
+
+    // Fallback: Dynamic session generation
     const checkoutWindow = window.open('', '_blank');
     if (!checkoutWindow) {
         toast({ variant: 'destructive', title: 'Popup Blocked', description: 'Please allow popups to proceed to verification.' });

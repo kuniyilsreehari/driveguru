@@ -1,6 +1,6 @@
 'use server';
 
-import { initializeApp, getApps, App } from 'firebase-admin/app';
+import { initializeApp, getApps, App, cert } from 'firebase-admin/app';
 
 const globalWithApp = global as typeof globalThis & {
   _firebaseAdminApp?: App;
@@ -21,7 +21,7 @@ export async function getAdminApp(): Promise<App> {
     return apps[0];
   }
 
-  // Use explicit configuration to stabilize authorization in the Studio environment
+  // Explicit configuration for Studio environment stability
   const config = {
     projectId: "studio-8621980584-11b8b",
     storageBucket: "studio-8621980584-11b8b.firebasestorage.app",
@@ -32,7 +32,6 @@ export async function getAdminApp(): Promise<App> {
     globalWithApp._firebaseAdminApp = newApp;
     return newApp;
   } catch (e: any) {
-    // Re-check apps in case of race conditions
     const apps = getApps();
     if (apps.length > 0) {
         globalWithApp._firebaseAdminApp = apps[0];
