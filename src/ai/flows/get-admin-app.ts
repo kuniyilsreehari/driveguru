@@ -1,6 +1,6 @@
 'use server';
 
-import { initializeApp, getApps, App, cert } from 'firebase-admin/app';
+import { initializeApp, getApps, App } from 'firebase-admin/app';
 
 const globalWithApp = global as typeof globalThis & {
   _firebaseAdminApp?: App;
@@ -8,8 +8,7 @@ const globalWithApp = global as typeof globalThis & {
 
 /**
  * Initializes and returns a Firebase Admin App instance.
- * Uses a singleton pattern to prevent multiple initializations.
- * Explicitly handles configuration for the Studio/App Hosting environments.
+ * Optimized for Studio/App Hosting environments to prevent token refresh errors.
  */
 export async function getAdminApp(): Promise<App> {
   if (globalWithApp._firebaseAdminApp) {
@@ -22,20 +21,18 @@ export async function getAdminApp(): Promise<App> {
     return apps[0];
   }
 
-  // Explicit configuration for the Studio environment
+  // Use the specific Project ID for the Studio environment to stabilize authorization
   const config = {
     projectId: "studio-8621980584-11b8b",
     storageBucket: "studio-8621980584-11b8b.firebasestorage.app",
   };
 
   try {
-    // In local development or Studio with ADC, initializeApp() without args often works
-    // but providing explicit config is more reliable for token refreshes.
     const newApp = initializeApp(config);
     globalWithApp._firebaseAdminApp = newApp;
     return newApp;
   } catch (e: any) {
-    // Fallback if the default initialization fails (e.g. app already exists)
+    // Re-check apps in case of race conditions
     const apps = getApps();
     if (apps.length > 0) {
         globalWithApp._firebaseAdminApp = apps[0];
