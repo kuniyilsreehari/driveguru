@@ -62,7 +62,7 @@ export function ApplyNowDialog({ vacancy, isOpen, onOpenChange }: ApplyNowDialog
         body += `CONTACT EMAIL: ${email}\n`;
         body += `DRIVEGURU ID: ${dgId}\n`;
         body += `TIER: ${profile.tier || 'Standard'}\n\n`;
-        body += `I have attached my details and look forward to hearing from you.\n\nBest regards,\n${fullName}`;
+        body += `I have attached my professional details and look forward to your response.\n\nBest regards,\n${fullName}`;
     } else {
         body += `I would like to apply for this position. Please find my professional details below:\n\n`;
         body += `NAME: \n`;
@@ -76,17 +76,17 @@ export function ApplyNowDialog({ vacancy, isOpen, onOpenChange }: ApplyNowDialog
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[450px] bg-[#1a1c23] border-none rounded-[2rem] shadow-2xl p-8">
+      <DialogContent className="sm:max-w-[450px] bg-[#1a1c23] border-none rounded-[2.5rem] shadow-2xl p-8">
         <DialogHeader>
           <DialogTitle className="text-2xl font-black text-white uppercase italic tracking-tight">Apply for {vacancy.title}</DialogTitle>
           <DialogDescription className="text-muted-foreground font-medium pt-2 leading-relaxed">
-            To apply, please send your resume and a cover letter to the email address below. You can copy the details to your clipboard.
+            To apply, please send your details directly to the company. You can copy the info below or open your email app.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6 py-6">
           <div className="space-y-2">
-            <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground ml-1">Company Email</Label>
+            <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground ml-1">Recruiter Email</Label>
             <div className="flex gap-2">
               <div className="relative flex-1 group">
                 <Input 
@@ -131,7 +131,7 @@ export function ApplyNowDialog({ vacancy, isOpen, onOpenChange }: ApplyNowDialog
           asChild
         >
           <a href={generateMailto()}>
-            Open Email Client
+            <Mail className="mr-2 h-5 w-5" /> Open Email Client
           </a>
         </Button>
       </DialogContent>

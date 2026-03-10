@@ -812,7 +812,7 @@ export default function AdminDashboardPage() {
                                         ) : vacancies?.slice((vacancyPage - 1) * ITEMS_PER_PAGE, vacancyPage * ITEMS_PER_PAGE).map((v, idx) => {
                                             const globalIndex = (vacancyPage - 1) * ITEMS_PER_PAGE + idx + 1;
                                             return (
-                                                <TableRow key={v.id} className="hover:bg-white/5 border-white/5 h-16">
+                                                <TableRow key={v.id} className="hover:bg-white/5 border-white/5 h-20">
                                                     <TableCell className="text-center font-bold text-muted-foreground text-xs">{globalIndex}</TableCell>
                                                     <TableCell className="font-black text-white italic">{v.title}</TableCell>
                                                     <TableCell className="text-muted-foreground font-bold text-xs uppercase tracking-wider">{v.companyName}</TableCell>
@@ -823,9 +823,9 @@ export default function AdminDashboardPage() {
                                                     </TableCell>
                                                     <TableCell className="text-right">
                                                         <div className="flex justify-end gap-2">
-                                                            <Button variant="outline" size="sm" className="rounded-lg h-8 px-3 border-green-500/20 text-green-500 hover:bg-green-500/10" onClick={() => updateDocumentNonBlocking(doc(firestore, 'vacancies', v.id), { status: 'Approved' })}><Check className="h-3 w-3" /></Button>
-                                                            <Button variant="outline" size="sm" className="rounded-lg h-8 px-3 border-red-500/20 text-red-500 hover:bg-red-500/10" onClick={() => updateDocumentNonBlocking(doc(firestore, 'vacancies', v.id), { status: 'Rejected' })}><Ban className="h-3 w-3" /></Button>
-                                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-white/30 hover:text-red-500" onClick={() => deleteDocumentNonBlocking(doc(firestore, 'vacancies', v.id))}><Trash2 className="h-4 w-4" /></Button>
+                                                            <Button variant="outline" size="sm" className="rounded-full h-10 w-10 p-0 border-green-500/20 text-green-500 hover:bg-green-500/10" onClick={() => updateDocumentNonBlocking(doc(firestore, 'vacancies', v.id), { status: 'Approved' })}><Check className="h-4 w-4" /></Button>
+                                                            <Button variant="outline" size="sm" className="rounded-full h-10 w-10 p-0 border-red-500/20 text-red-500 hover:bg-red-500/10" onClick={() => updateDocumentNonBlocking(doc(firestore, 'vacancies', v.id), { status: 'Rejected' })}><Ban className="h-4 w-4" /></Button>
+                                                            <Button variant="ghost" size="icon" className="h-10 w-10 text-white/30 hover:text-red-500" onClick={() => deleteDocumentNonBlocking(doc(firestore, 'vacancies', v.id))}><Trash2 className="h-5 w-5" /></Button>
                                                         </div>
                                                     </TableCell>
                                                 </TableRow>
