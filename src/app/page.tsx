@@ -1,9 +1,8 @@
-
 'use client';
 
 import { Suspense, useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { Briefcase, Building, ChevronDown, LocateIcon, MapPin, Search, Loader2, UserCheck, Crown, Sparkles, Bot, Lock, Users, User, Check, GraduationCap, UserPlus, ChevronLeft, ChevronRight } from "lucide-react"
+import { Briefcase, Building, ChevronDown, LocateIcon, MapPin, Search, Loader2, UserCheck, Crown, Sparkles, Bot, Lock, Users, User, Check, GraduationCap, UserPlus, ChevronLeft, ChevronRight, Filter } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
@@ -86,7 +85,6 @@ function HomePageContent() {
     }, [firestore]);
     
     const { data: appConfig, isLoading: isAppConfigLoading } = useDoc<AppConfig>(appConfigDocRef);
-    const featuredExpertsLimit = appConfig?.featuredExpertsLimit || 3;
     const homepageCategories = appConfig?.homepageCategories || [];
     const isRecentProfessionalsEnabled = appConfig?.isRecentProfessionalsEnabled !== false;
 
@@ -233,7 +231,7 @@ function HomePageContent() {
                      toast({
                         variant: "destructive",
                         title: "AI Search Error",
-                        description: "Could not process AI query. This may be due to a missing API key. Please check your setup.",
+                        description: "Could not process AI query. Please check your setup.",
                     });
                     setIsParsingQuery(false);
                     return;
@@ -304,30 +302,30 @@ function HomePageContent() {
     ];
 
     return (
-        <div className="min-h-screen">
+        <div className="min-h-screen bg-[#1a1c23]">
             <WelcomeRedirect />
             <div className="max-w-4xl mx-auto p-4 sm:p-8">
                 <header className="text-center py-8 sm:py-12">
-                    <h1 className="text-4xl sm:text-6xl font-bold text-primary tracking-tight">DriveGuru</h1>
-                    <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto font-medium">
-                        Your one-stop platform for finding trusted local service professionals and kickstarting your career.
+                    <h1 className="text-5xl sm:text-7xl font-black text-white tracking-tighter uppercase italic">DriveGuru</h1>
+                    <p className="mt-4 text-sm font-black uppercase tracking-[0.3em] text-orange-500/50 max-w-2xl mx-auto">
+                        DIRECT PROFESSIONAL CONNECTIONS
                     </p>
                 </header>
 
                 <main className="space-y-12">
                     {/* Top Experts Carousel */}
-                    <section className="bg-[#24262d] rounded-[2.5rem] p-6 sm:p-8 shadow-2xl overflow-hidden">
+                    <section className="bg-[#24262d] rounded-[2.5rem] p-6 sm:p-8 shadow-2xl overflow-hidden border border-white/5">
                         <div className="mb-8">
-                            <h2 className="text-2xl font-black text-white">Top Rated Experts</h2>
-                            <p className="text-sm text-muted-foreground font-medium">Expand your network by following our top-tier professionals.</p>
+                            <h2 className="text-2xl font-black text-white uppercase italic">Top Rated Experts</h2>
+                            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">PREMIUM NETWORK SUGGESTIONS</p>
                         </div>
 
                         {/* Module Search Bar */}
                         <div className="relative group mb-8">
                             <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground group-focus-within:text-orange-500 transition-colors" />
                             <Input 
-                                placeholder="Search suggestions..." 
-                                className="pl-12 h-14 bg-[#1a1c23] border-2 border-orange-500 rounded-2xl text-white text-lg placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:border-orange-400 transition-all shadow-[0_0_15px_rgba(249,115,22,0.1)]" 
+                                placeholder="Filter suggestions..." 
+                                className="pl-12 h-14 bg-[#1a1c23] border-none rounded-2xl text-white text-lg placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-orange-500 transition-all shadow-inner" 
                                 value={moduleSearchQuery} 
                                 onChange={(e) => setModuleSearchQuery(e.target.value)} 
                             />
@@ -342,37 +340,37 @@ function HomePageContent() {
                                     ))
                                 ) : filteredTopExperts.length > 0 ? (
                                     filteredTopExperts.map(expert => (
-                                        <Card key={expert.id} className="min-w-[240px] max-w-[240px] bg-[#1a1c23] border-white/5 flex flex-col items-center p-8 text-center rounded-[2rem] snap-start transition-all hover:scale-[1.05] group shadow-xl">
-                                            <div className="relative mb-6">
-                                                <Avatar className="h-24 w-24 border-4 border-white/10 group-hover:border-orange-500/50 transition-colors duration-500">
+                                        <Card key={expert.id} className="min-w-[240px] max-w-[240px] bg-[#1a1c23] border-none flex flex-col items-center p-8 text-center rounded-[2.5rem] snap-start transition-all hover:scale-[1.05] group shadow-xl relative overflow-hidden">
+                                            <div className="absolute inset-0 bg-gradient-to-b from-orange-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                                            <div className="relative mb-6 z-10">
+                                                <Avatar className="h-24 w-24 border-4 border-white/10 group-hover:border-orange-500/50 transition-colors duration-500 shadow-2xl">
                                                     <AvatarImage src={expert.photoUrl} className="object-cover" />
                                                     <AvatarFallback className="bg-orange-500/10 text-orange-500 text-3xl font-black">
                                                         {expert.firstName?.[0]}
                                                     </AvatarFallback>
                                                 </Avatar>
                                                 {expert.verified && (
-                                                    <div className="absolute -bottom-1 -right-1 bg-green-500 p-1.5 rounded-full border-4 border-[#1a1c23]">
+                                                    <div className="absolute -bottom-1 -right-1 bg-green-500 p-1.5 rounded-full border-4 border-[#1a1c23] shadow-lg">
                                                         <UserCheck className="h-3 w-3 text-white" />
                                                     </div>
                                                 )}
                                             </div>
-                                            <p className="font-black text-white text-xl line-clamp-1 mb-1 tracking-tight">{expert.firstName} {expert.lastName}</p>
-                                            <p className="text-[11px] text-[#8a92a6] uppercase tracking-[0.15em] font-black mb-10 line-clamp-1 h-4">{expert.profession || expert.role}</p>
+                                            <p className="font-black text-white text-xl line-clamp-1 mb-1 tracking-tight uppercase italic z-10">{expert.firstName} {expert.lastName}</p>
+                                            <p className="text-[10px] text-[#8a92a6] uppercase tracking-[0.2em] font-black mb-10 line-clamp-1 h-4 z-10">{expert.profession || expert.role}</p>
                                             <Button 
-                                                className="w-full bg-orange-500 hover:bg-orange-600 text-white rounded-2xl font-black text-sm h-12 shadow-lg shadow-orange-500/20 active:scale-95 transition-transform"
+                                                className="w-full bg-orange-500 hover:bg-orange-600 text-white rounded-2xl font-black text-xs h-12 shadow-xl shadow-orange-500/20 active:scale-95 transition-transform z-10 uppercase tracking-widest"
                                                 onClick={() => handleToggleFollow(expert.id)}
                                             >
-                                                <UserPlus className="h-4 w-4 mr-2" />
-                                                {userProfile?.following?.includes(expert.id) ? 'Following' : 'Follow'}
+                                                {userProfile?.following?.includes(expert.id) ? 'Following' : 'Follow Expert'}
                                             </Button>
                                         </Card>
                                     ))
                                 ) : (
-                                    <div className="w-full flex flex-col items-center justify-center py-16 bg-white/5 rounded-[2rem] border-2 border-dashed border-white/10">
+                                    <div className="w-full flex flex-col items-center justify-center py-16 bg-white/5 rounded-[2.5rem] border-2 border-dashed border-white/10">
                                         <Sparkles className="h-16 w-16 text-orange-500/20 mb-4 animate-pulse" />
-                                        <p className="text-xl font-black text-white/40 tracking-tight">Our Premium Network is Growing</p>
-                                        <p className="text-sm text-muted-foreground/60 max-w-xs text-center mt-2 font-medium">Be among the first to showcase your expertise at the top of our platform.</p>
-                                        <Button variant="link" className="mt-4 text-orange-500 font-bold" asChild>
+                                        <p className="text-xl font-black text-white/40 tracking-tight uppercase italic">Our Premium Network is Growing</p>
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 max-w-xs text-center mt-2">SHOWCASE YOUR EXPERTISE AT THE TOP</p>
+                                        <Button variant="link" className="mt-4 text-orange-500 font-black uppercase tracking-widest text-xs" asChild>
                                             <Link href="/dashboard#plans">Upgrade Your Plan</Link>
                                         </Button>
                                     </div>
@@ -395,40 +393,40 @@ function HomePageContent() {
                     </section>
 
                     {/* AI Search Card */}
-                    <Card className="transition-all border-2 border-transparent hover:border-orange-500/50 hover:shadow-2xl hover:shadow-orange-500/10 focus-within:border-orange-500/50 focus-within:shadow-orange-500/10 rounded-[2.5rem] p-4">
+                    <Card className="transition-all bg-[#24262d] border-none hover:shadow-2xl hover:shadow-orange-500/5 rounded-[2.5rem] p-4 overflow-hidden border border-white/5">
                         <CardHeader>
                              <div className="flex items-center justify-between">
-                                <CardTitle className="flex items-center gap-2 text-2xl font-black">
-                                    <Sparkles className="text-orange-500" /> AI-Powered Search
+                                <CardTitle className="flex items-center gap-3 text-2xl font-black text-white uppercase italic">
+                                    <Sparkles className="text-orange-500 h-6 w-6" /> Smart Engine
                                 </CardTitle>
-                                <div className="flex items-center space-x-2">
-                                    <Switch id="ai-mode" checked={useAiSearch} onCheckedChange={handleAiModeToggle} className="data-[state=checked]:bg-orange-500" />
-                                    <Label htmlFor="ai-mode" className="flex items-center gap-1 font-bold">
+                                <div className="flex items-center space-x-3 bg-white/5 px-4 py-2 rounded-2xl border border-white/5">
+                                    <Switch id="ai-mode" checked={useAiSearch} onCheckedChange={handleAiModeToggle} className="data-[state=checked]:bg-orange-500 scale-90" />
+                                    <Label htmlFor="ai-mode" className="flex items-center gap-2 font-black text-[10px] uppercase tracking-widest cursor-pointer">
                                         <Bot className={cn("h-4 w-4 transition-colors", useAiSearch ? "text-orange-500" : "text-muted-foreground")} />
-                                        AI Mode
+                                        AI Search
                                     </Label>
                                 </div>
                             </div>
                         </CardHeader>
-                        <CardContent>
-                            <div className="flex flex-col sm:flex-row items-stretch gap-2">
+                        <CardContent className="space-y-4">
+                            <div className="flex flex-col sm:flex-row items-stretch gap-3">
                                 <Dialog>
                                     <DialogTrigger asChild>
-                                        <Button variant="outline" className="w-full sm:w-auto justify-start text-left font-bold rounded-xl h-14 bg-white/5 border-none">
-                                            <span className="flex-1">{userTypes.find(t => t.value === role)?.label || 'Select a user type'}</span>
-                                            <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
+                                        <Button variant="outline" className="w-full sm:w-auto justify-start text-left font-black uppercase text-[10px] tracking-widest rounded-2xl h-14 bg-[#1a1c23] border-none shadow-inner">
+                                            <span className="flex-1 opacity-70">{userTypes.find(t => t.value === role)?.label || 'All User Types'}</span>
+                                            <ChevronDown className="ml-2 h-4 w-4 opacity-30" />
                                         </Button>
                                     </DialogTrigger>
-                                    <DialogContent className="rounded-3xl border-none bg-[#1a1c23]">
+                                    <DialogContent className="rounded-[2.5rem] border-none bg-[#1a1c23] text-white">
                                         <DialogHeader>
-                                            <DialogTitle className="text-xl font-black">Select User Type</DialogTitle>
+                                            <DialogTitle className="text-2xl font-black uppercase italic tracking-tight">Classification</DialogTitle>
                                         </DialogHeader>
-                                        <div className="grid grid-cols-1 gap-4 pt-4">
+                                        <div className="grid grid-cols-1 gap-3 pt-4">
                                             {userTypes.map((type) => (
                                                 <DialogTrigger key={type.value} asChild>
                                                     <Card 
                                                         className={cn(
-                                                            "cursor-pointer transition-all duration-300 transform hover:-translate-y-1 bg-white/5 border-none",
+                                                            "cursor-pointer transition-all duration-300 transform hover:-translate-y-1 bg-white/5 border-none rounded-2xl group",
                                                             role === type.value && !type.href
                                                                 ? "ring-2 ring-orange-500 bg-orange-500/10" 
                                                                 : "hover:bg-white/10"
@@ -441,10 +439,12 @@ function HomePageContent() {
                                                             }
                                                         }}
                                                     >
-                                                        <CardHeader className="flex flex-row items-center justify-between p-4">
+                                                        <CardHeader className="flex flex-row items-center justify-between p-5">
                                                             <div className="flex items-center gap-4">
-                                                                <type.icon className="h-6 w-6 text-orange-500" />
-                                                                <CardTitle className="text-base font-bold">{type.label}</CardTitle>
+                                                                <div className="p-3 bg-white/5 rounded-xl group-hover:bg-orange-500/10 transition-colors">
+                                                                    <type.icon className="h-6 w-6 text-orange-500" />
+                                                                </div>
+                                                                <CardTitle className="text-sm font-black uppercase tracking-widest">{type.label}</CardTitle>
                                                             </div>
                                                             {role === type.value && !type.href && <Check className="h-5 w-5 text-orange-500" />}
                                                         </CardHeader>
@@ -457,26 +457,21 @@ function HomePageContent() {
                                 <div className="relative flex-grow">
                                     <Input
                                         id="ai-search"
-                                        placeholder={useAiSearch ? `e.g. 'available verified plumber in Mumbai'` : `Search by keyword, name, profession...`}
-                                        className={cn("text-base h-14 bg-white/5 border-none rounded-xl focus-visible:ring-2 focus-visible:ring-orange-500")}
+                                        placeholder={useAiSearch ? `e.g. 'available verified plumber in Seoul'` : `Search by keyword, name, profession...`}
+                                        className={cn("text-base h-14 bg-[#1a1c23] border-none rounded-2xl focus-visible:ring-2 focus-visible:ring-orange-500 shadow-inner")}
                                         value={aiSearchQuery}
                                         onChange={(e) => setAiSearchQuery(e.target.value)}
                                         onKeyDown={(e) => e.key === 'Enter' && handleAiSearch()}
                                     />
                                 </div>
-                                <Button onClick={handleAiSearch} disabled={isParsingQuery} className="w-full sm:w-auto h-14 rounded-xl bg-orange-500 hover:bg-orange-600 font-black px-8 shadow-lg shadow-orange-500/20">
-                                    {isParsingQuery ? (
-                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                    ) : (
-                                        <Search className="mr-2 h-4 w-4" />
-                                    )}
-                                    Search
+                                <Button onClick={handleAiSearch} disabled={isParsingQuery} className="w-full sm:w-auto h-14 rounded-2xl bg-orange-500 hover:bg-orange-600 font-black px-10 shadow-xl shadow-orange-500/20 uppercase tracking-widest text-sm">
+                                    {isParsingQuery ? <Loader2 className="h-5 w-5 animate-spin" /> : <Search className="h-5 w-5" />}
                                 </Button>
                             </div>
                              {mounted && !useAiSearch && userProfile?.tier !== 'Super Premier' && (
-                                <p className="text-xs text-orange-500 font-bold mt-2 flex items-center gap-1">
+                                <p className="text-[10px] text-orange-500 font-black uppercase tracking-[0.2em] mt-2 flex items-center gap-2 opacity-70">
                                     <Lock className="h-3 w-3" />
-                                    Premium AI search enabled for Super Premier members. <Link href="/dashboard#plans" className="underline hover:text-orange-400">Upgrade</Link>
+                                    Premium AI access for Super Premier members. <Link href="/dashboard#plans" className="underline hover:text-orange-400">Join Tier</Link>
                                 </p>
                             )}
                         </CardContent>
@@ -486,22 +481,23 @@ function HomePageContent() {
                         <div className="absolute inset-0 flex items-center">
                             <span className="w-full border-t border-white/5" />
                         </div>
-                        <div className="relative inline-block bg-background px-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-                            Or Use Manual Search
+                        <div className="relative inline-block bg-[#1a1c23] px-6 text-[9px] font-black uppercase tracking-[0.4em] text-muted-foreground/40">
+                            MANUAL PARAMETERS
                         </div>
                     </div>
 
-                    {/* Manual Search Filters */}
-                    <Card className="rounded-[2.5rem] p-6 sm:p-8 bg-[#24262d] border-none shadow-2xl">
-                        <CardContent className="p-0 space-y-8">
-                             <div>
-                                <Label htmlFor="search" className="text-xs font-black uppercase tracking-widest text-muted-foreground">I&apos;m looking for...</Label>
-                                <div className="relative mt-2">
-                                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                    {/* Manual Search Filters - Redesigned to match the model */}
+                    <Card className="rounded-[2.5rem] p-6 sm:p-10 bg-[#24262d] border-none shadow-2xl relative overflow-hidden border border-white/5">
+                        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-orange-500/20 to-transparent" />
+                        <CardContent className="p-0 space-y-10">
+                             <div className="space-y-3">
+                                <Label htmlFor="search" className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 ml-1">I&apos;m Looking For...</Label>
+                                <div className="relative group">
+                                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground group-focus-within:text-orange-500 transition-colors" />
                                     <Input
                                         id="search"
                                         placeholder="Name, profession, skill, or company..."
-                                        className="pl-12 h-14 bg-[#1a1c23] border-none rounded-2xl text-white placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-orange-500"
+                                        className="pl-12 h-14 bg-[#1a1c23] border-none rounded-2xl text-white placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-orange-500 shadow-inner"
                                         value={searchQuery}
                                         onChange={(e) => setSearchQuery(e.target.value)}
                                     />
@@ -509,117 +505,117 @@ function HomePageContent() {
                             </div>
                             
                             <div className="space-y-4">
-                                <div className="flex items-center justify-between">
-                                    <Label className="text-xs font-black uppercase tracking-widest text-muted-foreground">Location Filtering</Label>
-                                    <Button variant="ghost" size="sm" onClick={handleDetectLocation} disabled={isDetectingLocation} className="text-orange-500 font-bold hover:bg-orange-500/10 rounded-lg">
-                                        {isDetectingLocation ? (
-                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                        ) : (
-                                            <LocateIcon className="mr-2 h-4 w-4" />
-                                        )}
+                                <div className="flex items-center justify-between mb-1">
+                                    <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 ml-1">Location Filtering</Label>
+                                    <Button variant="ghost" size="sm" onClick={handleDetectLocation} disabled={isDetectingLocation} className="text-orange-500 font-black uppercase text-[10px] tracking-widest hover:bg-orange-500/5 h-8 rounded-xl px-4 group">
+                                        {isDetectingLocation ? <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> : <LocateIcon className="mr-2 h-3.5 w-3.5 group-hover:scale-110 transition-transform" />}
                                         Auto-Detect
                                     </Button>
                                 </div>
                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                                    <div className="sm:col-span-1">
-                                        <Input id="city" placeholder="District / City" className="bg-[#1a1c23] border-none h-12 rounded-xl" value={city} onChange={(e) => setCity(e.target.value)} />
-                                    </div>
-                                    <div className="sm:col-span-1">
-                                        <Input id="state" placeholder="State" className="bg-[#1a1c23] border-none h-12 rounded-xl" value={state} onChange={(e) => setState(e.target.value)} />
-                                    </div>
-                                     <div className="sm:col-span-1">
-                                        <Input id="pincode" placeholder="Pincode" className="bg-[#1a1c23] border-none h-12 rounded-xl" value={pincode} onChange={(e) => setPincode(e.target.value)} />
-                                    </div>
+                                    <Input id="city" placeholder="District / City" className="bg-[#1a1c23] border-none h-14 rounded-2xl font-bold px-6 shadow-inner" value={city} onChange={(e) => setCity(e.target.value)} />
+                                    <Input id="state" placeholder="State" className="bg-[#1a1c23] border-none h-14 rounded-2xl font-bold px-6 shadow-inner" value={state} onChange={(e) => setState(e.target.value)} />
+                                    <Input id="pincode" placeholder="Pincode" className="bg-[#1a1c23] border-none h-14 rounded-2xl font-bold px-6 shadow-inner" value={pincode} onChange={(e) => setPincode(e.target.value)} />
                                 </div>
                             </div>
                             
-                            <div>
-                                <Label className="text-xs font-black uppercase tracking-widest text-muted-foreground mb-3 block">Budget Range</Label>
-                                <div className="flex items-center justify-between mb-4">
-                                    <span className="text-sm font-bold text-white">Max Hourly Rate</span>
-                                    <span className="text-sm font-black text-orange-500 bg-orange-500/10 px-3 py-1 rounded-full border border-orange-500/20">
-                                        {maxRate ? `₹${maxRate}/hr` : 'Unlimited'}
-                                    </span>
+                            <div className="space-y-6">
+                                <div className="flex items-center justify-between">
+                                    <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 ml-1">Budget Range</Label>
+                                    <div className="flex items-center gap-3">
+                                        <span className="text-[10px] font-black text-white uppercase tracking-wider">Max Hourly Rate</span>
+                                        <Badge className={cn("rounded-full px-4 h-7 text-[10px] font-black uppercase tracking-widest border-none transition-all", maxRate ? "bg-orange-500 text-white" : "bg-white/5 text-orange-500/50")}>
+                                            {maxRate ? `₹${maxRate}/hr` : 'Unlimited'}
+                                        </Badge>
+                                    </div>
                                 </div>
-                                <Slider 
-                                    defaultValue={[maxRate || 5000]}
-                                    value={[maxRate || 5000]}
-                                    max={5000} 
-                                    step={100} 
-                                    className="mt-3" 
-                                    onValueChange={(value) => setMaxRate(value[0] === 5000 ? null : value[0])}
-                                />
-                            </div>
-
-                            <div className="flex flex-wrap gap-6 pt-4">
-                                <div className="flex items-center space-x-3 bg-[#1a1c23] p-4 rounded-2xl flex-1 min-w-[200px]">
-                                    <Checkbox id="verified" checked={showVerifiedOnly} onCheckedChange={(checked) => setShowVerifiedOnly(!!checked)} className="border-orange-500 data-[state=checked]:bg-orange-500" />
-                                    <Label htmlFor="verified" className="font-bold cursor-pointer">Verified Experts Only</Label>
-                                </div>
-                                <div className="flex items-center space-x-3 bg-[#1a1c23] p-4 rounded-2xl flex-1 min-w-[200px]">
-                                    <Checkbox id="available" checked={showAvailableOnly} onCheckedChange={(checked) => setShowAvailableOnly(!!checked)} className="border-orange-500 data-[state=checked]:bg-orange-500" />
-                                    <Label htmlFor="available" className="font-bold cursor-pointer">Available Now Only</Label>
+                                <div className="px-2">
+                                    <Slider 
+                                        defaultValue={[maxRate || 5000]}
+                                        value={[maxRate || 5000]}
+                                        max={5000} 
+                                        step={100} 
+                                        className="h-2" 
+                                        onValueChange={(value) => setMaxRate(value[0] === 5000 ? null : value[0])}
+                                    />
                                 </div>
                             </div>
 
-                            <Button size="lg" className="w-full h-16 rounded-[1.5rem] bg-orange-500 hover:bg-orange-600 text-white font-black text-xl shadow-xl shadow-orange-500/20 active:scale-[0.98] transition-all" onClick={handleSearch}>
-                                <Search className="mr-3 h-6 w-6" />
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div className="flex items-center space-x-4 bg-[#1a1c23] p-5 rounded-2xl border border-white/5 group hover:bg-white/[0.03] transition-colors cursor-pointer" onClick={() => setShowVerifiedOnly(!showVerifiedOnly)}>
+                                    <Checkbox id="verified" checked={showVerifiedOnly} onCheckedChange={(checked) => setShowVerifiedOnly(!!checked)} className="h-5 w-5 border-2 border-orange-500 data-[state=checked]:bg-orange-500 rounded-md" />
+                                    <Label htmlFor="verified" className="text-xs font-black uppercase tracking-widest text-white/80 cursor-pointer select-none">Verified Professionals</Label>
+                                </div>
+                                <div className="flex items-center space-x-4 bg-[#1a1c23] p-5 rounded-2xl border border-white/5 group hover:bg-white/[0.03] transition-colors cursor-pointer" onClick={() => setShowAvailableOnly(!showAvailableOnly)}>
+                                    <Checkbox id="available" checked={showAvailableOnly} onCheckedChange={(checked) => setShowAvailableOnly(!!checked)} className="h-5 w-5 border-2 border-orange-500 data-[state=checked]:bg-orange-500 rounded-md" />
+                                    <Label htmlFor="available" className="text-xs font-black uppercase tracking-widest text-white/80 cursor-pointer select-none">Available Immediately</Label>
+                                </div>
+                            </div>
+
+                            <Button size="lg" className="w-full h-20 rounded-[2rem] bg-orange-500 hover:bg-orange-600 text-white font-black text-xl shadow-2xl shadow-orange-500/30 active:scale-[0.98] transition-all uppercase tracking-[0.2em] group" onClick={handleSearch}>
+                                <Search className="mr-4 h-7 w-7 group-hover:scale-110 transition-transform" />
                                 Find Local Professionals
                             </Button>
                         </CardContent>
                     </Card>
 
                     {/* Explore Categories */}
-                    <div className="mt-12 text-center">
-                        <h2 className="text-3xl font-black text-white mb-2">Explore Categories</h2>
-                        <p className="text-muted-foreground font-medium mb-8">Find exactly who you need by industry.</p>
+                    <div className="mt-16 text-center">
+                        <h2 className="text-3xl font-black text-white mb-2 uppercase italic">Industry Hub</h2>
+                        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-orange-500/50 mb-10">EXPLORE BY SPECIALIZATION</p>
                          {isAppConfigLoading ? (
                              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                <Skeleton className="h-28 w-full rounded-2xl bg-white/5" />
-                                <Skeleton className="h-28 w-full rounded-2xl bg-white/5" />
-                                <Skeleton className="h-28 w-full rounded-2xl bg-white/5" />
-                                <Skeleton className="h-28 w-full rounded-2xl bg-white/5" />
+                                <Skeleton className="h-32 w-full rounded-[2.5rem] bg-white/5" />
+                                <Skeleton className="h-32 w-full rounded-[2.5rem] bg-white/5" />
+                                <Skeleton className="h-32 w-full rounded-[2.5rem] bg-white/5" />
+                                <Skeleton className="h-32 w-full rounded-[2.5rem] bg-white/5" />
                             </div>
                          ) : homepageCategories.length > 0 ? (
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                                 {homepageCategories.map((category) => (
                                     <Link key={category.id} href={`/search?q=${encodeURIComponent(category.name)}`} passHref>
-                                        <Card className="flex flex-col items-center justify-center p-6 h-full bg-[#24262d] border-none hover:bg-orange-500/5 hover:ring-2 hover:ring-orange-500/50 transition-all rounded-[2rem] group cursor-pointer">
-                                            <div className="p-4 bg-white/5 rounded-2xl mb-3 group-hover:bg-orange-500/10 transition-colors">
+                                        <Card className="flex flex-col items-center justify-center p-8 h-full bg-[#24262d] border-none hover:bg-orange-500/5 hover:ring-2 hover:ring-orange-500/50 transition-all rounded-[2.5rem] group cursor-pointer shadow-xl">
+                                            <div className="p-5 bg-[#1a1c23] rounded-2xl mb-4 group-hover:bg-orange-500/10 group-hover:scale-110 transition-all duration-500 shadow-inner">
                                                 {getIcon(category.icon)}
                                             </div>
-                                            <p className="font-black text-sm text-white group-hover:text-orange-500 transition-colors">{category.name}</p>
+                                            <p className="font-black text-xs text-white group-hover:text-orange-500 transition-colors uppercase tracking-widest">{category.name}</p>
                                         </Card>
                                     </Link>
                                 ))}
                             </div>
                         ) : (
-                            <p className="text-sm text-muted-foreground">Categories are being configured by the admin.</p>
+                            <p className="text-xs text-muted-foreground font-black uppercase tracking-widest opacity-30">Category matrix pending system configuration.</p>
                         )}
                     </div>
 
                      {/* Recent Professionals Grid */}
                      {isRecentProfessionalsEnabled && (
-                        <div className="mt-16">
-                            <div className="flex items-center justify-between mb-8">
-                                <h2 className="text-3xl font-black text-white">Recent Professionals</h2>
-                                <Button variant="outline" className="rounded-xl border-white/10 bg-white/5 hover:bg-white/10 text-orange-500 font-black uppercase text-[10px] tracking-widest h-9 px-4 transition-all" asChild>
-                                    <Link href="/search">View All <ChevronRight className="ml-1 h-3.5 w-3.5"/></Link>
+                        <div className="mt-20">
+                            <div className="flex items-center justify-between mb-10">
+                                <div>
+                                    <h2 className="text-3xl font-black text-white uppercase italic">Fresh Talent</h2>
+                                    <p className="text-[10px] font-black uppercase tracking-[0.3em] text-orange-500/50">NEWLY JOINED PROFESSIONALS</p>
+                                </div>
+                                <Button variant="outline" className="rounded-2xl border-white/10 bg-white/5 hover:bg-white/10 text-orange-500 font-black uppercase text-[11px] tracking-widest h-12 px-8 transition-all shadow-xl active:scale-95" asChild>
+                                    <Link href="/search">Registry <ChevronRight className="ml-2 h-4 w-4"/></Link>
                                 </Button>
                             </div>
                             {isLoadingExperts ? (
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <Skeleton className="h-48 w-full rounded-[2rem] bg-white/5" />
-                                    <Skeleton className="h-48 w-full rounded-[2rem] bg-white/5" />
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                    <Skeleton className="h-56 w-full rounded-[2.5rem] bg-white/5" />
+                                    <Skeleton className="h-56 w-full rounded-[2.5rem] bg-white/5" />
                                 </div>
                             ) : (
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                     {recentExperts && recentExperts.length > 0 ? (
                                         recentExperts.map(expert => (
                                             <ExpertCard key={expert.id} expert={expert} />
                                         ))
                                     ) : (
-                                        <p className="text-center text-muted-foreground col-span-2 py-8 bg-white/5 rounded-[2rem] border-2 border-dashed border-white/5">No experts selected for this section yet.</p>
+                                        <div className="text-center py-20 bg-[#24262d] rounded-[3rem] border-2 border-dashed border-white/5 col-span-2 shadow-inner">
+                                            <Users className="h-16 w-16 mx-auto text-muted-foreground/10 mb-4" />
+                                            <p className="text-muted-foreground font-black uppercase tracking-widest text-xs opacity-40">The recent professionals grid is currently being updated.</p>
+                                        </div>
                                     )}
                                 </div>
                             )}
@@ -630,27 +626,27 @@ function HomePageContent() {
             </div>
 
             <Dialog open={isPremiumDialogOpen} onOpenChange={setIsPremiumDialogOpen}>
-                <DialogContent className="rounded-[2.5rem] border-none bg-[#1a1c23] p-8">
+                <DialogContent className="rounded-[3rem] border-none bg-[#1a1c23] p-10 text-white shadow-2xl">
                     <DialogHeader className="items-center text-center">
-                        <div className="p-4 bg-orange-500/10 rounded-full w-fit mb-4">
-                            <Sparkles className="h-10 w-10 text-orange-500" />
+                        <div className="p-6 bg-orange-500/10 rounded-full w-fit mb-6 shadow-inner">
+                            <Sparkles className="h-14 w-14 text-orange-500" />
                         </div>
-                        <DialogTitle className="text-3xl font-black text-white">Super Premier Feature</DialogTitle>
+                        <DialogTitle className="text-4xl font-black uppercase italic tracking-tighter">Tier Restriction</DialogTitle>
                         <UiDialogDescription className="text-lg text-muted-foreground font-medium pt-2">
-                            AI-Powered Search is exclusive to our top-tier members.
+                            AI-Powered Smart Search is reserved for our top-tier members.
                         </UiDialogDescription>
                     </DialogHeader>
-                    <div className="text-center space-y-4 py-4">
-                        <p className="text-white/70 font-medium">
-                            Unlock advanced AI tools, priority placement, and verified badges to multiply your client inquiries.
+                    <div className="text-center space-y-4 py-6">
+                        <p className="text-white/70 font-medium leading-relaxed">
+                            Unlock the elite smart engine, priority placement in search results, and professional verified badges to maximize your client engagement.
                         </p>
                     </div>
-                    <DialogFooter className="flex-col gap-3 pt-4 sm:flex-col">
-                        <Button asChild className="w-full h-14 rounded-2xl bg-orange-500 hover:bg-orange-600 font-black text-lg">
-                            <Link href="/dashboard#plans">View Premium Plans</Link>
+                    <DialogFooter className="flex-col gap-4 pt-4 sm:flex-col">
+                        <Button asChild className="w-full h-16 rounded-2xl bg-orange-500 hover:bg-orange-600 font-black text-lg shadow-xl shadow-orange-500/20 uppercase tracking-widest transition-all">
+                            <Link href="/dashboard#plans">VIEW PREMIUM PLANS</Link>
                         </Button>
-                        <Button variant="ghost" className="w-full h-12 rounded-xl text-muted-foreground hover:text-white hover:bg-white/5 font-bold" onClick={() => setIsPremiumDialogOpen(false)}>
-                            Maybe Later
+                        <Button variant="ghost" className="w-full h-12 rounded-xl text-muted-foreground hover:text-white hover:bg-white/5 font-black uppercase text-[10px] tracking-widest" onClick={() => setIsPremiumDialogOpen(false)}>
+                            MAYBE LATER
                         </Button>
                     </DialogFooter>
                 </DialogContent>
@@ -662,8 +658,8 @@ function HomePageContent() {
 export default function TalentSearchPage() {
     return (
         <Suspense fallback={
-            <div className="flex h-screen w-full items-center justify-center bg-background">
-                <Loader2 className="h-8 w-8 animate-spin text-orange-500" />
+            <div className="flex h-screen w-full items-center justify-center bg-[#1a1c23]">
+                <Loader2 className="h-12 w-12 animate-spin text-orange-500" />
             </div>
         }>
             <HomePageContent />
