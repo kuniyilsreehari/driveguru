@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -77,7 +78,7 @@ export function ApplyNowDialog({ vacancy, isOpen, onOpenChange }: ApplyNowDialog
   const handleGmailApply = () => {
     const body = getMailBody();
     const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${vacancy.companyEmail}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-    window.open(gmailUrl, '_blank');
+    window.location.href = gmailUrl;
   };
 
   const handleDefaultMailApply = () => {

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Suspense, useState, useEffect, useMemo } from 'react';
@@ -202,9 +203,9 @@ function HomePageContent() {
         if (showAvailableOnly) queryParams.set('available', 'true');
         if (maxRate !== null) queryParams.set('maxRate', maxRate.toString());
         
-        // If pincode or manual location is set, we can suggest a radius search
+        // If pincode or manual location is set, apply radius searching
         if (pincode || city) {
-            queryParams.set('radius', '20'); // Default radius
+            queryParams.set('radius', '20');
         }
         
         router.push(`/search?${queryParams.toString()}`);
@@ -607,8 +608,8 @@ function HomePageContent() {
                                     <h2 className="text-3xl font-black text-white uppercase italic">Fresh Talent</h2>
                                     <p className="text-[10px] font-black uppercase tracking-[0.3em] text-orange-500/50">NEWLY JOINED PROFESSIONALS</p>
                                 </div>
-                                <Button className="rounded-2xl bg-orange-500 hover:bg-orange-600 text-white font-black uppercase text-[11px] tracking-widest h-12 px-8 transition-all shadow-xl active:scale-95 shadow-orange-500/20" asChild>
-                                    <Link href="/search">VIEW REGISTRY <ChevronRight className="ml-2 h-4 w-4"/></Link>
+                                <Button className="rounded-2xl bg-orange-500 hover:bg-orange-600 text-white font-black uppercase text-[11px] tracking-widest h-14 px-10 transition-all shadow-xl active:scale-95 shadow-orange-500/20" asChild>
+                                    <Link href="/search">VIEW ALL EXPERTS <ChevronRight className="ml-2 h-5 w-5"/></Link>
                                 </Button>
                             </div>
                             {isLoadingExperts ? (
