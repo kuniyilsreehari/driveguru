@@ -142,8 +142,8 @@ function HomePageContent() {
 
     const getCurrentPosition = (): Promise<GeolocationPosition> => {
         return new Promise((resolve, reject) => {
-            if (!navigator.geolocation) {
-                reject(new Error('Geolocation is not supported by your browser.'));
+            if (typeof window === 'undefined' || !navigator.geolocation) {
+                reject(new Error('Geolocation is not supported.'));
                 return;
             }
             navigator.geolocation.getCurrentPosition(resolve, reject);
@@ -202,8 +202,10 @@ function HomePageContent() {
         if (showAvailableOnly) queryParams.set('available', 'true');
         if (maxRate !== null) queryParams.set('maxRate', maxRate.toString());
         
-        // If we have a pincode or city/state, let the search page handle geocoding for radius if radius is implied
-        // For manual search, we'll use string matching unless the user used "Auto-Detect"
+        // If pincode or manual location is set, we can suggest a radius search
+        if (pincode || city) {
+            queryParams.set('radius', '20'); // Default radius
+        }
         
         router.push(`/search?${queryParams.toString()}`);
     };
@@ -251,7 +253,7 @@ function HomePageContent() {
                      const position = await getCurrentPosition();
                      queryParams.set('lat', position.coords.latitude.toString());
                      queryParams.set('lon', position.coords.longitude.toString());
-                     queryParams.set('radius', '20'); // Default radius for "near me"
+                     queryParams.set('radius', '20'); 
                 }
             } catch (e) {
                 console.error("AI search parsing failed", e);

@@ -598,7 +598,7 @@ export default function ExpertDashboardPage() {
                   <p className="text-[10px] font-black uppercase tracking-[0.2em] text-orange-500 mb-10">POWER PROFESSIONAL</p>
                   <ul className="w-full space-y-5 mb-12">
                     <li className="flex items-center gap-3 text-[11px] font-black text-white uppercase tracking-tight"><CheckCircle2 className="h-5 w-5 text-green-500" /> High Priority Search Ranking</li>
-                    <li className="flex items-center gap-3 text-[11px] font-black text-white uppercase tracking-tight"><CheckCircle2 className="h-5 w-5 text-green-500" /> AI Bio & Profile Generator</li>
+                    <li className="flex items-center gap-3 text-[11px] font-black text-white uppercase tracking-tight"><CheckCircle2 className="h-5 w-5 text-green-500" /> AI BIO & PROFILE GENERATOR</li>
                     <li className="flex items-center gap-3 text-[11px] font-black text-white uppercase tracking-tight"><CheckCircle2 className="h-5 w-5 text-green-500" /> SMART SKILLS SUGGESTIONS</li>
                     <li className="flex items-center gap-3 text-[11px] font-black text-white uppercase tracking-tight"><CheckCircle2 className="h-5 w-5 text-green-500" /> FEATURED PURPLE BADGE</li>
                   </ul>

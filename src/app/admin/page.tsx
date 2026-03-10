@@ -253,10 +253,6 @@ export default function AdminDashboardPage() {
     }
   }, [appConfig]);
 
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [userSearchQuery, userFilter]);
-
   const stats = useMemo(() => {
     if (!users) return { total: 0, verified: 0, unverified: 0, premier: 0, super: 0, referrals: 0 };
     return {
@@ -318,8 +314,7 @@ export default function AdminDashboardPage() {
             u.city?.toLowerCase().includes(queryStr) ||
             u.state?.toLowerCase().includes(queryStr) ||
             u.pincode?.toLowerCase().includes(queryStr) ||
-            u.companyName?.toLowerCase().includes(queryStr) ||
-            u.id.toLowerCase().includes(queryStr);
+            u.companyName?.toLowerCase().includes(queryStr);
         
         const matchesFilter = 
             userFilter === 'all' ? true :
@@ -444,16 +439,6 @@ export default function AdminDashboardPage() {
         toast({ variant: "destructive", title: "Action Failed" });
     }
   };
-
-  const handleGenerateReferralCode = async (userId: string) => {
-    const code = Math.random().toString(36).substring(2, 10).toUpperCase();
-    try {
-        await updateDocumentNonBlocking(doc(firestore, 'users', userId), { referralCode: code });
-        toast({ title: "Referral Code Generated", description: `Assigned code: ${code}` });
-    } catch (e) {
-        toast({ variant: "destructive", title: "Action Failed" });
-    }
-  }
 
   const handleDeletePost = async () => {
     if (!selectedPost) return;
@@ -652,7 +637,7 @@ export default function AdminDashboardPage() {
                                 <div className="relative group">
                                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-orange-500 transition-colors" />
                                     <Input 
-                                        placeholder="Search experts by name, profession, location or pincode..." 
+                                        placeholder="Search experts by name, profession, or pincode..." 
                                         className="pl-10 h-12 bg-white/5 border-none rounded-xl text-white placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-orange-500"
                                         value={userSearchQuery}
                                         onChange={(e) => setUserSearchQuery(e.target.value)}
@@ -759,9 +744,6 @@ export default function AdminDashboardPage() {
                                                                     <DropdownMenuItem onClick={() => router.push(`/expert/${u.id}`)} className="rounded-lg h-10"><Eye className="mr-2 h-4 w-4 text-orange-500" /> View Profile</DropdownMenuItem>
                                                                     <DropdownMenuItem onClick={() => { setSelectedUser(u); setIsEditDialogOpen(true); }} className="rounded-lg h-10"><Edit className="mr-2 h-4 w-4" /> Edit Profile</DropdownMenuItem>
                                                                     <DropdownMenuItem onClick={() => { setSelectedUser(u); setIsAwardDialogOpen(true); }} className="rounded-lg h-10 text-orange-500"><Gift className="mr-2 h-4 w-4" /> Award Points</DropdownMenuItem>
-                                                                    {!u.referralCode && (
-                                                                        <DropdownMenuItem onClick={() => handleUpdateUserTier(u.id, 'Standard')} className="rounded-lg h-10 text-orange-500"><Hash className="mr-2 h-4 w-4" /> Generate Code</DropdownMenuItem>
-                                                                    )}
                                                                     <DropdownMenuSub>
                                                                         <DropdownMenuSubTrigger className="rounded-lg h-10"><Crown className="mr-2 h-4 w-4" /> Change Tier</DropdownMenuSubTrigger>
                                                                         <DropdownMenuPortal>

@@ -3,14 +3,12 @@
 import { Suspense, useMemo, useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { collection, query, where, limit, or, and, doc } from 'firebase/firestore';
+import { collection, query, where, limit, and, doc } from 'firebase/firestore';
 import { useFirestore, useCollection, useMemoFirebase, useDoc } from '@/firebase';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
-import { Loader2, User, MapPin, Star, IndianRupee, Briefcase, Calendar, Phone, MessageCircle, ChevronLeft, ChevronDown, UserCheck, Crown, Sparkles, SearchX } from 'lucide-react';
+import { Loader2, ChevronLeft, SearchX } from 'lucide-react';
 import { ExpertCard } from '@/components/expert-card';
 import type { ExpertUser } from '@/components/expert-card';
 
@@ -79,7 +77,7 @@ function SearchResults() {
                 if (data && data.length > 0) {
                     setSearchCenter({ lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon) });
                 } else {
-                    setSearchCenter(null); // Location not found
+                    setSearchCenter(null);
                 }
             } catch (error) {
                 console.error("Geocoding failed:", error);
@@ -109,7 +107,6 @@ function SearchResults() {
             constraints.push(where('role', '==', roleQuery));
         }
         
-        // If a tier is specified in the URL, use it. Otherwise, don't filter by tier.
         if (tierParam) {
             const tiers = tierParam.split(',').filter(t => t);
             if (tiers.length > 0) {
@@ -127,21 +124,18 @@ function SearchResults() {
     const filteredExperts = useMemo(() => {
         if (!allExperts) return null;
 
-        // Wait for geocoding to finish if distance search is active
         if (radius && !searchCenter && isGeocoding) {
-            return null; // Indicates loading state for distance filter
+            return null; 
         }
         
         let experts = allExperts;
 
-        // Filter out hidden profiles
         experts = experts.filter(e => {
             if (!e.hiddenUntil) return true;
             return (e.hiddenUntil as any).toDate() < new Date();
         });
 
         // 1. PINCODE FILTER (Highest Priority)
-        // If a 6-digit pincode is provided, we strictly match it first
         if (pincode && pincode.length === 6) {
             const matchedInZip = experts.filter(e => e.pincode === pincode);
             if (matchedInZip.length > 0) {
@@ -176,7 +170,6 @@ function SearchResults() {
                 return false;
             });
         } else {
-            // Text-based fallback location filtering
             if (city) {
                 const lowCity = city.toLowerCase();
                 experts = experts.filter(e => (e.city || '').toLowerCase().includes(lowCity));

@@ -48,7 +48,7 @@ function VacancyCard({ vacancy }: { vacancy: Vacancy }) {
                                 </Badge>
                             )}
                         </div>
-                        <CardTitle className="text-xl font-black text-white group-hover:text-orange-500 transition-colors uppercase italic tracking-tight">
+                        <CardTitle className="text-xl font-black text-orange-500 group-hover:text-orange-400 transition-colors uppercase italic tracking-tight">
                             {vacancy.title}
                         </CardTitle>
                         <div className="flex items-center gap-2 text-sm font-bold text-white/70">
@@ -95,16 +95,16 @@ function VacancyCard({ vacancy }: { vacancy: Vacancy }) {
                     </div>
                 </div>
             </CardContent>
-            <CardFooter className="bg-white/5 border-t border-white/5 p-6 flex flex-col sm:flex-row gap-3">
-                <Button className="w-full sm:flex-1 bg-orange-500 hover:bg-orange-600 text-white font-black rounded-xl h-12 shadow-xl shadow-orange-500/20 uppercase tracking-widest" asChild>
+            <CardFooter className="bg-white/5 border-t border-white/5 p-6 flex items-center gap-3">
+                <Button className="flex-1 h-16 rounded-2xl bg-orange-500 hover:bg-orange-600 text-white font-black text-xl shadow-2xl shadow-orange-500/30 uppercase tracking-[0.2em] transition-all active:scale-95 group" asChild>
                     <a href={`mailto:${vacancy.companyEmail}?subject=Application: ${vacancy.title}`}>
-                        Apply Now
+                        APPLY NOW
                     </a>
                 </Button>
                 {vacancy.contactPhone && (
-                    <Button variant="outline" className="w-full sm:w-auto px-6 border-white/10 bg-white/5 text-white font-black h-12 rounded-xl hover:bg-white/10 shadow-lg" asChild>
+                    <Button variant="outline" className="h-16 w-16 px-0 border-white/10 bg-white/5 text-white font-black rounded-2xl hover:bg-white/10 shadow-lg flex items-center justify-center shrink-0" asChild>
                         <a href={`tel:${vacancy.contactPhone}`}>
-                            <Phone className="h-4 w-4" />
+                            <Phone className="h-6 w-6" />
                         </a>
                     </Button>
                 )}
@@ -120,7 +120,6 @@ function VacanciesContent() {
 
     const vacanciesQuery = useMemoFirebase(() => {
         if (!firestore) return null;
-        // PUBLIC ACCESS: No permission check needed for fetching the list.
         return query(
             collection(firestore, 'vacancies'),
             orderBy('postedAt', 'desc')
