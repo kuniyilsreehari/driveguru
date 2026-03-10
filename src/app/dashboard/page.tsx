@@ -325,30 +325,31 @@ export default function ExpertDashboardPage() {
                 <CardContent className="space-y-6 pt-6">
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="bg-white/5 p-5 rounded-2xl flex items-center justify-between border border-white/5">
-                          <div className="flex items-center gap-3">
+                      {/* REDESIGNED HIRING STATUS COMPONENT */}
+                      <div className="bg-[#1a1c23] p-6 rounded-[1.5rem] flex items-center justify-between border border-white/5 shadow-inner transition-all hover:border-green-500/20">
+                          <div className="flex items-center gap-4">
                               <Switch 
                                   checked={userProfile.isAvailable} 
                                   onCheckedChange={(v) => updateDocumentNonBlocking(userDocRef!, { isAvailable: v })} 
-                                  className="data-[state=checked]:bg-green-500"
+                                  className="data-[state=checked]:bg-[#22c55e] scale-110"
                               />
                               <div>
-                                <p className="font-black text-sm text-white uppercase italic">Hiring Status</p>
-                                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Available for immediate booking.</p>
+                                <p className="font-black text-sm text-white uppercase italic tracking-tighter">HIRING STATUS</p>
+                                <p className="text-[10px] font-black uppercase tracking-widest text-[#3b82f6]">AVAILABLE FOR IMMEDIATE BOOKING.</p>
                               </div>
                           </div>
-                          {userProfile.isAvailable ? <CheckCircle className="text-green-500 h-5 w-5" /> : <Clock className="text-muted-foreground h-5 w-5 opacity-30" />}
+                          {userProfile.isAvailable && <CheckCircle2 className="text-[#22c55e] h-6 w-6" />}
                       </div>
 
-                      <div className={cn("p-5 rounded-2xl flex items-center justify-between transition-colors border", isHidden ? "bg-orange-500/10 border-orange-500/30" : "bg-white/5 border-white/5")}>
-                          <div className="flex items-center gap-3">
-                              {isHidden ? <EyeOff className="text-orange-500 h-5 w-5" /> : <Eye className="text-muted-foreground h-5 w-5" />}
+                      <div className={cn("p-6 rounded-[1.5rem] flex items-center justify-between transition-colors border", isHidden ? "bg-orange-500/10 border-orange-500/30" : "bg-[#1a1c23] border-white/5")}>
+                          <div className="flex items-center gap-4">
+                              {isHidden ? <EyeOff className="text-orange-500 h-6 w-6" /> : <Eye className="text-muted-foreground h-6 w-6" />}
                               <div>
-                                <p className="font-black text-sm text-white uppercase italic">Card Visibility</p>
-                                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                                <p className="font-black text-sm text-white uppercase italic tracking-tighter">CARD VISIBILITY</p>
+                                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
                                     {isHidden 
-                                        ? `Hidden until ${formatDistanceToNow(userProfile.hiddenUntil!.toDate(), { addSuffix: true })}` 
-                                        : "Your professional card is active."
+                                        ? `HIDDEN UNTIL ${formatDistanceToNow(userProfile.hiddenUntil!.toDate(), { addSuffix: true }).toUpperCase()}` 
+                                        : "YOUR PROFESSIONAL CARD IS ACTIVE."
                                     }
                                 </p>
                               </div>

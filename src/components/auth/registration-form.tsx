@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react";
@@ -28,7 +27,7 @@ import { setDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { Textarea } from "../ui/textarea";
-import { Card, CardDescription, CardHeader, CardTitle } from "../ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
 import { Icons } from "../icons";
 import { Checkbox } from "../ui/checkbox";
 
@@ -523,8 +522,8 @@ export function RegistrationForm() {
         </div>
 
         <div className="grid grid-cols-2 gap-2">
-            <Button onClick={handleGoogleSignUp} type="button"><Icons.google className="mr-2 h-4 w-4" />Google</Button>
-             <Button onClick={() => setView('phone')} type="button" className="bg-green-600 text-white hover:bg-green-700 transition-transform hover:scale-[1.02] active:scale-[0.98]"><Phone className="mr-2 h-4 w-4" />Phone</Button>
+            <Button onClick={handleGoogleSignUp} type="button" className="rounded-xl h-12"><Icons.google className="mr-2 h-4 w-4" />Google</Button>
+             <Button onClick={() => setView('phone')} type="button" className="bg-green-600 text-white hover:bg-green-700 transition-transform hover:scale-[1.02] active:scale-[0.98] rounded-xl h-12"><Phone className="mr-2 h-4 w-4" />Phone</Button>
         </div>
 
 
@@ -541,7 +540,7 @@ export function RegistrationForm() {
                   <FormLabel>Referral Code (Optional)</FormLabel>
                   <div className="relative">
                       <Gift className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                      <FormControl><Input placeholder="Enter a referral code" {...field} className="pl-10" disabled={!!searchParams.get('ref')} /></FormControl>
+                      <FormControl><Input placeholder="Enter a referral code" {...field} className="pl-10 h-12 rounded-xl" disabled={!!searchParams.get('ref')} /></FormControl>
                   </div>
                   <FormMessage />
               </FormItem>
@@ -553,7 +552,7 @@ export function RegistrationForm() {
                 <FormItem>
                 <FormLabel>First Name</FormLabel>
                 <div className="relative">
-                    <UserIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><FormControl><Input placeholder="John" {...field} className="pl-10" /></FormControl>
+                    <UserIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><FormControl><Input placeholder="John" {...field} className="pl-10 h-12 rounded-xl" /></FormControl>
                 </div>
                 <FormMessage />
                 </FormItem>
@@ -562,7 +561,7 @@ export function RegistrationForm() {
                 <FormItem>
                 <FormLabel>Last Name</FormLabel>
                 <div className="relative">
-                    <UserIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><FormControl><Input placeholder="Doe" {...field} className="pl-10" /></FormControl>
+                    <UserIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><FormControl><Input placeholder="Doe" {...field} className="pl-10 h-12 rounded-xl" /></FormControl>
                 </div>
                 <FormMessage />
                 </FormItem>
@@ -573,7 +572,7 @@ export function RegistrationForm() {
             <FormItem>
               <FormLabel>Email</FormLabel>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><FormControl><Input type="email" placeholder="name@example.com" {...field} className="pl-10" /></FormControl>
+                <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><FormControl><Input type="email" placeholder="name@example.com" {...field} className="pl-10 h-12 rounded-xl" /></FormControl>
               </div>
               <FormMessage />
             </FormItem>
@@ -584,7 +583,7 @@ export function RegistrationForm() {
               <FormLabel>Password</FormLabel>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <FormControl><Input type={showPassword ? "text" : "password"} placeholder="••••••••" {...field} className="pl-10 pr-10" /></FormControl>
+                <FormControl><Input type={showPassword ? "text" : "password"} placeholder="••••••••" {...field} className="pl-10 pr-10 h-12 rounded-xl" /></FormControl>
                 <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground">
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
@@ -604,12 +603,12 @@ export function RegistrationForm() {
                       {expertTypes.map((type) => (
                           <Card 
                               key={type.name} 
-                              className={cn("cursor-pointer transition-all hover:-translate-y-1", field.value === type.name ? "border-primary ring-2 ring-primary" : "hover:border-primary/50")}
+                              className={cn("cursor-pointer transition-all hover:-translate-y-1 border-white/5 bg-white/5", field.value === type.name ? "border-primary ring-2 ring-primary bg-primary/5" : "hover:border-primary/50")}
                               onClick={() => form.setValue('role', type.name, { shouldValidate: true })}
                           >
                               <CardHeader className="flex flex-row items-center gap-4 p-4">
-                                  <div className={cn("p-3 rounded-full", field.value === type.name ? "bg-primary/10 text-primary" : "bg-secondary text-secondary-foreground")}>{type.icon}</div>
-                                  <div><CardTitle className="text-lg">{type.name}</CardTitle><CardDescription className="text-xs">{type.description}</CardDescription></div>
+                                  <div className={cn("p-3 rounded-full", field.value === type.name ? "bg-primary text-white" : "bg-white/10 text-white/40")}>{type.icon}</div>
+                                  <div><CardTitle className="text-lg font-black uppercase italic tracking-tight">{type.name}</CardTitle><CardDescription className="text-xs font-medium">{type.description}</CardDescription></div>
                                   <ArrowRight className={cn("ml-auto h-5 w-5 text-muted-foreground transition-transform", field.value === type.name && "translate-x-1")}/>
                               </CardHeader>
                           </Card>
@@ -622,15 +621,15 @@ export function RegistrationForm() {
         />
         
         {selectedRole && (
-            <div className="space-y-4">
+            <div className="space-y-4 animate-in fade-in slide-in-from-top-4 duration-500">
               <FormItem>
                   <FormLabel>Phone Number</FormLabel>
                   <div className="flex items-center gap-2">
                       <FormField control={form.control} name="countryCode" render={({ field: codeField }) => (
-                          <Select onValueChange={codeField.onChange} defaultValue={codeField.value}><FormControl><SelectTrigger className="w-[80px]"><SelectValue placeholder="Code" /></SelectTrigger></FormControl><SelectContent><SelectItem value="+91">IN</SelectItem><SelectItem value="+1">USA</SelectItem><SelectItem value="+44">UK</SelectItem></SelectContent></Select>
+                          <Select onValueChange={codeField.onChange} defaultValue={codeField.value}><FormControl><SelectTrigger className="w-[80px] h-12 rounded-xl"><SelectValue placeholder="Code" /></SelectTrigger></FormControl><SelectContent><SelectItem value="+91">IN</SelectItem><SelectItem value="+1">USA</SelectItem><SelectItem value="+44">UK</SelectItem></SelectContent></Select>
                       )} />
                       <FormField control={form.control} name="phoneNumber" render={({ field }) => (
-                          <div className="relative flex-grow"><FormControl><Input placeholder="9876543210" {...field} /></FormControl></div>
+                          <div className="relative flex-grow"><FormControl><Input placeholder="9876543210" {...field} className="h-12 rounded-xl" /></FormControl></div>
                       )} />
                   </div>
                   <FormMessage />
@@ -638,36 +637,51 @@ export function RegistrationForm() {
               <div className="space-y-2">
                   <div className="flex items-center justify-between mb-2">
                       <FormLabel>Location</FormLabel>
-                      <Button type="button" variant="outline" size="sm" onClick={handleDetectLocation} disabled={isDetectingLocation}>{isDetectingLocation ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <LocateIcon className="mr-2 h-4 w-4" />}Detect</Button>
+                      <Button type="button" variant="outline" size="sm" onClick={handleDetectLocation} disabled={isDetectingLocation} className="rounded-xl h-9">{isDetectingLocation ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <LocateIcon className="mr-2 h-4 w-4" />}Detect</Button>
                   </div>
                   <div className="grid grid-cols-2 gap-2">
-                      <FormField control={form.control} name="city" render={({ field }) => (<FormItem><FormControl><Input placeholder="City" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                      <FormField control={form.control} name="state" render={({ field }) => (<FormItem><FormControl><Input placeholder="State" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                      <FormField control={form.control} name="city" render={({ field }) => (<FormItem><FormControl><Input placeholder="City" {...field} className="h-12 rounded-xl" /></FormControl><FormMessage /></FormItem>)} />
+                      <FormField control={form.control} name="state" render={({ field }) => (<FormItem><FormControl><Input placeholder="State" {...field} className="h-12 rounded-xl" /></FormControl><FormMessage /></FormItem>)} />
                   </div>
                   <FormField control={form.control} name="pincode" render={({ field }) => (
-                    <FormItem className="mt-2 text-center"><div className="relative"><FormControl><Input placeholder="Pincode" {...field} /></FormControl>{isFetchingPincode && <Loader2 className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin" />}</div><FormMessage /></FormItem>
+                    <FormItem className="mt-2 text-center"><div className="relative"><FormControl><Input placeholder="Pincode" {...field} className="h-12 rounded-xl" /></FormControl>{isFetchingPincode && <Loader2 className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin" />}</div><FormMessage /></FormItem>
                   )} />
               </div>
 
               {(selectedRole === 'Company' || selectedRole === 'Authorized Pro') && (
-                <div className="space-y-4">
-                  <FormField control={form.control} name="companyName" render={({ field }) => (<FormItem><FormLabel>Company Name</FormLabel><div className="relative"><Building className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><FormControl><Input placeholder="Company name" {...field} className="pl-10" /></FormControl></div><FormMessage /></FormItem>)} />
-                  <FormField control={form.control} name="department" render={({ field }) => (<FormItem><FormLabel>Department</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Department" /></SelectTrigger></FormControl><SelectContent>{departments.map(dep => <SelectItem key={dep} value={dep}>{dep}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
-                  <FormField control={form.control} name="address" render={({ field }) => (<FormItem><FormLabel>Address</FormLabel><div className="relative"><Home className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" /><FormControl><Textarea placeholder="Full address" {...field} className="pl-10" /></FormControl></div><FormMessage /></FormItem>)} />
+                <div className="space-y-4 animate-in fade-in slide-in-from-top-4 duration-500">
+                  <FormField control={form.control} name="companyName" render={({ field }) => (<FormItem><FormLabel>Company Name</FormLabel><div className="relative"><Building className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><FormControl><Input placeholder="Company name" {...field} className="pl-10 h-12 rounded-xl" /></FormControl></div><FormMessage /></FormItem>)} />
+                  <FormField control={form.control} name="department" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Department</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger className="h-12 rounded-xl">
+                            <SelectValue placeholder="Department" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {departments.map(dep => <SelectItem key={dep} value={dep}>{dep}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+                  <FormField control={form.control} name="address" render={({ field }) => (<FormItem><FormLabel>Address</FormLabel><div className="relative"><Home className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" /><FormControl><Textarea placeholder="Full address" {...field} className="pl-10 rounded-xl" /></FormControl></div><FormMessage /></FormItem>)} />
                 </div>
               )}
                 
                 <FormField control={form.control} name="terms" render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 shadow-sm"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange}/></FormControl><div className="space-y-1 leading-none"><FormLabel>Agree to <Link href="/terms" target="_blank" className="underline text-primary">Terms & Conditions</Link></FormLabel><FormMessage /></div></FormItem>
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-xl border border-white/5 bg-white/5 p-4 shadow-sm"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange}/></FormControl><div className="space-y-1 leading-none"><FormLabel className="text-xs font-medium">Agree to <Link href="/terms" target="_blank" className="underline text-primary">Terms & Conditions</Link></FormLabel><FormMessage /></div></FormItem>
                   )} />
 
-                <Button type="submit" className="w-full h-12 bg-orange-500 hover:bg-orange-600 font-black text-lg shadow-lg" disabled={form.formState.isSubmitting || isSubmitting}>
-                    {form.formState.isSubmitting || isSubmitting ? 'Processing...' : <><Briefcase className="mr-2 h-4 w-4" /> Create Expert Profile</>}
+                <Button type="submit" className="w-full h-14 bg-orange-500 hover:bg-orange-600 font-black text-lg shadow-xl shadow-orange-500/20 rounded-2xl uppercase tracking-widest" disabled={form.formState.isSubmitting || isSubmitting}>
+                    {form.formState.isSubmitting || isSubmitting ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <><Briefcase className="mr-2 h-5 w-5" /> CREATE EXPERT PROFILE</>}
                 </Button>
             </div>
         )}
 
-        <div className="mt-4 text-center text-sm">Already have an account? <Link href="/login" className="underline">Sign In</Link></div>
+        <div className="mt-4 text-center text-sm font-medium text-muted-foreground">Already have an account? <Link href="/login" className="underline text-white font-bold">Sign In</Link></div>
       </form>
     </Form>
   );
@@ -676,24 +690,24 @@ export function RegistrationForm() {
     <Form {...phoneForm}>
         <form onSubmit={phoneForm.handleSubmit(onPhoneSubmit)} className="space-y-4">
             <FormField control={phoneForm.control} name="phoneNumber" render={({ field }) => (
-                    <FormItem><FormLabel>Mobile Number</FormLabel><div className="relative"><span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">+91</span><FormControl><Input type="tel" placeholder="9876543210" {...field} className="pl-10"/></FormControl></div><FormMessage /></FormItem>
+                    <FormItem><FormLabel>Mobile Number</FormLabel><div className="relative"><span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground font-bold">+91</span><FormControl><Input type="tel" placeholder="9876543210" {...field} className="pl-10 h-12 rounded-xl"/></FormControl></div><FormMessage /></FormItem>
                 )} />
             <FormField control={phoneForm.control} name="referralCode" render={({ field }) => (
-                  <FormItem><FormLabel>Referral Code (Optional)</FormLabel><div className="relative"><Gift className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><FormControl><Input placeholder="Referral code" {...field} className="pl-10" disabled={!!searchParams.get('ref')} /></FormControl></div><FormMessage /></FormItem>
+                  <FormItem><FormLabel>Referral Code (Optional)</FormLabel><div className="relative"><Gift className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><FormControl><Input placeholder="Referral code" {...field} className="pl-10 h-12 rounded-xl" disabled={!!searchParams.get('ref')} /></FormControl></div><FormMessage /></FormItem>
               )} />
             <FormField control={phoneForm.control} name="role" render={({ field }) => (
-                <FormItem><FormLabel>Role</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select role" /></SelectTrigger></FormControl><SelectContent>{expertTypes.map(t => <SelectItem key={t.name} value={t.name}>{t.name}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>
+                <FormItem><FormLabel>Role</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger className="h-12 rounded-xl"><SelectValue placeholder="Select role" /></SelectTrigger></FormControl><SelectContent>{expertTypes.map(t => <SelectItem key={t.name} value={t.name}>{t.name}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>
                 )} />
             {selectedPhoneRole === 'Freelancer' && (
                 <div className="grid grid-cols-2 gap-4">
-                    <FormField control={phoneForm.control} name="firstName" render={({ field }) => (<FormItem><FormLabel>First Name</FormLabel><FormControl><Input placeholder="John" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                    <FormField control={phoneForm.control} name="lastName" render={({ field }) => (<FormItem><FormLabel>Last Name</FormLabel><FormControl><Input placeholder="Doe" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                    <FormField control={phoneForm.control} name="firstName" render={({ field }) => (<FormItem><FormLabel>First Name</FormLabel><FormControl><Input placeholder="John" {...field} className="h-12 rounded-xl" /></FormControl><FormMessage /></FormItem>)} />
+                    <FormField control={phoneForm.control} name="lastName" render={({ field }) => (<FormItem><FormLabel>Last Name</FormLabel><FormControl><Input placeholder="Doe" {...field} className="h-12 rounded-xl" /></FormControl><FormMessage /></FormItem>)} />
                 </div>
             )}
             {(selectedPhoneRole === 'Company' || selectedPhoneRole === 'Authorized Pro') && (
-                 <FormField control={phoneForm.control} name="companyName" render={({ field }) => (<FormItem><FormLabel>Company Name</FormLabel><FormControl><Input placeholder="Company" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                 <FormField control={phoneForm.control} name="companyName" render={({ field }) => (<FormItem><FormLabel>Company Name</FormLabel><FormControl><Input placeholder="Company" {...field} className="h-12 rounded-xl" /></FormControl><FormMessage /></FormItem>)} />
             )}
-            <Button type="submit" className="w-full" disabled={isSubmitting}>{isSubmitting ? 'Sending...' : 'Send OTP'}</Button>
+            <Button type="submit" className="w-full h-12 rounded-xl bg-orange-500 hover:bg-orange-600 font-black" disabled={isSubmitting}>{isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Send OTP'}</Button>
             <Button variant="link" className="w-full" onClick={() => setView('email')}>Email Sign Up</Button>
         </form>
     </Form>
@@ -703,9 +717,9 @@ export function RegistrationForm() {
      <Form {...otpForm}>
         <form onSubmit={otpForm.handleSubmit(onOtpSubmit)} className="space-y-4">
             <FormField control={otpForm.control} name="otp" render={({ field }) => (
-                    <FormItem><FormLabel>Enter OTP</FormLabel><div className="relative"><MessageSquare className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><FormControl><Input type="text" placeholder="123456" {...field} className="pl-10" /></FormControl></div><FormMessage /></FormItem>
+                    <FormItem><FormLabel>Enter OTP</FormLabel><div className="relative"><MessageSquare className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><FormControl><Input type="text" placeholder="123456" {...field} className="pl-10 h-12 rounded-xl" /></FormControl></div><FormMessage /></FormItem>
                 )} />
-            <Button type="submit" className="w-full" disabled={isSubmitting}>{isSubmitting ? 'Verifying...' : 'Verify & Sign Up'}</Button>
+            <Button type="submit" className="w-full h-12 rounded-xl bg-orange-500 hover:bg-orange-600 font-black" disabled={isSubmitting}>{isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Verify & Sign Up'}</Button>
             <Button variant="link" className="w-full" onClick={() => setView('phone')}>Change phone number</Button>
         </form>
     </Form>
