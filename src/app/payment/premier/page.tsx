@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Suspense, useState } from 'react';
@@ -24,7 +23,8 @@ function PremierPaymentPageContent() {
             return;
         }
 
-        const checkoutWindow = typeof window !== 'undefined' ? window.open('about:blank', '_blank') : null;
+        // Open window immediately to prevent browser popup blockers
+        const checkoutWindow = window.open('', '_blank');
         
         if (!checkoutWindow) {
             toast({ 
@@ -34,6 +34,9 @@ function PremierPaymentPageContent() {
             });
             return;
         }
+
+        // Show a placeholder in the new tab while we fetch the link
+        checkoutWindow.document.write('<html><body style="background:#1a1c23;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;color:white;font-family:sans-serif;"><div>Connecting to secure payment gateway...</div></body></html>');
 
         setIsCreatingOrder(true);
         try {
@@ -120,7 +123,7 @@ function PremierPaymentPageContent() {
                         {isCreatingOrder ? (
                             <><Loader2 className="mr-3 h-6 w-6 animate-spin" />Securing Session...</>
                         ) : (
-                            <><CheckCircle className="mr-3 h-6 w-6 group-hover:scale-110 transition-transform" />PROCEED TO PAYMENT</>
+                            <><CheckCircle className="mr-3 h-6 w-6 group-hover:scale-110 transition-transform" />PROCEED TO UPGRADE</>
                         )}
                     </Button>
                 </CardFooter>

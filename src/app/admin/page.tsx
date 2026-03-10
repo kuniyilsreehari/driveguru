@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
@@ -793,9 +792,10 @@ export default function AdminDashboardPage() {
                                     <Button variant="outline" size="sm" onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} disabled={currentPage === 1} className="rounded-xl h-9 border-white/10 bg-transparent text-white font-bold"><ChevronLeft className="h-4 w-4" /></Button>
                                     <Button variant="outline" size="sm" onClick={() => setCurrentPage(prev => prev + 1)} disabled={currentPage >= Math.ceil(filteredUsers.length / ITEMS_PER_PAGE)} className="rounded-xl h-9 border-white/10 bg-transparent text-white font-bold"><ChevronRight className="h-4 w-4" /></Button>
                                 </div>
-                            </CardContent>
-                        </Card>
-                    </TabsContent>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </TabsContent>
 
                 <TabsContent value="vacancies">
                     <Card className="border-none bg-card rounded-2xl overflow-hidden shadow-2xl">
@@ -856,8 +856,8 @@ export default function AdminDashboardPage() {
                             <div className="flex items-center justify-between pt-4">
                                 <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Page {vacancyPage}</p>
                                 <div className="flex items-center gap-2">
-                                    <Button variant="outline" size="sm" onClick={() => setVacancyPage(prev => Math.max(prev - 1, 1))} disabled={vacancyPage === 1} className="rounded-xl h-9 border-white/10 bg-transparent"><ChevronLeft className="h-4 w-4" /></Button>
-                                    <Button variant="outline" size="sm" onClick={() => setVacancyPage(prev => prev + 1)} disabled={vacancyPage >= Math.ceil((vacancies?.length || 0) / ITEMS_PER_PAGE)} className="rounded-xl h-9 border-white/10 bg-transparent"><ChevronRight className="h-4 w-4" /></Button>
+                                    <Button variant="outline" size="sm" onClick={() => setVacancyPage(prev => Math.max(prev - 1, 1))} disabled={vacancyPage === 1} className="rounded-xl h-9 border-white/10 bg-transparent text-white font-bold"><ChevronLeft className="h-4 w-4" /></Button>
+                                    <Button variant="outline" size="sm" onClick={() => setVacancyPage(prev => prev + 1)} disabled={vacancyPage >= Math.ceil((vacancies?.length || 0) / ITEMS_PER_PAGE)} className="rounded-xl h-9 border-white/10 bg-transparent text-white font-bold"><ChevronRight className="h-4 w-4" /></Button>
                                 </div>
                             </div>
                         </CardContent>
@@ -912,8 +912,8 @@ export default function AdminDashboardPage() {
                             <div className="flex items-center justify-between pt-4">
                                 <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Page {paymentPage}</p>
                                 <div className="flex items-center gap-2">
-                                    <Button variant="outline" size="sm" onClick={() => setPaymentPage(prev => Math.max(prev - 1, 1))} disabled={paymentPage === 1} className="rounded-xl h-9 border-white/10 bg-transparent"><ChevronLeft className="h-4 w-4" /></Button>
-                                    <Button variant="outline" size="sm" onClick={() => setPaymentPage(prev => prev + 1)} disabled={paymentPage >= Math.ceil((payments?.length || 0) / ITEMS_PER_PAGE)} className="rounded-xl h-9 border-white/10 bg-transparent"><ChevronRight className="h-4 w-4" /></Button>
+                                    <Button variant="outline" size="sm" onClick={() => setPaymentPage(prev => Math.max(prev - 1, 1))} disabled={paymentPage === 1} className="rounded-xl h-9 border-white/10 bg-transparent text-white font-bold"><ChevronLeft className="h-4 w-4" /></Button>
+                                    <Button variant="outline" size="sm" onClick={() => setPaymentPage(prev => prev + 1)} disabled={paymentPage >= Math.ceil((payments?.length || 0) / ITEMS_PER_PAGE)} className="rounded-xl h-9 border-white/10 bg-transparent text-white font-bold"><ChevronRight className="h-4 w-4" /></Button>
                                 </div>
                             </div>
                         </CardContent>
@@ -964,8 +964,8 @@ export default function AdminDashboardPage() {
                             <div className="flex items-center justify-between pt-4">
                                 <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Page {feedPage}</p>
                                 <div className="flex items-center gap-2">
-                                    <Button variant="outline" size="sm" onClick={() => setFeedPage(prev => Math.max(prev - 1, 1))} disabled={feedPage === 1} className="rounded-xl h-9 border-white/10 bg-transparent"><ChevronLeft className="h-4 w-4" /></Button>
-                                    <Button variant="outline" size="sm" onClick={() => setFeedPage(prev => prev + 1)} disabled={feedPage >= Math.ceil((posts?.length || 0) / ITEMS_PER_PAGE)} className="rounded-xl h-9 border-white/10 bg-transparent"><ChevronRight className="h-4 w-4" /></Button>
+                                    <Button variant="outline" size="sm" onClick={() => setFeedPage(prev => Math.max(prev - 1, 1))} disabled={feedPage === 1} className="rounded-xl h-9 border-white/10 bg-transparent text-white font-bold"><ChevronLeft className="h-4 w-4" /></Button>
+                                    <Button variant="outline" size="sm" onClick={() => setFeedPage(prev => prev + 1)} disabled={feedPage >= Math.ceil((posts?.length || 0) / ITEMS_PER_PAGE)} className="rounded-xl h-9 border-white/10 bg-transparent text-white font-bold"><ChevronRight className="h-4 w-4" /></Button>
                                 </div>
                             </div>
                         </CardContent>

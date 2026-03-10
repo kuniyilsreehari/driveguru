@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Suspense, useState } from 'react';
@@ -29,16 +28,20 @@ function VerificationPaymentPageContent() {
             return;
         }
 
-        const checkoutWindow = typeof window !== 'undefined' ? window.open('about:blank', '_blank') : null;
+        // Open window immediately to prevent browser popup blockers
+        const checkoutWindow = window.open('', '_blank');
         
         if (!checkoutWindow) {
             toast({ 
                 variant: 'destructive', 
                 title: 'Popup Blocked', 
-                description: 'Please allow popups to proceed to the secure payment gateway.' 
+                description: 'Please allow popups for DriveGuru to proceed to the secure payment gateway.' 
             });
             return;
         }
+
+        // Show a placeholder in the new tab while we fetch the link
+        checkoutWindow.document.write('<html><body style="background:#1a1c23;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;color:white;font-family:sans-serif;"><div>Connecting to secure verification gateway...</div></body></html>');
 
         setIsCreatingOrder(true);
         try {
