@@ -11,11 +11,12 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Copy, Check, Mail, ExternalLink } from 'lucide-react';
+import { Copy, Check, Mail, ExternalLink, Send } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import type { Vacancy } from '@/app/vacancies/page';
+import { Icons } from './icons';
 
 interface ApplyNowDialogProps {
   vacancy: Vacancy;
@@ -47,7 +48,7 @@ export function ApplyNowDialog({ vacancy, isOpen, onOpenChange }: ApplyNowDialog
     toast({ title: "Copied to clipboard" });
   };
 
-  const generateMailto = () => {
+  const getMailBody = () => {
     let body = `Hello ${vacancy.companyName} Team,\n\nI am writing to express my interest in the ${vacancy.title} position posted on DriveGuru.\n\n`;
     
     if (profile) {
@@ -70,23 +71,34 @@ export function ApplyNowDialog({ vacancy, isOpen, onOpenChange }: ApplyNowDialog
         body += `CONTACT EMAIL: \n`;
         body += `\nThank you.`;
     }
-    
-    return `mailto:${vacancy.companyEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    return body;
+  };
+
+  const handleGmailApply = () => {
+    const body = getMailBody();
+    const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${vacancy.companyEmail}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    window.open(gmailUrl, '_blank');
+  };
+
+  const handleDefaultMailApply = () => {
+    const body = getMailBody();
+    const mailtoUrl = `mailto:${vacancy.companyEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    window.location.href = mailtoUrl;
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[450px] bg-[#1a1c23] border-none rounded-[2.5rem] shadow-2xl p-8">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-black text-white uppercase italic tracking-tight">Apply for {vacancy.title}</DialogTitle>
+          <DialogTitle className="text-2xl font-black text-white uppercase italic tracking-tight">Direct Application</DialogTitle>
           <DialogDescription className="text-muted-foreground font-medium pt-2 leading-relaxed">
-            To apply, please send your details directly to the company. You can copy the info below or open your email app.
+            Send your professional profile directly to the recruiter. Use Gmail or your default email app.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6 py-6">
           <div className="space-y-2">
-            <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground ml-1">Recruiter Email</Label>
+            <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground ml-1">Company Email</Label>
             <div className="flex gap-2">
               <div className="relative flex-1 group">
                 <Input 
@@ -107,7 +119,7 @@ export function ApplyNowDialog({ vacancy, isOpen, onOpenChange }: ApplyNowDialog
           </div>
 
           <div className="space-y-2">
-            <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground ml-1">Email Subject</Label>
+            <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground ml-1">Subject</Label>
             <div className="flex gap-2">
               <Input 
                 value={subject} 
@@ -126,14 +138,22 @@ export function ApplyNowDialog({ vacancy, isOpen, onOpenChange }: ApplyNowDialog
           </div>
         </div>
 
-        <Button 
-          className="w-full h-16 rounded-2xl bg-orange-500 hover:bg-orange-600 font-black text-lg shadow-xl shadow-orange-500/20 uppercase tracking-widest transition-all active:scale-95"
-          asChild
-        >
-          <a href={generateMailto()}>
-            <Mail className="mr-2 h-5 w-5" /> Open Email Client
-          </a>
-        </Button>
+        <div className="flex flex-col gap-3">
+            <Button 
+                className="w-full h-16 rounded-2xl bg-orange-500 hover:bg-orange-600 font-black text-lg shadow-xl shadow-orange-500/20 uppercase tracking-widest transition-all active:scale-95"
+                onClick={handleGmailApply}
+            >
+                <Icons.google className="mr-2 h-5 w-5" /> APPLY VIA GMAIL
+            </Button>
+            
+            <Button 
+                variant="outline"
+                className="w-full h-12 rounded-xl border-white/10 bg-white/5 text-white font-bold hover:bg-white/10"
+                onClick={handleDefaultMailApply}
+            >
+                <Mail className="mr-2 h-4 w-4" /> DEFAULT MAIL APP
+            </Button>
+        </div>
       </DialogContent>
     </Dialog>
   );
