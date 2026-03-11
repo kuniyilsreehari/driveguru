@@ -315,8 +315,8 @@ export default function ExpertDashboardPage() {
                       <span className="flex items-center gap-1.5"><Users className="h-3.5 w-3.5 text-orange-500" /> {userProfile.following?.length || 0} FOLLOWING</span>
                     </div>
 
-                    <div className="py-3">
-                      <Badge className="font-black bg-orange-500 text-white border-none text-base uppercase tracking-[0.3em] px-8 py-3 rounded-2xl h-12 shadow-xl shadow-orange-500/20">
+                    <div className="py-3 flex justify-start">
+                      <Badge className="font-black bg-white text-black border-none text-base uppercase tracking-[0.3em] px-8 py-3 rounded-2xl h-12 shadow-xl">
                         {userProfile.role}
                       </Badge>
                     </div>
