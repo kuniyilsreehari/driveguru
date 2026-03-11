@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -602,7 +603,7 @@ export function EditProfileForm({ userProfile, onSuccess, isAdmin = false }: Edi
                                 </AvatarFallback>
                               </Avatar>
                               <Button type="button" variant="outline" size="sm" className="w-full h-9 rounded-xl border-white/10 bg-white/5 hover:bg-white/10" onClick={() => ref?.current?.click()} disabled={uploadingSlot !== null}>
-                                  {uploadingSlot === slot ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4 mr-2" />}
+                                  {uploadingSlot === slot ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4 mr-2" />}
                                   {slot === 1 ? 'Primary' : `Photo ${slot}`}
                               </Button>
                               <FormControl>
