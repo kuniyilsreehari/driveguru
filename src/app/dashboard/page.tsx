@@ -285,90 +285,96 @@ export default function ExpertDashboardPage() {
           </TabsList>
 
           <TabsContent value="overview" className="mt-0 space-y-8">
-            <Card className="border-none bg-[#24262d] rounded-3xl overflow-hidden shadow-2xl">
+            <Card className="border-none bg-[#24262d] rounded-[3rem] overflow-hidden shadow-2xl">
               <Collapsible open={isProfileExpanded} onOpenChange={setIsProfileExpanded}>
-                <CardHeader className="flex flex-col md:flex-row items-start md:items-center gap-6 pb-6 bg-white/5 border-b border-white/5">
-                  <Avatar className="h-24 w-24 border-4 border-orange-500/20 cursor-pointer hover:border-orange-500/50 transition-all shadow-xl" onClick={() => setIsEditDialogOpen(true)}>
-                    <AvatarImage src={userProfile.photoUrl} className="object-cover" />
-                    <AvatarFallback className="text-[10px] text-center px-2 font-bold leading-tight bg-orange-500/10 text-orange-500 uppercase">Profile<br/>Image</AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 space-y-1">
-                    <div className="flex items-center gap-3">
-                      <h2 className="text-4xl font-black text-white tracking-tighter uppercase italic">{(userProfile.companyName || userProfile.firstName).toUpperCase()}!</h2>
-                      <div className="flex items-center gap-2">
-                        {userProfile.verified ? <CheckCircle2 className="h-6 w-6 text-green-500 fill-green-500/10" /> : <ShieldAlert className="h-6 w-6 text-orange-500/40" />}
-                        <div className="flex gap-1">
-                          <Button variant="ghost" size="icon" onClick={() => setIsEditDialogOpen(true)} className="h-8 w-8 text-muted-foreground hover:text-white">
-                              <Edit className="h-4 w-4" />
-                          </Button>
-                          <CollapsibleTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-white">
-                              {isProfileExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                            </Button>
-                          </CollapsibleTrigger>
+                <CardHeader className="flex flex-col items-center gap-6 pb-10 bg-white/5 border-b border-white/5 text-center">
+                  <div className="relative">
+                    <Avatar className="h-32 w-32 border-4 border-orange-500/20 cursor-pointer hover:border-orange-500/50 transition-all shadow-2xl" onClick={() => setIsEditDialogOpen(true)}>
+                      <AvatarImage src={userProfile.photoUrl} className="object-cover" />
+                      <AvatarFallback className="text-[10px] text-center px-4 font-bold leading-tight bg-orange-500/10 text-orange-500 uppercase">Profile<br/>Image</AvatarFallback>
+                    </Avatar>
+                    {userProfile.verified && (
+                        <div className="absolute -bottom-2 -right-2 bg-green-500 p-2 rounded-full border-4 border-[#24262d] shadow-xl">
+                            <CheckCircle2 className="h-6 w-6 text-white" />
                         </div>
+                    )}
+                  </div>
+                  
+                  <div className="space-y-4 w-full">
+                    <div className="flex flex-col items-center gap-2">
+                      <h2 className="text-5xl sm:text-6xl font-black text-white tracking-tighter uppercase italic">{(userProfile.companyName || userProfile.firstName).toUpperCase()}!</h2>
+                      
+                      <div className="flex items-center gap-4 text-[11px] font-black uppercase tracking-[0.3em] text-muted-foreground mt-2">
+                        <span className="flex items-center gap-1.5"><Users className="h-4 w-4 text-orange-500" /> {myFollowers?.length || 0} FOLLOWERS</span>
+                        <div className="h-4 w-px bg-white/10" />
+                        <span className="flex items-center gap-1.5"><Users className="h-4 w-4 text-orange-500" /> {userProfile.following?.length || 0} FOLLOWING</span>
                       </div>
                     </div>
-                    
-                    <div className="flex flex-wrap items-center gap-4 text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">
-                      <span className="flex items-center gap-1.5"><Users className="h-3.5 w-3.5 text-orange-500" /> {myFollowers?.length || 0} FOLLOWERS</span>
-                      <span className="flex items-center gap-1.5"><Users className="h-3.5 w-3.5 text-orange-500" /> {userProfile.following?.length || 0} FOLLOWING</span>
-                    </div>
 
-                    <div className="py-4 flex justify-start">
-                      <Badge className="font-black bg-white text-black border-none text-xl uppercase tracking-[0.4em] px-10 py-4 rounded-2xl h-16 shadow-2xl transition-transform hover:scale-105">
+                    <div className="py-6">
+                      <Badge className="font-black bg-white text-black border-none text-2xl sm:text-3xl uppercase tracking-[0.4em] px-12 py-6 rounded-[2rem] h-auto shadow-2xl transition-transform hover:scale-105 active:scale-95 inline-flex">
                         {userProfile.role}
                       </Badge>
                     </div>
                     
-                    <div className="pt-2 space-y-3">
+                    <div className="space-y-4 max-w-2xl mx-auto">
                         {userProfile.profession && (
-                            <p className="text-2xl font-black text-orange-500 uppercase italic tracking-tighter flex items-center gap-2">
-                                <Briefcase className="h-6 w-6" /> {userProfile.profession}
+                            <p className="text-3xl font-black text-orange-500 uppercase italic tracking-tighter flex items-center justify-center gap-3">
+                                <Briefcase className="h-8 w-8" /> {userProfile.profession}
                             </p>
                         )}
                         {userProfile.category && (
-                            <p className="text-sm font-black text-white/60 uppercase tracking-widest flex items-center gap-2">
+                            <p className="text-sm font-black text-white/60 uppercase tracking-[0.3em] flex items-center justify-center gap-2">
                                 <List className="h-4 w-4" /> {userProfile.category}
                             </p>
                         )}
                         {userProfile.businessDescription && (
-                            <p className="text-base font-medium text-muted-foreground italic leading-relaxed max-w-xl border-l-4 border-orange-500/20 pl-4 py-1">
-                                "{userProfile.businessDescription}"
-                            </p>
+                            <div className="pt-4">
+                                <p className="text-lg font-medium text-muted-foreground italic leading-relaxed border-t border-white/5 pt-4">
+                                    "{userProfile.businessDescription}"
+                                </p>
+                            </div>
                         )}
                     </div>
                   </div>
-                  <div className="flex flex-col gap-2 w-full md:w-auto">
-                      <Button onClick={() => setIsEditDialogOpen(true)} className="w-full bg-orange-500 hover:bg-orange-600 text-white font-black rounded-xl h-16 px-10 shadow-xl shadow-orange-500/20 uppercase tracking-[0.2em] transition-all active:scale-95 group">
+                  
+                  <div className="flex flex-col sm:flex-row gap-3 w-full max-w-md mt-4">
+                      <Button onClick={() => setIsEditDialogOpen(true)} className="flex-1 bg-orange-500 hover:bg-orange-600 text-white font-black rounded-2xl h-16 px-10 shadow-xl shadow-orange-500/20 uppercase tracking-[0.2em] transition-all active:scale-95 group">
                           <Edit className="mr-3 h-6 w-6 group-hover:scale-110 transition-transform" /> UPDATE PROFILE
                       </Button>
+                      <CollapsibleTrigger asChild>
+                        <Button variant="outline" className="rounded-2xl border-white/10 h-16 w-16 bg-white/5 hover:bg-white/10">
+                          {isProfileExpanded ? <ChevronUp className="h-6 w-6" /> : <ChevronDown className="h-6 w-6" />}
+                        </Button>
+                      </CollapsibleTrigger>
                   </div>
                 </CardHeader>
-                <CardContent className="space-y-6 pt-6">
+                <CardContent className="space-y-6 pt-10 px-6 sm:px-10">
                   
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="bg-[#1a1c23] p-6 rounded-[1.5rem] flex items-center justify-between border border-white/5 shadow-inner transition-all hover:border-green-500/20">
-                          <div className="flex items-center gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="bg-[#1a1c23] p-8 rounded-[2.5rem] flex items-center justify-between border border-white/5 shadow-inner transition-all hover:border-green-500/20 group">
+                          <div className="flex items-center gap-6">
                               <Switch 
                                   checked={userProfile.isAvailable} 
                                   onCheckedChange={(v) => updateDocumentNonBlocking(userDocRef!, { isAvailable: v })} 
-                                  className="data-[state=checked]:bg-[#22c55e] scale-110"
+                                  className="data-[state=checked]:bg-[#22c55e] scale-125"
                               />
                               <div>
-                                <p className="font-black text-sm text-white uppercase italic tracking-tighter">HIRING STATUS</p>
-                                <p className="text-[10px] font-black uppercase tracking-widest text-[#3b82f6]">AVAILABLE FOR IMMEDIATE BOOKING.</p>
+                                <p className="font-black text-lg text-white uppercase italic tracking-tighter">HIRING STATUS</p>
+                                <p className="text-xs font-black uppercase tracking-widest text-[#3b82f6]">AVAILABLE FOR IMMEDIATE BOOKING.</p>
                               </div>
                           </div>
-                          {userProfile.isAvailable && <CheckCircle2 className="text-[#22c55e] h-6 w-6" />}
+                          {userProfile.isAvailable && <CheckCircle2 className="text-[#22c55e] h-8 w-8 drop-shadow-[0_0_8px_rgba(34,197,94,0.4)]" />}
                       </div>
 
-                      <div className={cn("p-6 rounded-[1.5rem] flex items-center justify-between transition-colors border", isHidden ? "bg-orange-500/10 border-orange-500/30" : "bg-[#1a1c23] border-white/5")}>
-                          <div className="flex items-center gap-4">
-                              {isHidden ? <EyeOff className="text-orange-500 h-6 w-6" /> : <Eye className="text-muted-foreground h-6 w-6" />}
+                      <div className={cn("p-8 rounded-[2.5rem] flex items-center justify-between transition-colors border", isHidden ? "bg-orange-500/10 border-orange-500/30" : "bg-[#1a1c23] border-white/5")}>
+                          <div className="flex items-center gap-6">
+                              <div className={cn("p-3 rounded-2xl", isHidden ? "bg-orange-500/20" : "bg-white/5")}>
+                                {isHidden ? <EyeOff className="text-orange-500 h-6 w-6" /> : <Eye className="text-muted-foreground h-6 w-6" />}
+                              </div>
                               <div>
-                                <p className="font-black text-sm text-white uppercase italic tracking-tighter">CARD VISIBILITY</p>
-                                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                                <p className="font-black text-lg text-white uppercase italic tracking-tighter">CARD VISIBILITY</p>
+                                <p className="text-xs font-black uppercase tracking-widest text-muted-foreground">
                                     {isHidden 
                                         ? `HIDDEN UNTIL ${formatDistanceToNowStrict(userProfile.hiddenUntil!.toDate(), { addSuffix: true }).toUpperCase()}` 
                                         : "YOUR PROFESSIONAL CARD IS ACTIVE."
@@ -377,15 +383,15 @@ export default function ExpertDashboardPage() {
                               </div>
                           </div>
                           {isHidden ? (
-                              <Button size="sm" variant="ghost" onClick={handleUnhideProfile} className="h-8 font-black text-[10px] uppercase text-orange-500 hover:text-orange-400 hover:bg-orange-500/5">Unhide</Button>
+                              <Button size="sm" variant="ghost" onClick={handleUnhideProfile} className="h-10 px-6 font-black text-xs uppercase text-orange-500 hover:text-orange-400 hover:bg-orange-500/5 rounded-xl">Unhide</Button>
                           ) : (
-                              <Button size="sm" variant="outline" onClick={() => setIsHideDialogOpen(true)} className="h-8 font-black text-[10px] uppercase border-white/10 hover:bg-white/5 text-muted-foreground hover:text-white">Hide Card</Button>
+                              <Button size="sm" variant="outline" onClick={() => setIsHideDialogOpen(true)} className="h-10 px-6 font-black text-xs uppercase border-white/10 hover:bg-white/5 text-muted-foreground hover:text-white rounded-xl">Hide Card</Button>
                           )}
                       </div>
                   </div>
 
                   {!userProfile.verified && (
-                    <div className="p-8 rounded-[2.5rem] border-2 border-primary/20 bg-[#24262d] flex flex-col md:flex-row items-center justify-between gap-8 animate-in fade-in slide-in-from-bottom-4 duration-700 shadow-2xl relative overflow-hidden group">
+                    <div className="p-8 rounded-[3rem] border-2 border-primary/20 bg-white/5 flex flex-col md:flex-row items-center justify-between gap-8 animate-in fade-in slide-in-from-bottom-4 duration-700 shadow-2xl relative overflow-hidden group">
                         <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -mr-16 -mt-16 group-hover:scale-110 transition-transform duration-700" />
                         <div className="flex items-center gap-6 relative z-10">
                             <div className="p-5 bg-white/5 rounded-2xl shadow-inner border border-white/5">
@@ -403,63 +409,91 @@ export default function ExpertDashboardPage() {
                     </div>
                   )}
 
-                  <div className="space-y-3">
+                  <div className="space-y-3 pt-4">
                     <div className="flex justify-between items-end">
                       <span className="text-xs font-black uppercase tracking-widest text-primary italic">Profile Completion Level</span>
                       <span className="text-xl font-black text-white">{profileCompletion}%</span>
                     </div>
-                    <Progress value={profileCompletion} className="h-3 bg-white/5" />
+                    <Progress value={profileCompletion} className="h-3 bg-white/5 rounded-full overflow-hidden" />
                   </div>
 
-                  <CollapsibleContent className="space-y-6 pt-6 border-t border-white/5">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-5">
-                        <div className="flex items-center gap-3 text-sm">
-                            <UserIcon className="h-4 w-4 text-orange-500" />
-                            <span className="font-black text-muted-foreground uppercase tracking-widest text-[10px] w-24">Gender</span>
-                            <span className={cn("text-white font-bold", !userProfile.gender && "text-red-500/50")}>{userProfile.gender || 'Pending'}</span>
+                  <CollapsibleContent className="space-y-10 pt-10 border-t border-white/5">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-16 gap-y-8">
+                        <div className="flex items-center gap-4 text-sm group">
+                            <div className="p-2.5 bg-white/5 rounded-xl border border-white/5 group-hover:border-orange-500/30 transition-colors">
+                                <UserIcon className="h-5 w-5 text-orange-500" />
+                            </div>
+                            <div className="flex-1">
+                                <span className="font-black text-muted-foreground uppercase tracking-widest text-[10px] block mb-0.5">Gender</span>
+                                <span className={cn("text-white font-bold text-lg", !userProfile.gender && "text-red-500/20 italic text-sm")}>{userProfile.gender || 'Pending'}</span>
+                            </div>
                         </div>
-                        <div className="flex items-center gap-3 text-sm">
-                            <IndianRupee className="h-4 w-4 text-orange-500" />
-                            <span className="font-black text-muted-foreground uppercase tracking-widest text-[10px] w-24">Rate</span>
-                            <span className={cn("text-white font-bold", !userProfile.pricingValue && "text-red-500/50")}>{userProfile.pricingValue ? `₹${userProfile.pricingValue} / ${userProfile.pricingModel || 'hr'}` : 'Pending'}</span>
+                        <div className="flex items-center gap-4 text-sm group">
+                            <div className="p-2.5 bg-white/5 rounded-xl border border-white/5 group-hover:border-orange-500/30 transition-colors">
+                                <IndianRupee className="h-5 w-5 text-orange-500" />
+                            </div>
+                            <div className="flex-1">
+                                <span className="font-black text-muted-foreground uppercase tracking-widest text-[10px] block mb-0.5">Rate</span>
+                                <span className={cn("text-white font-bold text-lg", !userProfile.pricingValue && "text-red-500/20 italic text-sm")}>{userProfile.pricingValue ? `₹${userProfile.pricingValue} / ${userProfile.pricingModel || 'hr'}` : 'Pending'}</span>
+                            </div>
                         </div>
-                        <div className="flex items-center gap-3 text-sm">
-                            <Calendar className="h-4 w-4 text-orange-500" />
-                            <span className="font-black text-muted-foreground uppercase tracking-widest text-[10px] w-24">Exp.</span>
-                            <span className={cn("text-white font-bold", !userProfile.experienceYears && "text-red-500/50")}>{userProfile.experienceYears ? `${userProfile.experienceYears} years` : 'Pending'}</span>
+                        <div className="flex items-center gap-4 text-sm group">
+                            <div className="p-2.5 bg-white/5 rounded-xl border border-white/5 group-hover:border-orange-500/30 transition-colors">
+                                <Calendar className="h-5 w-5 text-orange-500" />
+                            </div>
+                            <div className="flex-1">
+                                <span className="font-black text-muted-foreground uppercase tracking-widest text-[10px] block mb-0.5">Exp.</span>
+                                <span className={cn("text-white font-bold text-lg", !userProfile.experienceYears && "text-red-500/20 italic text-sm")}>{userProfile.experienceYears ? `${userProfile.experienceYears} years` : 'Pending'}</span>
+                            </div>
                         </div>
-                        <div className="flex items-center gap-3 text-sm">
-                            <MapPin className="h-4 w-4 text-orange-500" />
-                            <span className="font-black text-muted-foreground uppercase tracking-widest text-[10px] w-24">Location</span>
-                            <span className={cn("text-white font-bold", !userProfile.city && !userProfile.state && !userProfile.pincode && "text-red-500/50")}>{[userProfile.city, userProfile.state, userProfile.pincode].filter(Boolean).join(', ') || 'Pending'}</span>
+                        <div className="flex items-center gap-4 text-sm group">
+                            <div className="p-2.5 bg-white/5 rounded-xl border border-white/5 group-hover:border-orange-500/30 transition-colors">
+                                <MapPin className="h-5 w-5 text-orange-500" />
+                            </div>
+                            <div className="flex-1">
+                                <span className="font-black text-muted-foreground uppercase tracking-widest text-[10px] block mb-0.5">Location</span>
+                                <span className={cn("text-white font-bold text-lg truncate block max-w-[200px]", !userProfile.city && "text-red-500/20 italic text-sm")}>{[userProfile.city, userProfile.state].filter(Boolean).join(', ') || 'Pending'}</span>
+                            </div>
                         </div>
-                        <div className="flex items-center gap-3 text-sm">
-                            <GraduationCap className="h-4 w-4 text-orange-500" />
-                            <span className="font-black text-muted-foreground uppercase tracking-widest text-[10px] w-24">Degree</span>
-                            <span className={cn("text-white font-bold", !userProfile.qualification && "text-red-500/50")}>{userProfile.qualification || 'Pending'}</span>
+                        <div className="flex items-center gap-4 text-sm group">
+                            <div className="p-2.5 bg-white/5 rounded-xl border border-white/5 group-hover:border-orange-500/30 transition-colors">
+                                <GraduationCap className="h-5 w-5 text-orange-500" />
+                            </div>
+                            <div className="flex-1">
+                                <span className="font-black text-muted-foreground uppercase tracking-widest text-[10px] block mb-0.5">Degree</span>
+                                <span className={cn("text-white font-bold text-lg", !userProfile.qualification && "text-red-500/20 italic text-sm")}>{userProfile.qualification || 'Pending'}</span>
+                            </div>
                         </div>
-                        <div className="flex items-center gap-3 text-sm">
-                            <School className="h-4 w-4 text-orange-500" />
-                            <span className="font-black text-muted-foreground uppercase tracking-widest text-[10px] w-24">College</span>
-                            <span className={cn("text-white font-bold", !userProfile.collegeName && !userProfile.collegeName && "text-red-500/50")}>{userProfile.collegeName || 'Pending'}</span>
+                        <div className="flex items-center gap-4 text-sm group">
+                            <div className="p-2.5 bg-white/5 rounded-xl border border-white/5 group-hover:border-orange-500/30 transition-colors">
+                                <School className="h-5 w-5 text-orange-500" />
+                            </div>
+                            <div className="flex-1">
+                                <span className="font-black text-muted-foreground uppercase tracking-widest text-[10px] block mb-0.5">College</span>
+                                <span className={cn("text-white font-bold text-lg", !userProfile.collegeName && "text-red-500/20 italic text-sm")}>{userProfile.collegeName || 'Pending'}</span>
+                            </div>
                         </div>
                     </div>
 
-                    <Separator className="bg-white/5" />
-
-                    <div className="space-y-8">
-                        <div>
-                            <h4 className="font-black uppercase tracking-widest text-xs text-primary flex items-center gap-2 mb-3 italic"><Info className="h-4 w-4" /> Bio / Summary</h4>
-                            <p className={cn("text-sm font-medium leading-relaxed", !userProfile.aboutMe ? "text-red-500/50 italic" : "text-white/70")}>
+                    <div className="space-y-10">
+                        <div className="bg-[#1a1c23] p-8 rounded-[2rem] border border-white/5">
+                            <h4 className="font-black uppercase tracking-widest text-xs text-primary flex items-center gap-3 mb-6 italic">
+                                <div className="p-2 bg-primary/10 rounded-lg"><Info className="h-4 w-4" /></div> 
+                                Bio / Summary
+                            </h4>
+                            <p className={cn("text-base font-medium leading-relaxed", !userProfile.aboutMe ? "text-red-500/30 italic text-sm" : "text-white/70")}>
                               {userProfile.aboutMe || 'Biography pending completion.'}
                             </p>
                         </div>
-                        <div>
-                            <h4 className="font-black uppercase tracking-widest text-xs text-primary flex items-center gap-2 mb-3 italic"><Book className="h-4 w-4" /> Technical Skills</h4>
-                            <div className="flex flex-wrap gap-2">
+                        <div className="bg-[#1a1c23] p-8 rounded-[2rem] border border-white/5">
+                            <h4 className="font-black uppercase tracking-widest text-xs text-primary flex items-center gap-3 mb-6 italic">
+                                <div className="p-2 bg-primary/10 rounded-lg"><Book className="h-4 w-4" /></div> 
+                                Technical Skills
+                            </h4>
+                            <div className="flex flex-wrap gap-3">
                                 {userProfile.skills ? userProfile.skills.split(',').map((s, i) => (
-                                    <Badge key={i} variant="secondary" className="bg-white/10 text-white border-none font-bold text-xs px-3 py-1 rounded-lg">{s.trim()}</Badge>
-                                )) : <span className="text-xs text-red-500/50 font-bold italic">Skills list pending.</span>}
+                                    <Badge key={i} variant="secondary" className="bg-white/5 hover:bg-white/10 text-white border border-white/10 font-black text-[10px] px-4 py-2 rounded-xl uppercase tracking-widest transition-all">{s.trim()}</Badge>
+                                )) : <span className="text-sm text-red-500/30 font-bold italic">Skills list pending.</span>}
                             </div>
                         </div>
                     </div>
@@ -468,36 +502,36 @@ export default function ExpertDashboardPage() {
               </Collapsible>
             </Card>
 
-            <Card className="border-none bg-[#24262d] rounded-3xl overflow-hidden shadow-2xl">
-                <CardHeader className="bg-white/5 border-b border-white/5 pb-6">
+            <Card className="border-none bg-[#24262d] rounded-[3rem] overflow-hidden shadow-2xl">
+                <CardHeader className="bg-white/5 border-b border-white/5 pb-6 px-10">
                     <CardTitle className="flex items-center gap-3 text-2xl font-black text-white uppercase italic">
                         <Gift className="h-6 w-6 text-orange-500" /> Affiliate Network
                     </CardTitle>
                     <CardDescription className="text-muted-foreground font-medium">Leverage your code to earn premium platform rewards.</CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-6 pt-6">
-                    <div className="bg-white/5 border border-white/5 rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between gap-6">
+                <CardContent className="space-y-6 pt-10 px-10">
+                    <div className="bg-white/5 border border-white/5 rounded-[2rem] p-8 flex flex-col md:flex-row items-center justify-between gap-8">
                         <div className="text-center md:text-left">
-                            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground mb-2">Unique Referral ID</p>
-                            <p className="text-3xl font-black font-mono tracking-[0.2em] text-orange-500">{userProfile.referralCode || 'GENERATING...'}</p>
+                            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground mb-3">Unique Referral ID</p>
+                            <p className="text-4xl font-black font-mono tracking-[0.2em] text-orange-500">{userProfile.referralCode || 'GENERATING...'}</p>
                         </div>
-                        <div className="flex gap-3 w-full md:w-auto">
-                            <Button variant="outline" size="lg" onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/signup?ref=${userProfile.referralCode}`); toast({ title: "Copied!" }); }} className="flex-1 rounded-xl border-white/10 bg-white/5 hover:bg-white/10 font-black uppercase text-xs">
+                        <div className="flex gap-4 w-full md:w-auto">
+                            <Button variant="outline" size="lg" onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/signup?ref=${userProfile.referralCode}`); toast({ title: "Copied!" }); }} className="flex-1 rounded-2xl border-white/10 bg-white/5 hover:bg-white/10 font-black uppercase text-xs h-14">
                                 <LinkIcon className="h-4 w-4 mr-2" /> Copy link
                             </Button>
-                            <Button variant="outline" size="lg" className="bg-green-600/10 text-green-500 border-green-600/20 hover:bg-green-600 hover:text-white flex-1 rounded-xl font-black uppercase text-xs" onClick={() => window.open(`https://wa.me/?text=Join my professional network on DriveGuru using code: ${userProfile.referralCode}`, '_blank')}>
+                            <Button variant="outline" size="lg" className="bg-green-600/10 text-green-500 border-green-600/20 hover:bg-green-600 hover:text-white flex-1 rounded-2xl font-black uppercase text-xs h-14" onClick={() => window.open(`https://wa.me/?text=Join my professional network on DriveGuru using code: ${userProfile.referralCode}`, '_blank')}>
                                 <MessageSquare className="h-4 w-4 mr-2" /> WhatsApp
                             </Button>
                         </div>
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="bg-white/5 border border-white/5 rounded-2xl p-6 text-center shadow-inner group hover:bg-white/10 transition-colors">
-                            <p className="text-4xl font-black text-orange-500 mb-1 group-hover:scale-110 transition-transform">{userProfile.referralPoints || 0}</p>
-                            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Premium Credits</p>
+                    <div className="grid grid-cols-2 gap-6 pb-4">
+                        <div className="bg-white/5 border border-white/5 rounded-[2rem] p-8 text-center shadow-inner group hover:bg-white/10 transition-all">
+                            <p className="text-5xl font-black text-orange-500 mb-2 group-hover:scale-110 transition-transform">{userProfile.referralPoints || 0}</p>
+                            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Premium Credits</p>
                         </div>
-                        <div className="bg-white/5 border border-white/5 rounded-2xl p-6 text-center shadow-inner group hover:bg-white/10 transition-colors">
-                            <p className="text-4xl font-black text-white mb-1 group-hover:scale-110 transition-transform">{myReferrals?.length || 0}</p>
-                            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Successful Joins</p>
+                        <div className="bg-white/5 border border-white/5 rounded-[2rem] p-8 text-center shadow-inner group hover:bg-white/10 transition-all">
+                            <p className="text-5xl font-black text-white mb-2 group-hover:scale-110 transition-transform">{myReferrals?.length || 0}</p>
+                            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Successful Joins</p>
                         </div>
                     </div>
                 </CardContent>
@@ -505,43 +539,43 @@ export default function ExpertDashboardPage() {
           </TabsContent>
 
           <TabsContent value="network" className="mt-0">
-            <Card className="border-none bg-[#24262d] rounded-3xl overflow-hidden shadow-2xl">
-                <CardHeader className="bg-white/5 border-b border-white/5 pb-6">
+            <Card className="border-none bg-[#24262d] rounded-[3rem] overflow-hidden shadow-2xl">
+                <CardHeader className="bg-white/5 border-b border-white/5 pb-6 px-10">
                     <CardTitle className="text-2xl font-black text-white uppercase italic">Connections & Circles</CardTitle>
                     <CardDescription className="text-muted-foreground font-medium">Manage your professional industry relationships.</CardDescription>
                 </CardHeader>
-                <CardContent className="p-6">
+                <CardContent className="p-10">
                     <Tabs defaultValue="my-groups" className="w-full">
-                        <TabsList className="grid w-full grid-cols-3 bg-white/5 p-1 h-12 rounded-xl mb-8">
-                            <TabsTrigger value="my-groups" className="rounded-lg data-[state=active]:bg-orange-500 data-[state=active]:text-white font-black text-xs uppercase tracking-wider">My Groups</TabsTrigger>
-                            <TabsTrigger value="followers" className="rounded-lg data-[state=active]:bg-orange-500 data-[state=active]:text-white font-black text-xs uppercase tracking-wider">Followers <Badge variant="secondary" className="ml-2 bg-white/10 text-white border-none font-bold text-[10px]">{myFollowers?.length || 0}</Badge></TabsTrigger>
-                            <TabsTrigger value="following" className="rounded-lg data-[state=active]:bg-orange-500 data-[state=active]:text-white font-black text-xs uppercase tracking-wider">Following <Badge variant="secondary" className="ml-2 bg-white/10 text-white border-none font-bold text-[10px]">{userProfile?.following?.length || 0}</Badge></TabsTrigger>
+                        <TabsList className="grid w-full grid-cols-3 bg-white/5 p-1 h-14 rounded-2xl mb-10">
+                            <TabsTrigger value="my-groups" className="rounded-xl data-[state=active]:bg-orange-500 data-[state=active]:text-white font-black text-xs uppercase tracking-wider transition-all">My Groups</TabsTrigger>
+                            <TabsTrigger value="followers" className="rounded-xl data-[state=active]:bg-orange-500 data-[state=active]:text-white font-black text-xs uppercase tracking-wider transition-all">Followers <Badge variant="secondary" className="ml-2 bg-white/10 text-white border-none font-bold text-[10px]">{myFollowers?.length || 0}</Badge></TabsTrigger>
+                            <TabsTrigger value="following" className="rounded-xl data-[state=active]:bg-orange-500 data-[state=active]:text-white font-black text-xs uppercase tracking-wider transition-all">Following <Badge variant="secondary" className="ml-2 bg-white/10 text-white border-none font-bold text-[10px]">{userProfile?.following?.length || 0}</Badge></TabsTrigger>
                         </TabsList>
                         
-                        <TabsContent value="my-groups" className="space-y-4 mt-0">
+                        <TabsContent value="my-groups" className="space-y-6 mt-0">
                             {isMyGroupsLoading ? (
-                                <div className="flex justify-center p-8"><Loader className="animate-spin h-8 w-8 text-orange-500" /></div>
+                                <div className="flex justify-center p-12"><Loader className="animate-spin h-10 w-10 text-orange-500" /></div>
                             ) : myGroups && myGroups.length > 0 ? (
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     {myGroups.map(group => (
                                         <Link key={group.id} href={`/groups/${group.id}`}>
-                                            <div className="p-5 bg-white/5 border border-white/5 rounded-2xl hover:bg-white/10 transition-all group shadow-md">
-                                                <div className="flex items-center justify-between">
-                                                    <div>
-                                                        <h4 className="font-black text-white text-lg group-hover:text-orange-500 transition-colors uppercase italic">{group.name}</h4>
-                                                        <p className="text-xs text-muted-foreground font-black uppercase tracking-widest mt-1">{group.members?.length || 0} Members</p>
-                                                    </div>
-                                                    <PlusCircle className="h-5 w-5 text-muted-foreground group-hover:text-orange-500 transition-all rotate-45" />
+                                            <div className="p-6 bg-white/5 border border-white/5 rounded-[2rem] hover:bg-white/10 transition-all group shadow-md flex items-center justify-between">
+                                                <div>
+                                                    <h4 className="font-black text-white text-xl group-hover:text-orange-500 transition-colors uppercase italic">{group.name}</h4>
+                                                    <p className="text-[10px] text-muted-foreground font-black uppercase tracking-widest mt-1.5">{group.members?.length || 0} Members</p>
+                                                </div>
+                                                <div className="h-12 w-12 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-orange-500/20 transition-all">
+                                                    <ChevronRight className="h-6 w-6 text-muted-foreground group-hover:text-orange-500" />
                                                 </div>
                                             </div>
                                         </Link>
                                     ))}
                                 </div>
                             ) : (
-                                <div className="text-center py-16 bg-white/5 rounded-3xl border-4 border-dashed border-white/5">
-                                    <Users className="h-16 w-16 mx-auto text-muted-foreground mb-4 opacity-10" />
-                                    <p className="text-muted-foreground font-black uppercase italic">No active group memberships.</p>
-                                    <Button variant="link" asChild className="mt-2 text-orange-500 font-black uppercase tracking-widest text-[10px]">
+                                <div className="text-center py-20 bg-white/5 rounded-[3rem] border-4 border-dashed border-white/5">
+                                    <Users className="h-20 w-20 mx-auto text-muted-foreground mb-6 opacity-10" />
+                                    <p className="text-muted-foreground font-black uppercase italic tracking-widest">No active group memberships.</p>
+                                    <Button variant="link" asChild className="mt-4 text-orange-500 font-black uppercase tracking-[0.3em] text-xs">
                                         <Link href="/groups">Discover professional circles</Link>
                                     </Button>
                                 </div>
@@ -562,62 +596,62 @@ export default function ExpertDashboardPage() {
 
           <TabsContent value="feed" className="mt-0 space-y-6">
             {!showPostForm ? (
-              <Card className="border-none bg-[#24262d] rounded-3xl overflow-hidden shadow-2xl">
-                <CardHeader className="bg-white/5 border-b border-white/5 pb-6">
+              <Card className="border-none bg-[#24262d] rounded-[3rem] overflow-hidden shadow-2xl">
+                <CardHeader className="bg-white/5 border-b border-white/5 pb-8 px-10">
                   <CardTitle className="flex items-center gap-3 text-2xl font-black text-white uppercase italic">
                     <Rss className="h-6 w-6 text-orange-500" /> My Professional Updates
                   </CardTitle>
                   <CardDescription className="text-muted-foreground font-medium">Broadcast your wins, ask questions, and lead discussions.</CardDescription>
                 </CardHeader>
-                <CardContent className="p-8 space-y-8">
-                  <div className="flex flex-col sm:flex-row gap-4">
-                    <Button asChild className="flex-1 bg-white text-black hover:bg-white/90 font-black rounded-2xl h-14 text-lg uppercase shadow-xl" size="lg">
+                <CardContent className="p-10 space-y-10">
+                  <div className="flex flex-col sm:flex-row gap-6">
+                    <Button asChild className="flex-1 bg-white text-black hover:bg-white/90 font-black rounded-2xl h-16 text-lg uppercase shadow-xl" size="lg">
                       <Link href="/feed">Public Feed</Link>
                     </Button>
-                    <Button variant="secondary" className="flex-1 bg-orange-500 hover:bg-orange-600 text-white font-black rounded-2xl h-14 text-lg border-none uppercase shadow-xl" size="lg" onClick={() => setShowPostForm(true)}>
-                      <PlusCircle className="mr-2 h-5 w-5" /> Share Update
+                    <Button variant="secondary" className="flex-1 bg-orange-500 hover:bg-orange-600 text-white font-black rounded-2xl h-16 text-lg border-none uppercase shadow-xl" size="lg" onClick={() => setShowPostForm(true)}>
+                      <PlusCircle className="mr-2 h-6 w-6" /> Share Update
                     </Button>
                   </div>
 
                   <Separator className="bg-white/5" />
 
-                  <div className="space-y-4">
-                    <h4 className="font-black text-white text-xs uppercase italic tracking-[0.2em]">Recent Posts</h4>
+                  <div className="space-y-6">
+                    <h4 className="font-black text-white text-xs uppercase italic tracking-[0.3em]">Recent Posts</h4>
                     {isPostsLoading ? (
-                      <div className="flex justify-center p-8"><Loader className="animate-spin h-6 w-6 text-orange-500" /></div>
+                      <div className="flex justify-center p-12"><Loader className="animate-spin h-8 w-8 text-orange-500" /></div>
                     ) : myPosts && myPosts.length > 0 ? (
-                      <div className="space-y-4">
+                      <div className="space-y-6">
                         {myPosts.map((post: any) => (
-                          <div key={post.id} className="p-4 bg-white/5 border border-white/5 rounded-2xl hover:bg-white/10 transition-all">
-                            <p className="text-sm font-bold text-white mb-1">{post.title || 'Professional Update'}</p>
-                            <p className="text-xs text-muted-foreground line-clamp-2 mb-2">{post.content}</p>
-                            <div className="flex items-center justify-between">
-                              <span className="text-[10px] font-black uppercase text-orange-500/50">{post.createdAt ? formatDistanceToNowStrict(post.createdAt.toDate(), { addSuffix: true }) : 'Just now'}</span>
-                              <Button variant="link" className="h-auto p-0 text-[10px] font-black uppercase tracking-widest text-orange-500" asChild>
-                                <Link href={`/feed?authorId=${user.uid}`}>View Post</Link>
+                          <div key={post.id} className="p-6 bg-[#1a1c23] border border-white/5 rounded-[2rem] hover:bg-white/5 transition-all shadow-inner">
+                            <p className="text-lg font-black text-white mb-2 uppercase italic tracking-tight">{post.title || 'Professional Update'}</p>
+                            <p className="text-sm text-muted-foreground line-clamp-3 mb-4 leading-relaxed">{post.content}</p>
+                            <div className="flex items-center justify-between border-t border-white/5 pt-4 mt-4">
+                              <span className="text-[10px] font-black uppercase text-orange-500/50 tracking-widest">{post.createdAt ? formatDistanceToNowStrict(post.createdAt.toDate(), { addSuffix: true }) : 'Just now'}</span>
+                              <Button variant="link" className="h-auto p-0 text-[10px] font-black uppercase tracking-[0.3em] text-orange-500" asChild>
+                                <Link href={`/feed?authorId=${user.uid}`}>View Detailed Post</Link>
                               </Button>
                             </div>
                           </div>
                         ))}
                       </div>
                     ) : (
-                      <div className="text-center py-12 bg-white/5 rounded-2xl border-2 border-dashed border-white/10">
-                        <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40 italic">You haven't shared any updates yet.</p>
+                      <div className="text-center py-20 bg-[#1a1c23] rounded-[2.5rem] border-2 border-dashed border-white/10">
+                        <p className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground/20 italic">No activity recorded.</p>
                       </div>
                     )}
                   </div>
                 </CardContent>
               </Card>
             ) : (
-              <Card className="border-none bg-[#24262d] rounded-3xl overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-300">
-                <CardHeader className="flex flex-row items-center justify-between bg-white/5 border-b border-white/5 p-6">
+              <Card className="border-none bg-[#24262d] rounded-[3rem] overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-300">
+                <CardHeader className="flex flex-row items-center justify-between bg-white/5 border-b border-white/5 p-8 px-10">
                   <div>
                     <CardTitle className="text-2xl font-black text-white uppercase italic">Draft Update</CardTitle>
-                    <CardDescription className="text-muted-foreground font-medium">Your update will be visible to the entire professional community.</CardDescription>
+                    <CardDescription className="text-muted-foreground font-medium">Visible to the global DriveGuru community.</CardDescription>
                   </div>
-                  <Button variant="ghost" size="sm" onClick={() => setShowPostForm(false)} className="rounded-xl hover:bg-white/10 uppercase font-bold text-[10px]">Discard</Button>
+                  <Button variant="ghost" size="sm" onClick={() => setShowPostForm(false)} className="rounded-xl hover:bg-white/10 uppercase font-black text-[10px] tracking-widest h-10 px-6">Discard</Button>
                 </CardHeader>
-                <CardContent className="p-8">
+                <CardContent className="p-10">
                   <PostForm form={postForm} onSubmit={onPostSubmit} isSubmitting={isSubmittingPost} />
                 </CardContent>
               </Card>
