@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
@@ -312,22 +313,22 @@ export default function ExpertDashboardPage() {
                       <span className="flex items-center gap-1.5"><Users className="h-3.5 w-3.5 text-orange-500" /> {userProfile.following?.length || 0} FOLLOWING</span>
                     </div>
                     <div className="pt-2">
-                      <Badge variant="secondary" className="font-black bg-white/10 text-white border-none text-[10px] uppercase tracking-[0.3em] px-4 py-1.5 rounded-full">{userProfile.role}</Badge>
+                      <Badge variant="secondary" className="font-black bg-white/10 text-white border-none text-sm uppercase tracking-[0.3em] px-6 py-2 rounded-xl h-10 shadow-lg">{userProfile.role}</Badge>
                     </div>
                     
                     <div className="pt-4 space-y-2">
                         {userProfile.profession && (
-                            <p className="text-sm font-black text-orange-500 uppercase italic tracking-tighter flex items-center gap-2">
-                                <Briefcase className="h-3.5 w-3.5" /> {userProfile.profession}
+                            <p className="text-lg font-black text-orange-500 uppercase italic tracking-tighter flex items-center gap-2">
+                                <Briefcase className="h-5 w-5" /> {userProfile.profession}
                             </p>
                         )}
                         {userProfile.category && (
-                            <p className="text-[10px] font-black text-white/60 uppercase tracking-widest flex items-center gap-2">
-                                <List className="h-3 w-3" /> {userProfile.category}
+                            <p className="text-xs font-black text-white/60 uppercase tracking-widest flex items-center gap-2">
+                                <List className="h-4 w-4" /> {userProfile.category}
                             </p>
                         )}
                         {userProfile.businessDescription && (
-                            <p className="text-xs font-medium text-muted-foreground italic leading-relaxed max-w-lg">
+                            <p className="text-sm font-medium text-muted-foreground italic leading-relaxed max-w-xl">
                                 "{userProfile.businessDescription}"
                             </p>
                         )}
