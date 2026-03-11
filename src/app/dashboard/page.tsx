@@ -3,7 +3,7 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { collection, serverTimestamp, doc, Timestamp, query, where } from 'firebase/firestore';
+import { collection, serverTimestamp, doc, Timestamp, query, where, orderBy, limit } from 'firebase/firestore';
 import { signOut } from 'firebase/auth';
 import { useUser, useAuth, useFirestore, useDoc, useMemoFirebase, useCollection } from '@/firebase';
 import { updateDocumentNonBlocking, addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
@@ -33,7 +33,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow, formatDistanceToNowStrict } from 'date-fns';
 
 type ExpertUserProfile = {
     id: string;
@@ -108,16 +108,6 @@ export default function ExpertDashboardPage() {
     }
   }, [user, isUserLoading, router]);
 
-  useEffect(() => {
-    if (userProfile?.hiddenUntil && userDocRef) {
-        const hideDate = userProfile.hiddenUntil.toDate();
-        if (hideDate < new Date()) {
-            updateDocumentNonBlocking(userDocRef, { hiddenUntil: null });
-            toast({ title: "Profile Visible", description: "Your temporary hide period has ended." });
-        }
-    }
-  }, [userProfile, userDocRef, toast]);
-
   const postForm = useForm<z.infer<typeof postFormSchema>>({
     resolver: zodResolver(postFormSchema),
     defaultValues: { title: '', content: '', link: '' },
@@ -138,6 +128,17 @@ export default function ExpertDashboardPage() {
     const filled = fields.filter(f => !!f).length;
     return Math.round((filled / fields.length) * 100);
   }, [userProfile]);
+
+  const myPostsQuery = useMemoFirebase(() => {
+    if (!firestore || !user) return null;
+    return query(
+      collection(firestore, "posts"),
+      where("authorId", "==", user.uid),
+      orderBy("createdAt", "desc"),
+      limit(10)
+    );
+  }, [firestore, user]);
+  const { data: myPosts, isLoading: isPostsLoading } = useCollection<any>(myPostsQuery);
 
   const referralsQuery = useMemoFirebase(() => {
     if (!firestore || !userProfile?.referralCode) return null;
@@ -293,7 +294,7 @@ export default function ExpertDashboardPage() {
                   </Avatar>
                   <div className="flex-1 space-y-1">
                     <div className="flex items-center gap-3">
-                      <h2 className="text-4xl font-black text-white tracking-tighter uppercase italic">{userProfile.companyName || userProfile.firstName}!</h2>
+                      <h2 className="text-4xl font-black text-white tracking-tighter uppercase italic">{(userProfile.companyName || userProfile.firstName).toUpperCase()}!</h2>
                       <div className="flex items-center gap-2">
                         {userProfile.verified ? <CheckCircle2 className="h-6 w-6 text-green-500 fill-green-500/10" /> : <ShieldAlert className="h-6 w-6 text-orange-500/40" />}
                         <div className="flex gap-1">
@@ -308,17 +309,21 @@ export default function ExpertDashboardPage() {
                         </div>
                       </div>
                     </div>
+                    
                     <div className="flex flex-wrap items-center gap-4 text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">
                       <span className="flex items-center gap-1.5"><Users className="h-3.5 w-3.5 text-orange-500" /> {myFollowers?.length || 0} FOLLOWERS</span>
                       <span className="flex items-center gap-1.5"><Users className="h-3.5 w-3.5 text-orange-500" /> {userProfile.following?.length || 0} FOLLOWING</span>
                     </div>
-                    <div className="pt-2">
-                      <Badge variant="secondary" className="font-black bg-white/10 text-white border-none text-sm uppercase tracking-[0.3em] px-6 py-2 rounded-xl h-10 shadow-lg">{userProfile.role}</Badge>
+
+                    <div className="py-3">
+                      <Badge className="font-black bg-orange-500 text-white border-none text-base uppercase tracking-[0.3em] px-8 py-3 rounded-2xl h-12 shadow-xl shadow-orange-500/20">
+                        {userProfile.role}
+                      </Badge>
                     </div>
                     
-                    <div className="pt-4 space-y-2">
+                    <div className="pt-2 space-y-2">
                         {userProfile.profession && (
-                            <p className="text-lg font-black text-orange-500 uppercase italic tracking-tighter flex items-center gap-2">
+                            <p className="text-xl font-black text-orange-500 uppercase italic tracking-tighter flex items-center gap-2">
                                 <Briefcase className="h-5 w-5" /> {userProfile.profession}
                             </p>
                         )}
@@ -365,7 +370,7 @@ export default function ExpertDashboardPage() {
                                 <p className="font-black text-sm text-white uppercase italic tracking-tighter">CARD VISIBILITY</p>
                                 <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
                                     {isHidden 
-                                        ? `HIDDEN UNTIL ${formatDistanceToNow(userProfile.hiddenUntil!.toDate(), { addSuffix: true }).toUpperCase()}` 
+                                        ? `HIDDEN UNTIL ${formatDistanceToNowStrict(userProfile.hiddenUntil!.toDate(), { addSuffix: true }).toUpperCase()}` 
                                         : "YOUR PROFESSIONAL CARD IS ACTIVE."
                                     }
                                 </p>
@@ -560,17 +565,47 @@ export default function ExpertDashboardPage() {
               <Card className="border-none bg-[#24262d] rounded-3xl overflow-hidden shadow-2xl">
                 <CardHeader className="bg-white/5 border-b border-white/5 pb-6">
                   <CardTitle className="flex items-center gap-3 text-2xl font-black text-white uppercase italic">
-                    <Rss className="h-6 w-6 text-orange-500" /> Industry Updates
+                    <Rss className="h-6 w-6 text-orange-500" /> My Professional Updates
                   </CardTitle>
                   <CardDescription className="text-muted-foreground font-medium">Broadcast your wins, ask questions, and lead discussions.</CardDescription>
                 </CardHeader>
-                <CardContent className="p-8 flex flex-col sm:flex-row gap-4">
-                  <Button asChild className="flex-1 bg-white text-black hover:bg-white/90 font-black rounded-2xl h-14 text-lg uppercase shadow-xl" size="lg">
-                    <Link href="/feed">Public Feed</Link>
-                  </Button>
-                  <Button variant="secondary" className="flex-1 bg-orange-500 hover:bg-orange-600 text-white font-black rounded-2xl h-14 text-lg border-none uppercase shadow-xl" size="lg" onClick={() => setShowPostForm(true)}>
-                    <PlusCircle className="mr-2 h-5 w-5" /> Share Update
-                  </Button>
+                <CardContent className="p-8 space-y-8">
+                  <div className="flex flex-col sm:flex-row gap-4">
+                    <Button asChild className="flex-1 bg-white text-black hover:bg-white/90 font-black rounded-2xl h-14 text-lg uppercase shadow-xl" size="lg">
+                      <Link href="/feed">Public Feed</Link>
+                    </Button>
+                    <Button variant="secondary" className="flex-1 bg-orange-500 hover:bg-orange-600 text-white font-black rounded-2xl h-14 text-lg border-none uppercase shadow-xl" size="lg" onClick={() => setShowPostForm(true)}>
+                      <PlusCircle className="mr-2 h-5 w-5" /> Share Update
+                    </Button>
+                  </div>
+
+                  <Separator className="bg-white/5" />
+
+                  <div className="space-y-4">
+                    <h4 className="font-black text-white text-xs uppercase italic tracking-[0.2em]">Recent Posts</h4>
+                    {isPostsLoading ? (
+                      <div className="flex justify-center p-8"><Loader className="animate-spin h-6 w-6 text-orange-500" /></div>
+                    ) : myPosts && myPosts.length > 0 ? (
+                      <div className="space-y-4">
+                        {myPosts.map((post: any) => (
+                          <div key={post.id} className="p-4 bg-white/5 border border-white/5 rounded-2xl hover:bg-white/10 transition-all">
+                            <p className="text-sm font-bold text-white mb-1">{post.title || 'Professional Update'}</p>
+                            <p className="text-xs text-muted-foreground line-clamp-2 mb-2">{post.content}</p>
+                            <div className="flex items-center justify-between">
+                              <span className="text-[10px] font-black uppercase text-orange-500/50">{post.createdAt ? formatDistanceToNowStrict(post.createdAt.toDate(), { addSuffix: true }) : 'Just now'}</span>
+                              <Button variant="link" className="h-auto p-0 text-[10px] font-black uppercase tracking-widest text-orange-500" asChild>
+                                <Link href={`/feed?authorId=${user.uid}`}>View Post</Link>
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-12 bg-white/5 rounded-2xl border-2 border-dashed border-white/10">
+                        <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/40 italic">You haven't shared any updates yet.</p>
+                      </div>
+                    )}
+                  </div>
                 </CardContent>
               </Card>
             ) : (

@@ -203,7 +203,6 @@ function HomePageContent() {
         if (showAvailableOnly) queryParams.set('available', 'true');
         if (maxRate !== null) queryParams.set('maxRate', maxRate.toString());
         
-        // If pincode or manual location is set, apply radius searching
         if (pincode || city) {
             queryParams.set('radius', '20');
         }
@@ -321,14 +320,12 @@ function HomePageContent() {
                 </header>
 
                 <main className="space-y-12">
-                    {/* Top Experts Carousel */}
                     <section className="bg-[#24262d] rounded-[2.5rem] p-6 sm:p-8 shadow-2xl overflow-hidden border border-white/5">
                         <div className="mb-8">
                             <h2 className="text-2xl font-black text-white uppercase italic">Top Rated Experts</h2>
                             <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">PREMIUM NETWORK SUGGESTIONS</p>
                         </div>
 
-                        {/* Module Search Bar */}
                         <div className="relative group mb-8">
                             <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground group-focus-within:text-orange-500 transition-colors" />
                             <Input 
@@ -339,7 +336,6 @@ function HomePageContent() {
                             />
                         </div>
 
-                        {/* Experts Carousel */}
                         <div className="relative">
                             <div className="flex gap-6 overflow-x-auto pb-8 pt-2 scrollbar-hide snap-x px-1">
                                 {isLoadingTopExperts ? (
@@ -389,7 +385,6 @@ function HomePageContent() {
                                 )}
                             </div>
 
-                            {/* Navigation Bar */}
                             <div className="flex items-center justify-between mt-4 px-2">
                                 <Button variant="ghost" size="icon" className="text-muted-foreground/40 hover:text-white hover:bg-white/5 rounded-full h-8 w-8">
                                     <ChevronLeft className="h-6 w-6" />
@@ -404,7 +399,6 @@ function HomePageContent() {
                         </div>
                     </section>
 
-                    {/* AI Search Card */}
                     <Card className="transition-all bg-[#24262d] border-none hover:shadow-2xl hover:shadow-orange-500/5 rounded-[2.5rem] p-4 overflow-hidden border border-white/5">
                         <CardHeader>
                              <div className="flex items-center justify-between">
@@ -498,7 +492,6 @@ function HomePageContent() {
                         </div>
                     </div>
 
-                    {/* Manual Search Filters */}
                     <Card className="rounded-[2.5rem] p-6 sm:p-10 bg-[#24262d] border-none shadow-2xl relative overflow-hidden border border-white/5">
                         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-orange-500/20 to-transparent" />
                         <CardContent className="p-0 space-y-10">
@@ -571,7 +564,6 @@ function HomePageContent() {
                         </CardContent>
                     </Card>
 
-                    {/* Explore Categories */}
                     <div className="mt-16 text-center">
                         <h2 className="text-3xl font-black text-white mb-2 uppercase italic">Industry Hub</h2>
                         <p className="text-[10px] font-black uppercase tracking-[0.3em] text-orange-500/50 mb-10">EXPLORE BY SPECIALIZATION</p>
@@ -600,7 +592,6 @@ function HomePageContent() {
                         )}
                     </div>
 
-                     {/* Recent Professionals Grid */}
                      {isRecentProfessionalsEnabled && (
                         <div className="mt-20">
                             <div className="flex items-center justify-between mb-10">
