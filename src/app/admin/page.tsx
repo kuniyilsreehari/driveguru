@@ -434,7 +434,7 @@ export default function AdminDashboardPage() {
     try {
         const userRef = doc(firestore, 'users', selectedUser.id);
         await updateDocumentNonBlocking(userRef, { referralPoints: increment(awardPoints) });
-        toast({ title: "Points Awarded", description: `Successfully awarded ${awardPoints} points to ${selectedUser.firstName}` });
+        toast({ title: "Points Awarded", description: `Successfully awarded ${awardPoints} points to ${selectedUser.firstName} ${selectedUser.lastName}` });
         setIsAwardDialogOpen(false);
     } catch (e) {
         toast({ variant: "destructive", title: "Action Failed" });
@@ -1226,7 +1226,7 @@ export default function AdminDashboardPage() {
           <div className="items-center text-center">
             <div className="p-4 bg-orange-500/10 rounded-full w-fit mx-auto mb-4"><PlusCircle className="h-10 w-10 text-orange-500" /></div>
             <CardTitle className="text-3xl font-black uppercase italic">Award Credits</CardTitle>
-            <CardDescription className="text-muted-foreground font-medium pt-2">Manually grant referral points to {selectedUser?.firstName}.</CardDescription>
+            <CardDescription className="text-muted-foreground font-medium pt-2">Manually grant referral points to {selectedUser?.firstName} {selectedUser?.lastName}.</CardDescription>
           </div>
           <div className="py-8 space-y-2">
                 <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-[0.2em]">Amount to Grant</Label>

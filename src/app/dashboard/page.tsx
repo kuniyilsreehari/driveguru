@@ -8,7 +8,7 @@ import { signOut } from 'firebase/auth';
 import { useUser, useAuth, useFirestore, useDoc, useMemoFirebase, useCollection } from '@/firebase';
 import { updateDocumentNonBlocking, addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Button } from '@/components/ui/button';
-import { LogOut, Loader, Edit, UserCheck, User as UserIcon, MessageSquare, Gift, Info, Book, Pen, PlusCircle, MapPin, IndianRupee, Calendar, GraduationCap, School, Building, Home, Rss, Users, Link as LinkIcon, AlertCircle, CheckCircle, Eye, EyeOff, Clock, Crown, Sparkles, ChevronUp, ChevronDown, Shield, CheckCircle2, ShieldAlert, ShieldCheck, ArrowRight, Type, List, Briefcase, ChevronRight } from 'lucide-react';
+import { LogOut, Loader, Edit, UserCheck, User as UserIcon, MessageSquare, Gift, Info, Book, Pen, PlusCircle, MapPin, IndianRupee, Calendar, GraduationCap, School, Building, Home, Rss, Users, Link as LinkIcon, AlertCircle, CheckCircle, Eye, EyeOff, Clock, Crown, Sparkles, ChevronUp, ChevronDown, ChevronRight, Shield, CheckCircle2, ShieldAlert, ShieldCheck, ArrowRight, Type, List, Briefcase } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription as UiDialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { EditProfileForm } from '@/components/auth/edit-profile-form';
@@ -287,63 +287,66 @@ export default function ExpertDashboardPage() {
           <TabsContent value="overview" className="mt-0 space-y-8">
             <Card className="border-none bg-[#24262d] rounded-[3rem] overflow-hidden shadow-2xl">
               <Collapsible open={isProfileExpanded} onOpenChange={setIsProfileExpanded}>
-                <CardHeader className="flex flex-col items-center gap-6 pb-10 bg-white/5 border-b border-white/5 text-center">
+                <CardHeader className="flex flex-col items-center gap-4 pb-10 bg-transparent text-center px-6">
                   <div className="relative">
-                    <Avatar className="h-32 w-32 border-4 border-orange-500/20 cursor-pointer hover:border-orange-500/50 transition-all shadow-2xl" onClick={() => setIsEditDialogOpen(true)}>
+                    <Avatar className="h-32 w-32 border-4 border-white/10 shadow-2xl">
                       <AvatarImage src={userProfile.photoUrl} className="object-cover" />
-                      <AvatarFallback className="text-[10px] text-center px-4 font-bold leading-tight bg-orange-500/10 text-orange-500 uppercase">Profile<br/>Image</AvatarFallback>
+                      <AvatarFallback className="bg-orange-500/10 text-orange-500 font-black text-2xl">
+                        {userProfile.firstName?.[0]}
+                      </AvatarFallback>
                     </Avatar>
                     {userProfile.verified && (
-                        <div className="absolute -bottom-2 -right-2 bg-green-500 p-2 rounded-full border-4 border-[#24262d] shadow-xl">
-                            <CheckCircle2 className="h-6 w-6 text-white" />
+                        <div className="absolute -bottom-1 -right-1 bg-green-500 p-1.5 rounded-full border-4 border-[#24262d] shadow-xl">
+                            <CheckCircle2 className="h-4 w-4 text-white" />
                         </div>
                     )}
                   </div>
                   
-                  <div className="space-y-4 w-full">
-                    <div className="flex flex-col items-center gap-2">
-                      <h2 className="text-5xl sm:text-6xl font-black text-white tracking-tighter uppercase italic">{(userProfile.companyName || userProfile.firstName).toUpperCase()}!</h2>
-                      
-                      <div className="flex items-center gap-4 text-[11px] font-black uppercase tracking-[0.3em] text-muted-foreground mt-2">
-                        <span className="flex items-center gap-1.5"><Users className="h-4 w-4 text-orange-500" /> {myFollowers?.length || 0} FOLLOWERS</span>
-                        <div className="h-4 w-px bg-white/10" />
-                        <span className="flex items-center gap-1.5"><Users className="h-4 w-4 text-orange-500" /> {userProfile.following?.length || 0} FOLLOWING</span>
-                      </div>
-                    </div>
-
-                    <div className="py-6">
-                      <Badge className="font-black bg-white text-black border-none text-2xl sm:text-3xl uppercase tracking-[0.4em] px-12 py-6 rounded-[2rem] h-auto shadow-2xl transition-transform hover:scale-105 active:scale-95 inline-flex">
-                        {userProfile.role}
-                      </Badge>
-                    </div>
+                  <div className="space-y-2">
+                    <h2 className="text-5xl sm:text-6xl font-black text-white tracking-tighter uppercase italic">
+                        {(userProfile.companyName || userProfile.firstName).toUpperCase()}!
+                    </h2>
                     
-                    <div className="space-y-4 max-w-2xl mx-auto">
-                        {userProfile.profession && (
-                            <p className="text-3xl font-black text-orange-500 uppercase italic tracking-tighter flex items-center justify-center gap-3">
-                                <Briefcase className="h-8 w-8" /> {userProfile.profession}
-                            </p>
-                        )}
-                        {userProfile.category && (
-                            <p className="text-sm font-black text-white/60 uppercase tracking-[0.3em] flex items-center justify-center gap-2">
-                                <List className="h-4 w-4" /> {userProfile.category}
-                            </p>
-                        )}
-                        {userProfile.businessDescription && (
-                            <div className="pt-4">
-                                <p className="text-lg font-medium text-muted-foreground italic leading-relaxed border-t border-white/5 pt-4">
-                                    "{userProfile.businessDescription}"
-                                </p>
-                            </div>
-                        )}
+                    <div className="flex items-center gap-4 text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground justify-center">
+                      <span className="flex items-center gap-1.5"><Users className="h-3.5 w-3.5 text-orange-500" /> <span className="text-orange-500">{myFollowers?.length || 0}</span> FOLLOWERS</span>
+                      <div className="h-3 w-px bg-white/10" />
+                      <span className="flex items-center gap-1.5"><Users className="h-3.5 w-3.5 text-orange-500" /> <span className="text-orange-500">{userProfile.following?.length || 0}</span> FOLLOWING</span>
                     </div>
                   </div>
+
+                  <div className="py-4">
+                    <Badge className="font-black bg-white text-black border-none text-2xl sm:text-3xl uppercase tracking-[0.4em] px-14 py-6 rounded-[2rem] h-auto shadow-2xl">
+                      {userProfile.role}
+                    </Badge>
+                  </div>
                   
-                  <div className="flex flex-col sm:flex-row gap-3 w-full max-w-md mt-4">
-                      <Button onClick={() => setIsEditDialogOpen(true)} className="flex-1 bg-orange-500 hover:bg-orange-600 text-white font-black rounded-2xl h-16 px-10 shadow-xl shadow-orange-500/20 uppercase tracking-[0.2em] transition-all active:scale-95 group">
-                          <Edit className="mr-3 h-6 w-6 group-hover:scale-110 transition-transform" /> UPDATE PROFILE
+                  <div className="space-y-3 w-full">
+                      {userProfile.profession && (
+                          <p className="text-2xl font-black text-orange-500 uppercase italic tracking-tight flex items-center justify-center gap-3">
+                              <Briefcase className="h-6 w-6" /> {userProfile.profession}
+                          </p>
+                      )}
+                      {userProfile.category && (
+                          <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] flex items-center justify-center gap-2">
+                              <List className="h-3.5 w-3.5" /> {userProfile.category}
+                          </p>
+                      )}
+                      
+                      <Separator className="bg-white/5 w-2/3 mx-auto" />
+
+                      {userProfile.businessDescription && (
+                          <p className="text-sm font-medium text-muted-foreground italic leading-relaxed max-w-lg mx-auto">
+                              "{userProfile.businessDescription}"
+                          </p>
+                      )}
+                  </div>
+                  
+                  <div className="flex items-center gap-3 w-full max-w-sm mt-6">
+                      <Button onClick={() => setIsEditDialogOpen(true)} className="flex-1 bg-orange-500 hover:bg-orange-600 text-white font-black rounded-2xl h-16 px-10 shadow-xl shadow-orange-500/20 uppercase tracking-[0.1em] transition-all active:scale-95 group">
+                          <Edit className="mr-3 h-5 w-5 group-hover:scale-110 transition-transform" /> UPDATE PROFILE
                       </Button>
                       <CollapsibleTrigger asChild>
-                        <Button variant="outline" className="rounded-2xl border-white/10 h-16 w-16 bg-white/5 hover:bg-white/10">
+                        <Button variant="outline" className="rounded-2xl border-white/5 h-16 w-16 bg-white/5 hover:bg-white/10 shadow-lg">
                           {isProfileExpanded ? <ChevronUp className="h-6 w-6" /> : <ChevronDown className="h-6 w-6" />}
                         </Button>
                       </CollapsibleTrigger>
