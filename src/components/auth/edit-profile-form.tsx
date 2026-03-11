@@ -1,12 +1,12 @@
 "use client";
 
 import * as React from "react";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { User as UserIcon, Mail, Lock, Eye, EyeOff, Briefcase, MapPin, Phone, LocateIcon, Loader2, Building, Home, ArrowRight, MessageSquare, Gift, PenSquare, Factory, Shield, Save, Linkedin, Github, Globe, Twitter, Type, List, Youtube, Image as ImageIcon, Upload } from "lucide-react";
-import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, getAdditionalUserInfo, RecaptchaVerifier, signInWithPhoneNumber, EmailAuthProvider, linkWithCredential } from 'firebase/auth';
+import { User as UserIcon, Mail, Lock, Eye, EyeOff, Briefcase, MapPin, Phone, LocateIcon, Loader2, Building, Home, ArrowRight, MessageSquare, Gift, PenSquare, Factory, Shield, Save, Linkedin, Github, Globe, Twitter, Type, List, Youtube, Image as ImageIcon, Upload, X } from "lucide-react";
+import { GoogleAuthProvider, signInWithPopup, getAdditionalUserInfo, RecaptchaVerifier, signInWithPhoneNumber, EmailAuthProvider, linkWithCredential } from 'firebase/auth';
 import { doc, serverTimestamp, collection, query, where, getDocs, limit } from 'firebase/firestore';
 import { getStorage, ref as storageRef, uploadString, getDownloadURL } from "firebase/storage";
 
@@ -471,6 +471,15 @@ export function EditProfileForm({ userProfile, onSuccess, isAdmin = false }: Edi
     }
   };
 
+  const handleClearImage = (slot: number) => {
+    const fieldName = slot === 1 ? 'photoUrl' : slot === 2 ? 'photoUrl2' : 'photoUrl3';
+    form.setValue(fieldName as any, "", { shouldValidate: true });
+    toast({
+      title: `Photo ${slot} Cleared`,
+      description: "Remember to save changes to make it permanent.",
+    });
+  };
+
   const sanitizePhone = (num: string) => {
     const digits = num.replace(/\D/g, '');
     return digits.length > 10 ? digits.slice(-10) : digits;
@@ -570,7 +579,18 @@ export function EditProfileForm({ userProfile, onSuccess, isAdmin = false }: Edi
                       const currentPhoto = slot === 1 ? photoUrl : slot === 2 ? photoUrl2 : slot === 3 ? photoUrl3 : null;
                       const ref = slot === 1 ? fileInputRef1 : slot === 2 ? fileInputRef2 : slot === 3 ? fileInputRef3 : null;
                       return (
-                          <div key={slot} className="flex flex-col items-center gap-3">
+                          <div key={slot} className="flex flex-col items-center gap-3 relative group">
+                              {currentPhoto && (
+                                <Button 
+                                  type="button" 
+                                  variant="destructive" 
+                                  size="icon" 
+                                  className="absolute -top-2 -right-2 h-6 w-6 rounded-full z-10 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                                  onClick={() => handleClearImage(slot)}
+                                >
+                                  <X className="h-3 w-3" />
+                                </Button>
+                              )}
                               <Avatar className="h-32 w-32 cursor-pointer border-2 border-dashed border-white/10 hover:border-primary/50 transition-all" onClick={() => ref?.current?.click()}>
                                 <AvatarImage src={currentPhoto ? `${currentPhoto}` : undefined} className="object-cover" />
                                 <AvatarFallback className="text-[10px] text-center px-4 font-bold leading-tight bg-white/5">
