@@ -215,6 +215,21 @@ function CommentThread({ comment, postId, allComments, onDelete, postAuthorId }:
                 parentId: comment.id,
             });
 
+            // Notify comment author
+            if (user.uid !== comment.authorId) {
+                const notifRef = collection(firestore, 'users', comment.authorId, 'notifications');
+                addDocumentNonBlocking(notifRef, {
+                    type: 'comment_reply',
+                    message: `replied to your comment.`,
+                    link: `/feed#${postId}`,
+                    read: false,
+                    actorId: user.uid,
+                    actorName: user.displayName || 'An expert',
+                    actorPhotoUrl: user.photoURL || '',
+                    createdAt: serverTimestamp(),
+                });
+            }
+
             form.reset();
             setShowReplyForm(false);
         } catch (error) {
@@ -402,6 +417,22 @@ function CommentsSection({ postId, postAuthorId }: { postId: string, postAuthorI
                 createdAt: serverTimestamp(),
                 parentId: null
             });
+
+            // Notify post author
+            if (user.uid !== postAuthorId) {
+                const notifRef = collection(firestore, 'users', postAuthorId, 'notifications');
+                addDocumentNonBlocking(notifRef, {
+                    type: 'comment_reply',
+                    message: `commented on your post.`,
+                    link: `/feed#${postId}`,
+                    read: false,
+                    actorId: user.uid,
+                    actorName: user.displayName || 'An expert',
+                    actorPhotoUrl: user.photoURL || '',
+                    createdAt: serverTimestamp(),
+                });
+            }
+
             form.reset();
         } catch (error) {
             if ((error as any).name !== 'FirebaseError') {
@@ -695,6 +726,21 @@ function PostCard({ post }: { post: Post }) {
             await updateDoc(postRef, {
                 likes: updateAction,
             });
+
+            // Create notification for the author
+            if (!hasLiked && user.uid !== postToLike.authorId) {
+                const notifRef = collection(firestore, 'users', postToLike.authorId, 'notifications');
+                addDocumentNonBlocking(notifRef, {
+                    type: 'post_like',
+                    message: `liked your update.`,
+                    link: `/feed#${postToLike.id}`,
+                    read: false,
+                    actorId: user.uid,
+                    actorName: user.displayName || 'An expert',
+                    actorPhotoUrl: user.photoURL || '',
+                    createdAt: serverTimestamp(),
+                });
+            }
         } catch (error) {
             console.error('Error updating like:', error);
             if ((error as any).name !== 'FirebaseError') {

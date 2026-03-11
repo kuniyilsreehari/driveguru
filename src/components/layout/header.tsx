@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -87,31 +88,31 @@ function NotificationCenter() {
     return (
         <Popover open={isOpen} onOpenChange={setIsOpen}>
             <PopoverTrigger asChild>
-                <Button variant="ghost" size="icon" className="relative h-10 w-10 rounded-full hover:bg-white/10">
-                    <Bell className="h-5 w-5" />
+                <Button variant="ghost" size="icon" className="relative h-10 w-10 rounded-full hover:bg-white/10 group">
+                    <Bell className="h-5 w-5 transition-transform group-hover:scale-110" />
                     {unreadCount > 0 && (
-                        <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-orange-500 text-[10px] font-black text-white ring-4 ring-background">
+                        <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-orange-500 text-[10px] font-black text-white ring-4 ring-background animate-in zoom-in">
                             {unreadCount > 9 ? '9+' : unreadCount}
                         </span>
                     )}
                 </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-80 p-0 bg-[#24262d] border-white/10 rounded-2xl overflow-hidden shadow-2xl" align="end">
-                <div className="flex items-center justify-between p-4 border-b border-white/5 bg-white/5">
-                    <h4 className="font-black text-white text-sm uppercase tracking-wider">Notifications</h4>
+            <PopoverContent className="w-80 p-0 bg-[#24262d] border-white/10 rounded-3xl overflow-hidden shadow-2xl animate-in fade-in slide-in-from-top-4 duration-300" align="end">
+                <div className="flex items-center justify-between p-5 border-b border-white/5 bg-white/5">
+                    <h4 className="font-black text-white text-xs uppercase italic tracking-[0.2em]">Notifications</h4>
                     {unreadCount > 0 && (
-                        <Button variant="ghost" size="sm" onClick={markAllAsRead} className="h-7 px-2 text-[10px] font-bold text-orange-500 hover:text-orange-400 hover:bg-orange-500/10 rounded-lg">
-                            <CheckCircle2 className="mr-1 h-3 w-3" /> Mark all read
+                        <Button variant="ghost" size="sm" onClick={markAllAsRead} className="h-7 px-3 text-[9px] font-black uppercase text-orange-500 hover:text-orange-400 hover:bg-orange-500/10 rounded-xl">
+                            <CheckCircle2 className="mr-1.5 h-3.5 w-3.5" /> Mark all read
                         </Button>
                     )}
                 </div>
                 <ScrollArea className="h-[400px]">
                     {isLoading ? (
-                        <div className="flex h-32 items-center justify-center"><Loader2 className="h-5 w-5 animate-spin text-orange-500" /></div>
+                        <div className="flex h-32 items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-orange-500" /></div>
                     ) : !notifications || notifications.length === 0 ? (
                         <div className="flex flex-col items-center justify-center h-64 p-8 text-center opacity-40">
-                            <Bell className="h-12 w-12 mb-4" />
-                            <p className="text-sm font-bold">No notifications yet.</p>
+                            <Bell className="h-14 w-14 mb-4 text-muted-foreground" />
+                            <p className="text-[10px] font-black uppercase tracking-widest">No activity recorded yet.</p>
                         </div>
                     ) : (
                         <div className="divide-y divide-white/5">
@@ -120,7 +121,7 @@ function NotificationCenter() {
                                     key={notif.id} 
                                     href={notif.link} 
                                     className={cn(
-                                        "flex items-start gap-3 p-4 transition-colors hover:bg-white/5",
+                                        "flex items-start gap-4 p-5 transition-all hover:bg-white/5",
                                         !notif.read && "bg-orange-500/[0.03]"
                                     )}
                                     onClick={() => {
@@ -128,21 +129,23 @@ function NotificationCenter() {
                                         setIsOpen(false);
                                     }}
                                 >
-                                    <Avatar className="h-10 w-10 shrink-0 border-2 border-white/5">
-                                        <AvatarImage src={notif.actorPhotoUrl} />
-                                        <AvatarFallback className="bg-orange-500/10 text-orange-500 font-bold text-xs">
+                                    <Avatar className="h-11 w-11 shrink-0 border-2 border-white/10 shadow-lg">
+                                        <AvatarImage src={notif.actorPhotoUrl} className="object-cover" />
+                                        <AvatarFallback className="bg-orange-500/10 text-orange-500 font-black text-xs">
                                             {notif.actorName?.charAt(0)}
                                         </AvatarFallback>
                                     </Avatar>
-                                    <div className="flex-1 space-y-1">
-                                        <p className="text-sm text-white leading-snug">
-                                            <span className="font-black">{notif.actorName}</span>{' '}
-                                            <span className="text-muted-foreground font-medium">{notif.type === 'new_follower' ? 'started following you.' : notif.message}</span>
+                                    <div className="flex-1 space-y-1.5">
+                                        <p className="text-xs text-white leading-relaxed">
+                                            <span className="font-black uppercase italic text-orange-500">{notif.actorName}</span>{' '}
+                                            <span className="text-muted-foreground font-medium">{notif.type === 'new_follower' ? 'started following your professional profile.' : notif.message}</span>
                                         </p>
-                                        <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest flex items-center gap-2">
-                                            {notif.createdAt ? formatDistanceToNowStrict(notif.createdAt.toDate(), { addSuffix: true }) : 'Just now'}
-                                            {!notif.read && <span className="h-1.5 w-1.5 rounded-full bg-orange-500" />}
-                                        </p>
+                                        <div className="flex items-center justify-between">
+                                            <p className="text-[9px] text-muted-foreground font-black uppercase tracking-widest">
+                                                {notif.createdAt ? formatDistanceToNowStrict(notif.createdAt.toDate(), { addSuffix: true }) : 'Just now'}
+                                            </p>
+                                            {!notif.read && <div className="h-2 w-2 rounded-full bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.5)]" />}
+                                        </div>
                                     </div>
                                 </Link>
                             ))}

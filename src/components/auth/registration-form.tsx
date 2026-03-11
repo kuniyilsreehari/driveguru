@@ -708,7 +708,7 @@ export function RegistrationForm() {
                   <FormItem><FormLabel>Referral Code (Optional)</FormLabel><div className="relative"><Gift className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><FormControl><Input placeholder="Referral code" {...field} className="pl-10 h-12 rounded-xl" disabled={!!searchParams.get('ref')} /></FormControl></div><FormMessage /></FormItem>
               )} />
             <FormField control={phoneForm.control} name="role" render={({ field }) => (
-                <FormItem><FormLabel>Role</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger className="h-12 rounded-xl"><SelectValue placeholder="Select role" /></SelectTrigger></FormControl><SelectContent>{expertTypes.map(t => <SelectItem key={t.name} value={t.name}>{t.name}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>
+                <FormItem><FormLabel>Role</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger className="h-12 rounded-xl"><SelectValue placeholder="Select role" /></SelectTrigger></FormControl><SelectContent>{expertTypes.map(t => <SelectItem key={t.name} value={t.name}>{t.name}</SelectItem>)}</Select><FormMessage /></FormItem>
                 )} />
             {selectedPhoneRole === 'Freelancer' && (
                 <div className="grid grid-cols-2 gap-4">
