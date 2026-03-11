@@ -315,25 +315,25 @@ export default function ExpertDashboardPage() {
                       <span className="flex items-center gap-1.5"><Users className="h-3.5 w-3.5 text-orange-500" /> {userProfile.following?.length || 0} FOLLOWING</span>
                     </div>
 
-                    <div className="py-3 flex justify-start">
-                      <Badge className="font-black bg-white text-black border-none text-base uppercase tracking-[0.3em] px-8 py-3 rounded-2xl h-12 shadow-xl">
+                    <div className="py-4 flex justify-start">
+                      <Badge className="font-black bg-white text-black border-none text-xl uppercase tracking-[0.4em] px-10 py-4 rounded-2xl h-16 shadow-2xl transition-transform hover:scale-105">
                         {userProfile.role}
                       </Badge>
                     </div>
                     
-                    <div className="pt-2 space-y-2">
+                    <div className="pt-2 space-y-3">
                         {userProfile.profession && (
-                            <p className="text-xl font-black text-orange-500 uppercase italic tracking-tighter flex items-center gap-2">
-                                <Briefcase className="h-5 w-5" /> {userProfile.profession}
+                            <p className="text-2xl font-black text-orange-500 uppercase italic tracking-tighter flex items-center gap-2">
+                                <Briefcase className="h-6 w-6" /> {userProfile.profession}
                             </p>
                         )}
                         {userProfile.category && (
-                            <p className="text-xs font-black text-white/60 uppercase tracking-widest flex items-center gap-2">
+                            <p className="text-sm font-black text-white/60 uppercase tracking-widest flex items-center gap-2">
                                 <List className="h-4 w-4" /> {userProfile.category}
                             </p>
                         )}
                         {userProfile.businessDescription && (
-                            <p className="text-sm font-medium text-muted-foreground italic leading-relaxed max-w-xl">
+                            <p className="text-base font-medium text-muted-foreground italic leading-relaxed max-w-xl border-l-4 border-orange-500/20 pl-4 py-1">
                                 "{userProfile.businessDescription}"
                             </p>
                         )}
