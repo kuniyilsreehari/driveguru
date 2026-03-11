@@ -441,7 +441,7 @@ export default function ExpertDashboardPage() {
                         <div className="flex items-center gap-3 text-sm">
                             <School className="h-4 w-4 text-orange-500" />
                             <span className="font-black text-muted-foreground uppercase tracking-widest text-[10px] w-24">College</span>
-                            <span className={cn("text-white font-bold", !userProfile.collegeName && "text-red-500/50")}>{userProfile.collegeName || 'Pending'}</span>
+                            <span className={cn("text-white font-bold", !userProfile.collegeName && !userProfile.collegeName && "text-red-500/50")}>{userProfile.collegeName || 'Pending'}</span>
                         </div>
                     </div>
 
