@@ -1,4 +1,3 @@
-
 {
   "entities": {
     "User": {
@@ -99,18 +98,6 @@
         "isFeatured": {
           "type": "boolean",
           "description": "If true, the expert is shown in the featured 'Top Rated' carousel on the homepage."
-        },
-        "featuredOrder": {
-          "type": "number",
-          "description": "Manual sort order for the homepage carousel (lower numbers appear first)."
-        },
-        "showInRecent": {
-          "type": "boolean",
-          "description": "If true, the expert is shown in the 'Recent Professionals' grid on the homepage."
-        },
-        "recentOrder": {
-          "type": "number",
-          "description": "Manual sort order for the 'Recent Professionals' grid."
         },
         "cashPaymentStatus": {
           "type": "string",
@@ -688,6 +675,10 @@
           "type": "number",
           "description": "The scrolling duration for the announcement in seconds. A higher number means slower speed."
         },
+        "introVideoUrl": {
+          "type": "string",
+          "description": "URL or storage path for the platform introduction video on the guides page."
+        },
         "isRecentProfessionalsEnabled": {
           "type": "boolean",
           "description": "Global toggle to show or hide the 'Recent Professionals' section on the homepage."
@@ -912,6 +903,7 @@
           ]
         }
       }
-    ]
+    ],
+    "reasoning": "The Firestore structure is designed to support DriveGuru's core features while adhering to the principles of Authorization Independence, Structural Segregation, and Access Modeling. User data, company information, posts, and location data are stored in separate collections to maintain clarity and enforce consistent security rules. Crucially, authorization data is denormalized to avoid `get()` calls in security rules and ensure atomic operations.\\n\\1.  **Authorization Independence:** A separate `/roles_super_admin/{userId}` collection determines super admin privileges based on document existence rather than user document content. This simplifies security rules and avoids hierarchical dependencies.\\n\\2.  **Structural Segregation:**  User data, company data, location data, and posts are stored in separate collections, each with distinct security requirements. This segregation simplifies security rule management and prevents unintended access.\\n\\3.  **Access Modeling:**\\n    *   User-owned location data is structured under `/users/{userId}/location_data/{locationDataId}`. This allows for path-based security rules, ensuring that only the user can access their own location data.\\n    *   Posts are in a top-level `/posts` collection to allow for easy querying for the public feed, while rules ensure only authors can edit or delete their own posts.\\n    *   Companies are stored in a top-level `/companies` collection.\\n    *   The super admin role is managed through the `/roles_super_admin/{userId}` collection, where the existence of a document for a user ID grants super admin privileges."
   }
 }

@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
@@ -9,7 +8,7 @@ import { useUser, useFirestore, useDoc, useMemoFirebase, useAuth, useCollection 
 import { updateDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, UserX, Crown, Sparkles, User as UserIcon, Save, Briefcase, Building, MessageSquare, Search, PlusCircle, Download, IndianRupee, Upload, HardDriveDownload, Megaphone, Rss, TrendingUp, PieChart, Activity, ChevronLeft, ChevronRight, Check, Gift, Phone, Eye, Layout, Hash, SortAsc, LayoutGrid, CheckCircle2, ShieldAlert, Link as LinkIcon } from 'lucide-react';
+import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, UserX, Crown, Sparkles, User as UserIcon, Save, Briefcase, Building, MessageSquare, Search, PlusCircle, Download, IndianRupee, Upload, HardDriveDownload, Megaphone, Rss, TrendingUp, PieChart, Activity, ChevronLeft, ChevronRight, Check, Gift, Phone, Eye, Layout, Hash, SortAsc, LayoutGrid, CheckCircle2, ShieldAlert, Link as LinkIcon, Video } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -146,6 +145,7 @@ type AppConfig = {
     verificationPaymentLink?: string;
     premierPaymentLink?: string;
     superPremierPaymentLink?: string;
+    introVideoUrl?: string;
 };
 
 export default function AdminDashboardPage() {
@@ -194,6 +194,7 @@ export default function AdminDashboardPage() {
   const [referralPoints, setReferralPoints] = useState(100);
   const [homepageCategories, setHomepageCategories] = useState<HomepageCategory[]>([]);
   const [departments, setDepartments] = useState<string[]>([]);
+  const [introVideoUrl, setIntroVideoUrl] = useState("");
 
   const [hasSuperAdminClaim, setHasSuperAdminClaim] = useState(false);
 
@@ -251,6 +252,7 @@ export default function AdminDashboardPage() {
       setReferralPoints(appConfig.referralRewardPoints || 100);
       setHomepageCategories(appConfig.homepageCategories || []);
       setDepartments(appConfig.departments || []);
+      setIntroVideoUrl(appConfig.introVideoUrl || "");
     }
   }, [appConfig]);
 
@@ -356,6 +358,7 @@ export default function AdminDashboardPage() {
         referralRewardPoints: referralPoints,
         homepageCategories,
         departments,
+        introVideoUrl,
       }, { merge: true });
       toast({ title: "Settings Published" });
     } finally {
@@ -1157,6 +1160,22 @@ export default function AdminDashboardPage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Card className="border-none rounded-2xl overflow-hidden bg-card">
+                    <CardHeader className="bg-white/5 border-b border-white/5 pb-6">
+                        <div className="flex items-center gap-3">
+                            <Video className="h-6 w-6 text-orange-500" />
+                            <CardTitle className="text-xl font-black uppercase italic">Video Resources</CardTitle>
+                        </div>
+                    </CardHeader>
+                    <CardContent className="p-6 space-y-4">
+                        <div className="space-y-2">
+                            <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Platform Introduction Video URL</Label>
+                            <Input value={introVideoUrl} onChange={(e) => setIntroVideoUrl(e.target.value)} className="h-12 bg-background border-none rounded-xl font-mono text-xs" placeholder="YouTube URL or Storage Path" />
+                            <p className="text-[9px] text-muted-foreground italic">Update the video shown on the Guides page.</p>
+                        </div>
+                    </CardContent>
+                </Card>
+
                 <Card className="border-none rounded-2xl overflow-hidden bg-card">
                     <CardHeader className="bg-white/5 border-b border-white/5 pb-6">
                         <div className="flex items-center gap-3">

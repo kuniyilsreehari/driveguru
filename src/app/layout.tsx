@@ -1,6 +1,5 @@
-
 import type {Metadata} from 'next';
-import { PT_Sans } from 'next/font/google';
+import { Inter, Outfit } from 'next/font/google';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import { FirebaseClientProvider } from '@/firebase/client-provider';
@@ -10,11 +9,14 @@ import { ThemeProvider } from '@/components/theme-provider';
 import { ChatAssistant } from '@/components/chat-assistant';
 import { CentralCallButton } from '@/components/layout/central-call-button';
 
-const ptSans = PT_Sans({
+const inter = Inter({
   subsets: ['latin'],
-  weight: ['400', '700'],
-  style: ['normal', 'italic'],
-  variable: '--font-pt-sans',
+  variable: '--font-inter',
+});
+
+const outfit = Outfit({
+  subsets: ['latin'],
+  variable: '--font-outfit',
 });
 
 export const metadata: Metadata = {
@@ -35,7 +37,7 @@ export default function RootLayout({
         <link rel="icon" href="/icons/apple-touch-icon.svg" type="image/svg+xml" sizes="any" />
         <link rel="apple-touch-icon" href="/icons/apple-touch-icon.svg" />
       </head>
-      <body className={`${ptSans.variable} font-body antialiased flex flex-col min-h-screen`}>
+      <body className={`${inter.variable} ${outfit.variable} font-body antialiased flex flex-col min-h-screen`}>
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"

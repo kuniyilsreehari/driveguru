@@ -2,10 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  font-family: sans-serif;
-}
-
 @layer base {
   :root {
     --background: 240 10% 99%;
@@ -59,6 +55,10 @@ body {
   }
   body {
     @apply bg-background text-foreground;
+    font-family: var(--font-inter), sans-serif;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-outfit), sans-serif;
   }
 }
 
