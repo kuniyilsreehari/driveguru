@@ -644,7 +644,7 @@ export default function AdminDashboardPage() {
                                         placeholder="Search experts by name, profession, or pincode..." 
                                         className="pl-10 h-12 bg-white/5 border-none rounded-xl text-white placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-orange-500"
                                         value={userSearchQuery}
-                                        onChange={(e) => setUserSearchQuery(e.target.value)}
+                                        onChange={(e) => setUserSearchQuery(e.target.value)} 
                                     />
                                 </div>
                             </div>
