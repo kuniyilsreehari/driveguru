@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Suspense, useState, useEffect, useMemo } from 'react';
@@ -547,18 +546,18 @@ function HomePageContent() {
                             </div>
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div className="flex items-center space-x-4 bg-[#1a1c23] p-5 rounded-2xl border border-white/5 group hover:bg-white/[0.03] transition-colors cursor-pointer" onClick={() => setShowVerifiedOnly(!showVerifiedOnly)}>
+                                <div className="flex items-center space-x-4 bg-[#1a1c23] p-4 sm:p-5 rounded-2xl border border-white/5 group hover:bg-white/[0.03] transition-colors cursor-pointer" onClick={() => setShowVerifiedOnly(!showVerifiedOnly)}>
                                     <Checkbox id="verified" checked={showVerifiedOnly} onCheckedChange={(checked) => setShowVerifiedOnly(!!checked)} className="h-5 w-5 border-2 border-orange-500 data-[state=checked]:bg-orange-500 rounded-md" />
-                                    <Label htmlFor="verified" className="text-xs font-black uppercase tracking-widest text-white/80 cursor-pointer select-none">Verified Professionals</Label>
+                                    <Label htmlFor="verified" className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-white/80 cursor-pointer select-none">Verified Professionals</Label>
                                 </div>
-                                <div className="flex items-center space-x-4 bg-[#1a1c23] p-5 rounded-2xl border border-white/5 group hover:bg-white/[0.03] transition-colors cursor-pointer" onClick={() => setShowAvailableOnly(!showAvailableOnly)}>
+                                <div className="flex items-center space-x-4 bg-[#1a1c23] p-4 sm:p-5 rounded-2xl border border-white/5 group hover:bg-white/[0.03] transition-colors cursor-pointer" onClick={() => setShowAvailableOnly(!showAvailableOnly)}>
                                     <Checkbox id="available" checked={showAvailableOnly} onCheckedChange={(checked) => setShowAvailableOnly(!!checked)} className="h-5 w-5 border-2 border-orange-500 data-[state=checked]:bg-orange-500 rounded-md" />
-                                    <Label htmlFor="available" className="text-xs font-black uppercase tracking-widest text-white/80 cursor-pointer select-none">Available Immediately</Label>
+                                    <Label htmlFor="available" className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-white/80 cursor-pointer select-none">Available Immediately</Label>
                                 </div>
                             </div>
 
-                            <Button size="lg" className="w-full h-20 rounded-[2rem] bg-orange-500 hover:bg-orange-600 text-white font-black text-xl shadow-2xl shadow-orange-500/30 active:scale-[0.98] transition-all uppercase tracking-[0.2em] group" onClick={handleSearch}>
-                                <Search className="mr-4 h-7 w-7 group-hover:scale-110 transition-transform" />
+                            <Button size="lg" className="w-full h-16 sm:h-20 rounded-[2rem] bg-orange-500 hover:bg-orange-600 text-white font-black text-sm sm:text-xl shadow-2xl shadow-orange-500/30 active:scale-[0.98] transition-all uppercase tracking-widest sm:tracking-[0.2em] group" onClick={handleSearch}>
+                                <Search className="mr-2 sm:mr-4 h-5 w-5 sm:h-7 sm:w-7 group-hover:scale-110 transition-transform" />
                                 Find Local Professionals
                             </Button>
                         </CardContent>

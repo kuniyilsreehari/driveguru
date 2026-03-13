@@ -62,11 +62,13 @@
   }
 }
 
-@keyframes marquee {
-  0% { transform: translateX(100%); }
-  100% { transform: translateX(-100%); }
-}
+@layer utilities {
+  @keyframes marquee {
+    0% { transform: translateX(100%); }
+    100% { transform: translateX(-100%); }
+  }
 
-.animate-marquee {
-  animation: marquee var(--animation-duration, 20s) linear infinite;
+  .animate-marquee {
+    animation: marquee var(--animation-duration, 20s) linear infinite;
+  }
 }
