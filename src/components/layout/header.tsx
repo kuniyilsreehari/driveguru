@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -18,7 +17,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { User as UserIcon, LogOut, LayoutDashboard, Home, Award, Briefcase, Moon, Sun, Menu, Rss, Users, BookOpen, Bell, CheckCircle2, Loader2 } from 'lucide-react';
+import { User as UserIcon, LogOut, LayoutDashboard, Home, Award, Briefcase, Moon, Sun, Menu, Rss, Users, BookOpen, Bell, CheckCircle2, Loader2, Download } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, useMemo } from 'react';
 import { useTheme } from 'next-themes';
@@ -26,6 +25,9 @@ import { cn } from '@/lib/utils';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { formatDistanceToNowStrict } from 'date-fns';
+import { useAtom } from 'jotai';
+import { installPromptAtom } from '@/lib/store';
+import { InstallPwaDialog } from '../install-pwa-dialog';
 
 type Notification = {
     id: string;
@@ -167,6 +169,9 @@ export function Header() {
   const [mounted, setMounted] = useState(false);
   const { setTheme, theme } = useTheme();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  
+  const [installPrompt] = useAtom(installPromptAtom);
+  const [isInstallOpen, setIsInstallOpen] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -231,6 +236,15 @@ export function Header() {
                             </Button>
                         );
                     })}
+                    {installPrompt && (
+                        <Button 
+                            variant="default" 
+                            className="justify-start h-12 rounded-xl bg-orange-500 hover:bg-orange-600 mt-4" 
+                            onClick={() => { setIsInstallOpen(true); setIsMobileMenuOpen(false); }}
+                        >
+                            <Download className="mr-2 h-4 w-4" /> Install DriveGuru App
+                        </Button>
+                    )}
                 </div>
             </SheetContent>
         </Sheet>
@@ -265,6 +279,16 @@ export function Header() {
                         </Button>
                     )
                 })}
+                {installPrompt && (
+                    <Button 
+                        variant="outline" 
+                        size="sm"
+                        className="rounded-lg px-4 border-orange-500/30 text-orange-500 hover:bg-orange-500/5 font-black uppercase text-[10px] tracking-widest ml-2"
+                        onClick={() => setIsInstallOpen(true)}
+                    >
+                        <Download className="mr-2 h-3.5 w-3.5" /> Install App
+                    </Button>
+                )}
               </nav>
 
               <div className="flex items-center gap-1 sm:gap-2">
@@ -324,6 +348,7 @@ export function Header() {
           )}
         </div>
       </div>
+      <InstallPwaDialog open={isInstallOpen} onOpenChange={setIsInstallOpen} />
     </header>
   );
 }

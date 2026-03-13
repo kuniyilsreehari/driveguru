@@ -8,6 +8,7 @@ import { Footer } from '@/components/layout/footer';
 import { ThemeProvider } from '@/components/theme-provider';
 import { ChatAssistant } from '@/components/chat-assistant';
 import { CentralCallButton } from '@/components/layout/central-call-button';
+import { PwaPromptListener } from '@/components/pwa-prompt-listener';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -36,6 +37,7 @@ export default function RootLayout({
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/icons/apple-touch-icon.svg" type="image/svg+xml" sizes="any" />
         <link rel="apple-touch-icon" href="/icons/apple-touch-icon.svg" />
+        <meta name="theme-color" content="#f97316" />
       </head>
       <body className={`${inter.variable} ${outfit.variable} font-body antialiased flex flex-col min-h-screen`}>
         <ThemeProvider
@@ -45,6 +47,7 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <FirebaseClientProvider>
+            <PwaPromptListener />
             <Header />
             <main className="flex-grow">
               {children}
