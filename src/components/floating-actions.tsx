@@ -28,8 +28,8 @@ export function FloatingActions() {
     const actions = [
         {
             id: 'install',
-            label: 'INSTALL DRIVEGURU',
-            icon: <Download className="h-8 w-8" />,
+            label: 'INSTALL APP',
+            icon: <Download className="h-10 w-10" />,
             onClick: () => { setInstallOpen(true); setIsOpen(false); },
             enabled: !!installPrompt,
             color: 'bg-blue-600 hover:bg-blue-700 shadow-blue-500/20',
@@ -108,7 +108,7 @@ export function FloatingActions() {
                         >
                             <span className={cn(
                                 "bg-[#1a1c23] text-white font-black uppercase text-[10px] tracking-widest px-3 py-1.5 rounded-lg shadow-2xl border border-white/10",
-                                action.isBig && "text-xs py-2 px-4 border-blue-500/30 text-blue-400"
+                                action.isBig && "text-xs py-2 px-4 border-blue-500/30 text-blue-400 font-black"
                             )}>
                                 {action.label}
                             </span>
