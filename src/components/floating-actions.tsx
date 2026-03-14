@@ -8,7 +8,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { cn } from '@/lib/utils';
 import type { ExpertUser } from '@/components/expert-card';
 import { useAtom } from 'jotai';
-import { installPromptAtom, chatOpenAtom } from '@/lib/store';
+import { installPromptAtom, chatOpenAtom, installDialogOpenAtom } from '@/lib/store';
 import { useToast } from '@/hooks/use-toast';
 
 interface FloatingActionsProps {
@@ -22,7 +22,8 @@ const cleanPhoneNumber = (phoneNumber?: string) => {
 
 export function FloatingActions({ expert }: FloatingActionsProps) {
     const [isOpen, setIsOpen] = useState(false);
-    const [installPrompt, setInstallPrompt] = useAtom(installPromptAtom);
+    const [installPrompt] = useAtom(installPromptAtom);
+    const [, setInstallOpen] = useAtom(installDialogOpenAtom);
     const [, setChatOpen] = useAtom(chatOpenAtom);
     const [canShare, setCanShare] = useState(false);
     const { toast } = useToast();
@@ -30,16 +31,6 @@ export function FloatingActions({ expert }: FloatingActionsProps) {
     useEffect(() => {
         setCanShare(typeof navigator !== 'undefined' && (!!navigator.share || !!navigator.clipboard));
     }, []);
-
-    const handleInstallClick = () => {
-        if (!installPrompt) return;
-        (installPrompt as any).prompt();
-        (installPrompt as any).userChoice.then((choiceResult: { outcome: 'accepted' | 'dismissed' }) => {
-            if (choiceResult.outcome === 'accepted') {
-                 setInstallPrompt(null);
-            }
-        });
-    };
 
     const getDisplayName = (expert?: ExpertUser) => {
         if (!expert) return 'DriveGuru';
@@ -81,10 +72,11 @@ export function FloatingActions({ expert }: FloatingActionsProps) {
         ...(installPrompt ? [{
             id: 'install',
             label: 'Install App',
-            icon: <Download className="h-5 w-5" />,
-            onClick: handleInstallClick,
+            icon: <Download className="h-6 w-6" />,
+            onClick: () => { setInstallOpen(true); setIsOpen(false); },
             enabled: true,
-            color: 'bg-blue-600 hover:bg-blue-700',
+            color: 'bg-blue-600 hover:bg-blue-700 shadow-blue-500/20',
+            size: 'h-14 w-14', // Big size for install
         }] : []),
         {
             id: 'chat',
@@ -92,7 +84,8 @@ export function FloatingActions({ expert }: FloatingActionsProps) {
             icon: <Bot className="h-5 w-5" />,
             onClick: () => { setChatOpen(true); setIsOpen(false); },
             enabled: true,
-            color: 'bg-orange-500 hover:bg-orange-600', // Orange as per design
+            color: 'bg-orange-500 hover:bg-orange-600 shadow-orange-500/20',
+            size: 'h-12 w-12',
         },
         ...(expert ? [
             {
@@ -102,7 +95,8 @@ export function FloatingActions({ expert }: FloatingActionsProps) {
                 href: whatsappLink,
                 target: "_blank",
                 enabled: canContact,
-                color: 'bg-green-500 hover:bg-green-600', // Green as per design
+                color: 'bg-green-500 hover:bg-green-600 shadow-green-500/20',
+                size: 'h-12 w-12',
             },
             {
                 id: 'call',
@@ -111,6 +105,7 @@ export function FloatingActions({ expert }: FloatingActionsProps) {
                 href: callLink,
                 enabled: canContact,
                 color: 'bg-green-600 hover:bg-green-700',
+                size: 'h-12 w-12',
             }
         ] : []),
         ...(canShare ? [{
@@ -120,6 +115,7 @@ export function FloatingActions({ expert }: FloatingActionsProps) {
             onClick: handleShare,
             enabled: true,
             color: 'bg-zinc-700 hover:bg-zinc-800',
+            size: 'h-12 w-12',
         }] : []),
     ];
 
@@ -136,8 +132,9 @@ export function FloatingActions({ expert }: FloatingActionsProps) {
                                         variant="default"
                                         size="icon"
                                         className={cn(
-                                            "rounded-full h-12 w-12 shadow-xl border-2 border-white/10 transition-all active:scale-95",
+                                            "rounded-full shadow-xl border-2 border-white/10 transition-all active:scale-95",
                                             action.color,
+                                            action.size,
                                             !action.enabled && "opacity-50 grayscale cursor-not-allowed"
                                         )}
                                         onClick={action.onClick}

@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -26,7 +27,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { formatDistanceToNowStrict } from 'date-fns';
 import { useAtom } from 'jotai';
-import { installPromptAtom } from '@/lib/store';
+import { installPromptAtom, installDialogOpenAtom } from '@/lib/store';
 import { InstallPwaDialog } from '../install-pwa-dialog';
 
 type Notification = {
@@ -171,7 +172,7 @@ export function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
   const [installPrompt] = useAtom(installPromptAtom);
-  const [isInstallOpen, setIsInstallOpen] = useState(false);
+  const [isInstallOpen, setIsInstallOpen] = useAtom(installDialogOpenAtom);
 
   useEffect(() => {
     setMounted(true);
