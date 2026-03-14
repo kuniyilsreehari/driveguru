@@ -1,14 +1,11 @@
+'use client';
 
-"use client";
-
-import { useState, useEffect } from 'react';
-import { Plus, Download, Phone, Share2, MessageSquare, Bot, X } from 'lucide-react';
+import { useState } from 'react';
+import { Plus, Download, Phone, Share2, MessageSquare, Bot, X, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { useAtom } from 'jotai';
 import { installPromptAtom, chatOpenAtom, installDialogOpenAtom, currentExpertAtom } from '@/lib/store';
-import { useToast } from '@/hooks/use-toast';
 import { useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
 
@@ -18,69 +15,53 @@ export function FloatingActions() {
     const [, setInstallOpen] = useAtom(installDialogOpenAtom);
     const [, setChatOpen] = useAtom(chatOpenAtom);
     const [expert] = useAtom(currentExpertAtom);
-    const [canShare, setCanShare] = useState(false);
-    const { toast } = useToast();
 
     const firestore = useFirestore();
     const appConfigDocRef = useMemoFirebase(() => doc(firestore, 'app_config', 'homepage'), [firestore]);
     const { data: appConfig } = useDoc<any>(appConfigDocRef);
     const centralPhone = appConfig?.centralContactPhone;
 
-    useEffect(() => {
-        setCanShare(typeof navigator !== 'undefined' && (!!navigator.share || !!navigator.clipboard));
-    }, []);
-
-    const getDisplayName = () => {
-        if (!expert) return 'DriveGuru';
-        return expert.companyName || `${expert.firstName} ${expert.lastName}`;
-    }
-
-    const handleShare = async () => {
-        const shareData = {
-            title: `Check out ${getDisplayName()} on DriveGuru`,
-            text: `I found this expert, ${getDisplayName()}, on DriveGuru. Here's their profile:`,
-            url: window.location.href,
-        };
-        try {
-            if (navigator.share) {
-                await navigator.share(shareData);
-            } else {
-                await navigator.clipboard.writeText(shareData.url);
-                toast({ title: "Link Copied" });
-            }
-        } catch (err) {
-            console.error("Share failed:", err);
-        }
-    };
-
     const cleanNumber = (num?: string) => num?.replace(/\s+/g, '') || '';
-    
     const expertPhone = cleanNumber(expert?.phoneNumber);
     const canContactExpert = expert?.verified && expertPhone;
 
     const actions = [
-        ...(installPrompt ? [{
+        {
             id: 'install',
-            label: 'Install DriveGuru App',
-            icon: <Download className="h-6 w-6" />,
+            label: 'INSTALL DRIVEGURU',
+            icon: <Download className="h-8 w-8" />,
             onClick: () => { setInstallOpen(true); setIsOpen(false); },
-            enabled: true,
+            enabled: !!installPrompt,
             color: 'bg-blue-600 hover:bg-blue-700 shadow-blue-500/20',
-            size: 'h-14 w-14',
-        }] : []),
+            size: 'h-20 w-20',
+            isBig: true,
+        },
         {
             id: 'chat',
-            label: 'Ask Gemini AI Assistant',
+            label: 'ASK GEMINI AI',
             icon: <Bot className="h-5 w-5" />,
             onClick: () => { setChatOpen(true); setIsOpen(false); },
             enabled: true,
             color: 'bg-orange-500 hover:bg-orange-600 shadow-orange-500/20',
             size: 'h-12 w-12',
         },
+        {
+            id: 'share',
+            label: 'SHARE LINK',
+            icon: <Share2 className="h-5 w-5" />,
+            onClick: () => { 
+                if (navigator.share) {
+                    navigator.share({ title: 'DriveGuru', url: window.location.href });
+                }
+            },
+            enabled: true,
+            color: 'bg-zinc-700 hover:bg-zinc-600',
+            size: 'h-12 w-12',
+        },
         ...(expert ? [
             {
                 id: 'whatsapp',
-                label: 'WhatsApp Expert',
+                label: 'WHATSAPP',
                 icon: <MessageSquare className="h-5 w-5" />,
                 href: `https://wa.me/${expertPhone}`,
                 target: "_blank",
@@ -90,7 +71,7 @@ export function FloatingActions() {
             },
             {
                 id: 'call-expert',
-                label: 'Call Expert Directly',
+                label: 'CALL EXPERT',
                 icon: <Phone className="h-5 w-5" />,
                 href: `tel:${expertPhone}`,
                 enabled: canContactExpert,
@@ -100,77 +81,71 @@ export function FloatingActions() {
         ] : []),
         ...(centralPhone ? [{
             id: 'call-support',
-            label: 'Contact Central Support',
+            label: 'SUPPORT',
             icon: <Phone className="h-5 w-5" />,
             href: `tel:${cleanNumber(centralPhone)}`,
             enabled: true,
             color: 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/20',
             size: 'h-12 w-12',
         }] : []),
-        ...(canShare ? [{
-            id: 'share',
-            label: 'Share Current View',
-            icon: <Share2 className="h-5 w-5" />,
-            onClick: handleShare,
-            enabled: true,
-            color: 'bg-zinc-700 hover:bg-zinc-800',
-            size: 'h-12 w-12',
-        }] : []),
     ];
 
     return (
-        <TooltipProvider>
-            <div className="fixed bottom-8 right-8 z-[70] flex flex-col items-end gap-3">
-                {isOpen && (
-                    <div className="flex flex-col items-end gap-3 mb-2 animate-in fade-in slide-in-from-bottom-4 duration-300">
-                        {actions.map((action, index) => (
-                            <Tooltip key={action.id}>
-                                <TooltipTrigger asChild>
-                                    <Button
-                                        asChild={!!action.href}
-                                        variant="default"
-                                        size="icon"
-                                        className={cn(
-                                            "rounded-full shadow-xl border-2 border-white/10 transition-all active:scale-95",
-                                            action.color,
-                                            action.size,
-                                            !action.enabled && "opacity-50 grayscale cursor-not-allowed"
-                                        )}
-                                        onClick={action.onClick}
-                                        disabled={!action.enabled}
-                                        style={{ 
-                                            transitionDelay: `${index * 50}ms`,
-                                            transform: isOpen ? 'scale(1)' : 'scale(0.5)' 
-                                        }}
-                                    >
-                                        {action.href ? (
-                                            <a href={action.enabled ? action.href : undefined} target={action.target} rel="noopener noreferrer">
-                                                {action.icon}
-                                            </a>
-                                        ) : (
-                                            action.icon
-                                        )}
-                                    </Button>
-                                </TooltipTrigger>
-                                <TooltipContent side="left" className="bg-[#1a1c23] border-white/10 text-white font-black uppercase text-[10px] tracking-widest px-3 py-1.5 rounded-lg shadow-2xl">
-                                    {action.label} {!action.enabled && expert && '(Verified Only)'}
-                                </TooltipContent>
-                            </Tooltip>
-                        ))}
-                    </div>
+        <div className="fixed bottom-8 right-8 z-[70] flex flex-col items-end gap-4">
+            {isOpen && (
+                <div className="flex flex-col items-end gap-4 mb-2 animate-in fade-in slide-in-from-bottom-4 duration-300">
+                    {actions.map((action, index) => (
+                        <div 
+                            key={action.id} 
+                            className={cn(
+                                "flex items-center gap-3 transition-all duration-300",
+                                !action.enabled && "hidden"
+                            )}
+                            style={{ 
+                                transitionDelay: `${index * 50}ms`,
+                                transform: isOpen ? 'scale(1)' : 'scale(0.5)' 
+                            }}
+                        >
+                            <span className={cn(
+                                "bg-[#1a1c23] text-white font-black uppercase text-[10px] tracking-widest px-3 py-1.5 rounded-lg shadow-2xl border border-white/10",
+                                action.isBig && "text-xs py-2 px-4 border-blue-500/30 text-blue-400"
+                            )}>
+                                {action.label}
+                            </span>
+                            <Button
+                                asChild={!!action.href}
+                                variant="default"
+                                size="icon"
+                                className={cn(
+                                    "rounded-full shadow-xl border-2 border-white/10 transition-all active:scale-95",
+                                    action.color,
+                                    action.size
+                                )}
+                                onClick={action.onClick}
+                            >
+                                {action.href ? (
+                                    <a href={action.href} target={action.target} rel="noopener noreferrer">
+                                        {action.icon}
+                                    </a>
+                                ) : (
+                                    action.icon
+                                )}
+                            </Button>
+                        </div>
+                    ))}
+                </div>
+            )}
+            
+            <Button
+                size="icon"
+                className={cn(
+                    "rounded-full h-16 w-16 shadow-2xl transition-all duration-500 border-4 border-white/10",
+                    isOpen ? "bg-[#1a1c23] text-white rotate-45" : "bg-yellow-400 text-black hover:bg-yellow-500 scale-110"
                 )}
-                
-                <Button
-                    size="icon"
-                    className={cn(
-                        "rounded-full h-16 w-16 shadow-2xl transition-all duration-500 border-4 border-white/10",
-                        isOpen ? "bg-[#1a1c23] text-white rotate-45" : "bg-yellow-400 text-black hover:bg-yellow-500 scale-110"
-                    )}
-                    onClick={() => setIsOpen(!isOpen)}
-                >
-                    <Plus className="h-8 w-8" />
-                </Button>
-            </div>
-        </TooltipProvider>
+                onClick={() => setIsOpen(!isOpen)}
+            >
+                {isOpen ? <X className="h-8 w-8" /> : <Plus className="h-8 w-8" />}
+            </Button>
+        </div>
     );
 }
