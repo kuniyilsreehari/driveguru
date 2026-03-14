@@ -16,7 +16,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { LayoutDashboard, Home, Award, Briefcase, Moon, Sun, Rss, Users, BookOpen, Bell, CheckCircle2, Loader2, Menu } from 'lucide-react';
+import { LayoutDashboard, Home, Award, Briefcase, Moon, Sun, Rss, Users, BookOpen, Bell, CheckCircle2, Loader2, Menu, Search } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, useMemo } from 'react';
 import { useTheme } from 'next-themes';
@@ -40,6 +40,8 @@ type Notification = {
 const navItems = [
   { label: 'Home', href: '/', icon: Home },
   { label: 'Feed', href: '/feed', icon: Rss },
+  { label: 'Groups', href: '/groups', icon: Users },
+  { label: 'Jobs', href: '/vacancies', icon: Briefcase },
   { label: 'Featured', href: '/featured-experts', icon: Award },
 ];
 
@@ -159,7 +161,7 @@ export function Header() {
             </Link>
         </div>
 
-        <nav className="hidden md:flex items-center gap-1">
+        <nav className="hidden lg:flex items-center gap-1">
             {navItems.map((item) => (
                 <Button key={item.href} asChild variant="ghost" size="sm" className={cn("rounded-xl h-9 px-4 font-black uppercase text-[10px] tracking-widest", pathname === item.href ? "bg-white/10 text-white" : "text-muted-foreground hover:text-white")}>
                     <Link href={item.href}><item.icon className="mr-2 h-4 w-4" /> {item.label}</Link>
