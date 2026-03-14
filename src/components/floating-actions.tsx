@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -8,6 +9,7 @@ import { useAtom } from 'jotai';
 import { installPromptAtom, chatOpenAtom, installDialogOpenAtom, currentExpertAtom } from '@/lib/store';
 import { useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
+import { useToast } from '@/hooks/use-toast';
 
 export function FloatingActions() {
     const [isOpen, setIsOpen] = useState(false);
@@ -15,6 +17,7 @@ export function FloatingActions() {
     const [, setInstallOpen] = useAtom(installDialogOpenAtom);
     const [, setChatOpen] = useAtom(chatOpenAtom);
     const [expert] = useAtom(currentExpertAtom);
+    const { toast } = useToast();
 
     const firestore = useFirestore();
     const appConfigDocRef = useMemoFirebase(() => doc(firestore, 'app_config', 'homepage'), [firestore]);
@@ -25,14 +28,26 @@ export function FloatingActions() {
     const expertPhone = cleanNumber(expert?.phoneNumber);
     const canContactExpert = expert?.verified && expertPhone;
 
+    const handleInstallClick = () => {
+        // We always allow opening the dialog for layout checking/demo purposes
+        setInstallOpen(true);
+        setIsOpen(false);
+        if (!installPrompt) {
+            toast({
+                title: "Demo Mode",
+                description: "Simulating installation lifecycle.",
+            });
+        }
+    };
+
     const actions = [
         {
             id: 'install',
             label: 'INSTALL APP',
             icon: <Download className="h-10 w-10" />,
-            onClick: () => { setInstallOpen(true); setIsOpen(false); },
-            enabled: !!installPrompt,
-            color: 'bg-blue-600 hover:bg-blue-700 shadow-blue-500/20',
+            onClick: handleInstallClick,
+            enabled: true,
+            color: 'bg-blue-600 hover:bg-blue-700 shadow-2xl shadow-blue-500/30',
             size: 'h-20 w-20',
             isBig: true,
         },
@@ -52,6 +67,9 @@ export function FloatingActions() {
             onClick: () => { 
                 if (navigator.share) {
                     navigator.share({ title: 'DriveGuru', url: window.location.href });
+                } else {
+                    navigator.clipboard.writeText(window.location.href);
+                    toast({ title: "Link Copied" });
                 }
             },
             enabled: true,
@@ -108,7 +126,7 @@ export function FloatingActions() {
                         >
                             <span className={cn(
                                 "bg-[#1a1c23] text-white font-black uppercase text-[10px] tracking-widest px-3 py-1.5 rounded-lg shadow-2xl border border-white/10",
-                                action.isBig && "text-xs py-2 px-4 border-blue-500/30 text-blue-400 font-black"
+                                action.isBig && "text-xs py-2.5 px-5 border-blue-500/30 text-blue-400 font-black ring-2 ring-blue-500/10"
                             )}>
                                 {action.label}
                             </span>

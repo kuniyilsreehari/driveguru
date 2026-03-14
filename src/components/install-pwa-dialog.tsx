@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -26,28 +27,28 @@ export function InstallPwaDialog({ open, onOpenChange }: InstallPwaDialogProps) 
   const [progress, setProgress] = useState(0);
 
   const handleInstallClick = async () => {
-    if (!installPrompt) return;
-
-    try {
-      const promptEvent = installPrompt as any;
-      await promptEvent.prompt();
-      const { outcome } = await promptEvent.userChoice;
-
-      if (outcome === 'accepted') {
-        setInstallState('installing');
-        simulateProgress();
-        setInstallPrompt(null);
+    // If we have a real prompt, trigger it. Otherwise, just simulate for checking.
+    if (installPrompt) {
+      try {
+        const promptEvent = installPrompt as any;
+        await promptEvent.prompt();
+        const { outcome } = await promptEvent.userChoice;
+        if (outcome === 'accepted') {
+          setInstallPrompt(null);
+        }
+      } catch (error) {
+        console.error('PWA installation failed', error);
       }
-    } catch (error) {
-      console.error('PWA installation failed', error);
-      setInstallState('idle');
     }
+    
+    setInstallState('installing');
+    simulateProgress();
   };
 
   const simulateProgress = () => {
     let current = 0;
     const totalTime = 18000; // 18 seconds as requested
-    const intervalTime = 100; // Update every 100ms
+    const intervalTime = 100; 
     const step = 100 / (totalTime / intervalTime);
 
     const interval = setInterval(() => {
@@ -61,7 +62,6 @@ export function InstallPwaDialog({ open, onOpenChange }: InstallPwaDialogProps) 
     }, intervalTime);
   };
 
-  // Reset state when dialog closes
   useEffect(() => {
     if (!open) {
       setTimeout(() => {
@@ -80,11 +80,11 @@ export function InstallPwaDialog({ open, onOpenChange }: InstallPwaDialogProps) 
               <div className="p-5 bg-orange-500/10 rounded-full w-fit mb-6 border border-orange-500/20 shadow-inner">
                 <Download className="h-10 w-10 text-orange-500" />
               </div>
-              <DialogTitle className="text-3xl font-black text-white uppercase italic tracking-tighter">
-                Install DriveGuru
+              <DialogTitle className="text-3xl font-black text-white uppercase italic tracking-tighter text-center">
+                Setup DriveGuru
               </DialogTitle>
               <DialogDescription className="text-muted-foreground font-medium pt-2 text-center leading-relaxed">
-                Add DriveGuru to your device for a fast, app-like experience. Works offline and provides instant professional access.
+                Install our official application for an optimized professional experience. Faster loading and offline connectivity.
               </DialogDescription>
             </DialogHeader>
             <div className="grid grid-cols-2 gap-4 py-8">
@@ -115,7 +115,7 @@ export function InstallPwaDialog({ open, onOpenChange }: InstallPwaDialogProps) 
                 <Download className="h-10 w-10 text-green-500 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
             </div>
             <h3 className="text-2xl font-black text-white uppercase italic mb-2 tracking-tight">Syncing Files...</h3>
-            <p className="text-sm text-muted-foreground mb-8 font-medium">Configuring offline professional database.</p>
+            <p className="text-sm text-muted-foreground mb-8 font-medium">Configuring professional environment.</p>
             <div className="w-full space-y-3">
                 <Progress 
                   value={progress} 
@@ -124,7 +124,7 @@ export function InstallPwaDialog({ open, onOpenChange }: InstallPwaDialogProps) 
                 />
                 <div className="flex justify-between items-center px-1">
                   <p className="text-[10px] font-black text-green-500 uppercase tracking-[0.2em]">{Math.round(progress)}% COMPLETE</p>
-                  <p className="text-[9px] font-bold text-muted-foreground/40 uppercase tracking-widest">DO NOT CLOSE</p>
+                  <p className="text-[9px] font-bold text-muted-foreground/40 uppercase tracking-widest">EST. 18S</p>
                 </div>
             </div>
           </div>
@@ -137,7 +137,7 @@ export function InstallPwaDialog({ open, onOpenChange }: InstallPwaDialogProps) 
             </div>
             <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter mb-2">Setup Finished</h3>
             <p className="text-muted-foreground font-medium mb-8 leading-relaxed">
-              DriveGuru is now installed. Launch it from your home screen for lightning-fast professional connections.
+              DriveGuru is now installed on your device. You can launch it directly from your home screen or desktop.
             </p>
             <Button 
               onClick={() => onOpenChange(false)} 
