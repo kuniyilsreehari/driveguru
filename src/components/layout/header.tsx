@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -16,9 +15,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { User as UserIcon, LogOut, LayoutDashboard, Home, Award, Briefcase, Moon, Sun, Menu, Rss, Users, BookOpen, Bell, CheckCircle2, Loader2, Download } from 'lucide-react';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { LayoutDashboard, Home, Award, Briefcase, Moon, Sun, Rss, Users, BookOpen, Bell, CheckCircle2, Loader2, Menu } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, useMemo } from 'react';
 import { useTheme } from 'next-themes';
@@ -26,13 +24,10 @@ import { cn } from '@/lib/utils';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { formatDistanceToNowStrict } from 'date-fns';
-import { useAtom } from 'jotai';
-import { installPromptAtom, installDialogOpenAtom } from '@/lib/store';
-import { InstallPwaDialog } from '../install-pwa-dialog';
 
 type Notification = {
     id: string;
-    type: 'comment_reply' | 'post_like' | 'new_follower' | 'group_approval';
+    type: string;
     message: string;
     link: string;
     read: boolean;
@@ -45,10 +40,7 @@ type Notification = {
 const navItems = [
   { label: 'Home', href: '/', icon: Home },
   { label: 'Feed', href: '/feed', icon: Rss },
-  { label: 'Jobs', href: '/vacancies', icon: Briefcase },
-  { label: 'Groups', href: '/groups', icon: Users },
   { label: 'Featured', href: '/featured-experts', icon: Award },
-  { label: 'Guides', href: '/guides', icon: BookOpen },
 ];
 
 function NotificationCenter() {
@@ -77,78 +69,47 @@ function NotificationCenter() {
         await updateDoc(notifRef, { read: true });
     };
 
-    const markAllAsRead = async () => {
-        if (!user || !firestore || !notifications) return;
-        const unread = notifications.filter(n => !n.read);
-        for (const notif of unread) {
-            const notifRef = doc(firestore, 'users', user.uid, 'notifications', notif.id);
-            updateDoc(notifRef, { read: true });
-        }
-    };
-
     if (!user) return null;
 
     return (
         <Popover open={isOpen} onOpenChange={setIsOpen}>
             <PopoverTrigger asChild>
-                <Button variant="ghost" size="icon" className="relative h-10 w-10 rounded-full hover:bg-white/10 group">
-                    <Bell className="h-5 w-5 transition-transform group-hover:scale-110" />
+                <Button variant="ghost" size="icon" className="relative h-10 w-10 rounded-full hover:bg-white/10">
+                    <Bell className="h-5 w-5" />
                     {unreadCount > 0 && (
-                        <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-orange-500 text-[10px] font-black text-white ring-4 ring-background animate-in zoom-in">
-                            {unreadCount > 9 ? '9+' : unreadCount}
+                        <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-orange-500 text-[8px] font-black text-white ring-2 ring-background">
+                            {unreadCount}
                         </span>
                     )}
                 </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-80 p-0 bg-[#24262d] border-white/10 rounded-3xl overflow-hidden shadow-2xl animate-in fade-in slide-in-from-top-4 duration-300" align="end">
-                <div className="flex items-center justify-between p-5 border-b border-white/5 bg-white/5">
-                    <h4 className="font-black text-white text-xs uppercase italic tracking-[0.2em]">Notifications</h4>
-                    {unreadCount > 0 && (
-                        <Button variant="ghost" size="sm" onClick={markAllAsRead} className="h-7 px-3 text-[9px] font-black uppercase text-orange-500 hover:text-orange-400 hover:bg-orange-500/10 rounded-xl">
-                            <CheckCircle2 className="mr-1.5 h-3.5 w-3.5" /> Mark all read
-                        </Button>
-                    )}
+            <PopoverContent className="w-80 p-0 bg-[#24262d] border-white/10 rounded-3xl overflow-hidden shadow-2xl" align="end">
+                <div className="p-4 border-b border-white/5 bg-white/5">
+                    <h4 className="font-black text-white text-xs uppercase italic tracking-widest">Activity</h4>
                 </div>
-                <ScrollArea className="h-[400px]">
+                <ScrollArea className="h-[350px]">
                     {isLoading ? (
                         <div className="flex h-32 items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-orange-500" /></div>
                     ) : !notifications || notifications.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center h-64 p-8 text-center opacity-40">
-                            <Bell className="h-14 w-14 mb-4 text-muted-foreground" />
-                            <p className="text-[10px] font-black uppercase tracking-widest">No activity recorded yet.</p>
-                        </div>
+                        <div className="p-8 text-center opacity-40 italic text-[10px] font-black uppercase">No activity yet.</div>
                     ) : (
                         <div className="divide-y divide-white/5">
                             {notifications.map((notif) => (
                                 <Link 
                                     key={notif.id} 
                                     href={notif.link} 
-                                    className={cn(
-                                        "flex items-start gap-4 p-5 transition-all hover:bg-white/5",
-                                        !notif.read && "bg-orange-500/[0.03]"
-                                    )}
-                                    onClick={() => {
-                                        markAsRead(notif.id);
-                                        setIsOpen(false);
-                                    }}
+                                    className={cn("flex items-start gap-3 p-4 transition-all hover:bg-white/5", !notif.read && "bg-orange-500/5")}
+                                    onClick={() => markAsRead(notif.id)}
                                 >
-                                    <Avatar className="h-11 w-11 shrink-0 border-2 border-white/10 shadow-lg">
-                                        <AvatarImage src={notif.actorPhotoUrl} className="object-cover" />
-                                        <AvatarFallback className="bg-orange-500/10 text-orange-500 font-black text-xs">
-                                            {notif.actorName?.charAt(0)}
-                                        </AvatarFallback>
+                                    <Avatar className="h-8 w-8 shrink-0">
+                                        <AvatarImage src={notif.actorPhotoUrl} />
+                                        <AvatarFallback className="bg-orange-500/10 text-orange-500 font-black text-[10px]">{notif.actorName?.charAt(0)}</AvatarFallback>
                                     </Avatar>
-                                    <div className="flex-1 space-y-1.5">
-                                        <p className="text-xs text-white leading-relaxed">
-                                            <span className="font-black uppercase italic text-orange-500">{notif.actorName}</span>{' '}
-                                            <span className="text-muted-foreground font-medium">{notif.type === 'new_follower' ? 'started following your professional profile.' : notif.message}</span>
+                                    <div className="flex-1 space-y-1">
+                                        <p className="text-[11px] text-white leading-tight">
+                                            <span className="font-black text-orange-500 uppercase">{notif.actorName}</span> {notif.message}
                                         </p>
-                                        <div className="flex items-center justify-between">
-                                            <p className="text-[9px] text-muted-foreground font-black uppercase tracking-widest">
-                                                {notif.createdAt ? formatDistanceToNowStrict(notif.createdAt.toDate(), { addSuffix: true }) : 'Just now'}
-                                            </p>
-                                            {!notif.read && <div className="h-2 w-2 rounded-full bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.5)]" />}
-                                        </div>
+                                        <p className="text-[9px] text-muted-foreground font-bold uppercase">{notif.createdAt ? formatDistanceToNowStrict(notif.createdAt.toDate(), { addSuffix: true }) : 'now'}</p>
                                     </div>
                                 </Link>
                             ))}
@@ -169,10 +130,6 @@ export function Header() {
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [mounted, setMounted] = useState(false);
   const { setTheme, theme } = useTheme();
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  
-  const [installPrompt] = useAtom(installPromptAtom);
-  const [isInstallOpen, setIsInstallOpen] = useAtom(installDialogOpenAtom);
 
   useEffect(() => {
     setMounted(true);
@@ -185,171 +142,72 @@ export function Header() {
         setIsSuperAdmin(docSnapshot.exists());
       });
       return () => unsub();
-    } else if (!isUserLoading) {
-      setIsSuperAdmin(false);
     }
-  }, [user, isUserLoading, firestore]);
-
-  const handleSignOut = async () => {
-    if (auth) {
-        await signOut(auth);
-    }
-    router.push('/');
-  };
-
-  const getInitials = (email?: string | null) => {
-    if (!email) return 'U';
-    return email.substring(0, 2).toUpperCase();
-  };
+  }, [user, firestore]);
 
   const dashboardPath = isSuperAdmin ? '/admin' : '/dashboard';
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-14 max-w-screen-2xl items-center">
-        
-        <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
-            <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="sm:hidden mr-2">
-                    <Menu className="h-5 w-5" />
-                </Button>
-            </SheetTrigger>
-            <SheetContent side="left" className="bg-background border-r border-white/5">
-                <SheetHeader className="mb-6">
-                    <SheetTitle className="flex items-center gap-2">
-                        <Icons.logo className="h-6 w-6" /> DriveGuru
-                    </SheetTitle>
-                </SheetHeader>
-                <div className="flex flex-col space-y-2">
-                    {navItems.map((item) => {
-                        const isActive = pathname === item.href;
-                        return (
-                            <Button 
-                                key={item.href} 
-                                asChild 
-                                variant={isActive ? "secondary" : "ghost"} 
-                                className="justify-start h-12 rounded-xl" 
-                                onClick={() => setIsMobileMenuOpen(false)}
-                            >
-                                <Link href={item.href}>
-                                    <item.icon className={cn("mr-2 h-4 w-4", isActive && "stroke-[2px] text-orange-500")} /> {item.label}
-                                </Link>
-                            </Button>
-                        );
-                    })}
-                    {installPrompt && (
-                        <Button 
-                            variant="default" 
-                            className="justify-start h-12 rounded-xl bg-orange-500 hover:bg-orange-600 mt-4" 
-                            onClick={() => { setIsInstallOpen(true); setIsMobileMenuOpen(false); }}
-                        >
-                            <Download className="mr-2 h-4 w-4" /> Install DriveGuru App
-                        </Button>
-                    )}
+    <header className="sticky top-0 z-50 w-full bg-[#1a1c23]/95 backdrop-blur-xl border-b border-white/5">
+      <div className="container flex h-16 items-center justify-between px-4 max-w-7xl">
+        <div className="flex items-center gap-2 sm:gap-4">
+            <Link href="/" className="flex items-center gap-2">
+                <div className="bg-orange-500/10 p-1.5 rounded-lg border border-orange-500/20">
+                    <Icons.logo className="h-6 w-6 text-orange-500" />
                 </div>
-            </SheetContent>
-        </Sheet>
-        
-        <Link href="/" className="mr-auto flex items-center space-x-2">
-          <Icons.logo className="h-6 w-6 text-orange-500" />
-          <span className="hidden font-black sm:inline-block tracking-tighter text-lg">DriveGuru</span>
-        </Link>
+                <span className="hidden sm:inline-block font-black text-xl tracking-tighter text-white uppercase italic">DriveGuru</span>
+            </Link>
+        </div>
 
-        <div className="flex items-center justify-end space-x-2 sm:space-x-4">
-          {mounted ? (
+        <nav className="hidden md:flex items-center gap-1">
+            {navItems.map((item) => (
+                <Button key={item.href} asChild variant="ghost" size="sm" className={cn("rounded-xl h-9 px-4 font-black uppercase text-[10px] tracking-widest", pathname === item.href ? "bg-white/10 text-white" : "text-muted-foreground hover:text-white")}>
+                    <Link href={item.href}><item.icon className="mr-2 h-4 w-4" /> {item.label}</Link>
+                </Button>
+            ))}
+        </nav>
+
+        <div className="flex items-center gap-2">
+          {mounted && (
             <>
-              <nav className="hidden lg:flex items-center space-x-1">
-                {navItems.map((item) => {
-                    const isActive = pathname === item.href;
-                    return (
-                        <Button 
-                            key={item.href} 
-                            asChild 
-                            variant="ghost"
-                            size="sm"
-                            className={cn(
-                                "rounded-lg px-4 transition-all duration-300",
-                                isActive 
-                                    ? "bg-orange-500 text-white font-black hover:bg-orange-600 shadow-md shadow-orange-500/20" 
-                                    : "text-muted-foreground hover:bg-white/5 hover:text-white"
-                            )}
-                        >
-                            <Link href={item.href}>
-                                <item.icon className={cn("mr-2 h-4 w-4", isActive && "stroke-[2.5px]")} /> {item.label}
-                            </Link>
-                        </Button>
-                    )
-                })}
-                {installPrompt && (
-                    <Button 
-                        variant="outline" 
-                        size="sm"
-                        className="rounded-lg px-4 border-orange-500/30 text-orange-500 hover:bg-orange-500/5 font-black uppercase text-[10px] tracking-widest ml-2"
-                        onClick={() => setIsInstallOpen(true)}
-                    >
-                        <Download className="mr-2 h-3.5 w-3.5" /> Install App
-                    </Button>
-                )}
-              </nav>
-
-              <div className="flex items-center gap-1 sm:gap-2">
-                {!isUserLoading && user ? (
-                  <>
-                    <NotificationCenter />
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="relative h-9 w-9 rounded-full group">
-                            <Avatar className="h-9 w-9 ring-2 ring-primary/20 ring-offset-2 ring-offset-background group-hover:ring-primary/50 transition-all">
-                            <AvatarImage src={user.photoURL || undefined} className="object-cover" />
-                            <AvatarFallback className="bg-primary/10 text-primary font-black text-xs">{getInitials(user.email)}</AvatarFallback>
+              {user && <NotificationCenter />}
+              
+              {!isUserLoading && user ? (
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" className="relative h-10 w-10 rounded-full ring-2 ring-white/5 hover:ring-orange-500/50 transition-all p-0 overflow-hidden">
+                            <Avatar className="h-10 w-10">
+                                <AvatarImage src={user.photoURL || undefined} className="object-cover" />
+                                <AvatarFallback className="bg-orange-500/10 text-orange-500 font-black text-xs">{user.email?.substring(0, 2).toUpperCase()}</AvatarFallback>
                             </Avatar>
                         </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent className="w-64 p-2 bg-[#24262d] border-white/10 rounded-2xl shadow-2xl" align="end">
-                        <DropdownMenuLabel className="font-normal px-4 py-3">
-                            <div className="flex flex-col space-y-1">
-                            <p className="text-sm font-black text-white leading-none">Account Settings</p>
-                            <p className="text-xs leading-none text-muted-foreground font-medium">{user.email}</p>
-                            </div>
-                        </DropdownMenuLabel>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="w-56 p-2 bg-[#24262d] border-white/10 rounded-2xl shadow-2xl" align="end">
+                        <DropdownMenuLabel className="font-black text-xs uppercase tracking-widest px-4 py-3 opacity-50">Profile Settings</DropdownMenuLabel>
                         <DropdownMenuSeparator className="bg-white/5" />
                         <DropdownMenuItem onClick={() => router.push(dashboardPath)} className="font-bold h-11 rounded-xl focus:bg-white/5 cursor-pointer">
                             <LayoutDashboard className="mr-2 h-4 w-4 text-orange-500" /> Dashboard
                         </DropdownMenuItem>
-                        <DropdownMenuSeparator className="bg-white/5" />
-                        <DropdownMenuItem onClick={handleSignOut} className="text-red-500 font-bold h-11 rounded-xl focus:text-red-500 focus:bg-red-500/5 cursor-pointer">
-                            <LogOut className="mr-2 h-4 w-4" /> Log out
+                        <DropdownMenuItem onClick={() => signOut(auth!)} className="text-red-500 font-bold h-11 rounded-xl focus:text-red-500 focus:bg-red-500/5 cursor-pointer mt-1">
+                            Sign Out
                         </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                  </>
-                ) : !isUserLoading ? (
-                  <div className="flex items-center gap-2">
-                    <Button asChild variant="ghost" size="sm" className="font-bold rounded-xl px-4 hover:bg-white/5"><Link href="/login">Login</Link></Button>
-                    <Button asChild size="sm" className="font-black px-6 bg-orange-500 hover:bg-orange-600 rounded-xl shadow-lg shadow-orange-500/20"><Link href="/signup/role">Join</Link></Button>
-                  </div>
-                ) : (
-                  <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-                )}
+                    </DropdownMenuContent>
+                </DropdownMenu>
+              ) : !isUserLoading && (
+                <div className="flex items-center gap-2">
+                    <Button asChild variant="ghost" size="sm" className="font-black text-[10px] uppercase tracking-widest rounded-xl hover:bg-white/5"><Link href="/login">Login</Link></Button>
+                    <Button asChild size="sm" className="font-black text-[10px] uppercase tracking-widest bg-orange-500 hover:bg-orange-600 rounded-xl px-5 h-9 shadow-lg shadow-orange-500/20"><Link href="/signup/role">Join</Link></Button>
+                </div>
+              )}
 
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-9 w-9 rounded-full hover:bg-white/5"
-                    onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-                  >
-                    <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-                    <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-                    <span className="sr-only">Toggle theme</span>
-                </Button>
-              </div>
+              <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full hover:bg-white/5" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
+                <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+                <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+              </Button>
             </>
-          ) : (
-            <div className="h-9 w-32 bg-white/5 rounded-xl animate-pulse" />
           )}
         </div>
       </div>
-      <InstallPwaDialog open={isInstallOpen} onOpenChange={setIsInstallOpen} />
     </header>
   );
 }
