@@ -9,7 +9,7 @@ import * as z from "zod";
 import { User as UserIcon, Mail, Lock, Eye, EyeOff, Briefcase, MapPin, Phone, LocateIcon, Loader2, Building, Home, ArrowRight, MessageSquare, Gift, PenSquare, Factory, Shield, Save, Linkedin, Github, Globe, Twitter, Type, List, Youtube, Image as ImageIcon, Upload, X } from "lucide-react";
 import { EmailAuthProvider, linkWithCredential } from 'firebase/auth';
 import { doc, serverTimestamp } from 'firebase/firestore';
-import { getStorage, ref as storageRef, uploadString, getDownloadURL } from "firebase/storage";
+import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -442,49 +442,45 @@ export function EditProfileForm({ userProfile, onSuccess, isAdmin = false }: Edi
     }
   };
 
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>, slot: number) => {
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>, slot: number) => {
     const file = event.target.files?.[0];
-    if (file && user && auth) {
-      setUploadingSlot(slot);
-      const reader = new FileReader();
-      reader.onload = async (e) => {
-        const dataUrl = e.target?.result as string;
+    if (!file || !user || !auth) return;
 
-        try {
-          const storage = getStorage(auth.app);
-          const fileExtension = file.type.split('/')[1] || 'jpg';
-          const filePath = `profile-photos/${user.uid}/profile${slot}.${fileExtension}`;
-          const imageRef = storageRef(storage, filePath);
+    setUploadingSlot(slot);
 
-          await uploadString(imageRef, dataUrl, 'data_url');
-          const finalUrl = await getDownloadURL(imageRef);
-          const fieldName = slot === 1 ? 'photoUrl' : `photoUrl${slot}`;
-          
-          form.setValue(fieldName as any, `${finalUrl}?t=${new Date().getTime()}`, { shouldValidate: true });
-          toast({
-            title: `Photo ${slot} Uploaded!`,
-            description: "Your new photo is ready. Click 'Save Changes' to confirm.",
-          });
-        } catch (error) {
-          console.error("Photo upload failed:", error);
-          toast({
-            variant: "destructive",
-            title: "Upload Failed",
-            description: "Could not upload your photo. Please try again.",
-          });
-        } finally {
-          setUploadingSlot(null);
-        }
-      };
-      reader.onerror = () => {
-        setUploadingSlot(null);
-        toast({
-          variant: "destructive",
-          title: "Upload Failed",
-          description: "Could not read the image file.",
-        });
-      };
-      reader.readAsDataURL(file);
+    try {
+      const storage = getStorage(auth.app);
+      const fileExtension = file.type.split('/')[1] || 'jpg';
+      const filePath = `profile-photos/${user.uid}/profile${slot}.${fileExtension}`;
+      const imageRef = storageRef(storage, filePath);
+
+      // uploadBytes is much faster than uploadString because it streams raw binary data
+      const snapshot = await uploadBytes(imageRef, file, {
+        cacheControl: 'no-cache',
+        contentType: file.type,
+      });
+      
+      const finalUrl = await getDownloadURL(snapshot.ref);
+      const fieldName = slot === 1 ? 'photoUrl' : `photoUrl${slot}`;
+      
+      // Use timestamp to bypass browser cache for immediate visual update
+      form.setValue(fieldName as any, `${finalUrl}?t=${Date.now()}`, { shouldValidate: true });
+      
+      toast({
+        title: `Fast Upload Successful`,
+        description: `Photo slot ${slot} has been synchronized with cloud storage.`,
+      });
+    } catch (error) {
+      console.error("High-speed photo upload failed:", error);
+      toast({
+        variant: "destructive",
+        title: "Upload Interrupted",
+        description: "Could not stream image to storage. Please check your connection.",
+      });
+    } finally {
+      setUploadingSlot(null);
+      // Reset input so user can re-select the same file if needed
+      if (event.target) event.target.value = '';
     }
   };
 
