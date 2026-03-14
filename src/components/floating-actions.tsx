@@ -104,7 +104,7 @@ export function FloatingActions() {
             icon: <Phone className="h-5 w-5" />,
             href: `tel:${cleanNumber(centralPhone)}`,
             enabled: true,
-            color: 'bg-zinc-600 hover:bg-zinc-700',
+            color: 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/20',
             size: 'h-12 w-12',
         }] : []),
         ...(canShare ? [{
