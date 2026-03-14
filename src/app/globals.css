@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -24,6 +25,7 @@
     --input: 214.3 31.8% 91.4%;
     --ring: 222.2 84% 4.9%;
     --radius: 0.5rem;
+    --animation-duration: 20s;
   }
  
   .dark {
@@ -69,6 +71,6 @@
   }
 
   .animate-marquee {
-    animation: marquee var(--animation-duration, 20s) linear infinite;
+    animation: marquee var(--animation-duration) linear infinite;
   }
 }

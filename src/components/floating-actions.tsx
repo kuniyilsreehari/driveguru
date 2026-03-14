@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { Plus, Download, Phone, Share2, MessageCircle, MessageSquare, Bot } from 'lucide-react';
+import { Plus, Download, Phone, Share2, MessageCircle, MessageSquare, Bot, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
@@ -10,7 +10,6 @@ import type { ExpertUser } from '@/components/expert-card';
 import { useAtom } from 'jotai';
 import { installPromptAtom, chatOpenAtom } from '@/lib/store';
 import { useToast } from '@/hooks/use-toast';
-
 
 interface FloatingActionsProps {
     expert?: ExpertUser;
@@ -29,8 +28,7 @@ export function FloatingActions({ expert }: FloatingActionsProps) {
     const { toast } = useToast();
 
     useEffect(() => {
-        // Client-side only check
-        setCanShare(navigator.share !== undefined || navigator.clipboard !== undefined);
+        setCanShare(typeof navigator !== 'undefined' && (!!navigator.share || !!navigator.clipboard));
     }, []);
 
     const handleInstallClick = () => {
@@ -94,7 +92,7 @@ export function FloatingActions({ expert }: FloatingActionsProps) {
             icon: <Bot className="h-5 w-5" />,
             onClick: () => { setChatOpen(true); setIsOpen(false); },
             enabled: true,
-            color: 'bg-purple-600 hover:bg-purple-700',
+            color: 'bg-orange-500 hover:bg-orange-600', // Orange as per design
         },
         ...(expert ? [
             {
@@ -104,7 +102,7 @@ export function FloatingActions({ expert }: FloatingActionsProps) {
                 href: whatsappLink,
                 target: "_blank",
                 enabled: canContact,
-                color: 'bg-green-600 hover:bg-green-700',
+                color: 'bg-green-500 hover:bg-green-600', // Green as per design
             },
             {
                 id: 'call',
@@ -112,7 +110,7 @@ export function FloatingActions({ expert }: FloatingActionsProps) {
                 icon: <Phone className="h-5 w-5" />,
                 href: callLink,
                 enabled: canContact,
-                color: 'bg-orange-600 hover:bg-orange-700',
+                color: 'bg-green-600 hover:bg-green-700',
             }
         ] : []),
         ...(canShare ? [{
@@ -127,7 +125,7 @@ export function FloatingActions({ expert }: FloatingActionsProps) {
 
     return (
         <TooltipProvider>
-            <div className="fixed bottom-8 right-8 z-50 flex flex-col items-end gap-3">
+            <div className="fixed bottom-8 right-8 z-[70] flex flex-col items-end gap-3">
                 {isOpen && (
                     <div className="flex flex-col items-end gap-3 mb-2 animate-in fade-in slide-in-from-bottom-4 duration-300">
                         {actions.map((action, index) => (
