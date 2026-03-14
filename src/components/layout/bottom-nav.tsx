@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -31,7 +32,7 @@ export function BottomNav() {
               )}
             >
               <item.icon className={cn("h-5 w-5", isActive && "stroke-[2.5px]")} />
-              <span className="text-[10px] font-black uppercase tracking-widest">{item.label}</span>
+              <span className="text-[11px] font-bold uppercase tracking-wider">{item.label}</span>
               {isActive && <div className="h-1 w-1 rounded-full bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.5)]" />}
             </Link>
           );

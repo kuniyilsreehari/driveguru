@@ -29,7 +29,6 @@ export function FloatingActions() {
     const canContactExpert = expert?.verified && expertPhone;
 
     const handleInstallClick = () => {
-        // We always allow opening the dialog for layout checking/demo purposes
         setInstallOpen(true);
         setIsOpen(false);
         if (!installPrompt) {
@@ -109,7 +108,7 @@ export function FloatingActions() {
     ];
 
     return (
-        <div className="fixed bottom-8 right-8 z-[70] flex flex-col items-end gap-4">
+        <div className="fixed bottom-28 right-6 z-[70] flex flex-col items-end gap-4">
             {isOpen && (
                 <div className="flex flex-col items-end gap-4 mb-2 animate-in fade-in slide-in-from-bottom-4 duration-300">
                     {actions.map((action, index) => (

@@ -42,7 +42,6 @@ export function ChatAssistant() {
     setIsLoading(true);
 
     try {
-      // Map history to Genkit format
       const history = messages.map(m => ({
         role: m.role,
         content: [{ text: m.text }]
@@ -65,7 +64,7 @@ export function ChatAssistant() {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed bottom-6 left-6 z-[60] animate-in slide-in-from-bottom-4 duration-300">
+    <div className="fixed bottom-28 left-6 z-[60] animate-in slide-in-from-bottom-4 duration-300">
       <Card className="w-[350px] sm:w-[400px] h-[500px] shadow-2xl flex flex-col overflow-hidden border-2 border-primary/20 bg-background">
         <CardHeader className="bg-primary p-4 flex flex-row items-center justify-between">
           <div className="flex items-center gap-2">
