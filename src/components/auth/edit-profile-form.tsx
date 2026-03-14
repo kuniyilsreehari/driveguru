@@ -6,7 +6,7 @@ import { useState, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { User as UserIcon, Mail, Lock, Eye, EyeOff, Briefcase, MapPin, Phone, LocateIcon, Loader2, Building, Home, ArrowRight, MessageSquare, Gift, PenSquare, Factory, Shield, Save, Linkedin, Github, Globe, Twitter, Type, List, Youtube, Image as ImageIcon, Upload, X } from "lucide-react";
+import { User as UserIcon, Mail, Lock, Eye, EyeOff, Briefcase, MapPin, Phone, LocateIcon, Loader2, Building, Home, ArrowRight, MessageSquare, Gift, PenSquare, Factory, Shield, Save, Linkedin, Github, Globe, Twitter, Type, List, Youtube, Image as ImageIcon, Upload, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { EmailAuthProvider, linkWithCredential } from 'firebase/auth';
 import { doc, serverTimestamp } from 'firebase/firestore';
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
@@ -454,7 +454,6 @@ export function EditProfileForm({ userProfile, onSuccess, isAdmin = false }: Edi
       const filePath = `profile-photos/${user.uid}/profile${slot}.${fileExtension}`;
       const imageRef = storageRef(storage, filePath);
 
-      // uploadBytes is much faster than uploadString because it streams raw binary data
       const snapshot = await uploadBytes(imageRef, file, {
         cacheControl: 'no-cache',
         contentType: file.type,
@@ -463,7 +462,6 @@ export function EditProfileForm({ userProfile, onSuccess, isAdmin = false }: Edi
       const finalUrl = await getDownloadURL(snapshot.ref);
       const fieldName = slot === 1 ? 'photoUrl' : `photoUrl${slot}`;
       
-      // Use timestamp to bypass browser cache for immediate visual update
       form.setValue(fieldName as any, `${finalUrl}?t=${Date.now()}`, { shouldValidate: true });
       
       toast({
@@ -479,7 +477,6 @@ export function EditProfileForm({ userProfile, onSuccess, isAdmin = false }: Edi
       });
     } finally {
       setUploadingSlot(null);
-      // Reset input so user can re-select the same file if needed
       if (event.target) event.target.value = '';
     }
   };
@@ -490,6 +487,25 @@ export function EditProfileForm({ userProfile, onSuccess, isAdmin = false }: Edi
     toast({
       title: `Photo ${slot} Cleared`,
       description: "Remember to save changes to make it permanent.",
+    });
+  };
+
+  const handleMoveImage = (currentSlot: number, direction: 'prev' | 'next') => {
+    const targetSlot = direction === 'prev' ? currentSlot - 1 : currentSlot + 1;
+    if (targetSlot < 1 || targetSlot > photoSlots) return;
+
+    const currentFieldName = currentSlot === 1 ? 'photoUrl' : `photoUrl${currentSlot}`;
+    const targetFieldName = targetSlot === 1 ? 'photoUrl' : `photoUrl${targetSlot}`;
+
+    const currentValue = form.getValues(currentFieldName as any);
+    const targetValue = form.getValues(targetFieldName as any);
+
+    form.setValue(currentFieldName as any, targetValue, { shouldValidate: true });
+    form.setValue(targetFieldName as any, currentValue, { shouldValidate: true });
+    
+    toast({
+      title: "Position Updated",
+      description: `Moved image to Slot ${targetSlot}`,
     });
   };
 
@@ -592,17 +608,25 @@ export function EditProfileForm({ userProfile, onSuccess, isAdmin = false }: Edi
                       
                       return (
                           <div key={slot} className="flex flex-col items-center gap-3 relative group">
-                              {currentPhoto && (
-                                <Button 
-                                  type="button" 
-                                  variant="destructive" 
-                                  size="icon" 
-                                  className="absolute -top-2 -right-2 h-6 w-6 rounded-full z-10 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
-                                  onClick={() => handleClearImage(slot)}
-                                >
-                                  <X className="h-3 w-3" />
-                                </Button>
-                              )}
+                              <div className="absolute -top-2 -right-2 flex gap-1 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
+                                  {currentPhoto && (
+                                    <>
+                                      {slot > 1 && (
+                                        <Button type="button" size="icon" className="h-6 w-6 rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow-lg" onClick={() => handleMoveImage(slot, 'prev')}>
+                                          <ChevronLeft className="h-3 w-3" />
+                                        </Button>
+                                      )}
+                                      {slot < photoSlots && (
+                                        <Button type="button" size="icon" className="h-6 w-6 rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow-lg" onClick={() => handleMoveImage(slot, 'next')}>
+                                          <ChevronRight className="h-3 w-3" />
+                                        </Button>
+                                      )}
+                                      <Button type="button" variant="destructive" size="icon" className="h-6 w-6 rounded-full shadow-lg" onClick={() => handleClearImage(slot)}>
+                                        <X className="h-3 w-3" />
+                                      </Button>
+                                    </>
+                                  )}
+                              </div>
                               <Avatar className="h-32 w-32 cursor-pointer border-2 border-dashed border-white/10 hover:border-primary/50 transition-all" onClick={() => fileInputRefs.current[i]?.click()}>
                                 <AvatarImage src={currentPhoto ? `${currentPhoto}` : undefined} className="object-cover" />
                                 <AvatarFallback className="text-[10px] text-center px-4 font-bold leading-tight bg-white/5">
@@ -631,7 +655,7 @@ export function EditProfileForm({ userProfile, onSuccess, isAdmin = false }: Edi
                   })}
               </div>
               <p className="text-[10px] text-muted-foreground text-center italic">
-                {tier === 'Standard' ? "Upgrade to Premier for 6 slots or Super Premier for 9 slots." : "Showcase your portfolio with high-quality work photos."}
+                Use the arrow buttons to move photos between slots. Slot 1 is your Primary profile photo.
               </p>
           </div>
 
