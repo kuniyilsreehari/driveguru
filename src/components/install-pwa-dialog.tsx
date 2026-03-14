@@ -35,7 +35,6 @@ export function InstallPwaDialog({ open, onOpenChange }: InstallPwaDialogProps) 
 
       if (outcome === 'accepted') {
         setInstallState('installing');
-        // Simulate installation progress for better UX
         simulateProgress();
         setInstallPrompt(null);
       }
@@ -47,16 +46,30 @@ export function InstallPwaDialog({ open, onOpenChange }: InstallPwaDialogProps) 
 
   const simulateProgress = () => {
     let current = 0;
+    const totalTime = 18000; // 18 seconds as requested
+    const intervalTime = 100; // Update every 100ms
+    const step = 100 / (totalTime / intervalTime);
+
     const interval = setInterval(() => {
-      current += Math.random() * 15;
+      current += step;
       if (current >= 100) {
         current = 100;
         clearInterval(interval);
-        setTimeout(() => setInstallState('success'), 500);
+        setTimeout(() => setInstallState('success'), 800);
       }
       setProgress(current);
-    }, 200);
+    }, intervalTime);
   };
+
+  // Reset state when dialog closes
+  useEffect(() => {
+    if (!open) {
+      setTimeout(() => {
+        setInstallState('idle');
+        setProgress(0);
+      }, 300);
+    }
+  }, [open]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -71,7 +84,7 @@ export function InstallPwaDialog({ open, onOpenChange }: InstallPwaDialogProps) 
                 Install DriveGuru
               </DialogTitle>
               <DialogDescription className="text-muted-foreground font-medium pt-2 text-center leading-relaxed">
-                Add DriveGuru to your home screen for a fast, app-like experience. Works offline and takes up zero storage.
+                Add DriveGuru to your device for a fast, app-like experience. Works offline and provides instant professional access.
               </DialogDescription>
             </DialogHeader>
             <div className="grid grid-cols-2 gap-4 py-8">
@@ -98,30 +111,37 @@ export function InstallPwaDialog({ open, onOpenChange }: InstallPwaDialogProps) 
         {installState === 'installing' && (
           <div className="py-12 flex flex-col items-center text-center animate-in fade-in duration-500">
             <div className="relative mb-8">
-                <Loader2 className="h-20 w-20 text-orange-500 animate-spin opacity-20" />
-                <Download className="h-8 w-8 text-orange-500 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+                <Loader2 className="h-24 w-24 text-green-500 animate-spin opacity-20" />
+                <Download className="h-10 w-10 text-green-500 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
             </div>
-            <h3 className="text-xl font-black text-white uppercase italic mb-2">Integrating App...</h3>
-            <p className="text-sm text-muted-foreground mb-8">Preparing assets for offline access.</p>
-            <div className="w-full space-y-2">
-                <Progress value={progress} className="h-3 bg-white/5 rounded-full overflow-hidden" />
-                <p className="text-[10px] font-black text-orange-500 uppercase tracking-[0.2em]">{Math.round(progress)}% Complete</p>
+            <h3 className="text-2xl font-black text-white uppercase italic mb-2 tracking-tight">Syncing Files...</h3>
+            <p className="text-sm text-muted-foreground mb-8 font-medium">Configuring offline professional database.</p>
+            <div className="w-full space-y-3">
+                <Progress 
+                  value={progress} 
+                  className="h-3 bg-white/5 rounded-full overflow-hidden" 
+                  indicatorClassName="bg-green-500 shadow-[0_0_15px_rgba(34,197,94,0.4)]"
+                />
+                <div className="flex justify-between items-center px-1">
+                  <p className="text-[10px] font-black text-green-500 uppercase tracking-[0.2em]">{Math.round(progress)}% COMPLETE</p>
+                  <p className="text-[9px] font-bold text-muted-foreground/40 uppercase tracking-widest">DO NOT CLOSE</p>
+                </div>
             </div>
           </div>
         )}
 
         {installState === 'success' && (
           <div className="py-8 flex flex-col items-center text-center animate-in zoom-in fade-in duration-500">
-            <div className="p-6 bg-green-500/10 rounded-full w-fit mb-6 border border-green-500/20">
+            <div className="p-6 bg-green-500/10 rounded-full w-fit mb-6 border border-green-500/20 shadow-[0_0_30px_rgba(34,197,94,0.1)]">
               <CheckCircle className="h-14 w-14 text-green-500" />
             </div>
-            <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter mb-2">Installation Successful</h3>
+            <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter mb-2">Setup Finished</h3>
             <p className="text-muted-foreground font-medium mb-8 leading-relaxed">
-              DriveGuru has been added to your device. You can now launch it directly from your home screen or app drawer.
+              DriveGuru is now installed. Launch it from your home screen for lightning-fast professional connections.
             </p>
             <Button 
               onClick={() => onOpenChange(false)} 
-              className="w-full h-14 rounded-2xl bg-green-600 hover:bg-green-700 text-white font-black text-lg uppercase tracking-widest"
+              className="w-full h-16 rounded-2xl bg-green-600 hover:bg-green-700 text-white font-black text-lg uppercase tracking-widest shadow-xl shadow-green-500/20 transition-all active:scale-95"
             >
               CONTINUE TO APP
             </Button>
