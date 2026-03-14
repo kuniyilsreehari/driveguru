@@ -282,10 +282,10 @@ export default function ExpertDashboardPage() {
 
         <Tabs defaultValue="overview" className="w-full">
           <TabsList className="flex w-full bg-white/5 p-1 h-14 rounded-2xl mb-8">
-            <TabsTrigger value="overview" className="flex-1 rounded-xl data-[state=active]:bg-orange-500 data-[state=active]:text-white font-black text-xs uppercase tracking-wider transition-all">Overview</TabsTrigger>
-            <TabsTrigger value="network" className="flex-1 rounded-xl data-[state=active]:bg-orange-500 data-[state=active]:text-white font-black text-xs uppercase tracking-wider transition-all">Network</TabsTrigger>
-            <TabsTrigger value="feed" className="flex-1 rounded-xl data-[state=active]:bg-orange-500 data-[state=active]:text-white font-black text-xs uppercase tracking-wider transition-all">My Feed</TabsTrigger>
-            <TabsTrigger value="plans" className="flex-1 rounded-xl data-[state=active]:bg-orange-500 data-[state=active]:text-white font-black text-xs uppercase tracking-wider transition-all">Plans</TabsTrigger>
+            <TabsTrigger value="overview" className="flex-1 rounded-xl data-[state=active]:bg-orange-500 data-[state=active]:text-white font-black text-[10px] uppercase tracking-wider transition-all px-2">Overview</TabsTrigger>
+            <TabsTrigger value="network" className="flex-1 rounded-xl data-[state=active]:bg-orange-500 data-[state=active]:text-white font-black text-[10px] uppercase tracking-wider transition-all px-2">Network</TabsTrigger>
+            <TabsTrigger value="feed" className="flex-1 rounded-xl data-[state=active]:bg-orange-500 data-[state=active]:text-white font-black text-[10px] uppercase tracking-wider transition-all px-2">My Feed</TabsTrigger>
+            <TabsTrigger value="plans" className="flex-1 rounded-xl data-[state=active]:bg-orange-500 data-[state=active]:text-white font-black text-[10px] uppercase tracking-wider transition-all px-2">Plans</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="mt-0 space-y-8">
@@ -356,8 +356,8 @@ export default function ExpertDashboardPage() {
                     <Progress value={profileCompletion} className="h-2 bg-white/5 rounded-full overflow-hidden" />
                 </div>
 
-                <Button onClick={() => setIsEditDialogOpen(true)} className="w-full max-w-sm mt-10 bg-orange-500 hover:bg-orange-600 text-white font-black rounded-2xl h-14 shadow-xl shadow-orange-500/20 uppercase tracking-widest">
-                    <Edit className="mr-2 h-5 w-5" /> Update Professional Profile
+                <Button onClick={() => setIsEditDialogOpen(true)} className="w-full max-w-sm mt-10 bg-orange-500 hover:bg-orange-600 text-white font-black rounded-2xl h-14 shadow-xl shadow-orange-500/20 uppercase tracking-wider text-xs">
+                    <Edit className="mr-2 h-5 w-5" /> UPDATE PROFILE
                 </Button>
             </Card>
 
@@ -373,13 +373,13 @@ export default function ExpertDashboardPage() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
                         <Button 
                             variant="outline" 
-                            className="h-16 rounded-[1.5rem] border-none bg-white/5 hover:bg-white/10 text-white font-black uppercase tracking-widest text-xs flex items-center justify-center gap-3 shadow-inner"
+                            className="h-16 rounded-[1.5rem] border-none bg-white/5 hover:bg-white/10 text-white font-black uppercase tracking-wider text-[10px] flex items-center justify-center gap-3 shadow-inner"
                             onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/signup?ref=${userProfile.referralCode}`); toast({ title: "Link Copied" }); }}
                         >
                             <LinkIcon className="h-5 w-5" /> COPY LINK
                         </Button>
                         <Button 
-                            className="h-16 rounded-[1.5rem] bg-green-600/10 border border-green-600/20 text-green-500 hover:bg-green-600 hover:text-white font-black uppercase tracking-widest text-xs flex items-center justify-center gap-3"
+                            className="h-16 rounded-[1.5rem] bg-green-600/10 border border-green-600/20 text-green-500 hover:bg-green-600 hover:text-white font-black uppercase tracking-wider text-[10px] flex items-center justify-center gap-3"
                             onClick={() => window.open(`https://wa.me/?text=Join my professional network on DriveGuru using code: ${userProfile.referralCode}`, '_blank')}
                         >
                             <MessageSquare className="h-5 w-5" /> WHATSAPP
@@ -457,7 +457,7 @@ export default function ExpertDashboardPage() {
                   <CardTitle className="text-2xl font-black text-white uppercase italic">Community Updates</CardTitle>
                 </CardHeader>
                 <CardContent className="p-10 space-y-8">
-                  <Button variant="secondary" className="w-full bg-orange-500 hover:bg-orange-600 text-white font-black rounded-2xl h-16 text-lg uppercase shadow-xl" size="lg" onClick={() => setShowPostForm(true)}>
+                  <Button variant="secondary" className="w-full bg-orange-500 hover:bg-orange-600 text-white font-black rounded-2xl h-16 text-sm uppercase shadow-xl tracking-tight" size="lg" onClick={() => setShowPostForm(true)}>
                     <PlusCircle className="mr-2 h-6 w-6" /> SHARE PROFESSIONAL UPDATE
                   </Button>
 
