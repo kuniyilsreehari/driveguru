@@ -1,3 +1,4 @@
+
 import type {Metadata} from 'next';
 import { Inter, Outfit } from 'next/font/google';
 import './globals.css';
@@ -7,7 +8,7 @@ import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
 import { ThemeProvider } from '@/components/theme-provider';
 import { ChatAssistant } from '@/components/chat-assistant';
-import { CentralCallButton } from '@/components/layout/central-call-button';
+import { FloatingActions } from '@/components/floating-actions';
 import { PwaPromptListener } from '@/components/pwa-prompt-listener';
 
 const inter = Inter({
@@ -53,7 +54,7 @@ export default function RootLayout({
               {children}
             </main>
             <ChatAssistant />
-            <CentralCallButton />
+            <FloatingActions />
             <Footer />
           </FirebaseClientProvider>
           <Toaster />

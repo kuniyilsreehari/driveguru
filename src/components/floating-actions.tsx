@@ -2,45 +2,43 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { Plus, Download, Phone, Share2, MessageCircle, MessageSquare, Bot, X } from 'lucide-react';
+import { Plus, Download, Phone, Share2, MessageSquare, Bot, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
-import type { ExpertUser } from '@/components/expert-card';
 import { useAtom } from 'jotai';
-import { installPromptAtom, chatOpenAtom, installDialogOpenAtom } from '@/lib/store';
+import { installPromptAtom, chatOpenAtom, installDialogOpenAtom, currentExpertAtom } from '@/lib/store';
 import { useToast } from '@/hooks/use-toast';
+import { useFirestore, useDoc, useMemoFirebase } from '@/firebase';
+import { doc } from 'firebase/firestore';
 
-interface FloatingActionsProps {
-    expert?: ExpertUser;
-}
-
-const cleanPhoneNumber = (phoneNumber?: string) => {
-    if (!phoneNumber) return '';
-    return phoneNumber.replace(/\s+/g, '');
-}
-
-export function FloatingActions({ expert }: FloatingActionsProps) {
+export function FloatingActions() {
     const [isOpen, setIsOpen] = useState(false);
     const [installPrompt] = useAtom(installPromptAtom);
     const [, setInstallOpen] = useAtom(installDialogOpenAtom);
     const [, setChatOpen] = useAtom(chatOpenAtom);
+    const [expert] = useAtom(currentExpertAtom);
     const [canShare, setCanShare] = useState(false);
     const { toast } = useToast();
+
+    const firestore = useFirestore();
+    const appConfigDocRef = useMemoFirebase(() => doc(firestore, 'app_config', 'homepage'), [firestore]);
+    const { data: appConfig } = useDoc<any>(appConfigDocRef);
+    const centralPhone = appConfig?.centralContactPhone;
 
     useEffect(() => {
         setCanShare(typeof navigator !== 'undefined' && (!!navigator.share || !!navigator.clipboard));
     }, []);
 
-    const getDisplayName = (expert?: ExpertUser) => {
+    const getDisplayName = () => {
         if (!expert) return 'DriveGuru';
         return expert.companyName || `${expert.firstName} ${expert.lastName}`;
     }
 
     const handleShare = async () => {
         const shareData = {
-            title: `Check out ${getDisplayName(expert)} on DriveGuru`,
-            text: `I found this expert, ${getDisplayName(expert)}, on DriveGuru. Here's their profile:`,
+            title: `Check out ${getDisplayName()} on DriveGuru`,
+            text: `I found this expert, ${getDisplayName()}, on DriveGuru. Here's their profile:`,
             url: window.location.href,
         };
         try {
@@ -48,39 +46,31 @@ export function FloatingActions({ expert }: FloatingActionsProps) {
                 await navigator.share(shareData);
             } else {
                 await navigator.clipboard.writeText(shareData.url);
-                toast({
-                    title: "Link Copied",
-                    description: "The link to the profile has been copied to your clipboard.",
-                });
+                toast({ title: "Link Copied" });
             }
         } catch (err) {
             console.error("Share failed:", err);
-            toast({
-                variant: 'destructive',
-                title: "Share Failed",
-                description: "Could not share the profile at this time.",
-            });
         }
     };
 
-    const formattedPhoneNumber = cleanPhoneNumber(expert?.phoneNumber);
-    const canContact = expert?.verified && formattedPhoneNumber;
-    const whatsappLink = `https://wa.me/${formattedPhoneNumber}`;
-    const callLink = `tel:${formattedPhoneNumber}`;
+    const cleanNumber = (num?: string) => num?.replace(/\s+/g, '') || '';
+    
+    const expertPhone = cleanNumber(expert?.phoneNumber);
+    const canContactExpert = expert?.verified && expertPhone;
 
     const actions = [
         ...(installPrompt ? [{
             id: 'install',
-            label: 'Install App',
+            label: 'Install DriveGuru App',
             icon: <Download className="h-6 w-6" />,
             onClick: () => { setInstallOpen(true); setIsOpen(false); },
             enabled: true,
             color: 'bg-blue-600 hover:bg-blue-700 shadow-blue-500/20',
-            size: 'h-14 w-14', // Big size for install
+            size: 'h-14 w-14',
         }] : []),
         {
             id: 'chat',
-            label: 'Ask Gemini AI',
+            label: 'Ask Gemini AI Assistant',
             icon: <Bot className="h-5 w-5" />,
             onClick: () => { setChatOpen(true); setIsOpen(false); },
             enabled: true,
@@ -92,25 +82,34 @@ export function FloatingActions({ expert }: FloatingActionsProps) {
                 id: 'whatsapp',
                 label: 'WhatsApp Expert',
                 icon: <MessageSquare className="h-5 w-5" />,
-                href: whatsappLink,
+                href: `https://wa.me/${expertPhone}`,
                 target: "_blank",
-                enabled: canContact,
+                enabled: canContactExpert,
                 color: 'bg-green-500 hover:bg-green-600 shadow-green-500/20',
                 size: 'h-12 w-12',
             },
             {
-                id: 'call',
-                label: 'Call Expert',
+                id: 'call-expert',
+                label: 'Call Expert Directly',
                 icon: <Phone className="h-5 w-5" />,
-                href: callLink,
-                enabled: canContact,
-                color: 'bg-green-600 hover:bg-green-700',
+                href: `tel:${expertPhone}`,
+                enabled: canContactExpert,
+                color: 'bg-green-600 hover:bg-green-700 shadow-green-500/20',
                 size: 'h-12 w-12',
             }
         ] : []),
+        ...(centralPhone ? [{
+            id: 'call-support',
+            label: 'Contact Central Support',
+            icon: <Phone className="h-5 w-5" />,
+            href: `tel:${cleanNumber(centralPhone)}`,
+            enabled: true,
+            color: 'bg-zinc-600 hover:bg-zinc-700',
+            size: 'h-12 w-12',
+        }] : []),
         ...(canShare ? [{
             id: 'share',
-            label: 'Share Profile',
+            label: 'Share Current View',
             icon: <Share2 className="h-5 w-5" />,
             onClick: handleShare,
             enabled: true,
@@ -154,7 +153,7 @@ export function FloatingActions({ expert }: FloatingActionsProps) {
                                     </Button>
                                 </TooltipTrigger>
                                 <TooltipContent side="left" className="bg-[#1a1c23] border-white/10 text-white font-black uppercase text-[10px] tracking-widest px-3 py-1.5 rounded-lg shadow-2xl">
-                                    {action.label} {!action.enabled && '(Verified Only)'}
+                                    {action.label} {!action.enabled && expert && '(Verified Only)'}
                                 </TooltipContent>
                             </Tooltip>
                         ))}
@@ -165,7 +164,7 @@ export function FloatingActions({ expert }: FloatingActionsProps) {
                     size="icon"
                     className={cn(
                         "rounded-full h-16 w-16 shadow-2xl transition-all duration-500 border-4 border-white/10",
-                        isOpen ? "bg-[#1a1c23] text-white rotate-45" : "bg-orange-500 text-white hover:bg-orange-600 scale-110"
+                        isOpen ? "bg-[#1a1c23] text-white rotate-45" : "bg-yellow-400 text-black hover:bg-yellow-500 scale-110"
                     )}
                     onClick={() => setIsOpen(!isOpen)}
                 >

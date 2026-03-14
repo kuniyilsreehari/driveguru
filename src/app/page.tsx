@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Suspense, useState, useEffect, useMemo } from 'react';
@@ -21,7 +22,6 @@ import * as LucideIcons from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { parseSearchQuery } from '@/ai/flows/ai-search-flow';
 import Link from 'next/link';
-import { FloatingActions } from '@/components/floating-actions';
 import type { HomepageCategory } from '@/app/admin/page';
 import { WelcomeRedirect } from '@/components/welcome-redirect';
 import {
@@ -624,7 +624,6 @@ function HomePageContent() {
                         </div>
                      )}
                 </main>
-                <FloatingActions />
             </div>
 
             <Dialog open={isPremiumDialogOpen} onOpenChange={setIsPremiumDialogOpen}>

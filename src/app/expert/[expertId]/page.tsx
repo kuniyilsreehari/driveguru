@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Suspense, useState, useEffect, useMemo } from 'react';
@@ -12,13 +13,14 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { FloatingActions } from '@/components/floating-actions';
 import { WhatsAppBookingDialog } from '@/components/whatsapp-booking-dialog';
 import { Icons } from '@/components/icons';
 import { FollowerStats } from '@/components/follower-stats';
 import { ShareDialog } from '@/components/share-dialog';
 import { ImageLightbox } from '@/components/image-lightbox';
 import { cn } from '@/lib/utils';
+import { useAtom } from 'jotai';
+import { currentExpertAtom } from '@/lib/store';
 
 
 type ExpertUserProfile = {
@@ -72,6 +74,7 @@ function ExpertProfileContent() {
     const { toast } = useToast();
     const [isFollowing, setIsFollowing] = useState(false);
     const [isFollowLoading, setIsFollowLoading] = useState(false);
+    const [, setCurrentExpert] = useAtom(currentExpertAtom);
 
 
     const expertDocRef = useMemoFirebase(() => {
@@ -101,6 +104,21 @@ function ExpertProfileContent() {
             setIsFollowing(currentUserProfile.following?.includes(expert.id) || false);
         }
     }, [currentUserProfile, expert]);
+
+    // Sync global expert state for Floating Actions
+    useEffect(() => {
+        if (expert) {
+            setCurrentExpert({
+                id: expert.id,
+                firstName: expert.firstName,
+                lastName: expert.lastName,
+                companyName: expert.companyName,
+                phoneNumber: expert.phoneNumber,
+                verified: expert.verified
+            });
+        }
+        return () => setCurrentExpert(null);
+    }, [expert, setCurrentExpert]);
 
     const handleToggleFollow = async () => {
         if (isSuperAdmin) {
@@ -426,16 +444,11 @@ function ExpertProfileContent() {
                     <CardFooter className="p-6 mt-4">
                         <div className="flex flex-col sm:flex-row w-full gap-2">
                             {canContact ? (
-                                <>
-                                    <WhatsAppBookingDialog expert={expert}>
-                                        <Button className="flex-1" size="lg">
-                                            <MessageSquare className="mr-2 h-4 w-4" /> Book via WhatsApp
-                                        </Button>
-                                    </WhatsAppBookingDialog>
-                                    <Button asChild variant="outline" className="flex-1 bg-green-500/10 border-green-500/50 text-green-500 hover:bg-green-500/20 hover:text-green-500" size="lg">
-                                        <a href={`tel:${formattedPhoneNumber}`}><Phone className="mr-2 h-4 w-4" /> Call</a>
+                                <WhatsAppBookingDialog expert={expert}>
+                                    <Button className="flex-1" size="lg">
+                                        <MessageSquare className="mr-2 h-4 w-4" /> Book via WhatsApp
                                     </Button>
-                                </>
+                                </WhatsAppBookingDialog>
                             ) : (
                                 <div className="w-full bg-[#3a2a1a] border-2 border-orange-500/20 rounded-2xl p-6 flex flex-col items-center text-center gap-3">
                                     <div className="bg-orange-500/10 p-3 rounded-full">
@@ -463,7 +476,6 @@ function ExpertProfileContent() {
                         </div>
                     </CardFooter>
                 </Card>
-                <FloatingActions expert={expert} />
             </div>
         </div>
     );
