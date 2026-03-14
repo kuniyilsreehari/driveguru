@@ -42,6 +42,7 @@ import { suggestSkills } from "@/ai/flows/suggest-skills-flow";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Separator } from "../ui/separator";
 import { Switch } from "../ui/switch";
+import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { DialogFooter } from "../ui/dialog";
 import { IndianRupee, GraduationCap, School, Book, Info, Pen, Factory as FactoryIcon, Sparkles } from "lucide-react";
