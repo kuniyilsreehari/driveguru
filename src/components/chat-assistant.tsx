@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
@@ -9,6 +10,8 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Bot, Send, User, X, MessageCircle, Sparkles, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { useAtom } from 'jotai';
+import { chatOpenAtom } from '@/lib/store';
 
 type Message = {
   role: 'user' | 'model';
@@ -16,7 +19,7 @@ type Message = {
 };
 
 export function ChatAssistant() {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useAtom(chatOpenAtom);
   const [messages, setMessages] = useState<Message[]>([
     { role: 'model', text: 'Hi! I am Gemini, your DriveGuru assistant. How can I help you today?' }
   ]);
