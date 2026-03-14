@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
@@ -7,7 +8,7 @@ import { signOut } from 'firebase/auth';
 import { useUser, useAuth, useFirestore, useDoc, useMemoFirebase, useCollection } from '@/firebase';
 import { updateDocumentNonBlocking, addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Button } from '@/components/ui/button';
-import { LogOut, Loader, Edit, UserCheck, User as UserIcon, MessageSquare, Gift, Info, Book, Pen, PlusCircle, MapPin, IndianRupee, Calendar, GraduationCap, School, Building, Home, Rss, Users, Link as LinkIcon, AlertCircle, CheckCircle, Eye, EyeOff, Clock, Crown, Sparkles, ChevronUp, ChevronDown, ChevronRight, Shield, CheckCircle2, ShieldAlert, ShieldCheck, ArrowRight, Type, List, Briefcase, Share2 } from 'lucide-react';
+import { LogOut, Loader, Edit, UserCheck, User as UserIcon, MessageSquare, Gift, Info, Book, Pen, PlusCircle, MapPin, IndianRupee, Calendar, GraduationCap, School, Building, Home, Rss, Users, Link as LinkIcon, AlertCircle, CheckCircle, Eye, EyeOff, Clock, Crown, Sparkles, ChevronUp, ChevronDown, ChevronRight, Shield, CheckCircle2, ShieldAlert, ShieldCheck, ArrowRight, Type, List, Briefcase, Share2, AlertTriangle, RefreshCw } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription as UiDialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { EditProfileForm } from '@/components/auth/edit-profile-form';
@@ -24,15 +25,9 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { UserList } from '@/components/user-list';
-import { Separator } from '@/components/ui/separator';
 import { ProfileCompletionWizard } from '@/components/profile-completion-wizard';
 import { createPaymentOrder } from '@/ai/flows/payment-flow';
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
-import { formatDistanceToNowStrict } from 'date-fns';
+import { formatDistanceToNowStrict, subDays } from 'date-fns';
 
 type ExpertUserProfile = {
     id: string;
@@ -41,10 +36,19 @@ type ExpertUserProfile = {
     email: string | null;
     role: string;
     photoUrl?: string;
+    photoUrl2?: string;
+    photoUrl3?: string;
+    photoUrl4?: string;
+    photoUrl5?: string;
+    photoUrl6?: string;
+    photoUrl7?: string;
+    photoUrl8?: string;
+    photoUrl9?: string;
     verified?: boolean;
     tier?: 'Standard' | 'Premier' | 'Super Premier';
     isAvailable?: boolean;
     hiddenUntil?: Timestamp | null;
+    lastProfileUpdate?: Timestamp | null;
     referralCode?: string;
     referralPoints?: number;
     following?: string[];
@@ -87,7 +91,6 @@ export default function ExpertDashboardPage() {
   const [isWizardOpen, setIsWizardOpen] = useState(false);
   const [isProcessingVerify, setIsProcessingVerify] = useState(false);
   const [showPostForm, setShowPostForm] = useState(false);
-  const [isProfileExpanded, setIsProfileExpanded] = useState(true);
   const [isHideDialogOpen, setIsHideDialogOpen] = useState(false);
   const [isSubmittingPost, setIsSubmittingPost] = useState(false);
 
@@ -127,6 +130,13 @@ export default function ExpertDashboardPage() {
     const filled = fields.filter(f => !!f).length;
     return Math.round((filled / fields.length) * 100);
   }, [userProfile]);
+
+  const needsUpdate = useMemo(() => {
+    if (!userProfile) return false;
+    const ninetyDaysAgo = subDays(new Date(), 90);
+    const lastUpdate = userProfile.lastProfileUpdate?.toDate() || new Date(0);
+    return profileCompletion < 80 || lastUpdate < ninetyDaysAgo;
+  }, [userProfile, profileCompletion]);
 
   const myPostsQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
@@ -173,37 +183,6 @@ export default function ExpertDashboardPage() {
     updateDocumentNonBlocking(userDocRef, { hiddenUntil: null });
     toast({ title: "Profile Visible", description: "Your profile is now visible to everyone." });
   }
-
-  const handleDirectVerify = async () => {
-    if (!user) return;
-    
-    const configuredLink = appConfig?.verificationPaymentLink;
-    if (configuredLink) {
-        window.location.href = configuredLink;
-        return;
-    }
-
-    setIsProcessingVerify(true);
-    try {
-        const result = await createPaymentOrder({
-            userId: user.uid,
-            userEmail: user.email || '',
-            userName: `${userProfile?.firstName} ${userProfile?.lastName}` || 'Expert User',
-            userPhone: userProfile?.phoneNumber || '',
-            plan: 'Verification',
-        });
-
-        if (result.payment_link) {
-            window.location.href = result.payment_link;
-        } else {
-            toast({ variant: 'destructive', title: 'Link Not Found', description: 'Verification link is not configured.' });
-        }
-    } catch (e: any) {
-        toast({ variant: 'destructive', title: 'Error', description: 'Failed to initiate verification.' });
-    } finally {
-        setIsProcessingVerify(false);
-    }
-  };
 
   async function onPostSubmit(values: z.infer<typeof postFormSchema>) {
     if (!firestore || !user) return;
@@ -261,6 +240,30 @@ export default function ExpertDashboardPage() {
   return (
     <div className="min-h-screen bg-[#1a1c23] p-4 sm:p-8">
       <div className="mx-auto max-w-5xl">
+        
+        {needsUpdate && (
+            <Card className="mb-8 border-none bg-primary text-primary-foreground rounded-[2rem] overflow-hidden shadow-2xl animate-in slide-in-from-top-4 duration-500">
+                <CardContent className="p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div className="flex items-center gap-4 text-center sm:text-left">
+                        <div className="bg-white/20 p-3 rounded-full">
+                            <AlertTriangle className="h-6 w-6" />
+                        </div>
+                        <div>
+                            <h4 className="font-black uppercase italic tracking-tight text-lg">Profile Boost Available</h4>
+                            <p className="text-sm font-medium opacity-80">Update your details to increase visibility and trust with clients.</p>
+                        </div>
+                    </div>
+                    <Button 
+                        variant="secondary" 
+                        onClick={() => setIsEditDialogOpen(true)}
+                        className="bg-white text-primary hover:bg-white/90 font-black rounded-xl h-12 px-8 uppercase tracking-widest"
+                    >
+                        <RefreshCw className="mr-2 h-4 w-4" /> Update Now
+                    </Button>
+                </CardContent>
+            </Card>
+        )}
+
         <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-8 gap-4 border-b border-white/5 mb-8">
           <div>
             <h1 className="text-4xl font-black tracking-tight text-white uppercase italic">Dashboard</h1>
@@ -358,7 +361,6 @@ export default function ExpertDashboardPage() {
                 </Button>
             </Card>
 
-            {/* Referral Section matching the provided model */}
             <Card className="border-none bg-[#24262d] rounded-[3rem] overflow-hidden shadow-2xl">
                 <CardHeader className="text-center pt-10 pb-4">
                     <p className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground opacity-60">UNIQUE REFERRAL ID</p>
@@ -504,7 +506,7 @@ export default function ExpertDashboardPage() {
                   <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground text-center mb-8">ENTRY LEVEL</p>
                   <ul className="space-y-4 mb-10 text-[10px] font-black uppercase tracking-tight text-white/70">
                     <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-green-500" /> Basic Profile Listing</li>
-                    <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-green-500" /> Search Visibility</li>
+                    <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-green-500" /> 3 Portfolio Image Slots</li>
                   </ul>
                   <Button disabled className="w-full rounded-xl bg-white/5 text-muted-foreground font-black uppercase text-[10px]">Current Plan</Button>
                 </div>
@@ -516,8 +518,8 @@ export default function ExpertDashboardPage() {
                   <p className="text-[9px] font-black uppercase tracking-widest text-orange-500 text-center mb-8">POWER PROFESSIONAL</p>
                   <ul className="space-y-4 mb-10 text-[10px] font-black uppercase tracking-tight text-white/70">
                     <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-green-500" /> High Search Priority</li>
+                    <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-green-500" /> 6 Portfolio Image Slots</li>
                     <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-green-500" /> AI Bio Generator</li>
-                    <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-green-500" /> Premium Purple Badge</li>
                   </ul>
                   <Button className="w-full rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-black uppercase text-[10px]" asChild>
                     <Link href="/payment/premier">Upgrade Now</Link>
@@ -530,8 +532,8 @@ export default function ExpertDashboardPage() {
                   <p className="text-[9px] font-black uppercase tracking-widest text-blue-500 text-center mb-8">ELITE EXECUTIVE</p>
                   <ul className="space-y-4 mb-10 text-[10px] font-black uppercase tracking-tight text-white/70">
                     <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-green-500" /> Max Search Exposure</li>
+                    <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-green-500" /> 9 Portfolio Image Slots</li>
                     <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-green-500" /> Homepage Carousel</li>
-                    <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-green-500" /> Elite Blue Badge</li>
                   </ul>
                   <Button className="w-full rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-black uppercase text-[10px]" asChild>
                     <Link href="/payment/super-premier">Unlock Elite</Link>

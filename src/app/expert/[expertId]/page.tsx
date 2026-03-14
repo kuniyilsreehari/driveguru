@@ -34,6 +34,12 @@ type ExpertUserProfile = {
     photoUrl?: string;
     photoUrl2?: string;
     photoUrl3?: string;
+    photoUrl4?: string;
+    photoUrl5?: string;
+    photoUrl6?: string;
+    photoUrl7?: string;
+    photoUrl8?: string;
+    photoUrl9?: string;
     state?: string;
     city?: string;
     pincode?: string;
@@ -222,7 +228,17 @@ function ExpertProfileContent() {
     const formattedPhoneNumber = cleanPhoneNumber(expert.phoneNumber);
     const canContact = expert.verified && expert.showPhoneNumberOnProfile && formattedPhoneNumber;
 
-    const allPhotos = [expert.photoUrl, expert.photoUrl2, expert.photoUrl3].filter(Boolean) as string[];
+    const allPhotos = [
+        expert.photoUrl, 
+        expert.photoUrl2, 
+        expert.photoUrl3,
+        expert.photoUrl4,
+        expert.photoUrl5,
+        expert.photoUrl6,
+        expert.photoUrl7,
+        expert.photoUrl8,
+        expert.photoUrl9
+    ].filter(Boolean) as string[];
     
     return (
         <div className="min-h-screen bg-background p-4 sm:p-8">
@@ -300,23 +316,15 @@ function ExpertProfileContent() {
                                         <AvatarFallback className="bg-primary/10 text-primary font-black">{getInitials(expert.firstName, expert.lastName)}</AvatarFallback>
                                     </Avatar>
                                 </ImageLightbox>
-                                <div className="flex gap-2 justify-center">
-                                    {expert.photoUrl2 && (
-                                        <ImageLightbox images={allPhotos} initialIndex={allPhotos.indexOf(expert.photoUrl2)} altText={`${displayName} Secondary 1`}>
+                                <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                                    {allPhotos.slice(1).map((photo, index) => (
+                                        <ImageLightbox key={index} images={allPhotos} initialIndex={index + 1} altText={`${displayName} Portfolio ${index + 1}`}>
                                             <Avatar className="h-16 w-16 transition-all hover:scale-110 active:scale-95 shadow-md border-2 border-white/10">
-                                                <AvatarImage src={expert.photoUrl2} className="object-cover" onContextMenu={(e) => e.preventDefault()} draggable={false} />
+                                                <AvatarImage src={photo} className="object-cover" onContextMenu={(e) => e.preventDefault()} draggable={false} />
                                                 <AvatarFallback><ImageIcon className="h-4 w-4 opacity-30" /></AvatarFallback>
                                             </Avatar>
                                         </ImageLightbox>
-                                    )}
-                                    {expert.photoUrl3 && (
-                                        <ImageLightbox images={allPhotos} initialIndex={allPhotos.indexOf(expert.photoUrl3)} altText={`${displayName} Secondary 2`}>
-                                            <Avatar className="h-16 w-16 transition-all hover:scale-110 active:scale-95 shadow-md border-2 border-white/10">
-                                                <AvatarImage src={expert.photoUrl3} className="object-cover" onContextMenu={(e) => e.preventDefault()} draggable={false} />
-                                                <AvatarFallback><ImageIcon className="h-4 w-4 opacity-30" /></AvatarFallback>
-                                            </Avatar>
-                                        </ImageLightbox>
-                                    )}
+                                    ))}
                                 </div>
                             </div>
                             <div className="flex-1">

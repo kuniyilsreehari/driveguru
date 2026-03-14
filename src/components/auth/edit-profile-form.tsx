@@ -7,8 +7,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { User as UserIcon, Mail, Lock, Eye, EyeOff, Briefcase, MapPin, Phone, LocateIcon, Loader2, Building, Home, ArrowRight, MessageSquare, Gift, PenSquare, Factory, Shield, Save, Linkedin, Github, Globe, Twitter, Type, List, Youtube, Image as ImageIcon, Upload, X } from "lucide-react";
-import { GoogleAuthProvider, signInWithPopup, getAdditionalUserInfo, RecaptchaVerifier, signInWithPhoneNumber, EmailAuthProvider, linkWithCredential } from 'firebase/auth';
-import { doc, serverTimestamp, collection, query, where, getDocs, limit } from 'firebase/firestore';
+import { EmailAuthProvider, linkWithCredential } from 'firebase/auth';
+import { doc, serverTimestamp } from 'firebase/firestore';
 import { getStorage, ref as storageRef, uploadString, getDownloadURL } from "firebase/storage";
 
 import { Button } from "@/components/ui/button";
@@ -31,13 +31,12 @@ import {
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth, useUser, useFirestore, useDoc, useMemoFirebase } from "@/firebase";
-import { setDocumentNonBlocking, updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
+import { updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { Textarea } from "../ui/textarea";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "../ui/card";
 import { Icons } from "../icons";
-import { Checkbox } from "../ui/checkbox";
 import { generateAboutMe } from "@/ai/flows/generate-about-me-flow";
 import { suggestSkills } from "@/ai/flows/suggest-skills-flow";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
@@ -45,7 +44,7 @@ import { Separator } from "../ui/separator";
 import { Switch } from "../ui/switch";
 import Link from "next/link";
 import { DialogFooter } from "../ui/dialog";
-import { IndianRupee, Calendar, GraduationCap, School, Book, Info, Pen, Factory as FactoryIcon, Sparkles } from "lucide-react";
+import { IndianRupee, GraduationCap, School, Book, Info, Pen, Factory as FactoryIcon, Sparkles } from "lucide-react";
 import type { HomepageCategory } from "@/app/admin/page";
 
 const expertTypes = [
@@ -60,6 +59,12 @@ const formSchema = z.object({
   photoUrl: z.string().optional().or(z.literal('')),
   photoUrl2: z.string().optional().or(z.literal('')),
   photoUrl3: z.string().optional().or(z.literal('')),
+  photoUrl4: z.string().optional().or(z.literal('')),
+  photoUrl5: z.string().optional().or(z.literal('')),
+  photoUrl6: z.string().optional().or(z.literal('')),
+  photoUrl7: z.string().optional().or(z.literal('')),
+  photoUrl8: z.string().optional().or(z.literal('')),
+  photoUrl9: z.string().optional().or(z.literal('')),
   state: z.string().optional(),
   city: z.string().optional(),
   pincode: z.string().optional(),
@@ -108,6 +113,12 @@ type ExpertUserProfile = {
     photoUrl?: string;
     photoUrl2?: string;
     photoUrl3?: string;
+    photoUrl4?: string;
+    photoUrl5?: string;
+    photoUrl6?: string;
+    photoUrl7?: string;
+    photoUrl8?: string;
+    photoUrl9?: string;
     state?: string;
     city?: string;
     pincode?: string;
@@ -161,9 +172,9 @@ export function EditProfileForm({ userProfile, onSuccess, isAdmin = false }: Edi
   const [isGeneratingAboutMe, setIsGeneratingAboutMe] = useState(false);
   const [isSuggestingSkills, setIsSuggestingSkills] = useState(false);
   const [uploadingSlot, setUploadingSlot] = useState<number | null>(null);
-  const fileInputRef1 = React.useRef<HTMLInputElement>(null);
-  const fileInputRef2 = React.useRef<HTMLInputElement>(null);
-  const fileInputRef3 = React.useRef<HTMLInputElement>(null);
+  
+  const fileInputRefs = React.useRef<(HTMLInputElement | null)[]>([]);
+  
   const [isDetectingLocation, setIsDetectingLocation] = useState(false);
   const [isFetchingPincode, setIsFetchingPincode] = useState(false);
   const [isPremiumDialogOpen, setIsPremiumDialogOpen] = useState(false);
@@ -179,6 +190,8 @@ export function EditProfileForm({ userProfile, onSuccess, isAdmin = false }: Edi
   const departments = appConfig?.departments || [];
   const pricingModels = appConfig?.pricingModels || [];
 
+  const tier = userProfile.tier || 'Standard';
+  const photoSlots = tier === 'Super Premier' ? 9 : tier === 'Premier' ? 6 : 3;
 
   const extractPhoneNumberParts = (fullNumber?: string) => {
     if (!fullNumber) return { countryCode: "+91", phoneNumber: "" };
@@ -204,6 +217,12 @@ export function EditProfileForm({ userProfile, onSuccess, isAdmin = false }: Edi
       photoUrl: userProfile.photoUrl || "",
       photoUrl2: userProfile.photoUrl2 || "",
       photoUrl3: userProfile.photoUrl3 || "",
+      photoUrl4: userProfile.photoUrl4 || "",
+      photoUrl5: userProfile.photoUrl5 || "",
+      photoUrl6: userProfile.photoUrl6 || "",
+      photoUrl7: userProfile.photoUrl7 || "",
+      photoUrl8: userProfile.photoUrl8 || "",
+      photoUrl9: userProfile.photoUrl9 || "",
       state: userProfile.state || "",
       city: userProfile.city || "",
       pincode: userProfile.pincode || "",
@@ -246,11 +265,7 @@ export function EditProfileForm({ userProfile, onSuccess, isAdmin = false }: Edi
     },
   });
 
-
   const selectedRole = form.watch("role");
-  const photoUrl = form.watch("photoUrl");
-  const photoUrl2 = form.watch("photoUrl2");
-  const photoUrl3 = form.watch("photoUrl3");
   const pincodeValue = form.watch("pincode");
 
   useEffect(() => {
@@ -442,7 +457,7 @@ export function EditProfileForm({ userProfile, onSuccess, isAdmin = false }: Edi
 
           await uploadString(imageRef, dataUrl, 'data_url');
           const finalUrl = await getDownloadURL(imageRef);
-          const fieldName = slot === 1 ? 'photoUrl' : slot === 2 ? 'photoUrl2' : 'photoUrl3';
+          const fieldName = slot === 1 ? 'photoUrl' : `photoUrl${slot}`;
           
           form.setValue(fieldName as any, `${finalUrl}?t=${new Date().getTime()}`, { shouldValidate: true });
           toast({
@@ -473,7 +488,7 @@ export function EditProfileForm({ userProfile, onSuccess, isAdmin = false }: Edi
   };
 
   const handleClearImage = (slot: number) => {
-    const fieldName = slot === 1 ? 'photoUrl' : slot === 2 ? 'photoUrl2' : 'photoUrl3';
+    const fieldName = slot === 1 ? 'photoUrl' : `photoUrl${slot}`;
     form.setValue(fieldName as any, "", { shouldValidate: true });
     toast({
       title: `Photo ${slot} Cleared`,
@@ -499,6 +514,7 @@ export function EditProfileForm({ userProfile, onSuccess, isAdmin = false }: Edi
           values.countryCode && cleanPhoneNumber
             ? `${values.countryCode} ${cleanPhoneNumber}`
             : '',
+        lastProfileUpdate: serverTimestamp() as any,
       };
       
       delete (updatedData as any).email;
@@ -530,7 +546,6 @@ export function EditProfileForm({ userProfile, onSuccess, isAdmin = false }: Edi
       const credential = EmailAuthProvider.credential(values.newEmail, values.newPassword);
       await linkWithCredential(user, credential);
       
-      // Also update the Firestore document
       const userDocRef = doc(firestore, 'users', user.uid);
       await updateDocumentNonBlocking(userDocRef, { email: values.newEmail });
       
@@ -538,7 +553,7 @@ export function EditProfileForm({ userProfile, onSuccess, isAdmin = false }: Edi
         title: "Email Linked",
         description: "Your email and password have been successfully added to your account.",
       });
-      onSuccess(); // Close the dialog
+      onSuccess();
     } catch (error: any) {
       console.error("Email linking failed:", error);
       let description = "An unexpected error occurred. Please try again.";
@@ -557,14 +572,6 @@ export function EditProfileForm({ userProfile, onSuccess, isAdmin = false }: Edi
     }
   };
 
-
-  const getInitials = (firstName?: string, lastName?: string) => {
-    if (firstName && lastName) {
-        return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
-    }
-    return 'U';
-  }
-
   const isRoleSet = !isAdmin && !!userProfile.role;
 
   return (
@@ -574,11 +581,18 @@ export function EditProfileForm({ userProfile, onSuccess, isAdmin = false }: Edi
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           
           <div className="space-y-4">
-              <FormLabel className="text-lg font-black uppercase tracking-widest text-primary">Triple Image Profile Slots</FormLabel>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                  {[1, 2, 3].map((slot) => {
-                      const currentPhoto = slot === 1 ? photoUrl : slot === 2 ? photoUrl2 : slot === 3 ? photoUrl3 : null;
-                      const ref = slot === 1 ? fileInputRef1 : slot === 2 ? fileInputRef2 : slot === 3 ? fileInputRef3 : null;
+              <div className="flex items-center justify-between">
+                <FormLabel className="text-lg font-black uppercase tracking-widest text-primary">Profile Portfolio Slots</FormLabel>
+                <Badge variant="secondary" className="bg-orange-500/10 text-orange-500 font-black uppercase text-[10px]">
+                    {tier} Plan: {photoSlots} Slots
+                </Badge>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-6">
+                  {Array.from({ length: photoSlots }).map((_, i) => {
+                      const slot = i + 1;
+                      const fieldName = slot === 1 ? 'photoUrl' : `photoUrl${slot}`;
+                      const currentPhoto = form.watch(fieldName as any);
+                      
                       return (
                           <div key={slot} className="flex flex-col items-center gap-3 relative group">
                               {currentPhoto && (
@@ -592,7 +606,7 @@ export function EditProfileForm({ userProfile, onSuccess, isAdmin = false }: Edi
                                   <X className="h-3 w-3" />
                                 </Button>
                               )}
-                              <Avatar className="h-32 w-32 cursor-pointer border-2 border-dashed border-white/10 hover:border-primary/50 transition-all" onClick={() => ref?.current?.click()}>
+                              <Avatar className="h-32 w-32 cursor-pointer border-2 border-dashed border-white/10 hover:border-primary/50 transition-all" onClick={() => fileInputRefs.current[i]?.click()}>
                                 <AvatarImage src={currentPhoto ? `${currentPhoto}` : undefined} className="object-cover" />
                                 <AvatarFallback className="text-[10px] text-center px-4 font-bold leading-tight bg-white/5">
                                     {uploadingSlot === slot ? (
@@ -602,7 +616,7 @@ export function EditProfileForm({ userProfile, onSuccess, isAdmin = false }: Edi
                                     )}
                                 </AvatarFallback>
                               </Avatar>
-                              <Button type="button" variant="outline" size="sm" className="w-full h-9 rounded-xl border-white/10 bg-white/5 hover:bg-white/10" onClick={() => ref?.current?.click()} disabled={uploadingSlot !== null}>
+                              <Button type="button" variant="outline" size="sm" className="w-full h-9 rounded-xl border-white/10 bg-white/5 hover:bg-white/10" onClick={() => fileInputRefs.current[i]?.click()} disabled={uploadingSlot !== null}>
                                   {uploadingSlot === slot ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4 mr-2" />}
                                   {slot === 1 ? 'Primary' : `Photo ${slot}`}
                               </Button>
@@ -610,7 +624,7 @@ export function EditProfileForm({ userProfile, onSuccess, isAdmin = false }: Edi
                                   <Input 
                                       type="file"
                                       className="hidden"
-                                      ref={ref}
+                                      ref={el => fileInputRefs.current[i] = el}
                                       onChange={(e) => handleImageUpload(e, slot)}
                                       accept="image/png, image/jpeg, image/gif"
                                   />
@@ -619,7 +633,9 @@ export function EditProfileForm({ userProfile, onSuccess, isAdmin = false }: Edi
                       );
                   })}
               </div>
-              <p className="text-[10px] text-muted-foreground text-center italic">Experts with multiple high-quality photos receive 3x more inquiries.</p>
+              <p className="text-[10px] text-muted-foreground text-center italic">
+                {tier === 'Standard' ? "Upgrade to Premier for 6 slots or Super Premier for 9 slots." : "Showcase your portfolio with high-quality work photos."}
+              </p>
           </div>
 
           <Separator className="bg-white/5" />
