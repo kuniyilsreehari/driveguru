@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
@@ -26,7 +25,6 @@ import * as z from 'zod';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { UserList } from '@/components/user-list';
 import { ProfileCompletionWizard } from '@/components/profile-completion-wizard';
-import { createPaymentOrder } from '@/ai/flows/payment-flow';
 import { formatDistanceToNowStrict, subDays } from 'date-fns';
 
 type ExpertUserProfile = {
@@ -89,16 +87,12 @@ export default function ExpertDashboardPage() {
   const { toast } = useToast();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isWizardOpen, setIsWizardOpen] = useState(false);
-  const [isProcessingVerify, setIsProcessingVerify] = useState(false);
   const [showPostForm, setShowPostForm] = useState(false);
   const [isHideDialogOpen, setIsHideDialogOpen] = useState(false);
   const [isSubmittingPost, setIsSubmittingPost] = useState(false);
 
   const userDocRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
   const { data: userProfile, isLoading: isProfileLoading } = useDoc<ExpertUserProfile>(userDocRef);
-
-  const appConfigDocRef = useMemoFirebase(() => doc(firestore, 'app_config', 'homepage'), [firestore]);
-  const { data: appConfig } = useDoc<any>(appConfigDocRef);
 
   const superAdminDocRef = useMemoFirebase(() => user ? doc(firestore, 'roles_super_admin', user.uid) : null, [firestore, user]);
   const { data: superAdminData, isLoading: isRoleLoading } = useDoc(superAdminDocRef);
@@ -249,14 +243,14 @@ export default function ExpertDashboardPage() {
                             <AlertTriangle className="h-6 w-6" />
                         </div>
                         <div>
-                            <h4 className="font-bold sm:font-black uppercase italic tracking-tight text-base sm:text-lg">Profile Boost Available</h4>
-                            <p className="text-sm font-medium opacity-80">Update details to increase visibility.</p>
+                            <h4 className="font-bold sm:font-black uppercase italic tracking-tight text-sm sm:text-lg">Profile Boost Available</h4>
+                            <p className="text-xs font-medium opacity-80">Update details to increase visibility.</p>
                         </div>
                     </div>
                     <Button 
                         variant="secondary" 
                         onClick={() => setIsEditDialogOpen(true)}
-                        className="bg-white text-primary hover:bg-white/90 font-bold rounded-xl h-12 px-8 uppercase tracking-wider"
+                        className="bg-white text-primary hover:bg-white/90 font-bold rounded-xl h-10 px-6 uppercase tracking-wider text-xs"
                     >
                         <RefreshCw className="mr-2 h-4 w-4" /> Update Now
                     </Button>
@@ -264,15 +258,15 @@ export default function ExpertDashboardPage() {
             </Card>
         )}
 
-        <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-8 gap-4 border-b border-white/5 mb-8">
+        <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-6 gap-4 border-b border-white/5 mb-8">
           <div>
-            <h1 className="text-2xl sm:text-4xl font-black tracking-tight text-white uppercase italic">Dashboard</h1>
-            <p className="text-muted-foreground text-xs sm:text-sm font-medium">Manage professional identity and rewards.</p>
+            <h1 className="text-xl sm:text-4xl font-black tracking-tight text-white uppercase italic">Dashboard</h1>
+            <p className="text-muted-foreground text-[10px] sm:text-sm font-medium">Manage professional identity and rewards.</p>
           </div>
           <div className="flex items-center gap-2">
             <Button 
                 variant="outline" 
-                className="rounded-xl border-2 border-white/10 bg-transparent text-white hover:bg-white/5 font-bold h-12 uppercase" 
+                className="rounded-xl border-2 border-white/10 bg-transparent text-white hover:bg-white/5 font-bold h-10 px-4 uppercase text-xs" 
                 onClick={() => auth && signOut(auth).then(() => router.push('/'))}
             >
                 <LogOut className="mr-2 h-4 w-4" /> Log Out
@@ -281,19 +275,19 @@ export default function ExpertDashboardPage() {
         </header>
 
         <Tabs defaultValue="overview" className="w-full">
-          <TabsList className="flex w-full bg-white/5 p-1 h-14 rounded-2xl mb-8">
-            <TabsTrigger value="overview" className="flex-1 rounded-xl data-[state=active]:bg-orange-500 data-[state=active]:text-white font-black text-[10px] uppercase tracking-wider transition-all px-1">Overview</TabsTrigger>
-            <TabsTrigger value="network" className="flex-1 rounded-xl data-[state=active]:bg-orange-500 data-[state=active]:text-white font-black text-[10px] uppercase tracking-wider transition-all px-1">Network</TabsTrigger>
-            <TabsTrigger value="feed" className="flex-1 rounded-xl data-[state=active]:bg-orange-500 data-[state=active]:text-white font-black text-[10px] uppercase tracking-wider transition-all px-1">My Feed</TabsTrigger>
-            <TabsTrigger value="plans" className="flex-1 rounded-xl data-[state=active]:bg-orange-500 data-[state=active]:text-white font-black text-[10px] uppercase tracking-wider transition-all px-1">Plans</TabsTrigger>
+          <TabsList className="flex w-full bg-white/5 p-1 h-12 rounded-2xl mb-8">
+            <TabsTrigger value="overview" className="flex-1 rounded-xl data-[state=active]:bg-orange-500 data-[state=active]:text-white font-black text-[9px] sm:text-[10px] uppercase tracking-wider transition-all">Overview</TabsTrigger>
+            <TabsTrigger value="network" className="flex-1 rounded-xl data-[state=active]:bg-orange-500 data-[state=active]:text-white font-black text-[9px] sm:text-[10px] uppercase tracking-wider transition-all">Network</TabsTrigger>
+            <TabsTrigger value="feed" className="flex-1 rounded-xl data-[state=active]:bg-orange-500 data-[state=active]:text-white font-black text-[9px] sm:text-[10px] uppercase tracking-wider transition-all">My Feed</TabsTrigger>
+            <TabsTrigger value="plans" className="flex-1 rounded-xl data-[state=active]:bg-orange-500 data-[state=active]:text-white font-black text-[9px] sm:text-[10px] uppercase tracking-wider transition-all">Plans</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="mt-0 space-y-8">
             <Card className="border-none bg-[#24262d] rounded-[2rem] sm:rounded-[3rem] overflow-hidden shadow-2xl p-6 sm:p-10 text-center flex flex-col items-center">
                 <div className="relative mb-6">
-                    <Avatar className="h-24 w-24 sm:h-32 sm:w-32 border-4 border-white/10 shadow-2xl">
+                    <Avatar className="h-20 w-20 sm:h-32 sm:w-32 border-4 border-white/10 shadow-2xl">
                         <AvatarImage src={userProfile.photoUrl} className="object-cover" />
-                        <AvatarFallback className="bg-orange-500/10 text-orange-500 font-black text-2xl">
+                        <AvatarFallback className="bg-orange-500/10 text-orange-500 font-black text-xl">
                             {userProfile.firstName?.[0]}
                         </AvatarFallback>
                     </Avatar>
@@ -304,40 +298,40 @@ export default function ExpertDashboardPage() {
                     )}
                 </div>
                 
-                <h2 className="text-2xl sm:text-5xl font-black text-white tracking-tighter uppercase italic mb-2">
+                <h2 className="text-xl sm:text-5xl font-black text-white tracking-tighter uppercase italic mb-2">
                     {userProfile.firstName} {userProfile.lastName}
                 </h2>
                 
-                <div className="flex items-center gap-4 text-[9px] sm:text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground mb-6">
-                    <span className="flex items-center gap-1.5"><Users className="h-3.5 w-3.5 text-orange-500" /> <span className="text-orange-500">{myFollowers?.length || 0}</span> FOLLOWERS</span>
+                <div className="flex items-center gap-4 text-[8px] sm:text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground mb-6">
+                    <span className="flex items-center gap-1.5"><Users className="h-3 w-3 text-orange-500" /> <span className="text-orange-500">{myFollowers?.length || 0}</span> FOLLOWERS</span>
                     <div className="h-3 w-px bg-white/10" />
-                    <span className="flex items-center gap-1.5"><Users className="h-3.5 w-3.5 text-orange-500" /> <span className="text-orange-500">{userProfile.following?.length || 0}</span> FOLLOWING</span>
+                    <span className="flex items-center gap-1.5"><Users className="h-3 w-3 text-orange-500" /> <span className="text-orange-500">{userProfile.following?.length || 0}</span> FOLLOWING</span>
                 </div>
 
-                <Badge className="font-black bg-white text-black border-none text-base sm:text-2xl uppercase tracking-[0.2em] sm:tracking-[0.3em] px-6 sm:px-10 py-3 sm:py-4 rounded-[1.2rem] sm:rounded-[1.5rem] mb-8 shadow-xl">
+                <Badge className="font-black bg-white text-black border-none text-xs sm:text-2xl uppercase tracking-[0.2em] px-6 py-3 rounded-xl sm:rounded-[1.5rem] mb-8 shadow-xl">
                     {userProfile.role}
                 </Badge>
 
                 <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mt-4">
-                    <div className="bg-[#1a1c23] p-5 sm:p-6 rounded-[1.5rem] sm:rounded-[2rem] flex items-center justify-between border border-white/5 shadow-inner">
+                    <div className="bg-[#1a1c23] p-4 sm:p-6 rounded-2xl sm:rounded-[2rem] flex items-center justify-between border border-white/5 shadow-inner">
                         <div className="flex items-center gap-4 text-left">
-                            <Switch checked={userProfile.isAvailable} onCheckedChange={(v) => updateDocumentNonBlocking(userDocRef!, { isAvailable: v })} className="data-[state=checked]:bg-[#22c55e] scale-100 sm:scale-110" />
+                            <Switch checked={userProfile.isAvailable} onCheckedChange={(v) => updateDocumentNonBlocking(userDocRef!, { isAvailable: v })} className="data-[state=checked]:bg-[#22c55e] scale-90 sm:scale-110" />
                             <div>
-                                <p className="font-black text-[10px] sm:text-xs text-white uppercase tracking-widest">HIRING STATUS</p>
-                                <p className="text-[9px] sm:text-[10px] text-muted-foreground">{userProfile.isAvailable ? "AVAILABLE NOW" : "UNAVAILABLE"}</p>
+                                <p className="font-black text-[8px] sm:text-xs text-white uppercase tracking-widest">HIRING STATUS</p>
+                                <p className="text-[8px] sm:text-[10px] text-muted-foreground">{userProfile.isAvailable ? "AVAILABLE NOW" : "UNAVAILABLE"}</p>
                             </div>
                         </div>
-                        {userProfile.isAvailable && <CheckCircle2 className="text-[#22c55e] h-5 w-5 sm:h-6 sm:w-6" />}
+                        {userProfile.isAvailable && <CheckCircle2 className="text-[#22c55e] h-4 w-4 sm:h-6 sm:w-6" />}
                     </div>
 
-                    <div className="bg-[#1a1c23] p-5 sm:p-6 rounded-[1.5rem] sm:rounded-[2rem] flex items-center justify-between border border-white/5 shadow-inner">
+                    <div className="bg-[#1a1c23] p-4 sm:p-6 rounded-2xl sm:rounded-[2rem] flex items-center justify-between border border-white/5 shadow-inner">
                         <div className="flex items-center gap-4 text-left">
                             <div className="p-2 bg-white/5 rounded-xl">
                                 {isHidden ? <EyeOff className="text-orange-500 h-4 w-4 sm:h-5 sm:w-5" /> : <Eye className="text-muted-foreground h-4 w-4 sm:h-5 sm:w-5" />}
                             </div>
                             <div>
-                                <p className="font-black text-[10px] sm:text-xs text-white uppercase tracking-widest">VISIBILITY</p>
-                                <p className="text-[9px] sm:text-[10px] text-muted-foreground uppercase">{isHidden ? "Hidden" : "Publicly Active"}</p>
+                                <p className="font-black text-[8px] sm:text-xs text-white uppercase tracking-widest">VISIBILITY</p>
+                                <p className="text-[8px] sm:text-[10px] text-muted-foreground uppercase">{isHidden ? "Hidden" : "Publicly Active"}</p>
                             </div>
                         </div>
                         {isHidden ? (
@@ -350,50 +344,50 @@ export default function ExpertDashboardPage() {
 
                 <div className="w-full space-y-3 mt-10">
                     <div className="flex justify-between items-end">
-                        <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-primary italic">Profile Completion</span>
-                        <span className="text-sm sm:text-lg font-black text-white">{profileCompletion}%</span>
+                        <span className="text-[8px] sm:text-[10px] font-black uppercase tracking-widest text-primary italic">Profile Completion</span>
+                        <span className="text-xs sm:text-lg font-black text-white">{profileCompletion}%</span>
                     </div>
-                    <Progress value={profileCompletion} className="h-2 bg-white/5 rounded-full overflow-hidden" />
+                    <Progress value={profileCompletion} className="h-1.5 bg-white/5 rounded-full overflow-hidden" />
                 </div>
 
-                <Button onClick={() => setIsEditDialogOpen(true)} className="w-full max-w-sm mt-10 bg-orange-500 hover:bg-orange-600 text-white font-black rounded-2xl h-14 shadow-xl shadow-orange-500/20 uppercase tracking-wider text-xs">
-                    <Edit className="mr-2 h-5 w-5" /> UPDATE PROFILE
+                <Button onClick={() => setIsEditDialogOpen(true)} className="w-full max-w-sm mt-10 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-xl h-12 shadow-xl shadow-orange-500/20 uppercase tracking-wider text-xs">
+                    <Edit className="mr-2 h-4 w-4" /> UPDATE PROFILE
                 </Button>
             </Card>
 
             <Card className="border-none bg-[#24262d] rounded-[2rem] sm:rounded-[3rem] overflow-hidden shadow-2xl">
                 <CardHeader className="text-center pt-8 sm:pt-10 pb-4">
-                    <p className="text-[9px] sm:text-[10px] font-black uppercase tracking-[0.3em] sm:tracking-[0.4em] text-muted-foreground opacity-60">UNIQUE REFERRAL ID</p>
+                    <p className="text-[8px] sm:text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground opacity-60">UNIQUE REFERRAL ID</p>
                 </CardHeader>
                 <CardContent className="px-6 sm:px-10 pb-8 sm:pb-10 flex flex-col items-center">
-                    <h2 className="text-3xl sm:text-7xl font-black text-orange-500 tracking-[0.2em] sm:tracking-[0.3em] uppercase italic mb-8 sm:mb-10 font-mono">
+                    <h2 className="text-2xl sm:text-7xl font-black text-orange-500 tracking-[0.2em] uppercase italic mb-8 font-mono">
                         {userProfile.referralCode || 'UR3664XN'}
                     </h2>
                     
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
                         <Button 
                             variant="outline" 
-                            className="h-14 sm:h-16 rounded-[1.2rem] sm:rounded-[1.5rem] border-none bg-white/5 hover:bg-white/10 text-white font-black uppercase tracking-wider text-[10px] flex items-center justify-center gap-3 shadow-inner"
+                            className="h-12 sm:h-16 rounded-xl sm:rounded-[1.5rem] border-none bg-white/5 hover:bg-white/10 text-white font-bold uppercase tracking-wider text-[10px] flex items-center justify-center gap-3 shadow-inner"
                             onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/signup?ref=${userProfile.referralCode}`); toast({ title: "Link Copied" }); }}
                         >
-                            <LinkIcon className="h-5 w-5" /> COPY LINK
+                            <LinkIcon className="h-4 w-4" /> COPY LINK
                         </Button>
                         <Button 
-                            className="h-14 sm:h-16 rounded-[1.2rem] sm:rounded-[1.5rem] bg-green-600/10 border border-green-600/20 text-green-500 hover:bg-green-600 hover:text-white font-black uppercase tracking-wider text-[10px] flex items-center justify-center gap-3"
+                            className="h-12 sm:h-16 rounded-xl sm:rounded-[1.5rem] bg-green-600/10 border border-green-600/20 text-green-500 hover:bg-green-600 hover:text-white font-bold uppercase tracking-wider text-[10px] flex items-center justify-center gap-3"
                             onClick={() => window.open(`https://wa.me/?text=Join my professional network on DriveGuru using code: ${userProfile.referralCode}`, '_blank')}
                         >
-                            <MessageSquare className="h-5 w-5" /> WHATSAPP
+                            <MessageSquare className="h-4 w-4" /> WHATSAPP
                         </Button>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4 sm:gap-6 w-full mt-8 sm:mt-10">
-                        <div className="bg-[#1a1c23] p-6 sm:p-8 rounded-[1.5rem] sm:rounded-[2.5rem] text-center border border-white/5 shadow-inner group hover:bg-white/[0.02] transition-all">
-                            <p className="text-2xl sm:text-5xl font-black text-orange-500 mb-2">{userProfile.referralPoints || 100}</p>
-                            <p className="text-[8px] sm:text-[9px] font-black uppercase tracking-[0.2em] text-muted-foreground opacity-60">PREMIUM CREDITS</p>
+                    <div className="grid grid-cols-2 gap-4 sm:gap-6 w-full mt-8">
+                        <div className="bg-[#1a1c23] p-6 sm:p-8 rounded-2xl sm:rounded-[2.5rem] text-center border border-white/5 shadow-inner">
+                            <p className="text-xl sm:text-5xl font-black text-orange-500 mb-1">{userProfile.referralPoints || 100}</p>
+                            <p className="text-[7px] sm:text-[9px] font-black uppercase tracking-[0.2em] text-muted-foreground opacity-60">PREMIUM CREDITS</p>
                         </div>
-                        <div className="bg-[#1a1c23] p-6 sm:p-8 rounded-[1.5rem] sm:rounded-[2.5rem] text-center border border-white/5 shadow-inner group hover:bg-white/[0.02] transition-all">
-                            <p className="text-2xl sm:text-5xl font-black text-white mb-2">{myReferrals?.length || 2}</p>
-                            <p className="text-[8px] sm:text-[9px] font-black uppercase tracking-[0.2em] text-muted-foreground opacity-60">SUCCESSFUL JOINS</p>
+                        <div className="bg-[#1a1c23] p-6 sm:p-8 rounded-2xl sm:rounded-[2.5rem] text-center border border-white/5 shadow-inner">
+                            <p className="text-xl sm:text-5xl font-black text-white mb-1">{myReferrals?.length || 2}</p>
+                            <p className="text-[7px] sm:text-[9px] font-black uppercase tracking-[0.2em] text-muted-foreground opacity-60">SUCCESSFUL JOINS</p>
                         </div>
                     </div>
                 </CardContent>
@@ -403,14 +397,14 @@ export default function ExpertDashboardPage() {
           <TabsContent value="network" className="mt-0">
             <Card className="border-none bg-[#24262d] rounded-[2rem] sm:rounded-[3rem] overflow-hidden shadow-2xl">
                 <CardHeader className="bg-white/5 border-b border-white/5 pb-6 px-6 sm:px-10">
-                    <CardTitle className="text-xl sm:text-2xl font-black text-white uppercase italic">Connections</CardTitle>
+                    <CardTitle className="text-lg sm:text-2xl font-black text-white uppercase italic">Connections</CardTitle>
                 </CardHeader>
                 <CardContent className="p-6 sm:p-10">
                     <Tabs defaultValue="my-groups" className="w-full">
-                        <TabsList className="grid w-full grid-cols-3 bg-white/5 p-1 h-12 rounded-xl mb-8">
-                            <TabsTrigger value="my-groups" className="rounded-lg font-black text-[9px] sm:text-[10px] uppercase">Groups</TabsTrigger>
-                            <TabsTrigger value="followers" className="rounded-lg font-black text-[9px] sm:text-[10px] uppercase">Followers</TabsTrigger>
-                            <TabsTrigger value="following" className="rounded-lg font-black text-[9px] sm:text-[10px] uppercase">Following</TabsTrigger>
+                        <TabsList className="grid w-full grid-cols-3 bg-white/5 p-1 h-10 rounded-xl mb-8">
+                            <TabsTrigger value="my-groups" className="rounded-lg font-bold text-[8px] sm:text-[10px] uppercase">Groups</TabsTrigger>
+                            <TabsTrigger value="followers" className="rounded-lg font-bold text-[8px] sm:text-[10px] uppercase">Followers</TabsTrigger>
+                            <TabsTrigger value="following" className="rounded-lg font-bold text-[8px] sm:text-[10px] uppercase">Following</TabsTrigger>
                         </TabsList>
                         
                         <TabsContent value="my-groups" className="space-y-6 mt-0">
@@ -420,20 +414,20 @@ export default function ExpertDashboardPage() {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     {myGroups.map(group => (
                                         <Link key={group.id} href={`/groups/${group.id}`}>
-                                            <div className="p-6 bg-white/5 border border-white/5 rounded-2xl hover:bg-white/10 transition-all flex items-center justify-between">
+                                            <div className="p-5 bg-white/5 border border-white/5 rounded-2xl hover:bg-white/10 transition-all flex items-center justify-between">
                                                 <div>
-                                                    <h4 className="font-black text-white text-base sm:text-lg uppercase italic">{group.name}</h4>
-                                                    <p className="text-[10px] text-muted-foreground font-black uppercase tracking-widest mt-1">{group.members?.length || 0} Members</p>
+                                                    <h4 className="font-bold text-white text-sm sm:text-lg uppercase italic">{group.name}</h4>
+                                                    <p className="text-[8px] text-muted-foreground font-black uppercase tracking-widest mt-1">{group.members?.length || 0} Members</p>
                                                 </div>
-                                                <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                                                <ChevronRight className="h-4 w-4 text-muted-foreground" />
                                             </div>
                                         </Link>
                                     ))}
                                 </div>
                             ) : (
                                 <div className="text-center py-16 opacity-40">
-                                    <Users className="h-12 w-12 mx-auto mb-4" />
-                                    <p className="text-[10px] font-black uppercase tracking-widest">No active group memberships.</p>
+                                    <Users className="h-10 w-10 mx-auto mb-4" />
+                                    <p className="text-[8px] font-black uppercase tracking-widest">No active memberships.</p>
                                 </div>
                             )}
                         </TabsContent>
@@ -454,32 +448,32 @@ export default function ExpertDashboardPage() {
             {!showPostForm ? (
               <Card className="border-none bg-[#24262d] rounded-[2rem] sm:rounded-[3rem] overflow-hidden shadow-2xl">
                 <CardHeader className="bg-white/5 border-b border-white/5 pb-8 px-6 sm:px-10">
-                  <CardTitle className="text-xl sm:text-2xl font-black text-white uppercase italic">Community Updates</CardTitle>
+                  <CardTitle className="text-lg sm:text-2xl font-black text-white uppercase italic">Community Updates</CardTitle>
                 </CardHeader>
                 <CardContent className="p-6 sm:p-10 space-y-8">
-                  <Button variant="secondary" className="w-full bg-orange-500 hover:bg-orange-600 text-white font-black rounded-2xl h-16 text-sm uppercase shadow-xl tracking-tight" size="lg" onClick={() => setShowPostForm(true)}>
-                    <PlusCircle className="mr-2 h-6 w-6" /> SHARE PROFESSIONAL UPDATE
+                  <Button variant="secondary" className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-xl h-14 text-sm uppercase shadow-xl tracking-tight" size="lg" onClick={() => setShowPostForm(true)}>
+                    <PlusCircle className="mr-2 h-5 w-5" /> SHARE PROFESSIONAL UPDATE
                   </Button>
 
                   <div className="space-y-6">
-                    <h4 className="font-black text-white text-[9px] sm:text-[10px] uppercase italic tracking-[0.3em]">Your Recent Activity</h4>
+                    <h4 className="font-black text-white text-[8px] sm:text-[10px] uppercase italic tracking-[0.3em]">Your Recent Activity</h4>
                     {isPostsLoading ? (
                       <div className="flex justify-center p-12"><Loader className="animate-spin h-8 w-8 text-orange-500" /></div>
                     ) : myPosts && myPosts.length > 0 ? (
                       <div className="space-y-4">
                         {myPosts.map((post: any) => (
-                          <div key={post.id} className="p-6 bg-[#1a1c23] border border-white/5 rounded-2xl">
-                            <p className="text-base sm:text-lg font-black text-white mb-2 uppercase italic">{post.title || 'Professional Update'}</p>
-                            <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">{post.content}</p>
+                          <div key={post.id} className="p-5 bg-[#1a1c23] border border-white/5 rounded-2xl">
+                            <p className="text-sm sm:text-lg font-black text-white mb-2 uppercase italic">{post.title || 'Professional Update'}</p>
+                            <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">{post.content}</p>
                             <div className="flex items-center justify-between border-t border-white/5 pt-4 mt-4">
-                              <span className="text-[9px] sm:text-[10px] font-black uppercase text-orange-500/50 tracking-widest">{post.createdAt ? formatDistanceToNowStrict(post.createdAt.toDate(), { addSuffix: true }) : 'Just now'}</span>
-                              <Link href={`/feed?authorId=${user.uid}`} className="text-[10px] font-black uppercase text-orange-500 hover:underline">View Post</Link>
+                              <span className="text-[8px] sm:text-[10px] font-black uppercase text-orange-500/50 tracking-widest">{post.createdAt ? formatDistanceToNowStrict(post.createdAt.toDate(), { addSuffix: true }) : 'Just now'}</span>
+                              <Link href={`/feed?authorId=${user.uid}`} className="text-[8px] font-black uppercase text-orange-500 hover:underline">View Post</Link>
                             </div>
                           </div>
                         ))}
                       </div>
                     ) : (
-                      <div className="text-center py-16 opacity-30 italic text-[10px] font-black uppercase tracking-widest">No activity recorded.</div>
+                      <div className="text-center py-16 opacity-30 italic text-[8px] font-black uppercase tracking-widest">No activity recorded.</div>
                     )}
                   </div>
                 </CardContent>
@@ -487,8 +481,8 @@ export default function ExpertDashboardPage() {
             ) : (
               <Card className="border-none bg-[#24262d] rounded-[2rem] sm:rounded-[3rem] overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-300">
                 <CardHeader className="flex flex-row items-center justify-between bg-white/5 border-b border-white/5 p-6 sm:p-8">
-                  <CardTitle className="text-xl sm:text-2xl font-black text-white uppercase italic">Draft Update</CardTitle>
-                  <Button variant="ghost" size="sm" onClick={() => setShowPostForm(false)} className="rounded-xl uppercase font-black text-[10px] tracking-widest">Discard</Button>
+                  <CardTitle className="text-lg sm:text-2xl font-black text-white uppercase italic">Draft Update</CardTitle>
+                  <Button variant="ghost" size="sm" onClick={() => setShowPostForm(false)} className="rounded-xl uppercase font-bold text-[8px] tracking-widest">Discard</Button>
                 </CardHeader>
                 <CardContent className="p-6 sm:p-10">
                   <PostForm form={postForm} onSubmit={onPostSubmit} isSubmitting={isSubmittingPost} />
@@ -501,41 +495,41 @@ export default function ExpertDashboardPage() {
             <Card className="border-none bg-[#24262d] rounded-[2rem] sm:rounded-[3rem] overflow-hidden shadow-2xl p-6 sm:p-10">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {/* Standard Plan */}
-                <div className={cn("p-8 rounded-[2rem] border-2 transition-all", (userProfile.tier === 'Standard' || !userProfile.tier) ? "border-orange-500 bg-orange-500/5 shadow-2xl" : "border-white/5 bg-[#1a1c23]")}>
-                  <h3 className="text-xl sm:text-2xl font-black text-white mb-1 uppercase italic tracking-tight text-center">Standard</h3>
-                  <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground text-center mb-8">ENTRY LEVEL</p>
-                  <ul className="space-y-4 mb-10 text-[10px] font-black uppercase tracking-tight text-white/70">
-                    <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-green-500" /> Basic Profile Listing</li>
-                    <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-green-500" /> 3 Portfolio Image Slots</li>
+                <div className={cn("p-6 rounded-2xl border-2 transition-all", (userProfile.tier === 'Standard' || !userProfile.tier) ? "border-orange-500 bg-orange-500/5 shadow-2xl" : "border-white/5 bg-[#1a1c23]")}>
+                  <h3 className="text-lg sm:text-2xl font-black text-white mb-1 uppercase italic tracking-tight text-center">Standard</h3>
+                  <p className="text-[8px] font-black uppercase tracking-widest text-muted-foreground text-center mb-8">ENTRY LEVEL</p>
+                  <ul className="space-y-4 mb-10 text-[9px] font-bold uppercase tracking-tight text-white/70">
+                    <li className="flex items-center gap-2"><CheckCircle2 className="h-3.5 w-3.5 text-green-500" /> Basic Profile Listing</li>
+                    <li className="flex items-center gap-2"><CheckCircle2 className="h-3.5 w-3.5 text-green-500" /> 3 Portfolio Image Slots</li>
                   </ul>
-                  <Button disabled className="w-full rounded-xl bg-white/5 text-muted-foreground font-black uppercase text-[10px]">Current Plan</Button>
+                  <Button disabled className="w-full rounded-xl bg-white/5 text-muted-foreground font-bold uppercase text-[9px] h-10">Current Plan</Button>
                 </div>
 
                 {/* Premier Plan */}
-                <div className={cn("p-8 rounded-[2rem] border-2 transition-all relative overflow-hidden", userProfile.tier === 'Premier' ? "border-orange-500 bg-orange-500/5 shadow-2xl scale-105" : "border-white/5 bg-[#1a1c23]")}>
-                  <div className="absolute top-0 right-0 p-2 bg-orange-500 text-white font-black text-[8px] uppercase tracking-widest -rotate-45 translate-x-4 translate-y-2">MOST POPULAR</div>
-                  <h3 className="text-xl sm:text-2xl font-black text-white mb-1 uppercase italic tracking-tight text-center">Premier</h3>
-                  <p className="text-[9px] font-black uppercase tracking-widest text-orange-500 text-center mb-8">POWER PROFESSIONAL</p>
-                  <ul className="space-y-4 mb-10 text-[10px] font-black uppercase tracking-tight text-white/70">
-                    <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-green-500" /> High Search Priority</li>
-                    <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-green-500" /> 6 Portfolio Image Slots</li>
-                    <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-green-500" /> AI Bio Generator</li>
+                <div className={cn("p-6 rounded-2xl border-2 transition-all relative overflow-hidden", userProfile.tier === 'Premier' ? "border-orange-500 bg-orange-500/5 shadow-2xl scale-105" : "border-white/5 bg-[#1a1c23]")}>
+                  <div className="absolute top-0 right-0 p-1.5 bg-orange-500 text-white font-black text-[7px] uppercase tracking-widest -rotate-45 translate-x-4 translate-y-1">MOST POPULAR</div>
+                  <h3 className="text-lg sm:text-2xl font-black text-white mb-1 uppercase italic tracking-tight text-center">Premier</h3>
+                  <p className="text-[8px] font-black uppercase tracking-widest text-orange-500 text-center mb-8">POWER PROFESSIONAL</p>
+                  <ul className="space-y-4 mb-10 text-[9px] font-bold uppercase tracking-tight text-white/70">
+                    <li className="flex items-center gap-2"><CheckCircle2 className="h-3.5 w-3.5 text-green-500" /> High Search Priority</li>
+                    <li className="flex items-center gap-2"><CheckCircle2 className="h-3.5 w-3.5 text-green-500" /> 6 Portfolio Image Slots</li>
+                    <li className="flex items-center gap-2"><CheckCircle2 className="h-3.5 w-3.5 text-green-500" /> AI Bio Generator</li>
                   </ul>
-                  <Button className="w-full rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-black uppercase text-[10px]" asChild>
+                  <Button className="w-full rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold uppercase text-[9px] h-10" asChild>
                     <Link href="/payment/premier">Upgrade Now</Link>
                   </Button>
                 </div>
 
                 {/* Super Premier Plan */}
-                <div className={cn("p-8 rounded-[2rem] border-2 transition-all", userProfile.tier === 'Super Premier' ? "border-blue-500 bg-blue-500/5 shadow-2xl scale-105" : "border-white/5 bg-[#1a1c23]")}>
-                  <h3 className="text-xl sm:text-2xl font-black text-white mb-1 uppercase italic tracking-tight text-center">Super</h3>
-                  <p className="text-[9px] font-black uppercase tracking-widest text-blue-500 text-center mb-8">ELITE EXECUTIVE</p>
-                  <ul className="space-y-4 mb-10 text-[10px] font-black uppercase tracking-tight text-white/70">
-                    <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-green-500" /> Max Search Exposure</li>
-                    <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-green-500" /> 9 Portfolio Image Slots</li>
-                    <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-green-500" /> Homepage Carousel</li>
+                <div className={cn("p-6 rounded-2xl border-2 transition-all", userProfile.tier === 'Super Premier' ? "border-blue-500 bg-blue-500/5 shadow-2xl scale-105" : "border-white/5 bg-[#1a1c23]")}>
+                  <h3 className="text-lg sm:text-2xl font-black text-white mb-1 uppercase italic tracking-tight text-center">Super</h3>
+                  <p className="text-[8px] font-black uppercase tracking-widest text-blue-500 text-center mb-8">ELITE EXECUTIVE</p>
+                  <ul className="space-y-4 mb-10 text-[9px] font-bold uppercase tracking-tight text-white/70">
+                    <li className="flex items-center gap-2"><CheckCircle2 className="h-3.5 w-3.5 text-green-500" /> Max Search Exposure</li>
+                    <li className="flex items-center gap-2"><CheckCircle2 className="h-3.5 w-3.5 text-green-500" /> 9 Portfolio Image Slots</li>
+                    <li className="flex items-center gap-2"><CheckCircle2 className="h-3.5 w-3.5 text-green-500" /> Homepage Carousel</li>
                   </ul>
-                  <Button className="w-full rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-black uppercase text-[10px]" asChild>
+                  <Button className="w-full rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold uppercase text-[9px] h-10" asChild>
                     <Link href="/payment/super-premier">Unlock Elite</Link>
                   </Button>
                 </div>
@@ -549,22 +543,22 @@ export default function ExpertDashboardPage() {
           <DialogContent className="max-w-md rounded-[2rem] border-none bg-[#1a1c23] text-white p-8">
               <DialogHeader className="items-center text-center">
                   <div className="p-4 bg-orange-500/10 rounded-full w-fit mb-4"><EyeOff className="text-orange-500 h-10 w-10" /></div>
-                  <DialogTitle className="text-2xl sm:text-3xl font-black uppercase italic">Hide Profile</DialogTitle>
+                  <DialogTitle className="text-xl sm:text-3xl font-black uppercase italic">Hide Profile</DialogTitle>
                   <UiDialogDescription className="text-muted-foreground font-medium pt-2">Temporarily remove your card from public search results.</UiDialogDescription>
               </DialogHeader>
               <div className="grid grid-cols-2 gap-3 py-8">
-                  <Button variant="secondary" className="h-14 font-black rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 uppercase text-[10px]" onClick={() => handleHideProfile(1)}>1 Hour</Button>
-                  <Button variant="secondary" className="h-14 font-black rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 uppercase text-[10px]" onClick={() => handleHideProfile(24)}>1 Day</Button>
-                  <Button variant="secondary" className="h-14 font-black rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 uppercase text-[10px]" onClick={() => handleHideProfile(72)}>3 Days</Button>
-                  <Button variant="secondary" className="h-14 font-black rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 uppercase text-[10px]" onClick={() => handleHideProfile(168)}>1 Week</Button>
+                  <Button variant="secondary" className="h-12 font-bold rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 uppercase text-[9px]" onClick={() => handleHideProfile(1)}>1 Hour</Button>
+                  <Button variant="secondary" className="h-12 font-bold rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 uppercase text-[9px]" onClick={() => handleHideProfile(24)}>1 Day</Button>
+                  <Button variant="secondary" className="h-12 font-bold rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 uppercase text-[9px]" onClick={() => handleHideProfile(72)}>3 Days</Button>
+                  <Button variant="secondary" className="h-12 font-bold rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 uppercase text-[9px]" onClick={() => handleHideProfile(168)}>1 Week</Button>
               </div>
-              <DialogFooter><Button variant="ghost" onClick={() => setIsHideDialogOpen(false)} className="w-full h-12 rounded-xl text-muted-foreground hover:text-white font-black uppercase text-[10px]">Cancel</Button></DialogFooter>
+              <DialogFooter><Button variant="ghost" onClick={() => setIsHideDialogOpen(false)} className="w-full h-10 rounded-xl text-muted-foreground hover:text-white font-bold uppercase text-[9px]">Cancel</Button></DialogFooter>
           </DialogContent>
       </Dialog>
 
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="max-w-3xl overflow-y-auto max-h-[90vh] rounded-[2rem] border-none bg-[#1a1c23] p-8 shadow-2xl">
-          <DialogHeader className="mb-6"><DialogTitle className="text-2xl sm:text-3xl font-black text-white uppercase italic tracking-tight">Edit Expert Profile</DialogTitle></DialogHeader>
+          <DialogHeader className="mb-6"><DialogTitle className="text-xl sm:text-3xl font-black text-white uppercase italic tracking-tight">Edit Expert Profile</DialogTitle></DialogHeader>
           <div className="p-4">{userProfile && <EditProfileForm userProfile={userProfile as any} onSuccess={() => setIsEditDialogOpen(false)} />}</div>
         </DialogContent>
       </Dialog>
