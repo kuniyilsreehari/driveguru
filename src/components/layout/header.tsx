@@ -16,7 +16,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { LayoutDashboard, Home, Award, Briefcase, Moon, Sun, Rss, Users, BookOpen, Bell, CheckCircle2, Loader2, Menu, Search } from 'lucide-react';
+import { LayoutDashboard, Home, Award, Briefcase, Moon, Sun, Rss, Users, BookOpen, Bell, CheckCircle2, Loader2, Menu, Search, ShieldCheck, Lock, Info, Cookie, ChevronRight } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, useMemo } from 'react';
 import { useTheme } from 'next-themes';
@@ -44,6 +44,50 @@ const navItems = [
   { label: 'Jobs', href: '/vacancies', icon: Briefcase },
   { label: 'Featured', href: '/featured-experts', icon: Award },
 ];
+
+function SiteInfoPopover() {
+    return (
+        <Popover>
+            <PopoverTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:bg-white/5 group">
+                    <Lock className="h-3.5 w-3.5 text-green-500/70 group-hover:text-green-500 transition-colors" />
+                </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-72 p-0 bg-[#24262d] border-white/10 rounded-3xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200" align="start" sideOffset={10}>
+                <div className="p-5 border-b border-white/5 bg-white/5">
+                    <div className="flex items-center gap-3 mb-1">
+                        <ShieldCheck className="h-5 w-5 text-green-500" />
+                        <h4 className="font-black text-white text-sm uppercase italic tracking-widest">Connection is secure</h4>
+                    </div>
+                    <p className="text-[10px] text-muted-foreground leading-relaxed">Your information (for example, passwords or credit card numbers) is private when it is sent to this site.</p>
+                </div>
+                <div className="p-2">
+                    <Button variant="ghost" className="w-full justify-start h-12 rounded-xl hover:bg-white/5 px-3">
+                        <Cookie className="h-4 w-4 mr-3 text-muted-foreground" />
+                        <div className="text-left">
+                            <p className="text-[11px] font-black text-white uppercase tracking-tight">Cookies and site data</p>
+                            <p className="text-[9px] text-muted-foreground">Managing local preferences</p>
+                        </div>
+                        <ChevronRight className="ml-auto h-3 w-3 text-muted-foreground/30" />
+                    </Button>
+                    <Link href="/terms">
+                        <Button variant="ghost" className="w-full justify-start h-12 rounded-xl hover:bg-white/5 px-3">
+                            <Info className="h-4 w-4 mr-3 text-muted-foreground" />
+                            <div className="text-left">
+                                <p className="text-[11px] font-black text-white uppercase tracking-tight">About DriveGuru</p>
+                                <p className="text-[9px] text-muted-foreground">Perspectives and source info</p>
+                            </div>
+                            <ChevronRight className="ml-auto h-3 w-3 text-muted-foreground/30" />
+                        </Button>
+                    </Link>
+                </div>
+                <div className="p-4 bg-white/5 text-center">
+                    <p className="text-[8px] font-black text-orange-500/50 uppercase tracking-[0.2em]">Verified Secure by Firebase</p>
+                </div>
+            </PopoverContent>
+        </Popover>
+    );
+}
 
 function NotificationCenter() {
     const { user } = useUser();
@@ -152,13 +196,14 @@ export function Header() {
   return (
     <header className="sticky top-0 z-50 w-full bg-[#1a1c23]/95 backdrop-blur-xl border-b border-white/5">
       <div className="container flex h-16 items-center justify-between px-4 max-w-7xl">
-        <div className="flex items-center gap-2 sm:gap-4">
+        <div className="flex items-center gap-1 sm:gap-2">
             <Link href="/" className="flex items-center gap-2">
                 <div className="bg-orange-500/10 p-1.5 rounded-lg border border-orange-500/20">
                     <Icons.logo className="h-6 w-6 text-orange-500" />
                 </div>
                 <span className="hidden sm:inline-block font-black text-xl tracking-tighter text-white uppercase italic">DriveGuru</span>
             </Link>
+            <SiteInfoPopover />
         </div>
 
         <nav className="hidden lg:flex items-center gap-1">
