@@ -329,12 +329,16 @@ function HomePageContent() {
 
                 <main className="space-y-8 sm:space-y-12">
                     <section className="bg-[#24262d] rounded-[2rem] p-6 sm:p-8 shadow-2xl overflow-hidden border border-white/5 relative">
-                        <div className="mb-6">
+                        {/* Dot Pattern Model Background */}
+                        <div className="absolute inset-0 opacity-[0.03] pointer-events-none" 
+                             style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
+                        
+                        <div className="mb-6 relative z-10">
                             <h2 className="text-xl sm:text-3xl font-black text-white uppercase italic tracking-tight">Top Rated Experts</h2>
                             <p className="text-[8px] sm:text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">PREMIUM NETWORK SUGGESTIONS</p>
                         </div>
 
-                        <div className="relative group mb-6">
+                        <div className="relative group mb-6 z-10">
                             <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-orange-500 transition-colors" />
                             <Input 
                                 placeholder="Filter suggestions..." 
@@ -344,7 +348,7 @@ function HomePageContent() {
                             />
                         </div>
 
-                        <div className="relative group/carousel">
+                        <div className="relative group/carousel z-10">
                             <div 
                                 ref={carouselRef}
                                 className="flex gap-4 sm:gap-6 overflow-x-auto pb-6 pt-2 scrollbar-hide snap-x px-1"
@@ -355,7 +359,7 @@ function HomePageContent() {
                                     ))
                                 ) : filteredTopExperts.length > 0 ? (
                                     filteredTopExperts.map(expert => (
-                                        <Card key={expert.id} className="min-w-[200px] sm:min-w-[240px] max-w-[240px] bg-[#1a1c23] border-none flex flex-col items-center p-6 text-center rounded-[2rem] snap-start transition-all hover:scale-[1.05] group shadow-xl relative overflow-hidden">
+                                        <Card key={expert.id} className="min-w-[200px] sm:min-w-[240px] max-w-[240px] bg-[#1a1c23]/80 backdrop-blur-sm border-none flex flex-col items-center p-6 text-center rounded-[2rem] snap-start transition-all hover:scale-[1.05] group shadow-xl relative overflow-hidden">
                                             <div className="absolute inset-0 bg-gradient-to-b from-orange-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                                             <div className="relative mb-4 z-10">
                                                 <Avatar className="h-16 w-16 sm:h-24 sm:w-24 border-4 border-white/10 group-hover:border-orange-500/50 transition-colors duration-500 shadow-2xl">
@@ -373,7 +377,7 @@ function HomePageContent() {
                                             <p className="font-black text-white text-base sm:text-xl line-clamp-1 mb-1 tracking-tight uppercase italic z-10">{expert.firstName} {expert.lastName}</p>
                                             <p className="text-[8px] sm:text-[10px] text-[#8a92a6] uppercase tracking-[0.2em] font-black mb-8 line-clamp-1 h-4 z-10">{expert.profession || expert.role}</p>
                                             <Button 
-                                                className="w-full bg-orange-500 hover:bg-orange-600 text-white rounded-xl font-bold text-[9px] h-10 shadow-xl shadow-orange-500/20 active:scale-95 transition-transform z-10 uppercase tracking-widest"
+                                                className="w-full bg-orange-500 hover:bg-orange-600 text-white rounded-xl font-bold text-[9px] h-10 shadow-[0_10px_25px_-5px_rgba(249,115,22,0.4)] active:scale-95 transition-all z-10 uppercase tracking-widest border-none"
                                                 onClick={() => handleToggleFollow(expert.id)}
                                             >
                                                 {userProfile?.following?.includes(expert.id) ? 'Following' : 'Follow Expert'}
@@ -456,7 +460,7 @@ function HomePageContent() {
                                 <Button 
                                     onClick={handleAiSearch} 
                                     disabled={isParsingQuery} 
-                                    className="w-full h-16 rounded-2xl bg-orange-500 hover:bg-orange-600 font-black shadow-2xl shadow-orange-500/30 transition-all active:scale-95"
+                                    className="w-full h-16 rounded-2xl bg-orange-500 hover:bg-orange-600 font-black shadow-[0_10px_25px_-5px_rgba(249,115,22,0.4)] transition-all active:scale-95"
                                 >
                                     {isParsingQuery ? <Loader2 className="h-6 w-6 animate-spin" /> : <Search className="h-6 w-6 text-white" strokeWidth={3} />}
                                 </Button>
@@ -495,7 +499,7 @@ function HomePageContent() {
                                 </div>
                             </div>
 
-                            <Button size="lg" className="w-full h-20 rounded-[2rem] bg-orange-500 hover:bg-orange-600 text-white font-black text-lg sm:text-xl shadow-2xl shadow-orange-500/30 uppercase tracking-[0.2em] transition-all active:scale-95 group mt-4" onClick={handleSearch}>
+                            <Button size="lg" className="w-full h-20 rounded-[2rem] bg-orange-500 hover:bg-orange-600 text-white font-black text-lg sm:text-xl shadow-[0_15px_35px_-5px_rgba(249,115,22,0.4)] uppercase tracking-[0.2em] transition-all active:scale-95 group mt-4 border-none" onClick={handleSearch}>
                                 Find Professionals
                             </Button>
                         </CardContent>
