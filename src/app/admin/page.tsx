@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
@@ -8,7 +9,7 @@ import { useUser, useFirestore, useDoc, useMemoFirebase, useAuth, useCollection 
 import { updateDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, UserX, Crown, Sparkles, User as UserIcon, Save, Briefcase, Building, MessageSquare, Search, PlusCircle, Download, IndianRupee, Upload, HardDriveDownload, Megaphone, Rss, TrendingUp, PieChart, Activity, ChevronLeft, ChevronRight, Check, Gift, Phone, Eye, Layout, Hash, SortAsc, LayoutGrid, CheckCircle2, ShieldAlert, Link as LinkIcon, Video, Trophy, Zap, RotateCcw, AlertTriangle, Info } from 'lucide-react';
+import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, UserX, Crown, Sparkles, User as UserIcon, Save, Briefcase, Building, MessageSquare, Search, PlusCircle, Download, IndianRupee, Upload, HardDriveDownload, Megaphone, Rss, TrendingUp, PieChart, Activity, ChevronLeft, ChevronRight, Check, Gift, Phone, Eye, Layout, Hash, SortAsc, LayoutGrid, CheckCircle2, ShieldAlert, Link as LinkIcon, Video, Trophy, Zap, RotateCcw, AlertTriangle, Info, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -194,7 +195,7 @@ export default function AdminDashboardPage() {
   const [centralContactPhone, setCentralContactPhone] = useState("");
   const [isRecentProfessionalsEnabled, setIsRecentProfessionalsEnabled] = useState(true);
   const [publicApiKey, setPublicApiKey] = useState("");
-  const [referralPoints, setReferralPoints] = useState(100);
+  const [referralPoints, setReferralPoints] = useState(0); // Remove default 100
   const [homepageCategories, setHomepageCategories] = useState<HomepageCategory[]>([]);
   const [departments, setDepartments] = useState<string[]>([]);
   const [introVideoUrl, setIntroVideoUrl] = useState("");
@@ -252,7 +253,7 @@ export default function AdminDashboardPage() {
       setCentralContactPhone(appConfig.centralContactPhone || "");
       setIsRecentProfessionalsEnabled(appConfig.isRecentProfessionalsEnabled !== false);
       setPublicApiKey(appConfig.publicApiKey || "");
-      setReferralPoints(appConfig.referralRewardPoints || 100);
+      setReferralPoints(appConfig.referralRewardPoints || 0);
       setHomepageCategories(appConfig.homepageCategories || []);
       setDepartments(appConfig.departments || []);
       setIntroVideoUrl(appConfig.introVideoUrl || "");
@@ -1311,15 +1312,24 @@ export default function AdminDashboardPage() {
                     <CardHeader className="bg-white/5 border-b border-white/5 pb-6">
                         <div className="flex items-center gap-3">
                             <Gift className="h-6 w-6 text-orange-500" />
-                            <CardTitle className="text-xl font-black uppercase italic">Growth Engine</CardTitle>
+                            <CardTitle className="text-xl font-black uppercase italic tracking-tight">GROWTH ENGINE</CardTitle>
                         </div>
                         <CardDescription className="text-muted-foreground">Configure referral rewards and incentives.</CardDescription>
                     </CardHeader>
-                    <CardContent className="p-6 space-y-6">
-                        <div className="space-y-2">
-                            <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 ml-1">Points per Successful Join</Label>
-                            <Input type="number" value={referralPoints} onChange={e => setReferralPoints(Number(e.target.value))} className="h-12 bg-background border-none rounded-xl font-black text-xl text-white shadow-inner" />
-                            <p className="text-[9px] text-muted-foreground italic font-medium">This is the amount of 'Premium Credits' awarded to the referrer when a new user signs up with their code.</p>
+                    <CardContent className="p-6 space-y-8">
+                        <div className="space-y-4">
+                            <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">POINTS PER SUCCESSFUL JOIN</Label>
+                            <div className="bg-[#1a1c23] p-1 rounded-2xl shadow-inner">
+                                <Input 
+                                    type="number" 
+                                    value={referralPoints} 
+                                    onChange={e => setReferralPoints(Number(e.target.value))} 
+                                    className="h-14 bg-transparent border-none font-black text-xl text-white px-6 focus-visible:ring-0" 
+                                />
+                            </div>
+                            <p className="text-[10px] text-muted-foreground italic font-medium">
+                                This is the amount of 'Premium Credits' awarded to the referrer when a new user signs up with their code.
+                            </p>
                         </div>
                     </CardContent>
                 </Card>
