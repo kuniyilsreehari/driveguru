@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
@@ -1240,6 +1241,25 @@ export default function AdminDashboardPage() {
                 <Card className="border-none rounded-2xl overflow-hidden bg-card">
                     <CardHeader className="bg-white/5 border-b border-white/5 pb-6">
                         <div className="flex items-center gap-3">
+                            <Gift className="h-6 w-6 text-orange-500" />
+                            <CardTitle className="text-xl font-black uppercase italic">Growth Engine</CardTitle>
+                        </div>
+                        <CardDescription className="text-muted-foreground">Configure referral rewards and incentives.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="p-6 space-y-6">
+                        <div className="space-y-2">
+                            <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Points per Successful Join</Label>
+                            <Input type="number" value={referralPoints} onChange={e => setReferralPoints(Number(e.target.value))} className="h-12 bg-background border-none rounded-xl font-black text-xl text-white" />
+                            <p className="text-[9px] text-muted-foreground italic">This is the amount of 'Premium Credits' awarded to the referrer when a new user signs up with their code.</p>
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Card className="border-none rounded-2xl overflow-hidden bg-card">
+                    <CardHeader className="bg-white/5 border-b border-white/5 pb-6">
+                        <div className="flex items-center gap-3">
                             <Megaphone className="h-6 w-6 text-orange-500" />
                             <CardTitle className="text-xl font-black uppercase italic">Announcements</CardTitle>
                         </div>
@@ -1252,9 +1272,7 @@ export default function AdminDashboardPage() {
                         <Textarea value={announcementText} onChange={(e) => setAnnouncementText(e.target.value)} className="bg-background border-none rounded-xl min-h-[80px]" placeholder="Breaking news text here..." />
                     </CardContent>
                 </Card>
-            </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <Card className="border-none rounded-2xl overflow-hidden bg-card">
                     <CardHeader className="bg-white/5 border-b border-white/5 pb-6">
                         <div className="flex items-center gap-3">
@@ -1270,7 +1288,9 @@ export default function AdminDashboardPage() {
                         </div>
                     </CardContent>
                 </Card>
+            </div>
 
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <Card className="border-none rounded-2xl overflow-hidden bg-card">
                     <CardHeader className="bg-white/5 border-b border-white/5 pb-6">
                         <div className="flex items-center gap-3">
