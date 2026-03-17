@@ -39,6 +39,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
+  DialogFooter,
 } from '@/components/ui/dialog';
 import {
   Select,
@@ -163,6 +164,7 @@ export default function AdminDashboardPage() {
   const [isExporting, setIsExporting] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const [isResettingReferrals, setIsResettingReferrals] = useState(false);
+  const [isUpdatingJoins, setIsUpdatingJoins] = useState(false);
   const [selectedUser, setSelectedUser] = useState<ExpertUser | null>(null);
   const [selectedVacancy, setSelectedVacancy] = useState<Vacancy | null>(null);
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
@@ -171,6 +173,8 @@ export default function AdminDashboardPage() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isPostDeleteDialogOpen, setIsPostDeleteDialogOpen] = useState(false);
   const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
+  const [isReferralStatsOpen, setIsReferralStatsOpen] = useState(false);
+  const [manualJoins, setManualJoins] = useState(0);
   const [userSearchQuery, setUserSearchQuery] = useState('');
   const [userFilter, setUserFilter] = useState<'all' | 'verified' | 'unverified' | 'premier' | 'super' | 'referrers'>('all');
 
@@ -408,6 +412,22 @@ export default function AdminDashboardPage() {
     } finally {
         setIsResettingReferrals(false);
         setIsResetConfirmOpen(false);
+    }
+  }
+
+  const handleUpdateReferralStats = async () => {
+    if (!selectedUser || !firestore) return;
+    setIsUpdatingJoins(true);
+    try {
+        await updateDocumentNonBlocking(doc(firestore, 'users', selectedUser.id), {
+            referralCount: manualJoins
+        });
+        toast({ title: "Referral Stats Modified", description: "The professional's credits and score will recalculate automatically." });
+        setIsReferralStatsOpen(false);
+    } catch (e) {
+        toast({ variant: "destructive", title: "Update Failed" });
+    } finally {
+        setIsUpdatingJoins(false);
     }
   }
 
@@ -819,6 +839,7 @@ export default function AdminDashboardPage() {
                                                                 <DropdownMenuContent align="end" className="bg-[#24262d] text-white border-white/10 rounded-xl shadow-2xl p-1">
                                                                     <DropdownMenuItem onClick={() => router.push(`/expert/${u.id}`)} className="rounded-lg h-10"><Eye className="mr-2 h-4 w-4 text-orange-500" /> View Profile</DropdownMenuItem>
                                                                     <DropdownMenuItem onClick={() => { setSelectedUser(u); setIsEditDialogOpen(true); }} className="rounded-lg h-10"><Edit className="mr-2 h-4 w-4" /> Edit Profile</DropdownMenuItem>
+                                                                    <DropdownMenuItem onClick={() => { setSelectedUser(u); setManualJoins(u.referralCount || 0); setIsReferralStatsOpen(true); }} className="rounded-lg h-10"><Zap className="mr-2 h-4 w-4 text-orange-500" /> Adjust Referral Stats</DropdownMenuItem>
                                                                     <DropdownMenuSub>
                                                                         <DropdownMenuSubTrigger className="rounded-lg h-10"><Crown className="mr-2 h-4 w-4" /> Change Tier</DropdownMenuSubTrigger>
                                                                         <DropdownMenuPortal>
@@ -1443,6 +1464,40 @@ export default function AdminDashboardPage() {
             <DialogTitle className="text-3xl font-black uppercase italic">Modify Expert Profile</DialogTitle>
           </DialogHeader>
           {selectedUser && <EditProfileForm userProfile={selectedUser as any} isAdmin onSuccess={() => setIsEditDialogOpen(false)} />}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isReferralStatsOpen} onOpenChange={setIsReferralStatsOpen}>
+        <DialogContent className="max-w-md rounded-[2rem] border-none bg-background text-white shadow-2xl p-8">
+          <DialogHeader className="items-center text-center">
+            <div className="p-4 bg-orange-500/10 rounded-full w-fit mb-4"><Zap className="h-10 w-10 text-orange-500" /></div>
+            <DialogTitle className="text-3xl font-black uppercase italic tracking-tighter">Adjust Network Stats</DialogTitle>
+            <DialogDescription className="text-muted-foreground font-medium pt-2">
+                Manually setting the **Successful Joins** for {selectedUser?.firstName}.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-8 space-y-6">
+              <div className="space-y-2">
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 ml-1">Current Joins</Label>
+                  <Input 
+                    type="number" 
+                    value={manualJoins} 
+                    onChange={e => setManualJoins(Number(e.target.value))}
+                    className="h-16 bg-white/5 border-none rounded-2xl font-black text-3xl text-orange-500 text-center shadow-inner" 
+                  />
+              </div>
+              <div className="bg-white/5 p-4 rounded-xl border border-white/5 space-y-1">
+                  <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">Calculated Premium Credits</p>
+                  <p className="text-xl font-black text-white">{manualJoins * referralPoints} PTS</p>
+                  <p className="text-[8px] text-muted-foreground italic">Based on {referralPoints} PTS per join engine setting.</p>
+              </div>
+          </div>
+          <DialogFooter className="flex-col gap-3 sm:flex-col">
+            <Button onClick={handleUpdateReferralStats} disabled={isUpdatingJoins} className="w-full h-14 rounded-xl bg-orange-500 hover:bg-orange-600 font-black text-lg uppercase tracking-widest shadow-xl shadow-orange-500/20">
+                {isUpdatingJoins ? <Loader className="animate-spin h-5 w-5" /> : "Save Metrics"}
+            </Button>
+            <Button variant="ghost" onClick={() => setIsReferralStatsOpen(false)} className="w-full h-10 rounded-xl text-muted-foreground font-bold uppercase text-[10px] tracking-widest">Discard</Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 
