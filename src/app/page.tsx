@@ -1,17 +1,14 @@
 
 'use client';
 
-import { Suspense, useState, useEffect, useMemo, useRef } from 'react';
+import { Suspense, useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { Briefcase, Building, ChevronDown, LocateIcon, MapPin, Search, Loader2, UserCheck, Crown, Sparkles, Bot, Lock, Users, User, Check, GraduationCap, UserPlus, ChevronLeft, ChevronRight, Filter, ShieldAlert } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Slider } from "@/components/ui/slider"
 import { Badge } from "@/components/ui/badge"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { Icons } from "@/components/icons"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { useFirestore, useCollection, useDoc, useMemoFirebase, useUser, updateDocumentNonBlocking } from '@/firebase';
@@ -43,13 +40,11 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 
-
 type AppConfig = {
     featuredExpertsLimit?: number;
     homepageCategories?: HomepageCategory[];
     isRecentProfessionalsEnabled?: boolean;
 };
-
 
 function HomePageContent() {
     const [searchQuery, setSearchQuery] = useState('');
@@ -95,7 +90,6 @@ function HomePageContent() {
     const { data: appConfig, isLoading: isAppConfigLoading } = useDoc<AppConfig>(appConfigDocRef);
     const homepageCategories = appConfig?.homepageCategories || [];
     const isRecentProfessionalsEnabled = appConfig?.isRecentProfessionalsEnabled !== false;
-
 
     const topExpertsQuery = useMemoFirebase(() => {
         if (!firestore) return null;
@@ -145,7 +139,6 @@ function HomePageContent() {
     const recentExperts = useMemo(() => {
         return filterHidden(rawRecentExperts);
     }, [rawRecentExperts]);
-
 
     const getCurrentPosition = (): Promise<GeolocationPosition> => {
         return new Promise((resolve, reject) => {
@@ -323,10 +316,8 @@ function HomePageContent() {
             <WelcomeRedirect />
             <div className="max-w-4xl mx-auto p-4 sm:p-8">
                 <header className="text-center py-6 sm:py-12">
+                    <p className="text-[10px] font-black uppercase tracking-[0.4em] text-orange-500/60 mb-2">DIRECT PROFESSIONAL CONNECTIONS</p>
                     <h1 className="text-4xl sm:text-7xl font-black text-white tracking-tighter uppercase italic">DriveGuru</h1>
-                    <p className="mt-2 text-[8px] sm:text-sm font-black uppercase tracking-[0.2em] sm:tracking-[0.3em] text-orange-500/50 max-w-2xl mx-auto">
-                        DIRECT PROFESSIONAL CONNECTIONS
-                    </p>
                 </header>
 
                 <main className="space-y-8 sm:space-y-12">
@@ -338,16 +329,15 @@ function HomePageContent() {
                                 backgroundSize: '32px 32px' 
                              }} />
                         
-                        <div className="mb-10 relative z-10">
-                            <h2 className="text-3xl sm:text-5xl font-black text-white uppercase italic tracking-tight">Top Rated Experts</h2>
-                            <p className="text-[10px] sm:text-xs font-black uppercase tracking-[0.3em] text-orange-500/80 mt-1">PREMIUM NETWORK SUGGESTIONS</p>
+                        <div className="mb-10 relative z-10 text-center sm:text-left">
+                            <h2 className="text-3xl sm:text-5xl font-black text-white uppercase italic tracking-tight">TOP RATED EXPERTS</h2>
+                            <p className="text-[10px] sm:text-xs font-black uppercase tracking-[0.3em] text-orange-500 mt-1">PREMIUM NETWORK SUGGESTIONS</p>
                         </div>
 
                         <div className="relative group mb-12 z-10">
-                            <Search className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground group-focus-within:text-orange-500 transition-colors" />
                             <Input 
                                 placeholder="Filter suggestions..." 
-                                className="pl-14 h-16 bg-[#1a1c23]/80 backdrop-blur-md border-none rounded-2xl text-base sm:text-xl placeholder:text-muted-foreground/30 focus-visible:ring-2 focus-visible:ring-orange-500 transition-all shadow-inner text-white font-bold" 
+                                className="h-16 bg-[#1a1c23] border-none rounded-2xl text-base sm:text-xl placeholder:text-muted-foreground/30 focus-visible:ring-2 focus-visible:ring-orange-500 transition-all shadow-inner text-white font-bold px-8" 
                                 value={moduleSearchQuery} 
                                 onChange={(e) => setModuleSearchQuery(e.target.value)} 
                             />
@@ -355,48 +345,47 @@ function HomePageContent() {
 
                         <div className="relative z-10">
                             <Carousel opts={{ align: "start", loop: true }} className="w-full">
-                                <CarouselContent className="-ml-4 sm:-ml-6">
+                                <CarouselContent className="-ml-4">
                                     {isLoadingTopExperts ? (
-                                        [...Array(3)].map((_, i) => (
-                                            <CarouselItem key={i} className="pl-4 sm:pl-6 basis-full sm:basis-1/2 md:basis-1/3">
-                                                <div className="w-full h-[420px] bg-[#1a1c23] rounded-[2.5rem] animate-pulse" />
+                                        [...Array(1)].map((_, i) => (
+                                            <CarouselItem key={i} className="pl-4 basis-full">
+                                                <div className="w-full h-[450px] bg-[#1a1c23] rounded-[2.5rem] animate-pulse" />
                                             </CarouselItem>
                                         ))
                                     ) : filteredTopExperts.length > 0 ? (
                                         filteredTopExperts.map(expert => (
-                                            <CarouselItem key={expert.id} className="pl-4 sm:pl-6 basis-full sm:basis-1/2 md:basis-1/3">
-                                                <Card className="w-full bg-[#1a1c23]/95 backdrop-blur-xl border-none flex flex-col items-center p-10 text-center rounded-[2.5rem] transition-all hover:scale-[1.03] group shadow-2xl relative overflow-hidden h-full">
-                                                    <div className="absolute inset-0 bg-gradient-to-b from-orange-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                                                    
-                                                    <div className="relative mb-8 z-10">
-                                                        <div className="absolute -inset-4 bg-orange-500/5 rounded-full blur-2xl group-hover:bg-orange-500/10 transition-colors" />
-                                                        <Avatar className="h-24 w-24 sm:h-28 sm:w-28 border-4 border-white/10 group-hover:border-orange-500/50 transition-all duration-500 shadow-[0_0_40px_rgba(0,0,0,0.5)]">
-                                                            <AvatarImage src={expert.photoUrl} className="object-cover" />
-                                                            <AvatarFallback className="bg-[#24262d] text-orange-500 text-3xl sm:text-4xl font-black">
-                                                                {expert.firstName?.[0]}
-                                                            </AvatarFallback>
-                                                        </Avatar>
-                                                        {expert.verified && (
-                                                            <div className="absolute -bottom-1 -right-1 bg-green-500 p-2 rounded-full border-4 border-[#1a1c23] shadow-lg">
-                                                                <UserCheck className="h-4 w-4 text-white" />
-                                                            </div>
-                                                        )}
-                                                    </div>
+                                            <CarouselItem key={expert.id} className="pl-4 basis-full">
+                                                <div className="flex justify-center w-full">
+                                                    <Card className="w-full max-w-[400px] bg-[#1a1c23] border-none flex flex-col items-center p-12 text-center rounded-[2.5rem] shadow-2xl relative overflow-hidden h-full">
+                                                        <div className="relative mb-10">
+                                                            <Avatar className="h-32 w-32 sm:h-40 sm:w-40 border-4 border-white/5 shadow-2xl">
+                                                                <AvatarImage src={expert.photoUrl} className="object-cover" />
+                                                                <AvatarFallback className="bg-[#24262d] text-orange-500 text-4xl sm:text-5xl font-black">
+                                                                    {expert.firstName?.[0]}
+                                                                </AvatarFallback>
+                                                            </Avatar>
+                                                            {expert.verified && (
+                                                                <div className="absolute -bottom-1 -right-1 bg-green-500 p-2.5 rounded-full border-4 border-[#1a1c23] shadow-lg">
+                                                                    <UserCheck className="h-5 w-5 text-white" />
+                                                                </div>
+                                                            )}
+                                                        </div>
 
-                                                    <h3 className="font-black text-white text-xl sm:text-2xl line-clamp-1 mb-1 tracking-tighter uppercase italic z-10 group-hover:text-orange-500 transition-colors">
-                                                        {truncateName(`${expert.firstName} ${expert.lastName}`)}
-                                                    </h3>
-                                                    <p className="text-[10px] sm:text-[11px] text-[#8a92a6] uppercase tracking-[0.3em] font-black mb-12 z-10 opacity-60">
-                                                        {expert.profession || expert.role}
-                                                    </p>
+                                                        <h3 className="font-black text-white text-3xl sm:text-4xl line-clamp-1 mb-2 tracking-tighter uppercase italic">
+                                                            {truncateName(`${expert.firstName} ${expert.lastName}`)}
+                                                        </h3>
+                                                        <p className="text-[10px] sm:text-[11px] text-muted-foreground uppercase tracking-[0.4em] font-black mb-12">
+                                                            {expert.profession || expert.role}
+                                                        </p>
 
-                                                    <Button 
-                                                        className="w-full bg-orange-500 hover:bg-orange-600 text-white rounded-2xl font-black text-[11px] h-14 shadow-[0_15px_35px_-5px_rgba(249,115,22,0.4)] active:scale-95 transition-all z-10 uppercase tracking-[0.2em] border-none mt-auto"
-                                                        onClick={() => handleToggleFollow(expert.id)}
-                                                    >
-                                                        {userProfile?.following?.includes(expert.id) ? 'Following' : 'Follow Expert'}
-                                                    </Button>
-                                                </Card>
+                                                        <Button 
+                                                            className="w-full bg-orange-500 hover:bg-orange-600 text-white rounded-2xl font-black text-xs sm:text-sm h-16 shadow-[0_15px_35px_-5px_rgba(249,115,22,0.4)] active:scale-95 transition-all uppercase tracking-[0.2em] border-none"
+                                                            onClick={() => handleToggleFollow(expert.id)}
+                                                        >
+                                                            {userProfile?.following?.includes(expert.id) ? 'FOLLOWING' : 'FOLLOW EXPERT'}
+                                                        </Button>
+                                                    </Card>
+                                                </div>
                                             </CarouselItem>
                                         ))
                                     ) : (
@@ -555,7 +544,7 @@ function HomePageContent() {
                         <div className="mt-24">
                             <div className="flex flex-col sm:flex-row items-center justify-between mb-12 gap-8">
                                 <div className="text-center sm:text-left">
-                                    <h2 className="text-3xl sm:text-5xl font-black text-white uppercase italic tracking-tight">Fresh Talent</h2>
+                                    <h2 className="text-3xl sm:text-5xl font-black text-white uppercase italic tracking-tight">Talent Registry</h2>
                                     <p className="text-[10px] sm:text-xs font-black uppercase tracking-[0.3em] text-orange-500/50 mt-1">NEW PROFESSIONALS</p>
                                 </div>
                                 <Button className="w-full sm:w-auto rounded-2xl bg-orange-500 hover:bg-orange-600 text-white font-black uppercase text-[11px] tracking-[0.2em] h-14 px-10 shadow-xl shadow-orange-500/20" asChild>
