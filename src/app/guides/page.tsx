@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useMemo, useState, useEffect } from 'react';
@@ -19,6 +18,13 @@ import { ShareDialog } from '@/components/share-dialog';
 
 type AppConfig = {
     introVideoUrl?: string;
+    videoResources?: string[];
+};
+
+type ResolvedVideo = {
+    url: string;
+    type: 'youtube' | 'direct' | 'error';
+    originalUrl: string;
 };
 
 export default function GuidesPage() {
@@ -27,56 +33,66 @@ export default function GuidesPage() {
   const appConfigDocRef = useMemoFirebase(() => doc(firestore, 'app_config', 'homepage'), [firestore]);
   const { data: appConfig } = useDoc<AppConfig>(appConfigDocRef);
 
-  const [resolvedUrl, setResolvedUrl] = useState<string | null>(null);
-  const [videoType, setVideoType] = useState<'youtube' | 'direct' | 'none' | 'error'>('none');
-  const [isResolving, setIsFetching] = useState(false);
+  const [resolvedVideos, setResolvedVideos] = useState<ResolvedVideo[]>([]);
+  const [isResolving, setIsResolving] = useState(false);
 
   useEffect(() => {
-    const url = appConfig?.introVideoUrl;
-    if (!url) {
-        setVideoType('none');
-        setResolvedUrl(null);
+    const urls = appConfig?.videoResources || [appConfig?.introVideoUrl].filter(Boolean) || [];
+    if (urls.length === 0) {
+        setResolvedVideos([]);
         return;
     }
 
-    // 1. Check for YouTube
-    const ytRegExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-    const ytMatch = url.match(ytRegExp);
-    if (ytMatch && ytMatch[2].length === 11) {
-        setVideoType('youtube');
-        setResolvedUrl(`https://www.youtube.com/embed/${ytMatch[2]}`);
-        return;
-    }
+    const resolveAll = async () => {
+        setIsResolving(true);
+        const resolved: ResolvedVideo[] = [];
 
-    // 2. Check for Firebase Storage (gs:// or common paths)
-    if (url.startsWith('gs://') || (!url.startsWith('http') && url.includes('_DRIVE'))) {
-        setIsFetching(true);
-        const storage = getStorage(firebaseApp);
-        const path = url.startsWith('gs://') ? url : `gs://${firebaseApp.options.storageBucket}/${url}`;
-        const storageRef = ref(storage, path);
-        getDownloadURL(storageRef)
-            .then((downloadUrl) => {
-                setVideoType('direct');
-                setResolvedUrl(downloadUrl);
-            })
-            .catch((err) => {
-                console.error("Failed to resolve storage URL", err);
-                setVideoType('error');
-            })
-            .finally(() => setIsFetching(false));
-        return;
-    }
+        for (const url of urls) {
+            if (!url) continue;
 
-    // 3. Assume direct video link if it ends in common extensions
-    const directExtensions = ['.mp4', '.webm', '.ogg', '.mov'];
-    if (directExtensions.some(ext => url.toLowerCase().includes(ext)) || url.includes('firebasestorage.googleapis.com')) {
-        setVideoType('direct');
-        setResolvedUrl(url);
-        return;
-    }
+            // 1. YouTube
+            const ytRegExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+            const ytMatch = url.match(ytRegExp);
+            if (ytMatch && ytMatch[2].length === 11) {
+                resolved.push({ 
+                    url: `https://www.youtube.com/embed/${ytMatch[2]}`, 
+                    type: 'youtube',
+                    originalUrl: url
+                });
+                continue;
+            }
 
-    setVideoType('none');
-  }, [appConfig?.introVideoUrl, firebaseApp]);
+            // 2. Storage
+            if (url.startsWith('gs://') || (!url.startsWith('http') && url.includes('_DRIVE'))) {
+                try {
+                    const storage = getStorage(firebaseApp);
+                    const path = url.startsWith('gs://') ? url : `gs://${firebaseApp.options.storageBucket}/${url}`;
+                    const storageRef = ref(storage, path);
+                    const downloadUrl = await getDownloadURL(storageRef);
+                    resolved.push({ url: downloadUrl, type: 'direct', originalUrl: url });
+                } catch (err) {
+                    console.error("Failed to resolve storage URL", url, err);
+                    resolved.push({ url: '', type: 'error', originalUrl: url });
+                }
+                continue;
+            }
+
+            // 3. Direct
+            const directExtensions = ['.mp4', '.webm', '.ogg', '.mov'];
+            if (directExtensions.some(ext => url.toLowerCase().includes(ext)) || url.includes('firebasestorage.googleapis.com')) {
+                resolved.push({ url: url, type: 'direct', originalUrl: url });
+                continue;
+            }
+
+            resolved.push({ url: '', type: 'error', originalUrl: url });
+        }
+
+        setResolvedVideos(resolved);
+        setIsResolving(false);
+    };
+
+    resolveAll();
+  }, [appConfig?.videoResources, appConfig?.introVideoUrl, firebaseApp]);
 
   return (
     <div className="min-h-screen bg-background p-4 sm:p-8">
@@ -98,60 +114,69 @@ export default function GuidesPage() {
         {isResolving ? (
             <Card className="rounded-[2rem] border-none bg-[#24262d] p-12 flex flex-col items-center justify-center gap-4">
                 <Loader2 className="h-8 w-8 animate-spin text-orange-500" />
-                <p className="text-sm font-bold text-muted-foreground uppercase tracking-widest">Resolving Video Link...</p>
+                <p className="text-sm font-bold text-muted-foreground uppercase tracking-widest">Building Resource Library...</p>
             </Card>
-        ) : videoType === 'error' ? (
+        ) : resolvedVideos.length > 0 ? (
+            <div className="space-y-8">
+                {resolvedVideos.map((video, index) => (
+                    <Card key={index} className="overflow-hidden border-2 border-primary/20 rounded-[2rem] shadow-2xl shadow-primary/5 bg-[#24262d] animate-in fade-in slide-in-from-bottom-4 duration-500" style={{ transitionDelay: `${index * 100}ms` }}>
+                        <CardHeader className="bg-white/5 border-b border-white/5 p-6 flex flex-row items-center justify-between">
+                            <div>
+                                <CardTitle className="flex items-center gap-3 text-2xl font-black text-white">
+                                    <PlayCircle className="h-6 w-6 text-orange-500" />
+                                    {index === 0 ? "Platform Introduction" : `Tutorial Resource #${index + 1}`}
+                                </CardTitle>
+                                <CardDescription className="text-muted-foreground font-medium">Watch this guide to learn how to make the most of DriveGuru.</CardDescription>
+                            </div>
+                            <ShareDialog shareDetails={{ type: 'group-post', title: 'DriveGuru Platform Guide', text: 'Check out this professional guide on DriveGuru.', url: video.url || '' }}>
+                                <Button variant="ghost" size="icon" className="rounded-full hover:bg-white/10 h-10 w-10">
+                                    <Share2 className="h-5 w-5 text-muted-foreground" />
+                                </Button>
+                            </ShareDialog>
+                        </CardHeader>
+                        <CardContent className="p-0">
+                            <div className="aspect-video w-full bg-black">
+                                {video.type === 'error' ? (
+                                    <div className="w-full h-full flex flex-col items-center justify-center gap-4 text-center p-8">
+                                        <AlertCircle className="h-12 w-12 text-red-500 opacity-20" />
+                                        <p className="text-sm font-black text-white/40 uppercase tracking-widest">Video Resource Unavailable</p>
+                                    </div>
+                                ) : video.type === 'youtube' ? (
+                                    <iframe
+                                        width="100%"
+                                        height="100%"
+                                        src={video.url}
+                                        title={`Guide #${index + 1}`}
+                                        frameBorder="0"
+                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                        allowFullScreen
+                                        className="block"
+                                    ></iframe>
+                                ) : (
+                                    <video 
+                                        controls 
+                                        controlsList="nodownload"
+                                        onContextMenu={(e) => e.preventDefault()}
+                                        className="w-full h-full"
+                                        src={video.url}
+                                    >
+                                        Your browser does not support the video tag.
+                                    </video>
+                                )}
+                            </div>
+                        </CardContent>
+                    </Card>
+                ))}
+            </div>
+        ) : (
             <Card className="rounded-[2rem] border-none bg-[#24262d] p-12 flex flex-col items-center justify-center gap-4 text-center">
-                <div className="bg-red-500/10 p-4 rounded-full">
-                    <AlertCircle className="h-10 w-10 text-red-500" />
+                <div className="bg-orange-500/10 p-4 rounded-full">
+                    <Video className="h-10 w-10 text-orange-500 opacity-20" />
                 </div>
-                <h3 className="text-xl font-black text-white uppercase italic">Video Link Expired or Not Found</h3>
-                <p className="text-sm text-muted-foreground max-w-sm">The provided Storage path could not be resolved. Please contact the administrator to update the introduction video.</p>
+                <h3 className="text-xl font-black text-white/40 uppercase italic">Library Empty</h3>
+                <p className="text-sm text-muted-foreground max-w-sm">No training videos have been published by the administration yet.</p>
             </Card>
-        ) : videoType !== 'none' && resolvedUrl ? (
-            <Card className="overflow-hidden border-2 border-primary/20 rounded-[2rem] shadow-2xl shadow-primary/5 bg-[#24262d]">
-                <CardHeader className="bg-white/5 border-b border-white/5 p-6 flex flex-row items-center justify-between">
-                    <div>
-                        <CardTitle className="flex items-center gap-3 text-2xl font-black text-white">
-                            <PlayCircle className="h-6 w-6 text-orange-500" />
-                            Platform Introduction
-                        </CardTitle>
-                        <CardDescription className="text-muted-foreground font-medium">Watch this guide to learn how to make the most of DriveGuru.</CardDescription>
-                    </div>
-                    <ShareDialog shareDetails={{ type: 'group-post', title: 'DriveGuru Platform Introduction', text: 'Check out this guide to master the DriveGuru platform.', url: typeof window !== 'undefined' ? window.location.href : '' }}>
-                        <Button variant="ghost" size="icon" className="rounded-full hover:bg-white/10 h-10 w-10">
-                            <Share2 className="h-5 w-5 text-muted-foreground" />
-                        </Button>
-                    </ShareDialog>
-                </CardHeader>
-                <CardContent className="p-0">
-                    <div className="aspect-video w-full bg-black">
-                        {videoType === 'youtube' ? (
-                            <iframe
-                                width="100%"
-                                height="100%"
-                                src={resolvedUrl}
-                                title="DriveGuru Platform Introduction"
-                                frameBorder="0"
-                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                allowFullScreen
-                                className="block"
-                            ></iframe>
-                        ) : (
-                            <video 
-                                controls 
-                                controlsList="nodownload"
-                                onContextMenu={(e) => e.preventDefault()}
-                                className="w-full h-full"
-                                src={resolvedUrl}
-                            >
-                                Your browser does not support the video tag.
-                            </video>
-                        )}
-                    </div>
-                </CardContent>
-            </Card>
-        ) : null}
+        )}
 
         <Card className="rounded-[2rem] border-none bg-[#24262d] shadow-xl overflow-hidden">
             <CardHeader className="bg-white/5 border-b border-white/5 p-8">

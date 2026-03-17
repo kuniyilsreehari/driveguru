@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
@@ -9,7 +8,7 @@ import { useUser, useFirestore, useDoc, useMemoFirebase, useAuth, useCollection 
 import { updateDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, UserX, Crown, Sparkles, User as UserIcon, Save, Briefcase, Building, MessageSquare, Search, PlusCircle, Download, IndianRupee, Upload, HardDriveDownload, Megaphone, Rss, TrendingUp, PieChart, Activity, ChevronLeft, ChevronRight, Check, Gift, Phone, Eye, Layout, Hash, SortAsc, LayoutGrid, CheckCircle2, ShieldAlert, Link as LinkIcon, Video, Trophy, Zap, RotateCcw, AlertTriangle, Info, X } from 'lucide-react';
+import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, UserX, Crown, Sparkles, User as UserIcon, Save, Briefcase, Building, MessageSquare, Search, PlusCircle, IndianRupee, Download, Upload, HardDriveDownload, Megaphone, Rss, TrendingUp, PieChart, Activity, ChevronLeft, ChevronRight, Check, Gift, Phone, Eye, Layout, Hash, SortAsc, LayoutGrid, CheckCircle2, ShieldAlert, Link as LinkIcon, Video, Trophy, Zap, RotateCcw, AlertTriangle, Info, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -150,6 +149,7 @@ type AppConfig = {
     premierPaymentLink?: string;
     superPremierPaymentLink?: string;
     introVideoUrl?: string;
+    videoResources?: string[];
 };
 
 export default function AdminDashboardPage() {
@@ -202,7 +202,7 @@ export default function AdminDashboardPage() {
   const [referralPoints, setReferralPoints] = useState(0); 
   const [homepageCategories, setHomepageCategories] = useState<HomepageCategory[]>([]);
   const [departments, setDepartments] = useState<string[]>([]);
-  const [introVideoUrl, setIntroVideoUrl] = useState("");
+  const [videoResources, setVideoResources] = useState<string[]>([]);
 
   const [hasSuperAdminClaim, setHasSuperAdminClaim] = useState(false);
 
@@ -260,19 +260,22 @@ export default function AdminDashboardPage() {
       setReferralPoints(appConfig.referralRewardPoints || 0);
       setHomepageCategories(appConfig.homepageCategories || []);
       setDepartments(appConfig.departments || []);
-      setIntroVideoUrl(appConfig.introVideoUrl || "");
+      
+      const initialVideos = appConfig.videoResources || [appConfig.introVideoUrl].filter(Boolean);
+      setVideoResources(initialVideos.length > 0 ? initialVideos : [""]);
     }
   }, [appConfig]);
 
   const stats = useMemo(() => {
     if (!users) return { total: 0, verified: 0, unverified: 0, premier: 0, super: 0, referrals: 0, referrers: 0 };
+    const totalJoins = users.reduce((sum, u) => sum + (u.referralCount || 0), 0);
     return {
         total: users.length,
         verified: users.filter(u => u.verified).length,
         unverified: users.filter(u => !u.verified).length,
         premier: users.filter(u => u.tier === 'Premier').length,
         super: users.filter(u => u.tier === 'Super Premier').length,
-        referrals: users.reduce((sum, u) => sum + ((u.referralCount || 0) * referralPoints), 0),
+        referrals: totalJoins * referralPoints,
         referrers: users.filter(u => (u.referralCount || 0) > 0).length,
     };
   }, [users, referralPoints]);
@@ -366,6 +369,7 @@ export default function AdminDashboardPage() {
     if (!appConfigDocRef) return;
     setIsSaving(true);
     try {
+      const cleanVideoResources = videoResources.filter(url => url.trim() !== "");
       await setDocumentNonBlocking(appConfigDocRef, {
         featuredExpertsLimit: featuredLimit,
         announcementText,
@@ -383,7 +387,8 @@ export default function AdminDashboardPage() {
         referralRewardPoints: referralPoints,
         homepageCategories,
         departments,
-        introVideoUrl,
+        videoResources: cleanVideoResources,
+        introVideoUrl: cleanVideoResources[0] || "", // For backward compatibility
       }, { merge: true });
       toast({ title: "Settings Published" });
     } finally {
@@ -594,6 +599,20 @@ export default function AdminDashboardPage() {
         }
     };
     reader.readAsDataURL(file);
+  };
+
+  const handleAddVideoLink = () => {
+    setVideoResources([...videoResources, ""]);
+  };
+
+  const handleRemoveVideoLink = (index: number) => {
+    setVideoResources(videoResources.filter((_, i) => i !== index));
+  };
+
+  const handleUpdateVideoLink = (index: number, value: string) => {
+    const updated = [...videoResources];
+    updated[index] = value;
+    setVideoResources(updated);
   };
 
   if (isUserLoading || isRoleLoading) return <div className="flex h-screen items-center justify-center"><Loader className="animate-spin text-orange-500" /></div>;
@@ -879,7 +898,7 @@ export default function AdminDashboardPage() {
                         <CardHeader className="bg-white/5 pb-6 border-b border-white/5">
                             <div className="flex items-center gap-3">
                                 <Trophy className="h-6 w-6 text-orange-500" />
-                                <div>
+                                /<div>
                                     <CardTitle className="text-2xl font-black uppercase italic">Professional Rankings</CardTitle>
                                     <CardDescription className="text-muted-foreground">Experts ranked by multiplication result (PTS × JOINS).</CardDescription>
                                 </div>
@@ -1375,16 +1394,54 @@ export default function AdminDashboardPage() {
 
                 <Card className="border-none rounded-2xl overflow-hidden bg-[#24262d]">
                     <CardHeader className="bg-white/5 border-b border-white/5 pb-6">
-                        <div className="flex items-center gap-3">
-                            <Video className="h-6 w-6 text-orange-500" />
-                            <CardTitle className="text-xl font-black uppercase italic">Video Resources</CardTitle>
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <Video className="h-6 w-6 text-orange-500" />
+                                <CardTitle className="text-xl font-black uppercase italic">Video Resources</CardTitle>
+                            </div>
+                            <Button 
+                                type="button" 
+                                size="sm" 
+                                variant="outline" 
+                                className="h-8 rounded-xl border-orange-500/20 text-orange-500 hover:bg-orange-500/10 font-black text-[9px] uppercase tracking-widest"
+                                onClick={handleAddVideoLink}
+                            >
+                                <PlusCircle className="mr-1 h-3.5 w-3.5" /> Add Link
+                            </Button>
                         </div>
                     </CardHeader>
-                    <CardContent className="p-6 space-y-4">
-                        <div className="space-y-2">
-                            <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Platform Introduction Video URL</Label>
-                            <Input value={introVideoUrl} onChange={(e) => setIntroVideoUrl(e.target.value)} className="h-12 bg-background border-none rounded-xl font-mono text-xs" placeholder="YouTube URL or Storage Path" />
-                            <p className="text-[9px] text-muted-foreground italic">Update the video shown on the Guides page.</p>
+                    <CardContent className="p-6 space-y-6">
+                        <div className="space-y-4">
+                            <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Platform Tutorial Library (URLs)</Label>
+                            <div className="space-y-3">
+                                {videoResources.map((url, index) => (
+                                    <div key={index} className="flex gap-2 group animate-in slide-in-from-left-2 duration-300">
+                                        <div className="relative flex-1">
+                                            <Input 
+                                                value={url} 
+                                                onChange={(e) => handleUpdateVideoLink(index, e.target.value)} 
+                                                className="h-12 bg-background border-none rounded-xl font-mono text-[10px] text-white/80 pr-10" 
+                                                placeholder="YouTube URL or Storage Path" 
+                                            />
+                                            <div className="absolute right-3 top-1/2 -translate-y-1/2 opacity-20">
+                                                <LinkIcon className="h-3.5 w-3.5" />
+                                            </div>
+                                        </div>
+                                        {videoResources.length > 1 && (
+                                            <Button 
+                                                type="button" 
+                                                variant="ghost" 
+                                                size="icon" 
+                                                className="h-12 w-12 rounded-xl text-red-500/50 hover:text-red-500 hover:bg-red-500/5 transition-all"
+                                                onClick={() => handleRemoveVideoLink(index)}
+                                            >
+                                                <Trash2 className="h-4 w-4" />
+                                            </Button>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                            <p className="text-[9px] text-muted-foreground italic">Videos added here will appear in sequence on the Guides page.</p>
                         </div>
                     </CardContent>
                 </Card>
