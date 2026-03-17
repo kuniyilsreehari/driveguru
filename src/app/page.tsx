@@ -295,14 +295,6 @@ function HomePageContent() {
         }
     }
 
-    const scrollCarousel = (direction: 'left' | 'right') => {
-        if (carouselRef.current) {
-            const { scrollLeft, clientWidth } = carouselRef.current;
-            const scrollTo = direction === 'left' ? scrollLeft - clientWidth : scrollLeft + clientWidth;
-            carouselRef.current.scrollTo({ left: scrollTo, behavior: 'smooth' });
-        }
-    };
-
     const getIcon = (name: string) => {
         const Icon = (LucideIcons as any)[name];
         return Icon ? <Icon className="w-8 h-8 text-primary" /> : <Briefcase className="w-8 h-8 text-primary" />;
@@ -328,56 +320,56 @@ function HomePageContent() {
                 </header>
 
                 <main className="space-y-8 sm:space-y-12">
-                    <section className="bg-[#24262d] rounded-[2rem] p-6 sm:p-8 shadow-2xl overflow-hidden border border-white/5 relative">
+                    <section className="bg-[#24262d] rounded-[2rem] p-6 sm:p-10 shadow-2xl overflow-hidden border border-white/5 relative">
                         {/* Dot Pattern Model Background */}
-                        <div className="absolute inset-0 opacity-[0.03] pointer-events-none" 
+                        <div className="absolute inset-0 opacity-[0.05] pointer-events-none" 
                              style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
                         
-                        <div className="mb-6 relative z-10">
-                            <h2 className="text-xl sm:text-3xl font-black text-white uppercase italic tracking-tight">Top Rated Experts</h2>
-                            <p className="text-[8px] sm:text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">PREMIUM NETWORK SUGGESTIONS</p>
+                        <div className="mb-8 relative z-10">
+                            <h2 className="text-2xl sm:text-4xl font-black text-white uppercase italic tracking-tight">Top Rated Experts</h2>
+                            <p className="text-[10px] sm:text-xs font-black uppercase tracking-[0.3em] text-orange-500/50">PREMIUM NETWORK SUGGESTIONS</p>
                         </div>
 
-                        <div className="relative group mb-6 z-10">
-                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-orange-500 transition-colors" />
+                        <div className="relative group mb-10 z-10">
+                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground group-focus-within:text-orange-500 transition-colors" />
                             <Input 
                                 placeholder="Filter suggestions..." 
-                                className="pl-10 h-12 bg-[#1a1c23] border-none rounded-xl text-sm sm:text-lg placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-orange-500 transition-all shadow-inner" 
+                                className="pl-12 h-14 bg-[#1a1c23] border-none rounded-xl text-sm sm:text-lg placeholder:text-muted-foreground/40 focus-visible:ring-2 focus-visible:ring-orange-500 transition-all shadow-inner text-white font-bold" 
                                 value={moduleSearchQuery} 
                                 onChange={(e) => setModuleSearchQuery(e.target.value)} 
                             />
                         </div>
 
-                        <div className="relative group/carousel z-10">
+                        <div className="relative z-10">
                             <div 
                                 ref={carouselRef}
-                                className="flex gap-4 sm:gap-6 overflow-x-auto pb-6 pt-2 scrollbar-hide snap-x px-1"
+                                className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 sm:gap-8 pb-4"
                             >
                                 {isLoadingTopExperts ? (
-                                    [...Array(4)].map((_, i) => (
-                                        <div key={i} className="min-w-[200px] max-w-[200px] h-[340px] bg-[#1a1c23] rounded-[2rem] animate-pulse" />
+                                    [...Array(3)].map((_, i) => (
+                                        <div key={i} className="w-full h-[380px] bg-[#1a1c23] rounded-[2.5rem] animate-pulse" />
                                     ))
                                 ) : filteredTopExperts.length > 0 ? (
-                                    filteredTopExperts.map(expert => (
-                                        <Card key={expert.id} className="min-w-[200px] sm:min-w-[240px] max-w-[240px] bg-[#1a1c23]/80 backdrop-blur-sm border-none flex flex-col items-center p-6 text-center rounded-[2rem] snap-start transition-all hover:scale-[1.05] group shadow-xl relative overflow-hidden">
+                                    filteredTopExperts.slice(0, 3).map(expert => (
+                                        <Card key={expert.id} className="w-full bg-[#1a1c23]/90 backdrop-blur-md border-none flex flex-col items-center p-8 text-center rounded-[2.5rem] transition-all hover:scale-[1.03] group shadow-2xl relative overflow-hidden">
                                             <div className="absolute inset-0 bg-gradient-to-b from-orange-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                                            <div className="relative mb-4 z-10">
-                                                <Avatar className="h-16 w-16 sm:h-24 sm:w-24 border-4 border-white/10 group-hover:border-orange-500/50 transition-colors duration-500 shadow-2xl">
+                                            <div className="relative mb-6 z-10">
+                                                <Avatar className="h-20 w-20 sm:h-28 sm:w-24 border-4 border-white/10 group-hover:border-orange-500/50 transition-colors duration-500 shadow-2xl">
                                                     <AvatarImage src={expert.photoUrl} className="object-cover" />
-                                                    <AvatarFallback className="bg-orange-500/10 text-orange-500 text-xl sm:text-3xl font-black">
+                                                    <AvatarFallback className="bg-orange-500/10 text-orange-500 text-2xl sm:text-4xl font-black">
                                                         {expert.firstName?.[0]}
                                                     </AvatarFallback>
                                                 </Avatar>
                                                 {expert.verified && (
-                                                    <div className="absolute -bottom-1 -right-1 bg-green-500 p-1 rounded-full border-4 border-[#1a1c23] shadow-lg">
-                                                        <UserCheck className="h-2.5 w-2.5 text-white" />
+                                                    <div className="absolute -bottom-1 -right-1 bg-green-500 p-1.5 rounded-full border-4 border-[#1a1c23] shadow-lg">
+                                                        <UserCheck className="h-3 w-3 text-white" />
                                                     </div>
                                                 )}
                                             </div>
-                                            <p className="font-black text-white text-base sm:text-xl line-clamp-1 mb-1 tracking-tight uppercase italic z-10">{expert.firstName} {expert.lastName}</p>
-                                            <p className="text-[8px] sm:text-[10px] text-[#8a92a6] uppercase tracking-[0.2em] font-black mb-8 line-clamp-1 h-4 z-10">{expert.profession || expert.role}</p>
+                                            <p className="font-black text-white text-lg sm:text-2xl line-clamp-1 mb-1 tracking-tighter uppercase italic z-10">{expert.firstName} {expert.lastName}</p>
+                                            <p className="text-[10px] sm:text-xs text-[#8a92a6] uppercase tracking-[0.2em] font-black mb-10 line-clamp-1 h-4 z-10">{expert.profession || expert.role}</p>
                                             <Button 
-                                                className="w-full bg-orange-500 hover:bg-orange-600 text-white rounded-xl font-bold text-[9px] h-10 shadow-[0_10px_25px_-5px_rgba(249,115,22,0.4)] active:scale-95 transition-all z-10 uppercase tracking-widest border-none"
+                                                className="w-full bg-orange-500 hover:bg-orange-600 text-white rounded-2xl font-black text-[10px] h-12 shadow-[0_15px_35px_-5px_rgba(249,115,22,0.4)] active:scale-95 transition-all z-10 uppercase tracking-widest border-none"
                                                 onClick={() => handleToggleFollow(expert.id)}
                                             >
                                                 {userProfile?.following?.includes(expert.id) ? 'Following' : 'Follow Expert'}
@@ -385,9 +377,9 @@ function HomePageContent() {
                                         </Card>
                                     ))
                                 ) : (
-                                    <div className="w-full flex flex-col items-center justify-center py-12 bg-white/5 rounded-[2rem] border-2 border-dashed border-white/10">
-                                        <Sparkles className="h-12 w-12 text-orange-500/20 mb-4 animate-pulse" />
-                                        <p className="text-sm font-black text-white/40 tracking-tight uppercase italic text-center">No Featured Experts Yet</p>
+                                    <div className="col-span-full flex flex-col items-center justify-center py-16 bg-white/5 rounded-[2.5rem] border-2 border-dashed border-white/10">
+                                        <Sparkles className="h-16 w-16 text-orange-500/20 mb-4 animate-pulse" />
+                                        <p className="text-lg font-black text-white/40 tracking-tight uppercase italic text-center">No Featured Experts Matching Search</p>
                                     </div>
                                 )}
                             </div>
