@@ -8,7 +8,7 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { User as UserIcon, Mail, Lock, Eye, EyeOff, Briefcase, MapPin, Phone, LocateIcon, Loader2, Building, Home, ArrowRight, MessageSquare, Gift, Sparkles, CheckCircle2 } from "lucide-react";
+import { User as UserIcon, Mail, Lock, Eye, EyeOff, Briefcase, MapPin, Phone, LocateIcon, Loader2, Building, Home, ArrowRight, MessageSquare, Gift, Sparkles, CheckCircle2, Send, ChevronLeft } from "lucide-react";
 import { 
   createUserWithEmailAndPassword, 
   GoogleAuthProvider, 
@@ -68,12 +68,12 @@ const formSchema = z.object({
 });
 
 const phoneFormSchema = z.object({
+  firstName: z.string().min(1, { message: "First name is required." }),
+  lastName: z.string().min(1, { message: "Last name is required." }),
   phoneNumber: z.string().min(10, { message: "Enter 10-digit number." }),
-  referralCode: z.string().optional(),
   role: z.string({ required_error: "Role is required." }),
-  firstName: z.string().optional(),
-  lastName: z.string().optional(),
   companyName: z.string().optional(),
+  referralCode: z.string().optional(),
 });
 
 const otpFormSchema = z.object({
@@ -86,11 +86,11 @@ type AppConfig = {
 
 type PhoneSignupData = {
     phoneNumber: string;
-    referralCode?: string;
     role: string;
-    firstName?: string;
-    lastName?: string;
+    firstName: string;
+    lastName: string;
     companyName?: string;
+    referralCode?: string;
 }
 
 export function RegistrationForm() {
@@ -116,7 +116,6 @@ export function RegistrationForm() {
   }, [firestore]);
   
   const { data: appConfig } = useDoc<AppConfig>(appConfigDocRef);
-  const departments = appConfig?.departments || [];
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -126,6 +125,7 @@ export function RegistrationForm() {
       countryCode: "+91", phoneNumber: "", companyName: "", department: "",
       referralCode: searchParams.get('ref') || "",
       terms: false,
+      role: "Freelancer",
     },
   });
 
@@ -141,6 +141,12 @@ export function RegistrationForm() {
     resolver: zodResolver(otpFormSchema),
     defaultValues: { otp: "" },
   });
+
+  useEffect(() => {
+    if (!isUserLoading && user) {
+        router.push('/dashboard');
+    }
+  }, [user, isUserLoading, router]);
 
   useEffect(() => {
     if (auth && firestore) {
@@ -165,16 +171,10 @@ export function RegistrationForm() {
                     };
                     setDocumentNonBlocking(userDocRef, userData, { merge: true });
                 }
-                toast({ title: "Welcome to DriveGuru!", description: "Account created successfully." });
+                toast({ title: "Welcome!", description: "Account created successfully." });
             }
         }).catch((error) => {
-            if (error.code === 'auth/unauthorized-domain') {
-                toast({
-                    variant: "destructive",
-                    title: "Domain Not Authorized",
-                    description: "Please add 'driveguru.in' to Authorized Domains in Firebase console settings.",
-                });
-            } else if (error.code !== 'auth/popup-closed-by-user') {
+            if (error.code !== 'auth/popup-closed-by-user') {
                 console.error("Auth redirect error:", error);
             }
         });
@@ -192,48 +192,7 @@ export function RegistrationForm() {
   }, [view, auth]);
 
   const selectedRole = form.watch("role");
-  const pincodeValue = form.watch("pincode");
-
-  useEffect(() => {
-    if (pincodeValue && pincodeValue.length === 6) {
-      const fetchPincodeData = async () => {
-        setIsFetchingPincode(true);
-        try {
-          const response = await fetch(`https://api.postalpincode.in/pincode/${pincodeValue}`);
-          const data = await response.json();
-          if (data && data[0] && data[0].Status === 'Success') {
-            const postOffice = data[0].PostOffice[0];
-            form.setValue('city', postOffice.District, { shouldValidate: true });
-            form.setValue('state', postOffice.State, { shouldValidate: true });
-          }
-        } finally {
-          setIsFetchingPincode(false);
-        }
-      };
-      fetchPincodeData();
-    }
-  }, [pincodeValue, form]);
-  
-  const handleDetectLocation = () => {
-    if (!navigator.geolocation) return;
-    setIsDetectingLocation(true);
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        try {
-          const { latitude, longitude } = position.coords;
-          const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
-          const data = await response.json();
-          const address = data.address;
-          if (address.city || address.town) form.setValue('city', address.city || address.town, { shouldValidate: true });
-          if (address.state) form.setValue('state', address.state, { shouldValidate: true });
-          if (address.postcode) form.setValue('pincode', address.postcode, { shouldValidate: true });
-        } finally {
-          setIsDetectingLocation(false);
-        }
-      },
-      () => setIsDetectingLocation(false)
-    );
-  };
+  const selectedPhoneRole = phoneForm.watch("role");
 
   async function handleGoogleSignUp() {
     if (!auth) return;
@@ -256,8 +215,8 @@ export function RegistrationForm() {
             }
         }
     } catch (error: any) {
-        if (error.code === 'auth/unauthorized-domain') {
-            toast({ variant: "destructive", title: "Domain Error", description: "Add 'driveguru.in' to Firebase Authorized Domains." });
+        if (error.code !== 'auth/popup-closed-by-user') {
+            toast({ variant: "destructive", title: "Error", description: error.message });
         }
     }
   }
@@ -270,16 +229,80 @@ export function RegistrationForm() {
         const newUserDocRef = doc(firestore, "users", userCredential.user.uid);
         const userData = {
             ...values,
-            phoneNumber: `${values.countryCode} ${values.phoneNumber.replace(/\D/g, '').slice(-10)}`,
+            phoneNumber: `+91 ${values.phoneNumber.replace(/\D/g, '').slice(-10)}`,
             verified: false, isAvailable: true,
             referralCode: Math.random().toString(36).substring(2, 10).toUpperCase(),
             referralPoints: 0, createdAt: serverTimestamp(),
         };
         delete (userData as any).password;
         await setDocumentNonBlocking(newUserDocRef, userData);
-        toast({ title: "Account Active", description: "Welcome to the expert registry." });
+        toast({ title: "Account Active", description: "Welcome to DriveGuru." });
     } catch (error: any) {
-        toast({ variant: "destructive", title: "Registration Failed", description: error.message });
+        toast({ variant: "destructive", title: "Failed", description: error.message });
+    } finally {
+        setIsSubmitting(false);
+    }
+  }
+
+  async function onPhoneSubmit(values: z.infer<typeof phoneFormSchema>) {
+    if (!auth) return;
+    setIsSubmitting(true);
+    const fullPhoneNumber = `+91${values.phoneNumber.replace(/\D/g, '').slice(-10)}`;
+    setPhoneSignupData({
+        phoneNumber: fullPhoneNumber,
+        firstName: values.firstName,
+        lastName: values.lastName,
+        role: values.role,
+        companyName: values.companyName,
+        referralCode: values.referralCode,
+    });
+
+    try {
+        const verifier = (window as any).recaptchaVerifier;
+        const result = await signInWithPhoneNumber(auth, fullPhoneNumber, verifier);
+        setConfirmationResult(result);
+        setView('otp');
+        toast({ title: "OTP Sent", description: `Verification code sent to ${fullPhoneNumber}` });
+    } catch (error: any) {
+        toast({
+            variant: "destructive",
+            title: "Failed to Send OTP",
+            description: error.message,
+        });
+    } finally {
+        setIsSubmitting(false);
+    }
+  }
+
+  async function onOtpSubmit(values: z.infer<typeof otpFormSchema>) {
+    if (!confirmationResult || !firestore || !phoneSignupData) return;
+    setIsSubmitting(true);
+    try {
+        const result = await confirmationResult.confirm(values.otp);
+        const user = result.user;
+        const additionalInfo = getAdditionalUserInfo(result);
+
+        if (additionalInfo?.isNewUser) {
+            const userDocRef = doc(firestore, "users", user.uid);
+            const userData = {
+                id: user.uid,
+                firstName: phoneSignupData.firstName,
+                lastName: phoneSignupData.lastName,
+                email: null,
+                phoneNumber: phoneSignupData.phoneNumber,
+                role: phoneSignupData.role,
+                companyName: phoneSignupData.companyName || '',
+                verified: false,
+                isAvailable: true,
+                referralCode: Math.random().toString(36).substring(2, 10).toUpperCase(),
+                referralPoints: 0,
+                createdAt: serverTimestamp(),
+            };
+            await setDocumentNonBlocking(userDocRef, userData);
+        }
+        toast({ title: "Registration Complete", description: "Identity verified successfully." });
+    } catch (error: any) {
+        toast({ variant: "destructive", title: "Invalid OTP", description: "Please check the code and try again." });
     } finally {
         setIsSubmitting(false);
     }
@@ -302,7 +325,7 @@ export function RegistrationForm() {
 
             <div className="relative my-8">
                 <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-white/5" /></div>
-                <div className="relative flex justify-center text-[10px] uppercase font-black tracking-[0.2em]"><span className="bg-[#24262d] px-4 text-muted-foreground">Or Basic Details</span></div>
+                <div className="relative flex justify-center text-[10px] uppercase font-black tracking-[0.2em]"><span className="bg-[#24262d] px-4 text-muted-foreground">Or Secure Details</span></div>
             </div>
 
             <Form {...form}>
@@ -366,6 +389,106 @@ export function RegistrationForm() {
                 </form>
             </Form>
         </div>
+      )}
+
+      {view === 'phone' && (
+        <div className="space-y-6">
+            <Button onClick={() => setView('email')} variant="ghost" className="p-0 text-muted-foreground hover:text-white mb-2"><ChevronLeft className="mr-1 h-4 w-4" /> Back to Email</Button>
+            
+            <Form {...phoneForm}>
+                <form onSubmit={phoneForm.handleSubmit(onPhoneSubmit)} className="space-y-6">
+                    <FormField control={phoneForm.control} name="role" render={({ field }) => (
+                        <FormItem>
+                            <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 ml-1">Account Type</FormLabel>
+                            <div className="grid grid-cols-1 gap-3">
+                                {expertTypes.map((type) => (
+                                    <Card key={type.name} className={cn("cursor-pointer transition-all border-none bg-[#1a1c23] rounded-2xl shadow-inner", field.value === type.name ? "ring-2 ring-orange-500 bg-orange-500/5" : "hover:bg-white/5")} onClick={() => phoneForm.setValue('role', type.name, { shouldValidate: true })}>
+                                        <CardHeader className="flex flex-row items-center gap-4 p-4">
+                                            <div className={cn("p-2 rounded-full", field.value === type.name ? "bg-orange-500 text-white" : "bg-white/5 text-muted-foreground")}>{React.cloneElement(type.icon as React.ReactElement, { className: "w-5 h-5" })}</div>
+                                            <div className="flex-1">
+                                                <CardTitle className="text-xs font-black uppercase italic">{type.name}</CardTitle>
+                                                <p className="text-[9px] text-muted-foreground font-medium uppercase tracking-tighter">{type.description}</p>
+                                            </div>
+                                            {field.value === type.name && <CheckCircle2 className="h-5 w-5 text-orange-500" />}
+                                        </CardHeader>
+                                    </Card>
+                                ))}
+                            </div>
+                            <FormMessage />
+                        </FormItem>
+                    )} />
+
+                    <div className="space-y-4">
+                        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-orange-500/50">Identification</p>
+                        <div className="grid grid-cols-2 gap-4">
+                            <FormField control={phoneForm.control} name="firstName" render={({ field }) => (
+                                <FormItem><FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 ml-1">First Name</FormLabel>
+                                <FormControl><Input placeholder="John" {...field} className="h-12 bg-[#1a1c23] border-none rounded-xl font-bold text-white shadow-inner" /></FormControl><FormMessage /></FormItem>
+                            )} />
+                            <FormField control={phoneForm.control} name="lastName" render={({ field }) => (
+                                <FormItem><FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 ml-1">Last Name</FormLabel>
+                                <FormControl><Input placeholder="Doe" {...field} className="h-12 bg-[#1a1c23] border-none rounded-xl font-bold text-white shadow-inner" /></FormControl><FormMessage /></FormItem>
+                            )} />
+                        </div>
+
+                        {(selectedPhoneRole === 'Company' || selectedPhoneRole === 'Authorized Pro') && (
+                            <FormField control={phoneForm.control} name="companyName" render={({ field }) => (
+                                <FormItem><FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 ml-1">Organization Name</FormLabel>
+                                <div className="relative"><Building className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" /><FormControl><Input placeholder="Acme Corp" {...field} className="pl-10 h-12 bg-[#1a1c23] border-none rounded-xl font-bold text-white shadow-inner" /></FormControl></div><FormMessage /></FormItem>
+                            )} />
+                        )}
+
+                        <FormField control={phoneForm.control} name="phoneNumber" render={({ field }) => (
+                            <FormItem>
+                                <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 ml-1">Mobile Number</FormLabel>
+                                <div className="relative">
+                                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm text-muted-foreground font-black">+91</span>
+                                    <FormControl><Input type="tel" placeholder="98765 43210" {...field} className="pl-14 h-14 bg-[#1a1c23] border-none rounded-2xl font-bold text-white shadow-inner text-lg" /></FormControl>
+                                </div>
+                                <FormMessage />
+                            </FormItem>
+                        )} />
+                    </div>
+
+                    <Button type="submit" className="w-full h-16 bg-[#22c55e] hover:bg-[#1eb054] text-white font-black text-lg rounded-2xl shadow-xl uppercase tracking-widest transition-all active:scale-95" disabled={isSubmitting}>
+                        {isSubmitting ? <Loader2 className="h-6 w-6 animate-spin" /> : <><Send className="mr-2 h-5 w-5" /> Send Activation Code</>}
+                    </Button>
+                </form>
+            </Form>
+        </div>
+      )}
+
+      {view === 'otp' && (
+         <Form {...otpForm}>
+            <form onSubmit={otpForm.handleSubmit(onOtpSubmit)} className="space-y-8 text-center animate-in fade-in zoom-in-95 duration-500">
+                <div className="space-y-2">
+                    <h3 className="text-xl font-black uppercase italic text-white">Enter Security Code</h3>
+                    <p className="text-xs text-muted-foreground">We sent a 6-digit code to your mobile device.</p>
+                </div>
+                
+                <FormField
+                    control={otpForm.control}
+                    name="otp"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormControl>
+                                <Input type="text" placeholder="000000" {...field} className="h-20 bg-[#1a1c23] border-none rounded-[1.5rem] font-black tracking-[0.8em] text-center text-3xl text-orange-500 shadow-inner" maxLength={6} />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                
+                <div className="space-y-4">
+                    <Button type="submit" className="w-full h-16 bg-orange-500 hover:bg-orange-600 text-white font-black text-lg rounded-2xl shadow-[0_15px_35px_-5px_rgba(249,115,22,0.4)] uppercase tracking-widest transition-all active:scale-95" disabled={isSubmitting}>
+                        {isSubmitting ? <Loader2 className="h-6 w-6 animate-spin" /> : 'COMPLETE REGISTRATION'}
+                    </Button>
+                    <Button variant="link" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-white" onClick={() => setView('phone')} type="button">
+                        Incorrect phone number?
+                    </Button>
+                </div>
+            </form>
+        </Form>
       )}
     </div>
   );
