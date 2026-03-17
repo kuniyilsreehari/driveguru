@@ -88,6 +88,9 @@ export default function ExpertDashboardPage() {
   const userDocRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
   const { data: userProfile, isLoading: isProfileLoading } = useDoc<ExpertUserProfile>(userDocRef);
 
+  const appConfigDocRef = useMemoFirebase(() => doc(firestore, 'app_config', 'homepage'), [firestore]);
+  const { data: appConfig } = useDoc<any>(appConfigDocRef);
+
   const superAdminDocRef = useMemoFirebase(() => user ? doc(firestore, 'roles_super_admin', user.uid) : null, [firestore, user]);
   const { data: superAdminData, isLoading: isRoleLoading } = useDoc(superAdminDocRef);
   const isSuperAdmin = !!superAdminData;
@@ -218,6 +221,8 @@ export default function ExpertDashboardPage() {
   }
 
   const isHidden = userProfile.hiddenUntil && userProfile.hiddenUntil.toDate() > new Date();
+  const rewardPointsSetting = appConfig?.referralRewardPoints || 0;
+  const displayPoints = (userProfile.referralCount || 0) * rewardPointsSetting;
 
   return (
     <div className="min-h-screen bg-[#1a1c23] p-4 sm:p-8">
@@ -352,7 +357,7 @@ export default function ExpertDashboardPage() {
                         {userProfile.referralCode || 'UR3664XN'}
                     </h2>
                     
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full mb-8">
                         <Button 
                             variant="outline" 
                             className="h-12 sm:h-16 rounded-xl sm:rounded-[1.5rem] border-none bg-white/10 hover:bg-white/20 text-white font-bold uppercase tracking-wider text-[10px] flex items-center justify-center gap-3 shadow-inner"
@@ -368,9 +373,9 @@ export default function ExpertDashboardPage() {
                         </Button>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4 sm:gap-6 w-full mt-8">
+                    <div className="grid grid-cols-2 gap-4 sm:gap-6 w-full">
                         <div className="bg-[#1a1c23] p-6 sm:p-8 rounded-2xl sm:rounded-[2.5rem] text-center border border-white/5 shadow-inner">
-                            <p className="text-xl sm:text-5xl font-black text-orange-500 mb-1">{userProfile.referralPoints || 0}</p>
+                            <p className="text-xl sm:text-5xl font-black text-orange-500 mb-1">{displayPoints}</p>
                             <p className="text-[7px] sm:text-[9px] font-black uppercase tracking-[0.2em] text-muted-foreground opacity-60">PREMIUM CREDITS</p>
                         </div>
                         <div className="bg-[#1a1c23] p-6 sm:p-8 rounded-2xl sm:rounded-[2.5rem] text-center border border-white/5 shadow-inner">
