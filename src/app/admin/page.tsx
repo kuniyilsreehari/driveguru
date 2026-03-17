@@ -677,7 +677,7 @@ export default function AdminDashboardPage() {
                 <div className="text-3xl font-black text-blue-500">{stats.super}</div>
               </Card>
               <Card className="border-none bg-[#24262d] shadow-xl p-4">
-                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 mb-1">Referrals</p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 mb-1">Total Points (PTS)</p>
                 <div className="text-3xl font-black text-orange-500">{stats.referrals}</div>
               </Card>
               <Card className="border-none bg-[#24262d] shadow-xl p-4">
@@ -898,7 +898,7 @@ export default function AdminDashboardPage() {
                         <CardHeader className="bg-white/5 pb-6 border-b border-white/5">
                             <div className="flex items-center gap-3">
                                 <Trophy className="h-6 w-6 text-orange-500" />
-                                /<div>
+                                <div>
                                     <CardTitle className="text-2xl font-black uppercase italic">Professional Rankings</CardTitle>
                                     <CardDescription className="text-muted-foreground">Experts ranked by multiplication result (PTS × JOINS).</CardDescription>
                                 </div>
@@ -1380,15 +1380,22 @@ export default function AdminDashboardPage() {
                     <CardHeader className="bg-white/5 border-b border-white/5 pb-6">
                         <div className="flex items-center gap-3">
                             <Megaphone className="h-6 w-6 text-orange-500" />
-                            <CardTitle className="text-xl font-black uppercase italic">Announcements</CardTitle>
+                            <CardTitle className="text-xl font-black uppercase italic">ANNOUNCEMENTS</CardTitle>
                         </div>
                     </CardHeader>
-                    <CardContent className="p-6 space-y-4">
-                        <div className="flex items-center justify-between mb-4">
-                            <Label className="font-bold">Enable Banner</Label>
+                    <CardContent className="p-6 space-y-6">
+                        <div className="flex items-center justify-between">
+                            <Label className="font-bold text-sm text-white">Enable Banner</Label>
                             <Switch checked={announcementEnabled} onCheckedChange={setAnnouncementEnabled} className="data-[state=checked]:bg-orange-500" />
                         </div>
-                        <Textarea value={announcementText} onChange={(e) => setAnnouncementText(e.target.value)} className="bg-background border-none rounded-xl min-h-[80px]" placeholder="Breaking news text here..." />
+                        <div className="bg-[#1a1c23] rounded-xl p-1 shadow-inner">
+                            <Textarea 
+                                value={announcementText} 
+                                onChange={(e) => setAnnouncementText(e.target.value)} 
+                                className="bg-transparent border-none rounded-xl min-h-[100px] text-white/90 text-sm leading-relaxed focus-visible:ring-0" 
+                                placeholder="Find nearby electricians, plumbers, AC technicians, carpenters, and more — instantly with DriveGuru..." 
+                            />
+                        </div>
                     </CardContent>
                 </Card>
 

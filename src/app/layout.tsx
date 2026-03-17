@@ -10,6 +10,7 @@ import { ChatAssistant } from '@/components/chat-assistant';
 import { FloatingActions } from '@/components/floating-actions';
 import { PwaPromptListener } from '@/components/pwa-prompt-listener';
 import { BottomNav } from '@/components/layout/bottom-nav';
+import { AnnouncementBanner } from '@/components/layout/announcement-banner';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -49,6 +50,7 @@ export default function RootLayout({
         >
           <FirebaseClientProvider>
             <PwaPromptListener />
+            <AnnouncementBanner />
             <Header />
             <main className="flex-grow pb-20 sm:pb-0">
               {children}
