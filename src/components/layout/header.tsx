@@ -43,6 +43,7 @@ const navItems = [
   { label: 'Groups', href: '/groups', icon: Users },
   { label: 'Jobs', href: '/vacancies', icon: Briefcase },
   { label: 'Featured', href: '/featured-experts', icon: Award },
+  { label: 'Guides', href: '/guides', icon: BookOpen },
 ];
 
 function SiteInfoPopover() {

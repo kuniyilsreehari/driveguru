@@ -388,7 +388,7 @@ export default function AdminDashboardPage() {
         homepageCategories,
         departments,
         videoResources: cleanVideoResources,
-        introVideoUrl: cleanVideoResources[0] || "", // For backward compatibility
+        introVideoUrl: cleanVideoResources[0] || "", 
       }, { merge: true });
       toast({ title: "Settings Published" });
     } finally {
@@ -1358,7 +1358,7 @@ export default function AdminDashboardPage() {
                     </CardHeader>
                     <CardContent className="p-6 space-y-8">
                         <div className="space-y-4">
-                            <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">POINTS PER SUCCESSFUL JOIN</Label>
+                            <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 ml-1">POINTS PER SUCCESSFUL JOIN</Label>
                             <div className="bg-[#1a1c23] p-1 rounded-2xl shadow-inner">
                                 <Input 
                                     type="number" 
