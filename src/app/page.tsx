@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Suspense, useState, useEffect, useMemo, useRef } from 'react';
@@ -35,6 +34,13 @@ import {
 } from "@/components/ui/dialog"
 import { Switch } from '@/components/ui/switch';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
 
 
 type AppConfig = {
@@ -66,7 +72,6 @@ function HomePageContent() {
     const [mounted, setMounted] = useState(false);
     
     const { user, isUserLoading } = useUser();
-    const carouselRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         setMounted(true);
@@ -321,7 +326,6 @@ function HomePageContent() {
 
                 <main className="space-y-8 sm:space-y-12">
                     <section className="bg-[#24262d] rounded-[2rem] p-6 sm:p-10 shadow-2xl overflow-hidden border border-white/5 relative">
-                        {/* Dot Pattern Model Background */}
                         <div className="absolute inset-0 opacity-[0.05] pointer-events-none" 
                              style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
                         
@@ -340,49 +344,58 @@ function HomePageContent() {
                             />
                         </div>
 
-                        <div className="relative z-10">
-                            <div 
-                                ref={carouselRef}
-                                className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 sm:gap-8 pb-4"
-                            >
-                                {isLoadingTopExperts ? (
-                                    [...Array(3)].map((_, i) => (
-                                        <div key={i} className="w-full h-[380px] bg-[#1a1c23] rounded-[2.5rem] animate-pulse" />
-                                    ))
-                                ) : filteredTopExperts.length > 0 ? (
-                                    filteredTopExperts.slice(0, 3).map(expert => (
-                                        <Card key={expert.id} className="w-full bg-[#1a1c23]/90 backdrop-blur-md border-none flex flex-col items-center p-8 text-center rounded-[2.5rem] transition-all hover:scale-[1.03] group shadow-2xl relative overflow-hidden">
-                                            <div className="absolute inset-0 bg-gradient-to-b from-orange-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                                            <div className="relative mb-6 z-10">
-                                                <Avatar className="h-20 w-20 sm:h-28 sm:w-24 border-4 border-white/10 group-hover:border-orange-500/50 transition-colors duration-500 shadow-2xl">
-                                                    <AvatarImage src={expert.photoUrl} className="object-cover" />
-                                                    <AvatarFallback className="bg-orange-500/10 text-orange-500 text-2xl sm:text-4xl font-black">
-                                                        {expert.firstName?.[0]}
-                                                    </AvatarFallback>
-                                                </Avatar>
-                                                {expert.verified && (
-                                                    <div className="absolute -bottom-1 -right-1 bg-green-500 p-1.5 rounded-full border-4 border-[#1a1c23] shadow-lg">
-                                                        <UserCheck className="h-3 w-3 text-white" />
+                        <div className="relative z-10 px-4 sm:px-0">
+                            <Carousel opts={{ align: "start", loop: true }} className="w-full">
+                                <CarouselContent className="-ml-4 sm:-ml-8">
+                                    {isLoadingTopExperts ? (
+                                        [...Array(3)].map((_, i) => (
+                                            <CarouselItem key={i} className="pl-4 sm:pl-8 basis-full sm:basis-1/2 md:basis-1/3">
+                                                <div className="w-full h-[380px] bg-[#1a1c23] rounded-[2.5rem] animate-pulse" />
+                                            </CarouselItem>
+                                        ))
+                                    ) : filteredTopExperts.length > 0 ? (
+                                        filteredTopExperts.map(expert => (
+                                            <CarouselItem key={expert.id} className="pl-4 sm:pl-8 basis-full sm:basis-1/2 md:basis-1/3">
+                                                <Card className="w-full bg-[#1a1c23]/90 backdrop-blur-md border-none flex flex-col items-center p-8 text-center rounded-[2.5rem] transition-all hover:scale-[1.03] group shadow-2xl relative overflow-hidden h-full">
+                                                    <div className="absolute inset-0 bg-gradient-to-b from-orange-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                    <div className="relative mb-6 z-10">
+                                                        <Avatar className="h-20 w-20 sm:h-28 sm:w-24 border-4 border-white/10 group-hover:border-orange-500/50 transition-colors duration-500 shadow-2xl">
+                                                            <AvatarImage src={expert.photoUrl} className="object-cover" />
+                                                            <AvatarFallback className="bg-orange-500/10 text-orange-500 text-2xl sm:text-4xl font-black">
+                                                                {expert.firstName?.[0]}
+                                                            </AvatarFallback>
+                                                        </Avatar>
+                                                        {expert.verified && (
+                                                            <div className="absolute -bottom-1 -right-1 bg-green-500 p-1.5 rounded-full border-4 border-[#1a1c23] shadow-lg">
+                                                                <UserCheck className="h-3 w-3 text-white" />
+                                                            </div>
+                                                        )}
                                                     </div>
-                                                )}
+                                                    <p className="font-black text-white text-lg sm:text-xl line-clamp-1 mb-1 tracking-tighter uppercase italic z-10">{expert.firstName} {expert.lastName}</p>
+                                                    <p className="text-[10px] sm:text-[11px] text-[#8a92a6] uppercase tracking-[0.2em] font-black mb-10 line-clamp-1 h-4 z-10">{expert.profession || expert.role}</p>
+                                                    <Button 
+                                                        className="w-full bg-orange-500 hover:bg-orange-600 text-white rounded-2xl font-black text-[10px] h-12 shadow-[0_15px_35px_-5px_rgba(249,115,22,0.4)] active:scale-95 transition-all z-10 uppercase tracking-widest border-none mt-auto"
+                                                        onClick={() => handleToggleFollow(expert.id)}
+                                                    >
+                                                        {userProfile?.following?.includes(expert.id) ? 'Following' : 'Follow Expert'}
+                                                    </Button>
+                                                </Card>
+                                            </CarouselItem>
+                                        ))
+                                    ) : (
+                                        <CarouselItem className="basis-full">
+                                            <div className="flex flex-col items-center justify-center py-16 bg-white/5 rounded-[2.5rem] border-2 border-dashed border-white/10">
+                                                <Sparkles className="h-16 w-16 text-orange-500/20 mb-4 animate-pulse" />
+                                                <p className="text-lg font-black text-white/40 tracking-tight uppercase italic text-center">No Featured Experts Matching Search</p>
                                             </div>
-                                            <p className="font-black text-white text-lg sm:text-2xl line-clamp-1 mb-1 tracking-tighter uppercase italic z-10">{expert.firstName} {expert.lastName}</p>
-                                            <p className="text-[10px] sm:text-xs text-[#8a92a6] uppercase tracking-[0.2em] font-black mb-10 line-clamp-1 h-4 z-10">{expert.profession || expert.role}</p>
-                                            <Button 
-                                                className="w-full bg-orange-500 hover:bg-orange-600 text-white rounded-2xl font-black text-[10px] h-12 shadow-[0_15px_35px_-5px_rgba(249,115,22,0.4)] active:scale-95 transition-all z-10 uppercase tracking-widest border-none"
-                                                onClick={() => handleToggleFollow(expert.id)}
-                                            >
-                                                {userProfile?.following?.includes(expert.id) ? 'Following' : 'Follow Expert'}
-                                            </Button>
-                                        </Card>
-                                    ))
-                                ) : (
-                                    <div className="col-span-full flex flex-col items-center justify-center py-16 bg-white/5 rounded-[2.5rem] border-2 border-dashed border-white/10">
-                                        <Sparkles className="h-16 w-16 text-orange-500/20 mb-4 animate-pulse" />
-                                        <p className="text-lg font-black text-white/40 tracking-tight uppercase italic text-center">No Featured Experts Matching Search</p>
-                                    </div>
-                                )}
-                            </div>
+                                        </CarouselItem>
+                                    )}
+                                </CarouselContent>
+                                <div className="hidden sm:block">
+                                    <CarouselPrevious className="bg-white/5 border-none text-white hover:bg-white/10 -left-12 h-12 w-12" />
+                                    <CarouselNext className="bg-white/5 border-none text-white hover:bg-white/10 -right-12 h-12 w-12" />
+                                </div>
+                            </Carousel>
                         </div>
                     </section>
 
