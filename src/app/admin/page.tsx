@@ -582,7 +582,7 @@ export default function AdminDashboardPage() {
               <p className="text-muted-foreground text-sm font-medium">Welcome, {user?.email}</p>
             </div>
           </div>
-          <Button variant="outline" className="rounded-xl border-2 bg-transparent text-white hover:bg-white/10" onClick={() => auth && signOut(auth).then(() => router.push('/'))}><LogOut className="mr-2 h-4 w-4" /> Log Out</Button>
+          <Button variant="outline" className="rounded-xl border-2 border-white/10 bg-transparent text-white hover:bg-white/10" onClick={() => auth && signOut(auth).then(() => router.push('/'))}><LogOut className="mr-2 h-4 w-4" /> Log Out</Button>
         </header>
 
         <Tabs defaultValue="dashboard" className="w-full">
@@ -709,11 +709,11 @@ export default function AdminDashboardPage() {
                                                                         {!u.verified && <ShieldAlert className="h-3.5 w-3.5 text-orange-500/40" />}
                                                                     </div>
                                                                     <div className="text-[10px] text-muted-foreground uppercase tracking-widest truncate max-w-[150px]">{u.profession || u.role}</div>
-                                                                    <div className="flex items-center gap-1.5 mt-1 bg-orange-500/5 w-fit px-1.5 py-0.5 rounded-md border border-orange-500/10">
-                                                                        <Gift className="h-2.5 w-2.5 text-orange-500" />
-                                                                        <span className="text-[9px] font-black text-orange-500 uppercase tracking-tighter">{u.referralPoints || 0} PTS</span>
-                                                                        <span className="text-[8px] text-orange-500/40">|</span>
-                                                                        <span className="text-[9px] font-black text-white/60 uppercase tracking-tighter">{u.referralCount || 0} JOINS</span>
+                                                                    <div className="flex items-center gap-2 mt-1.5 bg-[#1a1c23] w-fit px-2 py-1 rounded-lg border border-white/10 shadow-inner">
+                                                                        <Gift className="h-3 w-3 text-orange-500" />
+                                                                        <span className="text-[10px] font-black text-orange-500 uppercase tracking-tighter">{u.referralPoints || 0} PTS</span>
+                                                                        <span className="text-[10px] text-white/20">|</span>
+                                                                        <span className="text-[10px] font-black text-white/70 uppercase tracking-tighter">{u.referralCount || 0} JOINS</span>
                                                                     </div>
                                                                 </div>
                                                             </div>
