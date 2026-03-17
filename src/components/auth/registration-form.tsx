@@ -350,6 +350,11 @@ export function RegistrationForm() {
             });
         }
     } catch (error: any) {
+        // Silently handle the case where the user closes the popup
+        if (error.code === 'auth/popup-closed-by-user') {
+            return;
+        }
+        
         console.error("Google sign-in failed:", error);
         toast({
             variant: "destructive",
