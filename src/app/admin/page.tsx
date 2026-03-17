@@ -338,12 +338,10 @@ export default function AdminDashboardPage() {
     return [...users]
         .filter(u => (u.referralPoints || 0) > 0 || (u.referralCount || 0) > 0)
         .sort((a, b) => {
-            // Ranking based on Multiplication Result: Score = Points * Joins
             const aScore = (a.referralPoints || 0) * (a.referralCount || 0);
             const bScore = (b.referralPoints || 0) * (b.referralCount || 0);
             
             if (bScore !== aScore) return bScore - aScore;
-            // Fallback: total points then joins
             if (b.referralPoints !== a.referralPoints) return (b.referralPoints || 0) - (a.referralPoints || 0);
             return (b.referralCount || 0) - (a.referralCount || 0);
         });
@@ -1293,6 +1291,7 @@ export default function AdminDashboardPage() {
                         </div>
                         <Textarea value={announcementText} onChange={(e) => setAnnouncementText(e.target.value)} className="bg-background border-none rounded-xl min-h-[80px]" placeholder="Breaking news text here..." />
                     </CardContent>
+                </Card>
 
                 <Card className="border-none rounded-2xl overflow-hidden bg-[#24262d]">
                     <CardHeader className="bg-white/5 border-b border-white/5 pb-6">
