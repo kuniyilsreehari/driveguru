@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
@@ -268,7 +267,7 @@ export default function AdminDashboardPage() {
         unverified: users.filter(u => !u.verified).length,
         premier: users.filter(u => u.tier === 'Premier').length,
         super: users.filter(u => u.tier === 'Super Premier').length,
-        referrals: users.filter(u => !!u.referredByCode).length,
+        referrals: users.reduce((sum, u) => sum + (u.referralPoints || 0), 0),
         referrers: users.filter(u => (u.referralPoints || 0) > 0 || (u.referralCount || 0) > 0).length,
     };
   }, [users]);
@@ -572,7 +571,7 @@ export default function AdminDashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-white p-4 sm:p-8">
+    <div className="min-h-screen bg-[#1a1c23] text-white p-4 sm:p-8">
       <div className="mx-auto max-w-7xl">
         <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-8 gap-4">
           <div className="flex items-center gap-4">
@@ -588,7 +587,7 @@ export default function AdminDashboardPage() {
         </header>
 
         <Tabs defaultValue="dashboard" className="w-full">
-          <TabsList className="grid w-full grid-cols-4 bg-secondary p-1 h-12 rounded-xl mb-8">
+          <TabsList className="grid w-full grid-cols-4 bg-[#24262d] p-1 h-12 rounded-xl mb-8">
             <TabsTrigger value="dashboard" className="rounded-lg font-bold">Management</TabsTrigger>
             <TabsTrigger value="reports" className="rounded-lg font-bold">Analytics</TabsTrigger>
             <TabsTrigger value="settings" className="rounded-lg font-bold">Platform Settings</TabsTrigger>
@@ -596,18 +595,39 @@ export default function AdminDashboardPage() {
           </TabsList>
 
           <TabsContent value="dashboard" className="mt-0 space-y-8">
-            <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-7">
-              <Card className="border-none bg-card"><CardHeader className="pb-2"><CardTitle className="text-xs font-black opacity-70 uppercase tracking-widest">Total Experts</CardTitle></CardHeader><CardContent><div className="text-2xl font-black">{stats.total}</div></CardContent></Card>
-              <Card className="border-none bg-card"><CardHeader className="pb-2"><CardTitle className="text-xs font-black opacity-70 uppercase tracking-widest text-green-500">Verified</CardTitle></CardHeader><CardContent><div className="text-2xl font-black text-green-500">{stats.verified}</div></CardContent></Card>
-              <Card className="border-none bg-card"><CardHeader className="pb-2"><CardTitle className="text-xs font-black opacity-70 uppercase tracking-widest text-red-500">Unverified</CardTitle></CardHeader><CardContent><div className="text-2xl font-black text-red-500">{stats.unverified}</div></CardContent></Card>
-              <Card className="border-none bg-card"><CardHeader className="pb-2"><CardTitle className="text-xs font-black opacity-70 uppercase tracking-widest text-purple-500">Premier</CardTitle></CardHeader><CardContent><div className="text-2xl font-black text-purple-500">{stats.premier}</div></CardContent></Card>
-              <Card className="border-none bg-card"><CardHeader className="pb-2"><CardTitle className="text-xs font-black opacity-70 uppercase tracking-widest text-blue-500">Super</CardTitle></CardHeader><CardContent><div className="text-2xl font-black text-blue-500">{stats.super}</div></CardContent></Card>
-              <Card className="border-none bg-card"><CardHeader className="pb-2"><CardTitle className="text-xs font-black opacity-70 uppercase tracking-widest text-orange-500">Referrals</CardTitle></CardHeader><CardContent><div className="text-2xl font-black text-orange-500">{stats.referrals}</div></CardContent></Card>
-              <Card className="border-none bg-card"><CardHeader className="pb-2"><CardTitle className="text-xs font-black opacity-70 uppercase tracking-widest text-orange-500">Earners</CardTitle></CardHeader><CardContent><div className="text-2xl font-black text-orange-500">{stats.referrers}</div></CardContent></Card>
+            <div className="grid gap-3 grid-cols-2 md:grid-cols-4 lg:grid-cols-7">
+              <Card className="border-none bg-[#24262d] shadow-xl p-4">
+                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 mb-1">Total Experts</p>
+                <div className="text-3xl font-black text-white">{stats.total}</div>
+              </Card>
+              <Card className="border-none bg-[#24262d] shadow-xl p-4">
+                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 mb-1">Verified</p>
+                <div className="text-3xl font-black text-green-500">{stats.verified}</div>
+              </Card>
+              <Card className="border-none bg-[#24262d] shadow-xl p-4">
+                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 mb-1">Unverified</p>
+                <div className="text-3xl font-black text-red-500">{stats.unverified}</div>
+              </Card>
+              <Card className="border-none bg-[#24262d] shadow-xl p-4">
+                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 mb-1">Premier</p>
+                <div className="text-3xl font-black text-purple-500">{stats.premier}</div>
+              </Card>
+              <Card className="border-none bg-[#24262d] shadow-xl p-4">
+                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 mb-1">Super</p>
+                <div className="text-3xl font-black text-blue-500">{stats.super}</div>
+              </Card>
+              <Card className="border-none bg-[#24262d] shadow-xl p-4">
+                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 mb-1">Referrals</p>
+                <div className="text-3xl font-black text-orange-500">{stats.referrals}</div>
+              </Card>
+              <Card className="border-none bg-[#24262d] shadow-xl p-4">
+                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 mb-1">Earners</p>
+                <div className="text-3xl font-black text-orange-500">{stats.referrers}</div>
+              </Card>
             </div>
 
             <Tabs defaultValue="users" className="w-full">
-                <TabsList className="flex w-full bg-secondary p-1 rounded-xl mb-6 overflow-x-auto h-auto sm:h-12">
+                <TabsList className="flex w-full bg-[#24262d] p-1 rounded-xl mb-6 overflow-x-auto h-auto sm:h-12">
                     <TabsTrigger value="users" className="flex-1 rounded-lg font-bold">Experts</TabsTrigger>
                     <TabsTrigger value="leaderboard" className="flex-1 rounded-lg font-bold">Rankings</TabsTrigger>
                     <TabsTrigger value="vacancies" className="flex-1 rounded-lg font-bold">Vacancies</TabsTrigger>
@@ -616,13 +636,13 @@ export default function AdminDashboardPage() {
                 </TabsList>
 
                 <TabsContent value="users">
-                    <Card className="border-none bg-card rounded-2xl overflow-hidden shadow-2xl">
+                    <Card className="border-none bg-[#24262d] rounded-2xl overflow-hidden shadow-2xl">
                         <CardHeader className="bg-white/5 pb-6 border-b border-white/5">
                             <div className="flex items-center gap-3">
                                 <Users className="h-6 w-6 text-orange-500" />
                                 <div>
-                                    <CardTitle className="text-2xl font-black uppercase italic">Expert Registry</CardTitle>
-                                    <CardDescription className="text-muted-foreground">Manage all registered professionals.</CardDescription>
+                                    <DialogTitle className="text-2xl font-black uppercase italic">Expert Registry</DialogTitle>
+                                    <DialogDescription className="text-muted-foreground">Manage all registered professionals.</DialogDescription>
                                 </div>
                             </div>
                         </CardHeader>
@@ -813,13 +833,13 @@ export default function AdminDashboardPage() {
                 </TabsContent>
 
                 <TabsContent value="leaderboard">
-                    <Card className="border-none bg-card rounded-2xl overflow-hidden shadow-2xl">
+                    <Card className="border-none bg-[#24262d] rounded-2xl overflow-hidden shadow-2xl">
                         <CardHeader className="bg-white/5 pb-6 border-b border-white/5">
                             <div className="flex items-center gap-3">
                                 <Trophy className="h-6 w-6 text-orange-500" />
                                 <div>
-                                    <CardTitle className="text-2xl font-black uppercase italic">Referral Rankings</CardTitle>
-                                    <CardDescription className="text-muted-foreground">Experts with the highest engagement points.</CardDescription>
+                                    <DialogTitle className="text-2xl font-black uppercase italic">Referral Rankings</DialogTitle>
+                                    <DialogDescription className="text-muted-foreground">Experts with the highest engagement points.</DialogDescription>
                                 </div>
                             </div>
                         </CardHeader>
@@ -880,14 +900,14 @@ export default function AdminDashboardPage() {
                 </TabsContent>
 
                 <TabsContent value="vacancies">
-                    <Card className="border-none bg-card rounded-2xl overflow-hidden shadow-2xl">
+                    <Card className="border-none bg-[#24262d] rounded-2xl overflow-hidden shadow-2xl">
                         <CardHeader className="bg-white/5 pb-6 border-b border-white/5">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-3">
                                     <Briefcase className="h-6 w-6 text-orange-500" />
                                     <div>
-                                        <CardTitle className="text-2xl font-black uppercase italic">Platform Openings</CardTitle>
-                                        <CardDescription className="text-muted-foreground">Review and moderate job vacancies.</CardDescription>
+                                        <DialogTitle className="text-2xl font-black uppercase italic">Platform Openings</DialogTitle>
+                                        <DialogDescription className="text-muted-foreground">Review and moderate job vacancies.</DialogDescription>
                                     </div>
                                 </div>
                                 <Button onClick={() => { setSelectedVacancy(null); setIsVacancyDialogOpen(true); }} className="rounded-xl font-black bg-orange-500 hover:bg-orange-600 shadow-lg shadow-orange-500/20"><PlusCircle className="mr-2 h-4 w-4" /> Post Admin Vacancy</Button>
@@ -947,13 +967,13 @@ export default function AdminDashboardPage() {
                 </TabsContent>
 
                 <TabsContent value="payments">
-                    <Card className="border-none bg-card rounded-2xl overflow-hidden shadow-2xl">
+                    <Card className="border-none bg-[#24262d] rounded-2xl overflow-hidden shadow-2xl">
                         <CardHeader className="bg-white/5 pb-6 border-b border-white/5">
                             <div className="flex items-center gap-3">
                                 <IndianRupee className="h-6 w-6 text-orange-500" />
                                 <div>
-                                    <CardTitle className="text-2xl font-black uppercase italic">Transaction Ledger</CardTitle>
-                                    <CardDescription className="text-muted-foreground">Monitor revenue and payment attempts.</CardDescription>
+                                    <DialogTitle className="text-2xl font-black uppercase italic">Transaction Ledger</DialogTitle>
+                                    <DialogDescription className="text-muted-foreground">Monitor revenue and payment attempts.</DialogDescription>
                                 </div>
                             </div>
                         </CardHeader>
@@ -1003,13 +1023,13 @@ export default function AdminDashboardPage() {
                 </TabsContent>
 
                 <TabsContent value="feed">
-                    <Card className="border-none bg-card rounded-2xl overflow-hidden shadow-2xl">
+                    <Card className="border-none bg-[#24262d] rounded-2xl overflow-hidden shadow-2xl">
                         <CardHeader className="bg-white/5 pb-6 border-b border-white/5">
                             <div className="flex items-center gap-3">
                                 <Rss className="h-6 w-6 text-orange-500" />
                                 <div>
-                                    <CardTitle className="text-2xl font-black uppercase italic">Feed Moderation</CardTitle>
-                                    <CardDescription className="text-muted-foreground">Monitor and remove community updates.</CardDescription>
+                                    <DialogTitle className="text-2xl font-black uppercase italic">Feed Moderation</DialogTitle>
+                                    <DialogDescription className="text-muted-foreground">Monitor and remove community updates.</DialogDescription>
                                 </div>
                             </div>
                         </CardHeader>
@@ -1060,36 +1080,36 @@ export default function AdminDashboardPage() {
             {mounted && reportData && (
               <>
                 <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
-                    <Card className="border-none bg-card shadow-xl">
+                    <Card className="border-none bg-[#24262d] shadow-xl">
                         <CardHeader className="pb-2">
-                            <CardDescription className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2"><TrendingUp className="h-3 w-3 text-green-500" /> Platform Revenue</CardDescription>
-                            <CardTitle className="text-3xl font-black text-orange-500">₹{reportData.totalRevenue.toLocaleString()}</CardTitle>
+                            <DialogDescription className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2"><TrendingUp className="h-3 w-3 text-green-500" /> Platform Revenue</DialogDescription>
+                            <DialogTitle className="text-3xl font-black text-orange-500">₹{reportData.totalRevenue.toLocaleString()}</DialogTitle>
                         </CardHeader>
                     </Card>
-                    <Card className="border-none bg-card shadow-xl">
+                    <Card className="border-none bg-[#24262d] shadow-xl">
                         <CardHeader className="pb-2">
-                            <CardDescription className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2"><Activity className="h-3 w-3 text-blue-500" /> Verification Rate</CardDescription>
-                            <CardTitle className="text-3xl font-black">{stats.total > 0 ? Math.round((stats.verified / stats.total) * 100) : 0}%</CardTitle>
+                            <DialogDescription className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2"><Activity className="h-3 w-3 text-blue-500" /> Verification Rate</DialogDescription>
+                            <DialogTitle className="text-3xl font-black">{stats.total > 0 ? Math.round((stats.verified / stats.total) * 100) : 0}%</DialogTitle>
                         </CardHeader>
                     </Card>
-                    <Card className="border-none bg-card shadow-xl">
+                    <Card className="border-none bg-[#24262d] shadow-xl">
                         <CardHeader className="pb-2">
-                            <CardDescription className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2"><Crown className="h-3 w-3 text-purple-500" /> Premium Users</CardDescription>
-                            <CardTitle className="text-3xl font-black">{stats.premier + stats.super}</CardTitle>
+                            <DialogDescription className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2"><Crown className="h-3 w-3 text-purple-500" /> Premium Users</DialogDescription>
+                            <DialogTitle className="text-3xl font-black">{stats.premier + stats.super}</DialogTitle>
                         </CardHeader>
                     </Card>
-                    <Card className="border-none bg-card shadow-xl">
+                    <Card className="border-none bg-[#24262d] shadow-xl">
                         <CardHeader className="pb-2">
-                            <CardDescription className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2"><MessageSquare className="h-3 w-3 text-orange-500" /> Community Content</CardDescription>
-                            <CardTitle className="text-3xl font-black">{reportData.totalPosts} Posts</CardTitle>
+                            <DialogDescription className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2"><MessageSquare className="h-3 w-3 text-orange-500" /> Community Content</DialogDescription>
+                            <DialogTitle className="text-3xl font-black">{reportData.totalPosts} Posts</DialogTitle>
                         </CardHeader>
                     </Card>
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    <Card className="border-none bg-card rounded-2xl overflow-hidden shadow-2xl">
+                    <Card className="border-none bg-[#24262d] rounded-2xl overflow-hidden shadow-2xl">
                         <CardHeader className="bg-white/5 border-b border-white/5">
-                            <CardTitle className="text-xl font-black flex items-center gap-2 uppercase italic"><TrendingUp className="h-5 w-5 text-orange-500" /> Expert Growth</CardTitle>
+                            <DialogTitle className="text-xl font-black flex items-center gap-2 uppercase italic"><TrendingUp className="h-5 w-5 text-orange-500" /> Expert Growth</DialogTitle>
                         </CardHeader>
                         <CardContent className="pt-8 h-[300px]">
                             <ResponsiveContainer width="100%" height="100%">
@@ -1104,9 +1124,9 @@ export default function AdminDashboardPage() {
                         </CardContent>
                     </Card>
 
-                    <Card className="border-none bg-card rounded-2xl overflow-hidden shadow-2xl">
+                    <Card className="border-none bg-[#24262d] rounded-2xl overflow-hidden shadow-2xl">
                         <CardHeader className="bg-white/5 border-b border-white/5">
-                            <CardTitle className="text-xl font-black flex items-center gap-2 uppercase italic"><PieChart className="h-5 w-5 text-orange-500" /> Revenue Split</CardTitle>
+                            <DialogTitle className="text-xl font-black flex items-center gap-2 uppercase italic"><PieChart className="h-5 w-5 text-orange-500" /> Revenue Split</DialogTitle>
                         </CardHeader>
                         <CardContent className="pt-8 h-[300px] flex items-center">
                             <div className="w-1/2 h-full">
@@ -1140,13 +1160,13 @@ export default function AdminDashboardPage() {
           </TabsContent>
 
           <TabsContent value="settings" className="mt-0 space-y-6">
-            <Card className="border-none rounded-2xl overflow-hidden bg-card">
+            <Card className="border-none rounded-2xl overflow-hidden bg-[#24262d]">
               <CardHeader className="bg-white/5 border-b border-white/5 pb-6">
                 <div className="flex items-center gap-3">
                     <IndianRupee className="h-6 w-6 text-orange-500" />
-                    <CardTitle className="text-2xl font-black uppercase italic">Payment Architecture</CardTitle>
+                    <DialogTitle className="text-2xl font-black uppercase italic">Payment Architecture</DialogTitle>
                 </div>
-                <CardDescription className="text-muted-foreground">Choose between automated API processing or simplified static links.</CardDescription>
+                <DialogDescription className="text-muted-foreground">Choose between automated API processing or simplified static links.</DialogDescription>
               </CardHeader>
               <CardContent className="p-6 space-y-8">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -1216,13 +1236,13 @@ export default function AdminDashboardPage() {
             </Card>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Card className="border-none rounded-2xl overflow-hidden bg-card">
+                <Card className="border-none rounded-2xl overflow-hidden bg-[#24262d]">
                     <CardHeader className="bg-white/5 border-b border-white/5 pb-6">
                         <div className="flex items-center gap-3">
                             <Layout className="h-6 w-6 text-orange-500" />
-                            <CardTitle className="text-xl font-black uppercase italic">Homepage Modules</CardTitle>
+                            <DialogTitle className="text-xl font-black uppercase italic">Homepage Modules</DialogTitle>
                         </div>
-                        <CardDescription className="text-muted-foreground">Manage the visibility of core sections.</CardDescription>
+                        <DialogDescription className="text-muted-foreground">Manage the visibility of core sections.</DialogDescription>
                     </CardHeader>
                     <CardContent className="p-6 space-y-6">
                         <div className="space-y-2">
@@ -1239,13 +1259,13 @@ export default function AdminDashboardPage() {
                     </CardContent>
                 </Card>
 
-                <Card className="border-none rounded-2xl overflow-hidden bg-card">
+                <Card className="border-none rounded-2xl overflow-hidden bg-[#24262d]">
                     <CardHeader className="bg-white/5 border-b border-white/5 pb-6">
                         <div className="flex items-center gap-3">
                             <Gift className="h-6 w-6 text-orange-500" />
-                            <CardTitle className="text-xl font-black uppercase italic">Growth Engine</CardTitle>
+                            <DialogTitle className="text-xl font-black uppercase italic">Growth Engine</DialogTitle>
                         </div>
-                        <CardDescription className="text-muted-foreground">Configure referral rewards and incentives.</CardDescription>
+                        <DialogDescription className="text-muted-foreground">Configure referral rewards and incentives.</DialogDescription>
                     </CardHeader>
                     <CardContent className="p-6 space-y-6">
                         <div className="space-y-2">
@@ -1258,11 +1278,11 @@ export default function AdminDashboardPage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Card className="border-none rounded-2xl overflow-hidden bg-card">
+                <Card className="border-none rounded-2xl overflow-hidden bg-[#24262d]">
                     <CardHeader className="bg-white/5 border-b border-white/5 pb-6">
                         <div className="flex items-center gap-3">
                             <Megaphone className="h-6 w-6 text-orange-500" />
-                            <CardTitle className="text-xl font-black uppercase italic">Announcements</CardTitle>
+                            <DialogTitle className="text-xl font-black uppercase italic">Announcements</DialogTitle>
                         </div>
                     </CardHeader>
                     <CardContent className="p-6 space-y-4">
@@ -1274,11 +1294,11 @@ export default function AdminDashboardPage() {
                     </CardContent>
                 </Card>
 
-                <Card className="border-none rounded-2xl overflow-hidden bg-card">
+                <Card className="border-none rounded-2xl overflow-hidden bg-[#24262d]">
                     <CardHeader className="bg-white/5 border-b border-white/5 pb-6">
                         <div className="flex items-center gap-3">
                             <Video className="h-6 w-6 text-orange-500" />
-                            <CardTitle className="text-xl font-black uppercase italic">Video Resources</CardTitle>
+                            <DialogTitle className="text-xl font-black uppercase italic">Video Resources</DialogTitle>
                         </div>
                     </CardHeader>
                     <CardContent className="p-6 space-y-4">
@@ -1292,11 +1312,11 @@ export default function AdminDashboardPage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Card className="border-none rounded-2xl overflow-hidden bg-card">
+                <Card className="border-none rounded-2xl overflow-hidden bg-[#24262d]">
                     <CardHeader className="bg-white/5 border-b border-white/5 pb-6">
                         <div className="flex items-center gap-3">
                             <Phone className="h-6 w-6 text-orange-500" />
-                            <CardTitle className="text-xl font-black uppercase italic">Central Support</CardTitle>
+                            <DialogTitle className="text-xl font-black uppercase italic">Central Support</DialogTitle>
                         </div>
                     </CardHeader>
                     <CardContent className="p-6 space-y-4">
@@ -1309,8 +1329,8 @@ export default function AdminDashboardPage() {
 
           <TabsContent value="data" className="mt-0 space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Card className="border-none bg-card rounded-2xl overflow-hidden shadow-xl">
-                    <CardHeader className="bg-white/5 border-b border-white/5 pb-6"><CardTitle className="font-black uppercase italic">CSV Actions</CardTitle></CardHeader>
+                <Card className="border-none bg-[#24262d] rounded-2xl overflow-hidden shadow-xl">
+                    <CardHeader className="bg-white/5 border-b border-white/5 pb-6"><DialogTitle className="font-black uppercase italic">CSV Actions</DialogTitle></CardHeader>
                     <CardContent className="p-6 space-y-4">
                         <div className="flex flex-col gap-3">
                             <input type="file" accept=".csv" className="hidden" id="csv-import-input" onChange={handleImportCSV} />
@@ -1324,8 +1344,8 @@ export default function AdminDashboardPage() {
                     </CardContent>
                 </Card>
 
-                <Card className="border-none bg-card rounded-2xl overflow-hidden shadow-xl">
-                    <CardHeader className="bg-white/5 border-b border-white/5 pb-6"><CardTitle className="font-black uppercase italic">System Backup</CardTitle></CardHeader>
+                <Card className="border-none bg-[#24262d] rounded-2xl overflow-hidden shadow-xl">
+                    <CardHeader className="bg-white/5 border-b border-white/5 pb-6"><DialogTitle className="font-black uppercase italic">System Backup</DialogTitle></CardHeader>
                     <CardContent className="p-6">
                         <Button className="w-full h-12 rounded-xl bg-orange-500 hover:bg-orange-600 font-black" onClick={handleExportJSON} disabled={isExporting}>
                             {isExporting ? <Loader className="animate-spin mr-2 h-4 w-4" /> : <HardDriveDownload className="mr-2 h-4 w-4" />} Full Data Backup (JSON)
@@ -1334,8 +1354,8 @@ export default function AdminDashboardPage() {
                 </Card>
             </div>
 
-            <Card className="border-none bg-card rounded-2xl overflow-hidden shadow-xl">
-              <CardHeader className="bg-white/5 border-b border-white/5 pb-6"><CardTitle className="font-black uppercase italic">Manual User Provisioning</CardTitle></CardHeader>
+            <Card className="border-none bg-[#24262d] rounded-2xl overflow-hidden shadow-xl">
+              <CardHeader className="bg-white/5 border-b border-white/5 pb-6"><DialogTitle className="font-black uppercase italic">Manual User Provisioning</DialogTitle></CardHeader>
               <CardContent className="p-6"><CreateUserForm onSuccess={() => toast({ title: "User created" })} /></CardContent>
             </Card>
           </TabsContent>
