@@ -142,7 +142,6 @@ export function RegistrationForm() {
     defaultValues: { otp: "" },
   });
 
-  // Handle Redirect Result for Google Sign-Up
   useEffect(() => {
     if (auth && firestore) {
         getRedirectResult(auth).then(async (result) => {
@@ -193,7 +192,6 @@ export function RegistrationForm() {
   }, [view, auth]);
 
   const selectedRole = form.watch("role");
-  const selectedPhoneRole = phoneForm.watch("role");
   const pincodeValue = form.watch("pincode");
 
   useEffect(() => {
@@ -292,7 +290,7 @@ export function RegistrationForm() {
       <div id="recaptcha-container" ref={recaptchaContainerRef}></div>
       <div className="mb-10 text-center sm:text-left">
         <h2 className="text-3xl sm:text-4xl font-black uppercase italic tracking-tighter text-white mb-2">Register</h2>
-        <p className="text-sm text-muted-foreground font-medium uppercase tracking-widest text-[10px]">Create Expert Profile</p>
+        <p className="text-[10px] sm:text-xs font-black uppercase tracking-[0.3em] text-orange-500/50">CREATE EXPERT PROFILE</p>
       </div>
 
       {view === 'email' && (
@@ -304,7 +302,7 @@ export function RegistrationForm() {
 
             <div className="relative my-8">
                 <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-white/5" /></div>
-                <div className="relative flex justify-center text-[10px] uppercase font-black tracking-[0.2em]"><span className="bg-[#24262d] px-4 text-muted-foreground">Detailed Signup</span></div>
+                <div className="relative flex justify-center text-[10px] uppercase font-black tracking-[0.2em]"><span className="bg-[#24262d] px-4 text-muted-foreground">Or Basic Details</span></div>
             </div>
 
             <Form {...form}>
@@ -317,7 +315,10 @@ export function RegistrationForm() {
                                     <Card key={type.name} className={cn("cursor-pointer transition-all border-none bg-[#1a1c23] rounded-2xl shadow-inner", field.value === type.name ? "ring-2 ring-orange-500 bg-orange-500/5" : "hover:bg-white/5")} onClick={() => form.setValue('role', type.name, { shouldValidate: true })}>
                                         <CardHeader className="flex flex-row items-center gap-4 p-4">
                                             <div className={cn("p-2 rounded-full", field.value === type.name ? "bg-orange-500 text-white" : "bg-white/5 text-muted-foreground")}>{React.cloneElement(type.icon as React.ReactElement, { className: "w-5 h-5" })}</div>
-                                            <div className="flex-1"><CardTitle className="text-xs font-black uppercase italic">{type.name}</CardTitle></div>
+                                            <div className="flex-1">
+                                                <CardTitle className="text-xs font-black uppercase italic">{type.name}</CardTitle>
+                                                <p className="text-[9px] text-muted-foreground font-medium uppercase tracking-tighter">{type.description}</p>
+                                            </div>
                                             {field.value === type.name && <CheckCircle2 className="h-5 w-5 text-orange-500" />}
                                         </CardHeader>
                                     </Card>
