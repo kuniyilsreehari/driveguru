@@ -267,10 +267,10 @@ export default function AdminDashboardPage() {
         unverified: users.filter(u => !u.verified).length,
         premier: users.filter(u => u.tier === 'Premier').length,
         super: users.filter(u => u.tier === 'Super Premier').length,
-        referrals: users.reduce((sum, u) => sum + (u.referralPoints || 0), 0),
-        referrers: users.filter(u => (u.referralPoints || 0) > 0 || (u.referralCount || 0) > 0).length,
+        referrals: users.reduce((sum, u) => sum + ((u.referralCount || 0) * referralPoints), 0),
+        referrers: users.filter(u => (u.referralCount || 0) > 0).length,
     };
-  }, [users]);
+  }, [users, referralPoints]);
 
   const reportData = useMemo(() => {
     if (!users || !payments || !posts) return null;
@@ -329,7 +329,7 @@ export default function AdminDashboardPage() {
             userFilter === 'unverified' ? !u.verified :
             userFilter === 'premier' ? u.tier === 'Premier' :
             userFilter === 'super' ? u.tier === 'Super Premier' : 
-            userFilter === 'referrers' ? ((u.referralPoints || 0) > 0 || (u.referralCount || 0) > 0) : true;
+            userFilter === 'referrers' ? ((u.referralCount || 0) > 0) : true;
 
         return matchesSearch && matchesFilter;
     });
@@ -338,16 +338,17 @@ export default function AdminDashboardPage() {
   const rankingUsers = useMemo(() => {
     if (!users) return [];
     return [...users]
-        .filter(u => (u.referralPoints || 0) > 0 || (u.referralCount || 0) > 0)
+        .filter(u => (u.referralCount || 0) > 0)
         .sort((a, b) => {
-            const aScore = (a.referralPoints || 0) * (a.referralCount || 0);
-            const bScore = (b.referralPoints || 0) * (b.referralCount || 0);
+            const aDynamicPoints = (a.referralCount || 0) * referralPoints;
+            const bDynamicPoints = (b.referralCount || 0) * referralPoints;
+            const aScore = aDynamicPoints * (a.referralCount || 0);
+            const bScore = bDynamicPoints * (b.referralCount || 0);
             
             if (bScore !== aScore) return bScore - aScore;
-            if (b.referralPoints !== a.referralPoints) return (b.referralPoints || 0) - (a.referralPoints || 0);
             return (b.referralCount || 0) - (a.referralCount || 0);
         });
-  }, [users]);
+  }, [users, referralPoints]);
 
   const sanitizePhoneNumber = useCallback((phone?: string) => {
     if (!phone) return 'N/A';
@@ -517,24 +518,28 @@ export default function AdminDashboardPage() {
 
   const handleExportCSV = () => {
     if (!users) return;
-    const headers = ["S.No", "Expert Name", "Profession/Role", "Email", "Phone Number", "City", "State", "Pincode", "Tier", "Verified", "Referral Code", "Referral Points", "Referral Joins", "Influence Score", "Joined Date"];
-    const rows = users.map((u, i) => [
-        i + 1,
-        `"${u.firstName} ${u.lastName}"`,
-        `"${u.profession || u.role}"`,
-        `"${u.email || ''}"`,
-        `"${sanitizePhoneNumber(u.phoneNumber)}"`,
-        `"${u.city || ''}"`,
-        `"${u.state || ''}"`,
-        `"${u.pincode || ''}"`,
-        `"${u.tier || 'Standard'}"`,
-        `"${u.verified ? 'Yes' : 'No'}"`,
-        `"${u.referralCode || ''}"`,
-        u.referralPoints || 0,
-        u.referralCount || 0,
-        (u.referralPoints || 0) * (u.referralCount || 0),
-        u.createdAt ? format(u.createdAt.toDate(), 'dd-MM-yyyy') : '---'
-    ]);
+    const headers = ["S.No", "Expert Name", "Profession/Role", "Email", "Phone Number", "City", "State", "Pincode", "Tier", "Verified", "Referral Code", "Total Points (PTS)", "Total Joins", "Influence Score", "Joined Date"];
+    const rows = users.map((u, i) => {
+        const dynamicPoints = (u.referralCount || 0) * referralPoints;
+        const influenceScore = dynamicPoints * (u.referralCount || 0);
+        return [
+            i + 1,
+            `"${u.firstName} ${u.lastName}"`,
+            `"${u.profession || u.role}"`,
+            `"${u.email || ''}"`,
+            `"${sanitizePhoneNumber(u.phoneNumber)}"`,
+            `"${u.city || ''}"`,
+            `"${u.state || ''}"`,
+            `"${u.pincode || ''}"`,
+            `"${u.tier || 'Standard'}"`,
+            `"${u.verified ? 'Yes' : 'No'}"`,
+            `"${u.referralCode || ''}"`,
+            dynamicPoints,
+            u.referralCount || 0,
+            influenceScore,
+            u.createdAt ? format(u.createdAt.toDate(), 'dd-MM-yyyy') : '---'
+        ]
+    });
 
     const csvContent = [headers, ...rows].map(e => e.join(",")).join("\n");
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -731,6 +736,7 @@ export default function AdminDashboardPage() {
                                             }
                                             return paginated.map((u, index) => {
                                                 const globalIndex = (currentPage - 1) * ITEMS_PER_PAGE + index + 1;
+                                                const dynamicPoints = (u.referralCount || 0) * referralPoints;
                                                 return (
                                                     <TableRow key={u.id} className="hover:bg-white/5 border-white/5 h-24">
                                                         <TableCell className="text-center font-bold text-muted-foreground text-xs">{globalIndex}</TableCell>
@@ -748,7 +754,7 @@ export default function AdminDashboardPage() {
                                                                     <div className="text-[10px] text-muted-foreground uppercase tracking-widest truncate max-w-[150px]">{u.profession || u.role}</div>
                                                                     <div className="flex items-center gap-2 mt-1.5 bg-[#1a1c23] w-fit px-2 py-1 rounded-lg border border-white/10 shadow-inner">
                                                                         <Gift className="h-3 w-3 text-orange-500" />
-                                                                        <span className="text-[10px] font-black text-orange-500 uppercase tracking-tighter">{u.referralPoints || 0} PTS</span>
+                                                                        <span className="text-[10px] font-black text-orange-500 uppercase tracking-tighter">{dynamicPoints} PTS</span>
                                                                         <span className="text-[10px] text-white/20">|</span>
                                                                         <span className="text-[10px] font-black text-white/70 uppercase tracking-tighter">{u.referralCount || 0} JOINS</span>
                                                                     </div>
@@ -890,7 +896,8 @@ export default function AdminDashboardPage() {
                                             <TableRow><TableCell colSpan={7} className="text-center py-12 text-muted-foreground italic">No experts have earned referral points yet.</TableCell></TableRow>
                                         ) : rankingUsers.slice((rankingPage - 1) * ITEMS_PER_PAGE, rankingPage * ITEMS_PER_PAGE).map((u, idx) => {
                                             const globalRank = (rankingPage - 1) * ITEMS_PER_PAGE + idx + 1;
-                                            const influenceScore = (u.referralPoints || 0) * (u.referralCount || 0);
+                                            const dynamicPoints = (u.referralCount || 0) * referralPoints;
+                                            const influenceScore = dynamicPoints * (u.referralCount || 0);
                                             return (
                                                 <TableRow key={u.id} className="hover:bg-white/5 border-white/5 h-20">
                                                     <TableCell className="text-center font-black text-orange-500 text-lg">#{globalRank}</TableCell>
@@ -909,7 +916,7 @@ export default function AdminDashboardPage() {
                                                     <TableCell className="text-center">
                                                         <span className="text-xs font-black text-white/80">{sanitizePhoneNumber(u.phoneNumber)}</span>
                                                     </TableCell>
-                                                    <TableCell className="text-center font-black text-white/60 text-lg">{u.referralPoints || 0}</TableCell>
+                                                    <TableCell className="text-center font-black text-white/60 text-lg">{dynamicPoints}</TableCell>
                                                     <TableCell className="text-center font-black text-white/60 text-lg">{u.referralCount || 0}</TableCell>
                                                     <TableCell className="text-center">
                                                         <div className="flex flex-col items-center justify-center">
