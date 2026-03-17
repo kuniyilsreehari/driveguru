@@ -838,6 +838,7 @@ export default function AdminDashboardPage() {
                                         <TableRow className="border-white/5">
                                             <TableHead className="w-[60px] font-bold text-white text-center">Rank</TableHead>
                                             <TableHead className="font-bold text-white">Top Referrer</TableHead>
+                                            <TableHead className="font-bold text-white text-center">Contact</TableHead>
                                             <TableHead className="font-bold text-white text-center">Total Points (PTS)</TableHead>
                                             <TableHead className="font-bold text-white text-center">Total Joins</TableHead>
                                             <TableHead className="font-bold text-orange-500 text-center uppercase tracking-widest text-[10px]">Influence Score (PTS × JOINS)</TableHead>
@@ -846,9 +847,9 @@ export default function AdminDashboardPage() {
                                     </TableHeader>
                                     <TableBody>
                                         {isUsersLoading ? (
-                                            <TableRow><TableCell colSpan={6} className="text-center py-8"><Loader className="animate-spin mx-auto text-orange-500" /></TableCell></TableRow>
+                                            <TableRow><TableCell colSpan={7} className="text-center py-8"><Loader className="animate-spin mx-auto text-orange-500" /></TableCell></TableRow>
                                         ) : rankingUsers.length === 0 ? (
-                                            <TableRow><TableCell colSpan={6} className="text-center py-12 text-muted-foreground italic">No experts have earned referral points yet.</TableCell></TableRow>
+                                            <TableRow><TableCell colSpan={7} className="text-center py-12 text-muted-foreground italic">No experts have earned referral points yet.</TableCell></TableRow>
                                         ) : rankingUsers.slice((rankingPage - 1) * ITEMS_PER_PAGE, rankingPage * ITEMS_PER_PAGE).map((u, idx) => {
                                             const globalRank = (rankingPage - 1) * ITEMS_PER_PAGE + idx + 1;
                                             const influenceScore = (u.referralPoints || 0) * (u.referralCount || 0);
@@ -866,6 +867,9 @@ export default function AdminDashboardPage() {
                                                                 <div className="text-[10px] text-muted-foreground uppercase tracking-widest">{u.profession || u.role}</div>
                                                             </div>
                                                         </div>
+                                                    </TableCell>
+                                                    <TableCell className="text-center">
+                                                        <span className="text-xs font-black text-white/80">{sanitizePhoneNumber(u.phoneNumber)}</span>
                                                     </TableCell>
                                                     <TableCell className="text-center font-black text-white/60 text-lg">{u.referralPoints || 0}</TableCell>
                                                     <TableCell className="text-center font-black text-white/60 text-lg">{u.referralCount || 0}</TableCell>
