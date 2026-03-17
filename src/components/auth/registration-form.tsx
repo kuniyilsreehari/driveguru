@@ -8,7 +8,7 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { User as UserIcon, Mail, Lock, Eye, EyeOff, Briefcase, MapPin, Phone, LocateIcon, Loader2, Building, Home, ArrowRight, MessageSquare, Gift, Sparkles } from "lucide-react";
+import { User as UserIcon, Mail, Lock, Eye, EyeOff, Briefcase, MapPin, Phone, LocateIcon, Loader2, Building, Home, ArrowRight, MessageSquare, Gift, Sparkles, CheckCircle2 } from "lucide-react";
 import { 
   createUserWithEmailAndPassword, 
   GoogleAuthProvider, 
@@ -42,77 +42,42 @@ import { Icons } from "../icons";
 import { Checkbox } from "../ui/checkbox";
 
 const expertTypes = [
-    { name: "Freelancer", icon: <UserIcon className="w-8 h-8" />, description: "Offer your individual skills and services directly to clients." },
-    { name: "Company", icon: <Building className="w-8 h-8" />, description: "Represent your business and manage company-wide talent." },
-    { name: "Authorized Pro", icon: <Briefcase className="w-8 h-8" />, description: "A professional authorized to work for a company." },
+    { name: "Freelancer", icon: <UserIcon className="w-8 h-8" />, description: "Individual skills and services." },
+    { name: "Company", icon: <Building className="w-8 h-8" />, description: "Business and talent management." },
+    { name: "Authorized Pro", icon: <Briefcase className="w-8 h-8" />, description: "Representing an organization." },
 ]
 
 const formSchema = z.object({
   firstName: z.string().min(1, { message: "First name is required." }),
   lastName: z.string().min(1, { message: "Last name is required." }),
-  email: z.string().email({ message: "Please enter a valid email address." }),
-  password: z
-    .string()
-    .min(8, { message: "Password must be at least 8 characters." }),
-  state: z.string().min(1, { message: "State is required." }),
-  city: z.string().min(1, { message: "City is required." }),
-  pincode: z.string().min(1, { message: "Pincode is required." }),
+  email: z.string().email({ message: "Invalid email address." }),
+  password: z.string().min(8, { message: "Password must be 8+ characters." }),
+  state: z.string().min(1, { message: "State required." }),
+  city: z.string().min(1, { message: "City required." }),
+  pincode: z.string().min(1, { message: "Pincode required." }),
   address: z.string().optional(),
   countryCode: z.string().optional(),
-  phoneNumber: z.string().min(10, { message: "Phone number is required." }),
-  role: z.string({ required_error: "Please select your expert type." }),
+  phoneNumber: z.string().min(10, { message: "10-digit number required." }),
+  role: z.string({ required_error: "Role is required." }),
   department: z.string().optional(),
   companyName: z.string().optional(),
   referralCode: z.string().optional(),
   terms: z.boolean().default(false).refine(val => val === true, {
-      message: "You must accept the terms and conditions to continue.",
+      message: "Accept terms to continue.",
   }),
-}).refine(data => {
-    if (data.role === 'Company' || data.role === 'Authorized Pro') {
-        return !!data.companyName;
-    }
-    return true;
-}, {
-    message: "Company name is required.",
-    path: ["companyName"],
-}).refine(data => {
-    if (data.role === 'Company' || data.role === 'Authorized Pro') {
-        return !!data.address;
-    }
-    return true;
-}, {
-    message: "Address is required.",
-    path: ["address"],
 });
 
 const phoneFormSchema = z.object({
-  phoneNumber: z.string().min(10, { message: "Please enter a valid 10-digit phone number." }),
+  phoneNumber: z.string().min(10, { message: "Enter 10-digit number." }),
   referralCode: z.string().optional(),
-  role: z.string({ required_error: "Please select your expert type." }),
+  role: z.string({ required_error: "Role is required." }),
   firstName: z.string().optional(),
   lastName: z.string().optional(),
   companyName: z.string().optional(),
-}).refine(data => {
-    if (data.role === 'Freelancer') {
-        return !!data.firstName && !!data.lastName;
-    }
-    return true;
-}, {
-    message: "First and last name are required for Freelancers.",
-    path: ["firstName"],
-}).refine(data => {
-    if (data.role === 'Company' || data.role === 'Authorized Pro') {
-        return !!data.companyName;
-    }
-    return true;
-}, {
-    message: "Company name is required for this role.",
-    path: ["companyName"],
 });
 
-
 const otpFormSchema = z.object({
-  otp: z.string().length(6, { message: "OTP must be 6 digits." }),
+  otp: z.string().length(6, { message: "Enter 6-digit OTP." }),
 });
 
 type AppConfig = {
@@ -127,7 +92,6 @@ type PhoneSignupData = {
     lastName?: string;
     companyName?: string;
 }
-
 
 export function RegistrationForm() {
   const { toast } = useToast();
@@ -154,36 +118,22 @@ export function RegistrationForm() {
   const { data: appConfig } = useDoc<AppConfig>(appConfigDocRef);
   const departments = appConfig?.departments || [];
 
-
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      firstName: "",
-      lastName: "",
-      email: "",
-      password: "",
-      state: "",
-      city: "",
-      pincode: "",
-      address: "",
-      countryCode: "+91",
-      phoneNumber: "",
-      companyName: "",
-      department: "",
+      firstName: "", lastName: "", email: "", password: "",
+      state: "", city: "", pincode: "", address: "",
+      countryCode: "+91", phoneNumber: "", companyName: "", department: "",
       referralCode: searchParams.get('ref') || "",
       terms: false,
     },
   });
 
-   const phoneForm = useForm<z.infer<typeof phoneFormSchema>>({
+  const phoneForm = useForm<z.infer<typeof phoneFormSchema>>({
     resolver: zodResolver(phoneFormSchema),
     defaultValues: { 
-        phoneNumber: "", 
-        referralCode: searchParams.get('ref') || "", 
-        role: "Freelancer",
-        firstName: "",
-        lastName: "",
-        companyName: "",
+        phoneNumber: "", referralCode: searchParams.get('ref') || "", 
+        role: "Freelancer", firstName: "", lastName: "", companyName: "",
     },
   });
 
@@ -192,7 +142,7 @@ export function RegistrationForm() {
     defaultValues: { otp: "" },
   });
 
-  // Handle Redirect Result
+  // Handle Redirect Result for Google Sign-Up
   useEffect(() => {
     if (auth && firestore) {
         getRedirectResult(auth).then(async (result) => {
@@ -216,16 +166,17 @@ export function RegistrationForm() {
                     };
                     setDocumentNonBlocking(userDocRef, userData, { merge: true });
                 }
+                toast({ title: "Welcome to DriveGuru!", description: "Account created successfully." });
             }
         }).catch((error) => {
             if (error.code === 'auth/unauthorized-domain') {
                 toast({
                     variant: "destructive",
                     title: "Domain Not Authorized",
-                    description: "Please add driveguru.in to Authorized Domains in Firebase Console.",
+                    description: "Please add 'driveguru.in' to Authorized Domains in Firebase console settings.",
                 });
             } else if (error.code !== 'auth/popup-closed-by-user') {
-                console.error("Redirect auth error:", error);
+                console.error("Auth redirect error:", error);
             }
         });
     }
@@ -256,41 +207,17 @@ export function RegistrationForm() {
             const postOffice = data[0].PostOffice[0];
             form.setValue('city', postOffice.District, { shouldValidate: true });
             form.setValue('state', postOffice.State, { shouldValidate: true });
-            toast({
-              title: "Location Fetched",
-              description: "City and State have been auto-filled from your pincode.",
-            });
-          } else {
-            toast({
-              variant: "destructive",
-              title: "Invalid Pincode",
-              description: "Could not find location details for this pincode.",
-            });
           }
-        } catch (error) {
-          toast({
-            variant: "destructive",
-            title: "Pincode Lookup Failed",
-            description: "Could not fetch location details. Please enter manually.",
-          });
         } finally {
           setIsFetchingPincode(false);
         }
       };
       fetchPincodeData();
     }
-  }, [pincodeValue, form, toast]);
+  }, [pincodeValue, form]);
   
   const handleDetectLocation = () => {
-    if (!navigator.geolocation) {
-      toast({
-        variant: 'destructive',
-        title: 'Geolocation Not Supported',
-        description: 'Your browser does not support geolocation.',
-      });
-      return;
-    }
-
+    if (!navigator.geolocation) return;
     setIsDetectingLocation(true);
     navigator.geolocation.getCurrentPosition(
       async (position) => {
@@ -299,522 +226,146 @@ export function RegistrationForm() {
           const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
           const data = await response.json();
           const address = data.address;
-
-          if (address.city || address.town || address.village) {
-            form.setValue('city', address.city || address.town || address.village, { shouldValidate: true });
-          }
-          if (address.state) {
-            form.setValue('state', address.state, { shouldValidate: true });
-          }
-          if (address.postcode) {
-            form.setValue('pincode', address.postcode, { shouldValidate: true });
-          }
-          
-          toast({
-            title: 'Location Detected',
-            description: 'Your city, state, and pincode have been filled.',
-          });
-        } catch (error) {
-          toast({
-            variant: 'destructive',
-            title: 'Detection Failed',
-            description: 'Could not fetch address details. Please enter manually.',
-          });
+          if (address.city || address.town) form.setValue('city', address.city || address.town, { shouldValidate: true });
+          if (address.state) form.setValue('state', address.state, { shouldValidate: true });
+          if (address.postcode) form.setValue('pincode', address.postcode, { shouldValidate: true });
         } finally {
           setIsDetectingLocation(false);
         }
       },
-      (error) => {
-        setIsDetectingLocation(false);
-        toast({
-          variant: 'destructive',
-          title: 'Location Access Denied',
-          description: error.message,
-        });
-      }
+      () => setIsDetectingLocation(false)
     );
   };
 
-  useEffect(() => {
-    if (!isUserLoading && user) {
-        router.push('/dashboard');
-    }
-  }, [user, isUserLoading, router]);
-
-  async function getCoordinates(address: string): Promise<{ lat: number; lon: number } | null> {
-    try {
-        const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`);
-        const data = await response.json();
-        if (data && data.length > 0) {
-            return { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon) };
-        }
-        return null;
-    } catch (error) {
-        console.error("Geocoding failed:", error);
-        return null;
-    }
-  }
-
-  const generateReferralCode = () => {
-    return Math.random().toString(36).substring(2, 10).toUpperCase();
-  }
-
   async function handleGoogleSignUp() {
-    if (!auth || !firestore) return;
+    if (!auth) return;
     const provider = new GoogleAuthProvider();
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
     try {
-        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
         if (isMobile) {
             await signInWithRedirect(auth, provider);
         } else {
             const result = await signInWithPopup(auth, provider);
-            const user = result.user;
-            const additionalInfo = getAdditionalUserInfo(result);
-
-            if (additionalInfo?.isNewUser) {
-                const userDocRef = doc(firestore, "users", user.uid);
-                const nameParts = user.displayName?.split(' ') || [];
-                const firstName = nameParts[0] || 'New';
-                const lastName = nameParts.slice(1).join(' ') || 'User';
-
-                const userData = {
-                    id: user.uid,
-                    firstName: firstName,
-                    lastName: lastName,
-                    email: user.email,
-                    photoUrl: user.photoURL || '',
-                    role: 'Freelancer',
-                    verified: false,
-                    isAvailable: true,
-                    referralCode: generateReferralCode(),
-                    referralPoints: 0,
+            if (getAdditionalUserInfo(result)?.isNewUser) {
+                const userDocRef = doc(firestore!, "users", result.user.uid);
+                const nameParts = result.user.displayName?.split(' ') || [];
+                setDocumentNonBlocking(userDocRef, {
+                    id: result.user.uid, firstName: nameParts[0] || 'New', lastName: nameParts.slice(1).join(' ') || 'User',
+                    email: result.user.email, role: 'Freelancer', verified: false, isAvailable: true,
+                    referralCode: Math.random().toString(36).substring(2, 10).toUpperCase(), referralPoints: 0,
                     createdAt: serverTimestamp(),
-                };
-                setDocumentNonBlocking(userDocRef, userData, { merge: true });
-                toast({
-                    title: "Welcome!",
-                    description: "Your account has been created. Please complete your profile in the dashboard.",
-                });
+                }, { merge: true });
             }
         }
     } catch (error: any) {
         if (error.code === 'auth/unauthorized-domain') {
-            toast({
-                variant: "destructive",
-                title: "Domain Restricted",
-                description: "This domain must be authorized in the Firebase Console.",
-            });
-        } else if (error.code !== 'auth/popup-closed-by-user') {
-            toast({
-                variant: "destructive",
-                title: "Google Sign-In Failed",
-                description: error.message,
-            });
+            toast({ variant: "destructive", title: "Domain Error", description: "Add 'driveguru.in' to Firebase Authorized Domains." });
         }
     }
-  }
-
-  async function getReferringUser(referralCode: string) {
-    if (!firestore || !referralCode) return null;
-    const usersRef = collection(firestore, 'users');
-    const q = query(usersRef, where('referralCode', '==', referralCode), limit(1));
-    const querySnapshot = await getDocs(q);
-    if (!querySnapshot.empty) {
-        return querySnapshot.docs[0];
-    }
-    return null;
-  }
-
-  const sanitizePhone = (phoneNumber: string) => {
-    const digits = phoneNumber.trim().replace(/\D/g, '');
-    return digits.length > 10 ? digits.slice(-10) : digits;
   }
 
   async function onEmailSubmit(values: z.infer<typeof formSchema>) {
     if (!auth || !firestore) return;
     setIsSubmitting(true);
-    
     try {
-        if (values.referralCode) {
-            const referringUserDoc = await getReferringUser(values.referralCode);
-            if (!referringUserDoc) {
-                form.setError("referralCode", { type: "manual", message: "Invalid referral code." });
-                setIsSubmitting(false);
-                return;
-            }
-        }
-        
         const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
-        const newUser = userCredential.user;
-        
-        const fullAddress = [values.address, values.city, values.state, values.pincode].filter(Boolean).join(', ');
-        const coords = await getCoordinates(fullAddress);
-        
-        const newUserDocRef = doc(firestore, "users", newUser.uid);
-        const cleanPhoneNumber = sanitizePhone(values.phoneNumber);
-
-        const userData: any = {
-            id: newUser.uid,
-            firstName: values.firstName,
-            lastName: values.lastName,
-            email: values.email,
-            role: values.role,
-            department: values.department,
-            state: values.state,
-            city: values.city,
-            pincode: values.pincode,
-            address: values.address,
-            latitude: coords?.lat || null,
-            longitude: coords?.lon || null,
-            phoneNumber: `+91 ${cleanPhoneNumber}`,
-            companyName: values.companyName,
-            verified: false,
-            photoUrl: '',
-            isAvailable: true,
-            referralCode: generateReferralCode(),
-            referralPoints: 0,
-            referredByCode: values.referralCode || null,
-            createdAt: serverTimestamp(),
+        const newUserDocRef = doc(firestore, "users", userCredential.user.uid);
+        const userData = {
+            ...values,
+            phoneNumber: `${values.countryCode} ${values.phoneNumber.replace(/\D/g, '').slice(-10)}`,
+            verified: false, isAvailable: true,
+            referralCode: Math.random().toString(36).substring(2, 10).toUpperCase(),
+            referralPoints: 0, createdAt: serverTimestamp(),
         };
-
-        setDocumentNonBlocking(newUserDocRef, userData);
-        toast({ title: "Account Created", description: "Successfully joined DriveGuru." });
-
+        delete (userData as any).password;
+        await setDocumentNonBlocking(newUserDocRef, userData);
+        toast({ title: "Account Active", description: "Welcome to the expert registry." });
     } catch (error: any) {
-        if (error.code === 'auth/email-already-in-use') {
-            form.setError("email", { type: "manual", message: "Email already registered." });
-        } else if (error.name !== 'FirebaseError') {
-            toast({ variant: "destructive", title: "Registration Failed", description: error.message });
-        }
+        toast({ variant: "destructive", title: "Registration Failed", description: error.message });
     } finally {
         setIsSubmitting(false);
     }
   }
-
-   async function onPhoneSubmit(values: z.infer<typeof phoneFormSchema>) {
-    if (!auth) return;
-    setIsSubmitting(true);
-
-    if (values.referralCode) {
-        const referringUserDoc = await getReferringUser(values.referralCode);
-        if (!referringUserDoc) {
-            phoneForm.setError("referralCode", { type: "manual", message: "Invalid referral code." });
-            setIsSubmitting(false);
-            return;
-        }
-    }
-
-    const cleanPhoneNumber = sanitizePhone(values.phoneNumber);
-    const fullPhoneNumber = `+91${cleanPhoneNumber}`;
-    
-    setPhoneSignupData({
-      phoneNumber: fullPhoneNumber,
-      referralCode: values.referralCode,
-      role: values.role,
-      firstName: values.firstName,
-      lastName: values.lastName,
-      companyName: values.companyName
-    });
-
-    try {
-        const verifier = (window as any).recaptchaVerifier;
-        await verifier.render();
-        const result = await signInWithPhoneNumber(auth, fullPhoneNumber, verifier);
-        setConfirmationResult(result);
-        setView('otp');
-        toast({ title: "OTP Sent", description: `Sent to ${fullPhoneNumber}.` });
-    } catch (error: any) {
-        toast({ variant: "destructive", title: "Failed to Send OTP", description: error.message });
-    } finally {
-        setIsSubmitting(false);
-    }
-  }
-
-  async function onOtpSubmit(values: z.infer<typeof otpFormSchema>) {
-    if (!confirmationResult || !firestore || !phoneSignupData) return;
-    setIsSubmitting(true);
-    try {
-        const result = await confirmationResult.confirm(values.otp);
-        const user = result.user;
-        const additionalInfo = getAdditionalUserInfo(result);
-
-        if (additionalInfo?.isNewUser) {
-            const userDocRef = doc(firestore, "users", user.uid);
-            const userData = {
-                id: user.uid,
-                firstName: phoneSignupData.firstName || 'New',
-                lastName: phoneSignupData.lastName || 'User',
-                companyName: phoneSignupData.companyName || '',
-                email: null,
-                phoneNumber: phoneSignupData.phoneNumber,
-                role: phoneSignupData.role,
-                verified: false,
-                isAvailable: true,
-                referralCode: generateReferralCode(),
-                referredByCode: phoneSignupData.referralCode || null,
-                referralPoints: 0,
-                createdAt: serverTimestamp(),
-            };
-            await setDocumentNonBlocking(userDocRef, userData, { merge: true });
-            toast({ title: "Welcome!", description: "Account created successfully." });
-        } else {
-             toast({ title: "Signed In", description: "Phone number already registered." });
-        }
-    } catch (error: any) {
-        toast({ variant: "destructive", title: "OTP Failed", description: "Incorrect OTP code." });
-    } finally {
-        setIsSubmitting(false);
-    }
-  }
-
-
-  const renderEmailForm = () => (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onEmailSubmit)} className="space-y-4">
-        
-        <div className="relative my-8">
-            <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-white/5" /></div>
-            <div className="relative flex justify-center text-[10px] uppercase font-black tracking-widest"><span className="bg-[#1a1c23] px-4 text-muted-foreground">Sign up with</span></div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-3">
-            <Button onClick={handleGoogleSignUp} type="button" variant="outline" className="rounded-xl h-12 border-white/10 bg-white/5 hover:bg-white/10 font-bold"><Icons.google className="mr-2 h-4 w-4" />Google</Button>
-             <Button onClick={() => setView('phone')} type="button" className="bg-[#22c55e] text-white hover:bg-[#1eb054] rounded-xl h-12 font-bold"><Phone className="mr-2 h-4 w-4" />Phone</Button>
-        </div>
-
-
-        <div className="relative my-8">
-            <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-white/5" /></div>
-            <div className="relative flex justify-center text-[10px] uppercase font-black tracking-widest"><span className="bg-[#1a1c23] px-4 text-muted-foreground">Or email details</span></div>
-        </div>
-        
-        <FormField
-          control={form.control}
-          name="referralCode"
-          render={({ field }) => (
-              <FormItem>
-                  <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Referral Code (Optional)</FormLabel>
-                  <div className="relative">
-                      <Gift className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                      <FormControl><Input placeholder="Enter a referral code" {...field} className="pl-10 h-12 bg-white/5 border-none rounded-xl font-bold" disabled={!!searchParams.get('ref')} /></FormControl>
-                  </div>
-                  <FormMessage />
-              </FormItem>
-          )}
-        />
-        
-        <div className="grid grid-cols-2 gap-4">
-            <FormField control={form.control} name="firstName" render={({ field }) => (
-                <FormItem>
-                <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">First Name</FormLabel>
-                <div className="relative">
-                    <UserIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><FormControl><Input placeholder="John" {...field} className="pl-10 h-12 bg-white/5 border-none rounded-xl font-bold" /></FormControl>
-                </div>
-                <FormMessage />
-                </FormItem>
-            )} />
-            <FormField control={form.control} name="lastName" render={({ field }) => (
-                <FormItem>
-                <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Last Name</FormLabel>
-                <div className="relative">
-                    <UserIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><FormControl><Input placeholder="Doe" {...field} className="pl-10 h-12 bg-white/5 border-none rounded-xl font-bold" /></FormControl>
-                </div>
-                <FormMessage />
-                </FormItem>
-            )} />
-        </div>
-
-        <FormField control={form.control} name="email" render={({ field }) => (
-            <FormItem>
-              <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Email Address</FormLabel>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><FormControl><Input type="email" placeholder="name@example.com" {...field} className="pl-10 h-12 bg-white/5 border-none rounded-xl font-bold" /></FormControl>
-              </div>
-              <FormMessage />
-            </FormItem>
-          )} />
-        
-        <FormField control={form.control} name="password" render={({ field }) => (
-            <FormItem>
-              <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Secure Password</FormLabel>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <FormControl><Input type={showPassword ? "text" : "password"} placeholder="••••••••" {...field} className="pl-10 pr-10 h-12 bg-white/5 border-none rounded-xl font-bold" /></FormControl>
-                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground">
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
-              </div>
-              <FormMessage />
-            </FormItem>
-          )} />
-        
-        <FormField
-          control={form.control}
-          name="role"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Classification</FormLabel>
-              <FormControl>
-                  <div className="grid grid-cols-1 gap-3">
-                      {expertTypes.map((type) => (
-                          <Card 
-                              key={type.name} 
-                              className={cn("cursor-pointer transition-all border-white/5 bg-white/5 rounded-2xl", field.value === type.name ? "border-primary ring-2 ring-primary/50 bg-primary/10" : "hover:bg-white/10")}
-                              onClick={() => form.setValue('role', type.name, { shouldValidate: true })}
-                          >
-                              <CardHeader className="flex flex-row items-center gap-4 p-4">
-                                  <div className={cn("p-2 rounded-full", field.value === type.name ? "bg-primary text-white" : "bg-white/10 text-white/40")}>{React.cloneElement(type.icon as React.ReactElement, { className: "w-5 h-5" })}</div>
-                                  <div className="flex-1"><CardTitle className="text-sm font-black uppercase italic tracking-tight">{type.name}</CardTitle></div>
-                                  <ArrowRight className={cn("h-4 w-4 text-muted-foreground transition-transform", field.value === type.name && "translate-x-1")}/>
-                              </CardHeader>
-                          </Card>
-                      ))}
-                  </div>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        
-        {selectedRole && (
-            <div className="space-y-4 animate-in fade-in slide-in-from-top-4 duration-500 pt-4">
-              <FormItem>
-                  <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Contact Number</FormLabel>
-                  <div className="flex items-center gap-2">
-                      <FormField control={form.control} name="countryCode" render={({ field: codeField }) => (
-                          <Select onValueChange={codeField.onChange} defaultValue={codeField.value}>
-                            <FormControl>
-                              <SelectTrigger className="w-[85px] h-12 bg-white/5 border-none rounded-xl font-bold">
-                                <SelectValue placeholder="Code" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent className="bg-[#24262d] border-white/10">
-                              <SelectItem value="+91">IN (+91)</SelectItem>
-                              <SelectItem value="+1">USA (+1)</SelectItem>
-                              <SelectItem value="+44">UK (+44)</SelectItem>
-                            </SelectContent>
-                          </Select>
-                      )} />
-                      <FormField control={form.control} name="phoneNumber" render={({ field }) => (
-                          <div className="relative flex-grow"><FormControl><Input placeholder="9876543210" {...field} className="h-12 bg-white/5 border-none rounded-xl font-bold" /></FormControl></div>
-                      )} />
-                  </div>
-                  <FormMessage />
-              </FormItem>
-              <div className="space-y-3">
-                  <div className="flex items-center justify-between mb-1">
-                      <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Location</FormLabel>
-                      <Button type="button" variant="ghost" size="sm" onClick={handleDetectLocation} disabled={isDetectingLocation} className="text-orange-500 font-black uppercase text-[10px] tracking-widest h-8 rounded-xl hover:bg-orange-500/10 gap-1">{isDetectingLocation ? <Loader2 className="h-3 w-3 animate-spin" /> : <LocateIcon className="h-3 w-3" />}AUTO-DETECT</Button>
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                      <FormField control={form.control} name="city" render={({ field }) => (<FormItem><FormControl><Input placeholder="City" {...field} className="h-12 bg-white/5 border-none rounded-xl font-bold" /></FormControl><FormMessage /></FormItem>)} />
-                      <FormField control={form.control} name="state" render={({ field }) => (<FormItem><FormControl><Input placeholder="State" {...field} className="h-12 bg-white/5 border-none rounded-xl font-bold" /></FormControl><FormMessage /></FormItem>)} />
-                  </div>
-                  <FormField control={form.control} name="pincode" render={({ field }) => (
-                    <FormItem><div className="relative"><FormControl><Input placeholder="Pincode" {...field} className="h-12 bg-white/5 border-none rounded-xl font-bold" /></FormControl>{isFetchingPincode && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin" />}</div><FormMessage /></FormItem>
-                  )} />
-              </div>
-
-              {(selectedRole === 'Company' || selectedRole === 'Authorized Pro') && (
-                <div className="space-y-4 pt-4 border-t border-white/5 animate-in fade-in slide-in-from-top-4 duration-500">
-                  <FormField control={form.control} name="companyName" render={({ field }) => (<FormItem><FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Organization Name</FormLabel><div className="relative"><Building className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><FormControl><Input placeholder="Your Company Name" {...field} className="pl-10 h-12 bg-white/5 border-none rounded-xl font-bold" /></FormControl></div><FormMessage /></FormItem>)} />
-                  <FormField control={form.control} name="department" render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Primary Industry</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger className="h-12 bg-white/5 border-none rounded-xl font-bold">
-                            <SelectValue placeholder="Select Department" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent className="bg-[#24262d] border-white/10">
-                          {departments.map(dep => <SelectItem key={dep} value={dep}>{dep}</SelectItem>)}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )} />
-                  <FormField control={form.control} name="address" render={({ field }) => (<FormItem><FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Physical Address</FormLabel><div className="relative"><Home className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" /><FormControl><Textarea placeholder="Building, Street, Landmark" {...field} className="pl-10 bg-white/5 border-none rounded-xl font-bold min-h-[100px]" /></FormControl></div><FormMessage /></FormItem>)} />
-                </div>
-              )}
-                
-                <FormField control={form.control} name="terms" render={({ field }) => (
-                    <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-2xl border border-white/5 bg-white/5 p-4 shadow-inner">
-                        <FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} className="border-white/20"/></FormControl>
-                        <div className="space-y-1 leading-none"><FormLabel className="text-[10px] font-black uppercase tracking-widest">Agree to <Link href="/terms" target="_blank" className="underline text-orange-500">Terms & Policies</Link></FormLabel><FormMessage /></div>
-                    </FormItem>
-                  )} />
-
-                <Button type="submit" className="w-full h-16 bg-orange-500 hover:bg-orange-600 font-black text-lg shadow-[0_10px_25px_-5px_rgba(249,115,22,0.4)] rounded-2xl uppercase tracking-widest transition-all active:scale-95" disabled={form.formState.isSubmitting || isSubmitting}>
-                    {form.formState.isSubmitting || isSubmitting ? <Loader2 className="h-6 w-6 animate-spin" /> : <><Sparkles className="mr-2 h-6 w-6" /> CREATE PROFILE</>}
-                </Button>
-            </div>
-        )}
-
-        <div className="mt-6 text-center text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Already have an account? <Link href="/login" className="text-white hover:text-orange-500 underline underline-offset-4">Sign In</Link></div>
-      </form>
-    </Form>
-  );
-
-  const renderPhoneForm = () => (
-    <Form {...phoneForm}>
-        <form onSubmit={phoneForm.handleSubmit(onPhoneSubmit)} className="space-y-4">
-            <FormField control={phoneForm.control} name="phoneNumber" render={({ field }) => (
-                    <FormItem><FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Mobile Number</FormLabel><div className="relative"><span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground font-black">+91</span><FormControl><Input type="tel" placeholder="9876543210" {...field} className="pl-12 h-12 bg-white/5 border-none rounded-xl font-bold"/></FormControl></div><FormMessage /></FormItem>
-                )} />
-            <FormField control={phoneForm.control} name="referralCode" render={({ field }) => (
-                  <FormItem><FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Referral Code (Optional)</FormLabel><div className="relative"><Gift className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><FormControl><Input placeholder="Referral code" {...field} className="pl-10 h-12 bg-white/5 border-none rounded-xl font-bold" disabled={!!searchParams.get('ref')} /></FormControl></div><FormMessage /></FormItem>
-              )} />
-            <FormField control={phoneForm.control} name="role" render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Classification</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl><SelectTrigger className="h-12 bg-white/5 border-none rounded-xl font-bold"><SelectValue placeholder="Select role" /></SelectTrigger></FormControl>
-                    <SelectContent className="bg-[#24262d] border-white/10">
-                      {expertTypes.map(t => <SelectItem key={t.name} value={t.name}>{t.name}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-                )} />
-            {selectedPhoneRole === 'Freelancer' && (
-                <div className="grid grid-cols-2 gap-4">
-                    <FormField control={phoneForm.control} name="firstName" render={({ field }) => (<FormItem><FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">First Name</FormLabel><FormControl><Input placeholder="John" {...field} className="h-12 bg-white/5 border-none rounded-xl font-bold" /></FormControl><FormMessage /></FormItem>)} />
-                    <FormField control={phoneForm.control} name="lastName" render={({ field }) => (<FormItem><FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Last Name</FormLabel><FormControl><Input placeholder="Doe" {...field} className="h-12 bg-white/5 border-none rounded-xl font-bold" /></FormControl><FormMessage /></FormItem>)} />
-                </div>
-            )}
-            {(selectedPhoneRole === 'Company' || selectedPhoneRole === 'Authorized Pro') && (
-                 <FormField control={phoneForm.control} name="companyName" render={({ field }) => (<FormItem><FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Company Name</FormLabel><FormControl><Input placeholder="Company" {...field} className="h-12 bg-white/5 border-none rounded-xl font-bold" /></FormControl><FormMessage /></FormItem>)} />
-            )}
-            <Button type="submit" className="w-full h-14 bg-orange-500 hover:bg-orange-600 font-black text-lg rounded-2xl shadow-xl uppercase tracking-widest" disabled={isSubmitting}>{isSubmitting ? <Loader2 className="h-6 w-6 animate-spin" /> : 'Send Activation Code'}</Button>
-            <Button variant="link" className="w-full text-[10px] font-bold uppercase tracking-widest text-muted-foreground" onClick={() => setView('email')}>Sign up with Email</Button>
-        </form>
-    </Form>
-  );
-
-  const renderOtpForm = () => (
-     <Form {...otpForm}>
-        <form onSubmit={otpForm.handleSubmit(onOtpSubmit)} className="space-y-4">
-            <FormField control={otpForm.control} name="otp" render={({ field }) => (
-                    <FormItem><FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Enter Code</FormLabel><div className="relative"><MessageSquare className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><FormControl><Input type="text" placeholder="123456" {...field} className="pl-10 h-12 bg-white/5 border-none rounded-xl font-bold tracking-[0.5em] text-center" /></FormControl></div><FormMessage /></FormItem>
-                )} />
-            <Button type="submit" className="w-full h-14 bg-[#22c55e] hover:bg-[#1eb054] text-white font-black text-lg rounded-2xl shadow-xl uppercase tracking-widest" disabled={isSubmitting}>{isSubmitting ? <Loader2 className="h-6 w-6 animate-spin" /> : 'Verify & Sign Up'}</Button>
-            <Button variant="link" className="w-full text-[10px] font-bold uppercase tracking-widest text-muted-foreground" onClick={() => setView('phone')}>Change phone number</Button>
-        </form>
-    </Form>
-  );
-
 
   return (
     <div className="w-full">
       <div id="recaptcha-container" ref={recaptchaContainerRef}></div>
-      <div className="mb-10">
-        <h2 className="text-3xl sm:text-4xl font-black uppercase italic tracking-tighter text-white mb-2">Expert Sign Up</h2>
-        <p className="text-sm text-muted-foreground font-medium">Join the professional registry today.</p>
+      <div className="mb-10 text-center sm:text-left">
+        <h2 className="text-3xl sm:text-4xl font-black uppercase italic tracking-tighter text-white mb-2">Register</h2>
+        <p className="text-sm text-muted-foreground font-medium uppercase tracking-widest text-[10px]">Create Expert Profile</p>
       </div>
-      {view === 'email' && renderEmailForm()}
-      {view === 'phone' && renderPhoneForm()}
-      {view === 'otp' && renderOtpForm()}
+
+      {view === 'email' && (
+        <div className="space-y-6">
+            <div className="grid grid-cols-2 gap-3">
+                <Button onClick={handleGoogleSignUp} type="button" variant="outline" className="h-14 rounded-2xl border-white/10 bg-white/5 hover:bg-white/10 font-bold"><Icons.google className="mr-2 h-5 w-5" />Google</Button>
+                <Button onClick={() => setView('phone')} type="button" className="bg-[#22c55e] text-white hover:bg-[#1eb054] rounded-2xl h-14 font-bold border-none"><Phone className="mr-2 h-5 w-5" />Phone</Button>
+            </div>
+
+            <div className="relative my-8">
+                <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-white/5" /></div>
+                <div className="relative flex justify-center text-[10px] uppercase font-black tracking-[0.2em]"><span className="bg-[#24262d] px-4 text-muted-foreground">Detailed Signup</span></div>
+            </div>
+
+            <Form {...form}>
+                <form onSubmit={form.handleSubmit(onEmailSubmit)} className="space-y-5">
+                    <FormField control={form.control} name="role" render={({ field }) => (
+                        <FormItem>
+                            <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 ml-1">Account Type</FormLabel>
+                            <div className="grid grid-cols-1 gap-3">
+                                {expertTypes.map((type) => (
+                                    <Card key={type.name} className={cn("cursor-pointer transition-all border-none bg-[#1a1c23] rounded-2xl shadow-inner", field.value === type.name ? "ring-2 ring-orange-500 bg-orange-500/5" : "hover:bg-white/5")} onClick={() => form.setValue('role', type.name, { shouldValidate: true })}>
+                                        <CardHeader className="flex flex-row items-center gap-4 p-4">
+                                            <div className={cn("p-2 rounded-full", field.value === type.name ? "bg-orange-500 text-white" : "bg-white/5 text-muted-foreground")}>{React.cloneElement(type.icon as React.ReactElement, { className: "w-5 h-5" })}</div>
+                                            <div className="flex-1"><CardTitle className="text-xs font-black uppercase italic">{type.name}</CardTitle></div>
+                                            {field.value === type.name && <CheckCircle2 className="h-5 w-5 text-orange-500" />}
+                                        </CardHeader>
+                                    </Card>
+                                ))}
+                            </div>
+                            <FormMessage />
+                        </FormItem>
+                    )} />
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <FormField control={form.control} name="firstName" render={({ field }) => (
+                            <FormItem><FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 ml-1">First Name</FormLabel>
+                            <FormControl><Input placeholder="John" {...field} className="h-12 bg-[#1a1c23] border-none rounded-xl font-bold text-white shadow-inner" /></FormControl><FormMessage /></FormItem>
+                        )} />
+                        <FormField control={form.control} name="lastName" render={({ field }) => (
+                            <FormItem><FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 ml-1">Last Name</FormLabel>
+                            <FormControl><Input placeholder="Doe" {...field} className="h-12 bg-[#1a1c23] border-none rounded-xl font-bold text-white shadow-inner" /></FormControl><FormMessage /></FormItem>
+                        )} />
+                    </div>
+
+                    <FormField control={form.control} name="email" render={({ field }) => (
+                        <FormItem><FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 ml-1">Email Address</FormLabel>
+                        <FormControl><Input type="email" placeholder="name@example.com" {...field} className="h-12 bg-[#1a1c23] border-none rounded-xl font-bold text-white shadow-inner" /></FormControl><FormMessage /></FormItem>
+                    )} />
+
+                    <FormField control={form.control} name="password" render={({ field }) => (
+                        <FormItem><FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 ml-1">Password</FormLabel>
+                        <div className="relative"><FormControl><Input type={showPassword ? "text" : "password"} placeholder="••••••••" {...field} className="h-12 bg-[#1a1c23] border-none rounded-xl font-bold text-white shadow-inner" /></FormControl>
+                        <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-white transition-colors">{showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</button>
+                        </div><FormMessage /></FormItem>
+                    )} />
+
+                    <div className="pt-4 space-y-4">
+                        <FormField control={form.control} name="terms" render={({ field }) => (
+                            <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-2xl bg-[#1a1c23] p-4 shadow-inner">
+                                <FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} className="border-white/20 data-[state=checked]:bg-orange-500 data-[state=checked]:border-orange-500"/></FormControl>
+                                <div className="space-y-1"><FormLabel className="text-[10px] font-black uppercase tracking-widest">Agree to <Link href="/terms" target="_blank" className="underline text-orange-500">Terms & Policies</Link></FormLabel></div>
+                            </FormItem>
+                        )} />
+
+                        <Button type="submit" className="w-full h-16 bg-orange-500 hover:bg-orange-600 text-white font-black text-lg shadow-[0_15px_35px_-5px_rgba(249,115,22,0.4)] rounded-2xl uppercase tracking-widest transition-all active:scale-95" disabled={isSubmitting}>
+                            {isSubmitting ? <Loader2 className="h-6 w-6 animate-spin" /> : <><Sparkles className="mr-2 h-6 w-6" /> COMPLETE SIGNUP</>}
+                        </Button>
+                    </div>
+                </form>
+            </Form>
+        </div>
+      )}
     </div>
   );
 }

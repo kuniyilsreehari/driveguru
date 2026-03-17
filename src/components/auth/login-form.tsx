@@ -7,7 +7,7 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Mail, Lock, LogIn, Eye, EyeOff, Phone, MessageSquare, Loader2, Sparkles } from "lucide-react";
+import { Mail, Lock, LogIn, Eye, EyeOff, Phone, MessageSquare, Loader2, Sparkles, ShieldAlert } from "lucide-react";
 import { 
   signInWithEmailAndPassword, 
   GoogleAuthProvider, 
@@ -18,8 +18,8 @@ import {
   RecaptchaVerifier,
   signInWithPhoneNumber,
   setPersistence,
-  browserSessionPersistence,
   browserLocalPersistence,
+  browserSessionPersistence,
 } from 'firebase/auth';
 import { doc, serverTimestamp } from 'firebase/firestore';
 
@@ -36,7 +36,6 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth, useUser, useFirestore, setDocumentNonBlocking } from "@/firebase";
 import { Icons } from "../icons";
-import { Separator } from "../ui/separator";
 import { Checkbox } from "../ui/checkbox";
 
 const emailFormSchema = z.object({
@@ -54,7 +53,6 @@ const phoneFormSchema = z.object({
 const otpFormSchema = z.object({
   otp: z.string().length(6, { message: "OTP must be 6 digits." }),
 });
-
 
 export function LoginForm() {
   const { toast } = useToast();
@@ -115,16 +113,17 @@ export function LoginForm() {
                     };
                     setDocumentNonBlocking(userDocRef, userData, { merge: true });
                 }
+                toast({ title: "Login Successful", description: "Welcome back to DriveGuru." });
             }
         }).catch((error) => {
             if (error.code === 'auth/unauthorized-domain') {
                 toast({
                     variant: "destructive",
-                    title: "Security Restriction",
-                    description: "This domain is not authorized. Please add it in the Firebase Console.",
+                    title: "Domain Not Authorized",
+                    description: "Please add 'driveguru.in' to Authorized Domains in Firebase Console > Authentication > Settings.",
                 });
             } else if (error.code !== 'auth/popup-closed-by-user') {
-                console.error("Redirect auth error:", error);
+                console.error("Auth redirect error:", error);
             }
         });
     }
@@ -142,7 +141,6 @@ export function LoginForm() {
         };
     }
   }, [view, auth]);
-
 
   async function handleGoogleSignIn() {
     if (!auth || !firestore) return;
@@ -179,7 +177,7 @@ export function LoginForm() {
             toast({
                 variant: "destructive",
                 title: "Login Blocked",
-                description: "This domain is not authorized in Firebase Console Settings.",
+                description: "This domain is not authorized. Add 'driveguru.in' in Firebase Console.",
             });
         } else if (error.code !== 'auth/popup-closed-by-user') {
             toast({
@@ -191,7 +189,6 @@ export function LoginForm() {
     }
   }
 
-
   async function onEmailSubmit(values: z.infer<typeof emailFormSchema>) {
     if(!auth) return;
     setIsSubmitting(true);
@@ -202,7 +199,7 @@ export function LoginForm() {
     } catch (error: any) {
       let errorMessage = "An unexpected error occurred. Please try again.";
       if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
-        errorMessage = "Invalid email or password. Please check your credentials and try again.";
+        errorMessage = "Invalid email or password. Please check your credentials.";
       }
       toast({
         variant: "destructive",
@@ -224,12 +221,8 @@ export function LoginForm() {
         const result = await signInWithPhoneNumber(auth, fullPhoneNumber, verifier);
         setConfirmationResult(result);
         setView('otp');
-        toast({
-            title: "OTP Sent",
-            description: `An OTP has been sent to ${fullPhoneNumber}.`,
-        });
+        toast({ title: "OTP Sent", description: `An OTP has been sent to ${fullPhoneNumber}.` });
     } catch (error: any) {
-        console.error("OTP send failed:", error);
         toast({
             variant: "destructive",
             title: "Failed to Send OTP",
@@ -250,7 +243,6 @@ export function LoginForm() {
 
         if (additionalInfo?.isNewUser) {
             const userDocRef = doc(firestore, "users", user.uid);
-            
             const userData = {
                 id: user.uid,
                 firstName: 'New',
@@ -263,211 +255,164 @@ export function LoginForm() {
                 createdAt: serverTimestamp(),
             };
             setDocumentNonBlocking(userDocRef, userData, { merge: true });
-            toast({
-                title: "Welcome!",
-                description: "Your account has been created with your phone number.",
-            });
-        } else {
-             toast({
-                title: "Signed In",
-                description: "You have successfully signed in.",
-            });
         }
     } catch (error: any) {
-        console.error("OTP verification failed:", error);
-        toast({
-            variant: "destructive",
-            title: "OTP Verification Failed",
-            description: "The OTP you entered is incorrect. Please try again.",
-        });
+        toast({ variant: "destructive", title: "OTP Verification Failed", description: "Incorrect OTP. Please try again." });
     } finally {
         setIsSubmitting(false);
     }
   }
 
-  const renderEmailForm = () => (
-    <>
-      <div className="grid grid-cols-2 gap-3">
-        <Button variant="outline" className="h-12 rounded-xl border-white/10 bg-white/5 hover:bg-white/10" onClick={handleGoogleSignIn}>
-            <Icons.google className="mr-2 h-4 w-4" />
-            Google
-        </Button>
-        <Button variant="outline" className="h-12 rounded-xl bg-[#22c55e] text-white hover:bg-[#1eb054] border-none" onClick={() => setView('phone')}>
-            <Phone className="mr-2 h-4 w-4" />
-            Phone
-        </Button>
-      </div>
-
-       <div className="relative my-8">
-        <div className="absolute inset-0 flex items-center">
-            <span className="w-full border-t border-white/5" />
-        </div>
-        <div className="relative flex justify-center text-[10px] uppercase font-black tracking-widest">
-            <span className="bg-[#1a1c23] px-4 text-muted-foreground">
-            Or continue with
-            </span>
-        </div>
-      </div>
-
-      <Form {...emailForm}>
-        <form onSubmit={emailForm.handleSubmit(onEmailSubmit)} className="space-y-4">
-          <FormField
-            control={emailForm.control}
-            name="email"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Email Address</FormLabel>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <FormControl>
-                    <Input
-                      type="email"
-                      placeholder="name@example.com"
-                      {...field}
-                      className="pl-10 h-12 bg-white/5 border-none rounded-xl font-bold"
-                    />
-                  </FormControl>
-                </div>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={emailForm.control}
-            name="password"
-            render={({ field }) => (
-              <FormItem>
-                  <div className="flex items-center">
-                      <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Password</FormLabel>
-                  </div>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <FormControl>
-                    <Input type={showPassword ? "text" : "password"} placeholder="••••••••" {...field} className="pl-10 pr-10 h-12 bg-white/5 border-none rounded-xl font-bold" />
-                  </FormControl>
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
-                  >
-                    {showPassword ? <EyeOff /> : <Eye />}
-                  </button>
-                </div>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <div className="flex items-center justify-between py-2">
-            <FormField
-              control={emailForm.control}
-              name="rememberMe"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-center space-x-2 space-y-0">
-                  <FormControl>
-                    <Checkbox
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                      className="border-white/20"
-                    />
-                  </FormControl>
-                  <FormLabel className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                    Keep me signed in
-                  </FormLabel>
-                </FormItem>
-              )}
-            />
-             <Link
-                href="/forgot-password"
-                className="text-[10px] font-bold uppercase tracking-widest text-orange-500 hover:text-orange-400"
-            >
-                Forgot password?
-            </Link>
-          </div>
-
-
-          <Button type="submit" className="w-full h-14 bg-orange-500 hover:bg-orange-600 text-white font-black text-lg rounded-2xl shadow-[0_10px_25px_-5px_rgba(249,115,22,0.4)] uppercase tracking-widest transition-all active:scale-95" disabled={isSubmitting}>
-            {isSubmitting ? <Loader2 className="h-5 w-5 animate-spin" /> : <><LogIn className="mr-2 h-5 w-5" /> Sign In</>}
-          </Button>
-
-          <div className="mt-6 text-center text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">
-              Don&apos;t have an account?{" "}
-              <Link href="/signup/role" className="text-white hover:text-orange-500 underline underline-offset-4">
-                  Register
-              </Link>
-          </div>
-        </form>
-      </Form>
-    </>
-  );
-
-  const renderPhoneForm = () => (
-    <Form {...phoneForm}>
-        <form onSubmit={phoneForm.handleSubmit(onPhoneSubmit)} className="space-y-4">
-            <FormField
-                control={phoneForm.control}
-                name="phoneNumber"
-                render={({ field }) => (
-                    <FormItem>
-                        <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Mobile Number</FormLabel>
-                        <div className="flex items-center gap-2">
-                           <div className="relative flex-grow">
-                             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground font-black">+91</span>
-                             <FormControl>
-                                <Input type="tel" placeholder="98765 43210" {...field} className="pl-12 h-12 bg-white/5 border-none rounded-xl font-bold"/>
-                             </FormControl>
-                           </div>
-                        </div>
-                         <FormMessage />
-                    </FormItem>
-                )}
-            />
-            <Button type="submit" className="w-full h-14 bg-[#22c55e] hover:bg-[#1eb054] text-white font-black text-lg rounded-2xl shadow-xl uppercase tracking-widest" disabled={isSubmitting}>
-                {isSubmitting ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Send Activation Code'}
-            </Button>
-            <Button variant="link" className="w-full text-[10px] font-bold uppercase tracking-widest text-muted-foreground" onClick={() => setView('email')}>
-                Sign in with Email instead
-            </Button>
-        </form>
-    </Form>
-  );
-
-  const renderOtpForm = () => (
-     <Form {...otpForm}>
-        <form onSubmit={otpForm.handleSubmit(onOtpSubmit)} className="space-y-4">
-            <FormField
-                control={otpForm.control}
-                name="otp"
-                render={({ field }) => (
-                    <FormItem>
-                        <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Activation Code</FormLabel>
-                        <div className="relative">
-                            <MessageSquare className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                            <FormControl>
-                                <Input type="text" placeholder="123456" {...field} className="pl-10 h-12 bg-white/5 border-none rounded-xl font-bold tracking-[0.5em] text-center" />
-                            </FormControl>
-                        </div>
-                        <FormMessage />
-                    </FormItem>
-                )}
-            />
-            <Button type="submit" className="w-full h-14 bg-orange-500 hover:bg-orange-600 text-white font-black text-lg rounded-2xl shadow-xl uppercase tracking-widest" disabled={isSubmitting}>
-                {isSubmitting ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Verify & Continue'}
-            </Button>
-            <Button variant="link" className="w-full text-[10px] font-bold uppercase tracking-widest text-muted-foreground" onClick={() => setView('phone')}>
-                Change phone number
-            </Button>
-        </form>
-    </Form>
-  );
-
-
   return (
     <>
       <div id="recaptcha-container" ref={recaptchaContainerRef}></div>
-      {view === 'email' && renderEmailForm()}
-      {view === 'phone' && renderPhoneForm()}
-      {view === 'otp' && renderOtpForm()}
+      {view === 'email' && (
+        <div className="space-y-6">
+          <div className="grid grid-cols-2 gap-3">
+            <Button variant="outline" className="h-14 rounded-2xl border-white/10 bg-white/5 hover:bg-white/10 font-bold" onClick={handleGoogleSignIn}>
+                <Icons.google className="mr-2 h-5 w-5" />
+                Google
+            </Button>
+            <Button variant="outline" className="h-14 rounded-2xl bg-[#22c55e] text-white hover:bg-[#1eb054] border-none font-bold" onClick={() => setView('phone')}>
+                <Phone className="mr-2 h-5 w-5" />
+                Phone
+            </Button>
+          </div>
+
+          <div className="relative my-8">
+            <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t border-white/5" />
+            </div>
+            <div className="relative flex justify-center text-[10px] uppercase font-black tracking-[0.2em]">
+                <span className="bg-[#24262d] px-4 text-muted-foreground">Or Secure Login</span>
+            </div>
+          </div>
+
+          <Form {...emailForm}>
+            <form onSubmit={emailForm.handleSubmit(onEmailSubmit)} className="space-y-4">
+              <FormField
+                control={emailForm.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 ml-1">Email Address</FormLabel>
+                    <div className="relative">
+                      <Mail className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                      <FormControl>
+                        <Input placeholder="name@example.com" {...field} className="pl-12 h-14 bg-[#1a1c23] border-none rounded-2xl font-bold text-white shadow-inner" />
+                      </FormControl>
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={emailForm.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 ml-1">Password</FormLabel>
+                    <div className="relative">
+                      <Lock className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                      <FormControl>
+                        <Input type={showPassword ? "text" : "password"} placeholder="••••••••" {...field} className="pl-12 pr-12 h-14 bg-[#1a1c23] border-none rounded-2xl font-bold text-white shadow-inner" />
+                      </FormControl>
+                      <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground hover:text-white transition-colors">
+                        {showPassword ? <EyeOff /> : <Eye />}
+                      </button>
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="flex items-center justify-between py-2 px-1">
+                <FormField
+                  control={emailForm.control}
+                  name="rememberMe"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center space-x-2 space-y-0">
+                      <FormControl>
+                        <Checkbox checked={field.value} onCheckedChange={field.onChange} className="border-white/20 data-[state=checked]:bg-orange-500 data-[state=checked]:border-orange-500" />
+                      </FormControl>
+                      <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground cursor-pointer">Stay Signed In</FormLabel>
+                    </FormItem>
+                  )}
+                />
+                <Link href="/forgot-password" className="text-[10px] font-black uppercase tracking-widest text-orange-500 hover:text-orange-400 italic">Forgot?</Link>
+              </div>
+
+              <Button type="submit" className="w-full h-16 bg-orange-500 hover:bg-orange-600 text-white font-black text-lg rounded-2xl shadow-[0_15px_35px_-5px_rgba(249,115,22,0.4)] uppercase tracking-widest transition-all active:scale-95 mt-4" disabled={isSubmitting}>
+                {isSubmitting ? <Loader2 className="h-6 w-6 animate-spin" /> : <><LogIn className="mr-2 h-6 w-6" /> Access Account</>}
+              </Button>
+
+              <div className="pt-8 text-center">
+                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground mb-4">New to the platform?</p>
+                  <Button asChild variant="outline" className="w-full h-12 rounded-xl border-white/10 bg-white/5 hover:bg-white/10 text-white font-bold uppercase tracking-widest text-xs">
+                      <Link href="/signup/role">Create Expert Profile</Link>
+                  </Button>
+              </div>
+            </form>
+          </Form>
+        </div>
+      )}
+      {view === 'phone' && (
+        <Form {...phoneForm}>
+            <form onSubmit={phoneForm.handleSubmit(onPhoneSubmit)} className="space-y-6">
+                <FormField
+                    control={phoneForm.control}
+                    name="phoneNumber"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 ml-1">Mobile Number</FormLabel>
+                            <div className="flex items-center gap-2">
+                               <div className="relative flex-grow">
+                                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm text-muted-foreground font-black">+91</span>
+                                 <FormControl>
+                                    <Input type="tel" placeholder="98765 43210" {...field} className="pl-14 h-14 bg-[#1a1c23] border-none rounded-2xl font-bold text-white shadow-inner text-lg" />
+                                 </FormControl>
+                               </div>
+                            </div>
+                             <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                <Button type="submit" className="w-full h-16 bg-[#22c55e] hover:bg-[#1eb054] text-white font-black text-lg rounded-2xl shadow-xl uppercase tracking-widest transition-all active:scale-95" disabled={isSubmitting}>
+                    {isSubmitting ? <Loader2 className="h-6 w-6 animate-spin" /> : 'Send Activation Code'}
+                </Button>
+                <Button variant="link" className="w-full text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-white" onClick={() => setView('email')}>
+                    Back to Email Login
+                </Button>
+            </form>
+        </Form>
+      )}
+      {view === 'otp' && (
+         <Form {...otpForm}>
+            <form onSubmit={otpForm.handleSubmit(onOtpSubmit)} className="space-y-6 text-center">
+                <FormField
+                    control={otpForm.control}
+                    name="otp"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Verification Code</FormLabel>
+                            <div className="relative">
+                                <FormControl>
+                                    <Input type="text" placeholder="000000" {...field} className="h-16 bg-[#1a1c23] border-none rounded-2xl font-black tracking-[0.8em] text-center text-2xl text-orange-500 shadow-inner" />
+                                </FormControl>
+                            </div>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                <Button type="submit" className="w-full h-16 bg-orange-500 hover:bg-orange-600 text-white font-black text-lg rounded-2xl shadow-xl uppercase tracking-widest transition-all active:scale-95" disabled={isSubmitting}>
+                    {isSubmitting ? <Loader2 className="h-6 w-6 animate-spin" /> : 'Verify Identity'}
+                </Button>
+                <Button variant="link" className="w-full text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-white" onClick={() => setView('phone')}>
+                    Change Phone Number
+                </Button>
+            </form>
+        </Form>
+      )}
     </>
   );
 }
