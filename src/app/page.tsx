@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Suspense, useState, useEffect, useMemo, useRef } from 'react';
@@ -313,6 +314,10 @@ function HomePageContent() {
         { value: 'Fresher', label: 'Freshers (Find Jobs)', icon: GraduationCap, href: '/vacancies' },
     ];
 
+    const truncateName = (name: string) => {
+        return name.length > 8 ? `${name.substring(0, 6)}...` : name;
+    }
+
     return (
         <div className="min-h-screen bg-[#1a1c23]">
             <WelcomeRedirect />
@@ -325,56 +330,68 @@ function HomePageContent() {
                 </header>
 
                 <main className="space-y-8 sm:space-y-12">
-                    <section className="bg-[#24262d] rounded-[2rem] p-6 sm:p-10 shadow-2xl overflow-hidden border border-white/5 relative">
-                        <div className="absolute inset-0 opacity-[0.05] pointer-events-none" 
-                             style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
+                    <section className="bg-[#24262d] rounded-[3rem] p-8 sm:p-12 shadow-2xl overflow-hidden border border-white/5 relative">
+                        {/* Dotted Background Pattern */}
+                        <div className="absolute inset-0 opacity-[0.15] pointer-events-none" 
+                             style={{ 
+                                backgroundImage: 'radial-gradient(#ffffff 1px, transparent 1px)', 
+                                backgroundSize: '32px 32px' 
+                             }} />
                         
-                        <div className="mb-8 relative z-10">
-                            <h2 className="text-2xl sm:text-4xl font-black text-white uppercase italic tracking-tight">Top Rated Experts</h2>
-                            <p className="text-[10px] sm:text-xs font-black uppercase tracking-[0.3em] text-orange-500/50">PREMIUM NETWORK SUGGESTIONS</p>
+                        <div className="mb-10 relative z-10">
+                            <h2 className="text-3xl sm:text-5xl font-black text-white uppercase italic tracking-tight">Top Rated Experts</h2>
+                            <p className="text-[10px] sm:text-xs font-black uppercase tracking-[0.3em] text-orange-500/80 mt-1">PREMIUM NETWORK SUGGESTIONS</p>
                         </div>
 
-                        <div className="relative group mb-10 z-10">
-                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground group-focus-within:text-orange-500 transition-colors" />
+                        <div className="relative group mb-12 z-10">
+                            <Search className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground group-focus-within:text-orange-500 transition-colors" />
                             <Input 
                                 placeholder="Filter suggestions..." 
-                                className="pl-12 h-14 bg-[#1a1c23] border-none rounded-xl text-sm sm:text-lg placeholder:text-muted-foreground/40 focus-visible:ring-2 focus-visible:ring-orange-500 transition-all shadow-inner text-white font-bold" 
+                                className="pl-14 h-16 bg-[#1a1c23]/80 backdrop-blur-md border-none rounded-2xl text-base sm:text-xl placeholder:text-muted-foreground/30 focus-visible:ring-2 focus-visible:ring-orange-500 transition-all shadow-inner text-white font-bold" 
                                 value={moduleSearchQuery} 
                                 onChange={(e) => setModuleSearchQuery(e.target.value)} 
                             />
                         </div>
 
-                        <div className="relative z-10 px-4 sm:px-0">
+                        <div className="relative z-10">
                             <Carousel opts={{ align: "start", loop: true }} className="w-full">
-                                <CarouselContent className="-ml-4 sm:-ml-8">
+                                <CarouselContent className="-ml-4 sm:-ml-6">
                                     {isLoadingTopExperts ? (
                                         [...Array(3)].map((_, i) => (
-                                            <CarouselItem key={i} className="pl-4 sm:pl-8 basis-full sm:basis-1/2 md:basis-1/3">
-                                                <div className="w-full h-[380px] bg-[#1a1c23] rounded-[2.5rem] animate-pulse" />
+                                            <CarouselItem key={i} className="pl-4 sm:pl-6 basis-full sm:basis-1/2 md:basis-1/3">
+                                                <div className="w-full h-[420px] bg-[#1a1c23] rounded-[2.5rem] animate-pulse" />
                                             </CarouselItem>
                                         ))
                                     ) : filteredTopExperts.length > 0 ? (
                                         filteredTopExperts.map(expert => (
-                                            <CarouselItem key={expert.id} className="pl-4 sm:pl-8 basis-full sm:basis-1/2 md:basis-1/3">
-                                                <Card className="w-full bg-[#1a1c23]/90 backdrop-blur-md border-none flex flex-col items-center p-8 text-center rounded-[2.5rem] transition-all hover:scale-[1.03] group shadow-2xl relative overflow-hidden h-full">
-                                                    <div className="absolute inset-0 bg-gradient-to-b from-orange-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                                                    <div className="relative mb-6 z-10">
-                                                        <Avatar className="h-20 w-20 sm:h-28 sm:w-24 border-4 border-white/10 group-hover:border-orange-500/50 transition-colors duration-500 shadow-2xl">
+                                            <CarouselItem key={expert.id} className="pl-4 sm:pl-6 basis-full sm:basis-1/2 md:basis-1/3">
+                                                <Card className="w-full bg-[#1a1c23]/95 backdrop-blur-xl border-none flex flex-col items-center p-10 text-center rounded-[2.5rem] transition-all hover:scale-[1.03] group shadow-2xl relative overflow-hidden h-full">
+                                                    <div className="absolute inset-0 bg-gradient-to-b from-orange-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                                                    
+                                                    <div className="relative mb-8 z-10">
+                                                        <div className="absolute -inset-4 bg-orange-500/5 rounded-full blur-2xl group-hover:bg-orange-500/10 transition-colors" />
+                                                        <Avatar className="h-24 w-24 sm:h-28 sm:w-28 border-4 border-white/10 group-hover:border-orange-500/50 transition-all duration-500 shadow-[0_0_40px_rgba(0,0,0,0.5)]">
                                                             <AvatarImage src={expert.photoUrl} className="object-cover" />
-                                                            <AvatarFallback className="bg-orange-500/10 text-orange-500 text-2xl sm:text-4xl font-black">
+                                                            <AvatarFallback className="bg-[#24262d] text-orange-500 text-3xl sm:text-4xl font-black">
                                                                 {expert.firstName?.[0]}
                                                             </AvatarFallback>
                                                         </Avatar>
                                                         {expert.verified && (
-                                                            <div className="absolute -bottom-1 -right-1 bg-green-500 p-1.5 rounded-full border-4 border-[#1a1c23] shadow-lg">
-                                                                <UserCheck className="h-3 w-3 text-white" />
+                                                            <div className="absolute -bottom-1 -right-1 bg-green-500 p-2 rounded-full border-4 border-[#1a1c23] shadow-lg">
+                                                                <UserCheck className="h-4 w-4 text-white" />
                                                             </div>
                                                         )}
                                                     </div>
-                                                    <p className="font-black text-white text-lg sm:text-xl line-clamp-1 mb-1 tracking-tighter uppercase italic z-10">{expert.firstName} {expert.lastName}</p>
-                                                    <p className="text-[10px] sm:text-[11px] text-[#8a92a6] uppercase tracking-[0.2em] font-black mb-10 line-clamp-1 h-4 z-10">{expert.profession || expert.role}</p>
+
+                                                    <h3 className="font-black text-white text-xl sm:text-2xl line-clamp-1 mb-1 tracking-tighter uppercase italic z-10 group-hover:text-orange-500 transition-colors">
+                                                        {truncateName(`${expert.firstName} ${expert.lastName}`)}
+                                                    </h3>
+                                                    <p className="text-[10px] sm:text-[11px] text-[#8a92a6] uppercase tracking-[0.3em] font-black mb-12 z-10 opacity-60">
+                                                        {expert.profession || expert.role}
+                                                    </p>
+
                                                     <Button 
-                                                        className="w-full bg-orange-500 hover:bg-orange-600 text-white rounded-2xl font-black text-[10px] h-12 shadow-[0_15px_35px_-5px_rgba(249,115,22,0.4)] active:scale-95 transition-all z-10 uppercase tracking-widest border-none mt-auto"
+                                                        className="w-full bg-orange-500 hover:bg-orange-600 text-white rounded-2xl font-black text-[11px] h-14 shadow-[0_15px_35px_-5px_rgba(249,115,22,0.4)] active:scale-95 transition-all z-10 uppercase tracking-[0.2em] border-none mt-auto"
                                                         onClick={() => handleToggleFollow(expert.id)}
                                                     >
                                                         {userProfile?.following?.includes(expert.id) ? 'Following' : 'Follow Expert'}
@@ -384,65 +401,65 @@ function HomePageContent() {
                                         ))
                                     ) : (
                                         <CarouselItem className="basis-full">
-                                            <div className="flex flex-col items-center justify-center py-16 bg-white/5 rounded-[2.5rem] border-2 border-dashed border-white/10">
-                                                <Sparkles className="h-16 w-16 text-orange-500/20 mb-4 animate-pulse" />
-                                                <p className="text-lg font-black text-white/40 tracking-tight uppercase italic text-center">No Featured Experts Matching Search</p>
+                                            <div className="flex flex-col items-center justify-center py-20 bg-white/5 rounded-[3rem] border-4 border-dashed border-white/10">
+                                                <Sparkles className="h-20 w-20 text-orange-500/10 mb-6 animate-pulse" />
+                                                <p className="text-xl font-black text-white/30 tracking-tight uppercase italic text-center">No Featured Experts Found</p>
                                             </div>
                                         </CarouselItem>
                                     )}
                                 </CarouselContent>
                                 <div className="hidden sm:block">
-                                    <CarouselPrevious className="bg-white/5 border-none text-white hover:bg-white/10 -left-12 h-12 w-12" />
-                                    <CarouselNext className="bg-white/5 border-none text-white hover:bg-white/10 -right-12 h-12 w-12" />
+                                    <CarouselPrevious className="bg-white/5 border-none text-white hover:bg-white/10 -left-14 h-14 w-14" />
+                                    <CarouselNext className="bg-white/5 border-none text-white hover:bg-white/10 -right-14 h-14 w-14" />
                                 </div>
                             </Carousel>
                         </div>
                     </section>
 
-                    <Card className="bg-[#24262d] border-none rounded-[2.5rem] p-6 sm:p-8 overflow-hidden shadow-2xl border border-white/5">
-                        <CardHeader className="p-0 pb-8">
+                    <Card className="bg-[#24262d] border-none rounded-[3rem] p-8 sm:p-10 overflow-hidden shadow-2xl border border-white/5">
+                        <CardHeader className="p-0 pb-10">
                              <div className="flex items-center justify-between">
-                                <CardTitle className="flex items-center gap-3 text-2xl sm:text-3xl font-black text-white uppercase italic tracking-tighter">
-                                    <Sparkles className="text-orange-500 h-6 w-6 sm:h-8 sm:w-8" /> ENGINE
+                                <CardTitle className="flex items-center gap-4 text-3xl sm:text-4xl font-black text-white uppercase italic tracking-tighter">
+                                    <Sparkles className="text-orange-500 h-8 w-8 sm:h-10 sm:w-10" /> ENGINE
                                 </CardTitle>
-                                <div className="flex items-center space-x-3 bg-white/5 px-4 py-2 rounded-2xl border border-white/5 shadow-inner">
-                                    <Switch id="ai-mode" checked={useAiSearch} onCheckedChange={handleAiModeToggle} className="data-[state=checked]:bg-orange-500 scale-90" />
-                                    <Label htmlFor="ai-mode" className="flex items-center gap-2 font-black text-[9px] sm:text-[10px] uppercase tracking-[0.2em] cursor-pointer text-white">
-                                        <Bot className={cn("h-4 w-4 transition-colors", useAiSearch ? "text-orange-500" : "text-muted-foreground")} />
+                                <div className="flex items-center space-x-4 bg-white/5 px-5 py-3 rounded-[1.5rem] border border-white/5 shadow-inner">
+                                    <Switch id="ai-mode" checked={useAiSearch} onCheckedChange={handleAiModeToggle} className="data-[state=checked]:bg-orange-500 scale-110" />
+                                    <Label htmlFor="ai-mode" className="flex items-center gap-3 font-black text-[10px] sm:text-[11px] uppercase tracking-[0.2em] cursor-pointer text-white">
+                                        <Bot className={cn("h-5 w-5 transition-colors", useAiSearch ? "text-orange-500" : "text-muted-foreground")} />
                                         AI SEARCH
                                     </Label>
                                 </div>
                             </div>
                         </CardHeader>
-                        <CardContent className="p-0 space-y-4">
-                            <div className="flex flex-col gap-4">
+                        <CardContent className="p-0 space-y-6">
+                            <div className="flex flex-col gap-5">
                                 <Dialog>
                                     <DialogTrigger asChild>
-                                        <Button variant="outline" className="w-full h-16 justify-between text-left font-black uppercase text-[10px] sm:text-[11px] tracking-[0.2em] rounded-2xl bg-[#1a1c23] border-none shadow-inner px-6 text-white/70">
+                                        <Button variant="outline" className="w-full h-20 justify-between text-left font-black uppercase text-[11px] sm:text-[12px] tracking-[0.2em] rounded-[1.5rem] bg-[#1a1c23] border-none shadow-inner px-8 text-white/70">
                                             <span className="flex-1">{userTypes.find(t => t.value === role)?.label || 'ALL USER TYPES'}</span>
-                                            <ChevronDown className="ml-2 h-4 w-4 opacity-30" />
+                                            <ChevronDown className="ml-2 h-5 w-5 opacity-30" />
                                         </Button>
                                     </DialogTrigger>
-                                    <DialogContent className="rounded-3xl border-none bg-[#1a1c23] text-white">
+                                    <DialogContent className="rounded-[2.5rem] border-none bg-[#1a1c23] text-white p-8">
                                         <DialogHeader>
-                                            <DialogTitle className="text-xl font-black uppercase italic tracking-tight">Classification</DialogTitle>
+                                            <DialogTitle className="text-2xl font-black uppercase italic tracking-tight mb-4">Classification</DialogTitle>
                                         </DialogHeader>
-                                        <div className="grid grid-cols-1 gap-2 pt-4">
+                                        <div className="grid grid-cols-1 gap-3 pt-2">
                                             {userTypes.map((type) => (
                                                 <DialogTrigger key={type.value} asChild>
                                                     <Card 
                                                         className={cn(
-                                                            "cursor-pointer transition-all bg-white/5 border-none rounded-2xl shadow-lg hover:bg-white/10",
+                                                            "cursor-pointer transition-all bg-white/5 border-none rounded-2xl shadow-lg hover:bg-white/10 h-20 flex items-center",
                                                             role === type.value && !type.href ? "ring-2 ring-orange-500 bg-orange-500/10" : ""
                                                         )}
                                                         onClick={() => type.href ? router.push(type.href) : setRole(type.value)}
                                                     >
-                                                        <CardHeader className="flex flex-row items-center justify-between p-5">
-                                                            <div className="flex items-center gap-4">
-                                                                <type.icon className="h-5 w-5 text-orange-500" />
-                                                                <CardTitle className="text-sm font-black uppercase tracking-widest">{type.label}</CardTitle>
+                                                        <CardHeader className="flex flex-row items-center justify-between p-6 w-full">
+                                                            <div className="flex items-center gap-5">
+                                                                <type.icon className="h-6 w-6 text-orange-500" />
+                                                                <CardTitle className="text-base font-black uppercase tracking-widest">{type.label}</CardTitle>
                                                             </div>
-                                                            {role === type.value && !type.href && <Check className="h-5 w-5 text-orange-500" />}
+                                                            {role === type.value && !type.href && <Check className="h-6 w-6 text-orange-500" />}
                                                         </CardHeader>
                                                     </Card>
                                                 </DialogTrigger>
@@ -455,7 +472,7 @@ function HomePageContent() {
                                     <Input
                                         id="ai-search"
                                         placeholder={useAiSearch ? `e.g. 'verified plumber'` : `Search name, profession...`}
-                                        className="text-sm sm:text-base h-16 bg-[#1a1c23] border-none rounded-2xl focus-visible:ring-2 focus-visible:ring-orange-500 shadow-inner px-6 text-white font-bold placeholder:text-muted-foreground/50"
+                                        className="text-base sm:text-lg h-20 bg-[#1a1c23] border-none rounded-[1.5rem] focus-visible:ring-2 focus-visible:ring-orange-500 shadow-inner px-8 text-white font-bold placeholder:text-muted-foreground/40"
                                         value={aiSearchQuery}
                                         onChange={(e) => setAiSearchQuery(e.target.value)}
                                         onKeyDown={(e) => e.key === 'Enter' && handleAiSearch()}
@@ -465,68 +482,68 @@ function HomePageContent() {
                                 <Button 
                                     onClick={handleAiSearch} 
                                     disabled={isParsingQuery} 
-                                    className="w-full h-16 rounded-2xl bg-orange-500 hover:bg-orange-600 font-black shadow-[0_10px_25px_-5px_rgba(249,115,22,0.4)] transition-all active:scale-95"
+                                    className="w-full h-20 rounded-[1.5rem] bg-orange-500 hover:bg-orange-600 font-black shadow-[0_15px_35px_-5px_rgba(249,115,22,0.4)] transition-all active:scale-95"
                                 >
-                                    {isParsingQuery ? <Loader2 className="h-6 w-6 animate-spin" /> : <Search className="h-6 w-6 text-white" strokeWidth={3} />}
+                                    {isParsingQuery ? <Loader2 className="h-8 w-8 animate-spin" /> : <Search className="h-8 w-8 text-white" strokeWidth={3} />}
                                 </Button>
                             </div>
                         </CardContent>
                     </Card>
 
-                    <Card className="rounded-[2.5rem] p-6 sm:p-10 bg-[#24262d] border-none shadow-2xl relative overflow-hidden border border-white/5">
-                        <CardContent className="p-0 space-y-6">
-                             <div className="space-y-2">
-                                <Label htmlFor="search" className="text-[9px] sm:text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground/60 ml-1">LOOKING FOR...</Label>
+                    <Card className="rounded-[3rem] p-10 sm:p-12 bg-[#24262d] border-none shadow-2xl relative overflow-hidden border border-white/5">
+                        <CardContent className="p-0 space-y-8">
+                             <div className="space-y-3">
+                                <Label htmlFor="search" className="text-[10px] sm:text-[11px] font-black uppercase tracking-[0.3em] text-muted-foreground/60 ml-1">LOOKING FOR...</Label>
                                 <div className="relative">
-                                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                                    <Search className="absolute left-5 top-1/2 -translate-y-1/2 h-6 w-6 text-muted-foreground" />
                                     <Input
                                         id="search"
                                         placeholder="Name, skill, or company..."
-                                        className="pl-12 h-14 bg-[#1a1c23] border-none rounded-2xl text-sm sm:text-base placeholder:text-muted-foreground shadow-inner font-bold text-white"
+                                        className="pl-14 h-16 bg-[#1a1c23] border-none rounded-2xl text-base sm:text-lg placeholder:text-muted-foreground shadow-inner font-bold text-white"
                                         value={searchQuery}
                                         onChange={(e) => setSearchQuery(e.target.value)}
                                     />
                                 </div>
                             </div>
                             
-                            <div className="space-y-3">
+                            <div className="space-y-4">
                                 <div className="flex items-center justify-between mb-1">
-                                    <Label className="text-[9px] sm:text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground/60 ml-1">LOCATION</Label>
-                                    <Button variant="ghost" size="sm" onClick={handleDetectLocation} disabled={isDetectingLocation} className="text-orange-500 font-black uppercase text-[9px] sm:text-[10px] tracking-widest h-8 rounded-xl hover:bg-orange-500/10 gap-1 px-0">
+                                    <Label className="text-[10px] sm:text-[11px] font-black uppercase tracking-[0.3em] text-muted-foreground/60 ml-1">LOCATION</Label>
+                                    <Button variant="ghost" size="sm" onClick={handleDetectLocation} disabled={isDetectingLocation} className="text-orange-500 font-black uppercase text-[10px] sm:text-[11px] tracking-widest h-10 rounded-xl hover:bg-orange-500/10 gap-2 px-4 border border-orange-500/20">
                                         {isDetectingLocation ? <Loader2 className="h-4 w-4 animate-spin" /> : <LocateIcon className="h-4 w-4" />}
                                         AUTO-DETECT
                                     </Button>
                                 </div>
-                                <div className="grid grid-cols-1 gap-3">
-                                    <Input id="city" placeholder="City" className="bg-[#1a1c23] border-none h-14 rounded-2xl font-bold px-6 shadow-inner text-sm text-white" value={city} onChange={(e) => setCity(e.target.value)} />
-                                    <Input id="state" placeholder="State" className="bg-[#1a1c23] border-none h-14 rounded-2xl font-bold px-6 shadow-inner text-sm text-white" value={state} onChange={(e) => setState(e.target.value)} />
-                                    <Input id="pincode" placeholder="Pincode" className="bg-[#1a1c23] border-none h-14 rounded-2xl font-bold px-6 shadow-inner text-sm text-white" value={pincode} onChange={(e) => setPincode(e.target.value)} />
+                                <div className="grid grid-cols-1 gap-4">
+                                    <Input id="city" placeholder="City" className="bg-[#1a1c23] border-none h-16 rounded-2xl font-bold px-8 shadow-inner text-base text-white" value={city} onChange={(e) => setCity(e.target.value)} />
+                                    <Input id="state" placeholder="State" className="bg-[#1a1c23] border-none h-16 rounded-2xl font-bold px-8 shadow-inner text-base text-white" value={state} onChange={(e) => setState(e.target.value)} />
+                                    <Input id="pincode" placeholder="Pincode" className="bg-[#1a1c23] border-none h-16 rounded-2xl font-bold px-8 shadow-inner text-base text-white" value={pincode} onChange={(e) => setPincode(e.target.value)} />
                                 </div>
                             </div>
 
-                            <Button size="lg" className="w-full h-20 rounded-[2rem] bg-orange-500 hover:bg-orange-600 text-white font-black text-lg sm:text-xl shadow-[0_15px_35px_-5px_rgba(249,115,22,0.4)] uppercase tracking-[0.2em] transition-all active:scale-95 group mt-4 border-none" onClick={handleSearch}>
+                            <Button size="lg" className="w-full h-24 rounded-[2.5rem] bg-orange-500 hover:bg-orange-600 text-white font-black text-xl sm:text-2xl shadow-[0_20px_45px_-5px_rgba(249,115,22,0.4)] uppercase tracking-[0.2em] transition-all active:scale-95 group mt-6 border-none" onClick={handleSearch}>
                                 Find Professionals
                             </Button>
                         </CardContent>
                     </Card>
 
-                    <div className="mt-12 text-center">
-                        <h2 className="text-2xl sm:text-4xl font-black text-white mb-1 uppercase italic tracking-tight">Industry Hub</h2>
-                        <p className="text-[9px] sm:text-[10px] font-black uppercase tracking-[0.3em] text-orange-500/50 mb-10">EXPLORE SPECIALIZATIONS</p>
+                    <div className="mt-16 text-center">
+                        <h2 className="text-3xl sm:text-5xl font-black text-white mb-2 uppercase italic tracking-tight">Industry Hub</h2>
+                        <p className="text-[10px] sm:text-xs font-black uppercase tracking-[0.3em] text-orange-500/50 mb-12">EXPLORE SPECIALIZATIONS</p>
                          {isAppConfigLoading ? (
-                             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                <Skeleton className="h-28 w-full rounded-3xl bg-white/5" />
-                                <Skeleton className="h-28 w-full rounded-3xl bg-white/5" />
+                             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                                <Skeleton className="h-32 w-full rounded-[2rem] bg-white/5" />
+                                <Skeleton className="h-32 w-full rounded-[2rem] bg-white/5" />
                             </div>
                          ) : homepageCategories.length > 0 ? (
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                                 {homepageCategories.map((category) => (
                                     <Link key={category.id} href={`/search?q=${encodeURIComponent(category.name)}`} passHref>
-                                        <Card className="flex flex-col items-center justify-center p-6 sm:p-10 h-full bg-[#24262d] border-none hover:bg-orange-500/5 hover:ring-2 hover:ring-orange-500/50 transition-all rounded-[2rem] group shadow-xl">
-                                            <div className="p-4 sm:p-6 bg-[#1a1c23] rounded-2xl mb-4 shadow-inner">
+                                        <Card className="flex flex-col items-center justify-center p-8 sm:p-12 h-full bg-[#24262d] border-none hover:bg-orange-500/10 hover:ring-2 hover:ring-orange-500/50 transition-all rounded-[2.5rem] group shadow-2xl">
+                                            <div className="p-5 sm:p-8 bg-[#1a1c23] rounded-[1.5rem] mb-6 shadow-inner group-hover:scale-110 transition-transform duration-500">
                                                 {getIcon(category.icon)}
                                             </div>
-                                            <p className="font-black text-[9px] sm:text-xs text-white group-hover:text-orange-500 transition-colors uppercase tracking-[0.2em]">{category.name}</p>
+                                            <p className="font-black text-[10px] sm:text-xs text-white group-hover:text-orange-500 transition-colors uppercase tracking-[0.2em]">{category.name}</p>
                                         </Card>
                                     </Link>
                                 ))}
@@ -535,22 +552,22 @@ function HomePageContent() {
                     </div>
 
                      {isRecentProfessionalsEnabled && (
-                        <div className="mt-20">
-                            <div className="flex flex-col sm:flex-row items-center justify-between mb-10 gap-6">
+                        <div className="mt-24">
+                            <div className="flex flex-col sm:flex-row items-center justify-between mb-12 gap-8">
                                 <div className="text-center sm:text-left">
-                                    <h2 className="text-2xl sm:text-4xl font-black text-white uppercase italic tracking-tight">Fresh Talent</h2>
-                                    <p className="text-[9px] sm:text-[10px] font-black uppercase tracking-[0.3em] text-orange-500/50">NEW PROFESSIONALS</p>
+                                    <h2 className="text-3xl sm:text-5xl font-black text-white uppercase italic tracking-tight">Fresh Talent</h2>
+                                    <p className="text-[10px] sm:text-xs font-black uppercase tracking-[0.3em] text-orange-500/50 mt-1">NEW PROFESSIONALS</p>
                                 </div>
-                                <Button className="w-full sm:w-auto rounded-2xl bg-orange-500 hover:bg-orange-600 text-white font-black uppercase text-[10px] tracking-[0.2em] h-12 px-8 shadow-xl" asChild>
-                                    <Link href="/search">VIEW ALL REGISTRY <ChevronRight className="ml-2 h-4 w-4" strokeWidth={3}/></Link>
+                                <Button className="w-full sm:w-auto rounded-2xl bg-orange-500 hover:bg-orange-600 text-white font-black uppercase text-[11px] tracking-[0.2em] h-14 px-10 shadow-xl shadow-orange-500/20" asChild>
+                                    <Link href="/search">VIEW ALL REGISTRY <ChevronRight className="ml-3 h-5 w-5" strokeWidth={3}/></Link>
                                 </Button>
                             </div>
                             {isLoadingExperts ? (
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                    <Skeleton className="h-48 w-full rounded-[2.5rem] bg-white/5" />
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                                    <Skeleton className="h-56 w-full rounded-[3rem] bg-white/5" />
                                 </div>
                             ) : (
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                                     {recentExperts && recentExperts.length > 0 ? (
                                         recentExperts.map(expert => (
                                             <ExpertCard key={expert.id} expert={expert} />
@@ -564,21 +581,21 @@ function HomePageContent() {
             </div>
 
             <Dialog open={isPremiumDialogOpen} onOpenChange={setIsPremiumDialogOpen}>
-                <DialogContent className="rounded-[2.5rem] border-none bg-[#1a1c23] p-10 text-white shadow-2xl">
+                <DialogContent className="rounded-[3rem] border-none bg-[#1a1c23] p-12 text-white shadow-2xl">
                     <DialogHeader className="items-center text-center">
-                        <div className="p-5 bg-orange-500/10 rounded-full w-fit mb-6">
-                            <Sparkles className="h-12 w-12 text-orange-500" />
+                        <div className="p-6 bg-orange-500/10 rounded-full w-fit mb-8 border border-orange-500/20 shadow-inner">
+                            <Sparkles className="h-14 w-14 text-orange-500" />
                         </div>
-                        <DialogTitle className="text-2xl sm:text-3xl font-black uppercase italic tracking-tighter">Tier Restriction</DialogTitle>
-                        <UiDialogDescription className="text-base sm:text-lg text-muted-foreground font-medium pt-2">
+                        <DialogTitle className="text-3xl sm:text-4xl font-black uppercase italic tracking-tighter">Tier Restriction</DialogTitle>
+                        <UiDialogDescription className="text-lg sm:text-xl text-muted-foreground font-medium pt-3 leading-relaxed">
                             AI Search is for Super Premier members.
                         </UiDialogDescription>
                     </DialogHeader>
-                    <DialogFooter className="flex-col gap-4 pt-6 sm:flex-col">
-                        <Button asChild className="w-full h-16 rounded-2xl bg-orange-500 hover:bg-orange-600 font-black text-base sm:text-lg shadow-xl uppercase tracking-widest">
+                    <DialogFooter className="flex-col gap-5 pt-8 sm:flex-col">
+                        <Button asChild className="w-full h-20 rounded-[1.5rem] bg-orange-500 hover:bg-orange-600 font-black text-lg sm:text-xl shadow-[0_15px_35px_-5px_rgba(249,115,22,0.4)] uppercase tracking-widest transition-all active:scale-95">
                             <Link href="/dashboard#plans">UPGRADE NOW</Link>
                         </Button>
-                        <Button variant="ghost" className="w-full h-12 rounded-xl text-muted-foreground hover:text-white font-bold uppercase text-[10px] tracking-widest" onClick={() => setIsPremiumDialogOpen(false)}>
+                        <Button variant="ghost" className="w-full h-12 rounded-xl text-muted-foreground hover:text-white font-bold uppercase text-[11px] tracking-[0.2em]" onClick={() => setIsPremiumDialogOpen(false)}>
                             NOT AT THIS TIME
                         </Button>
                     </DialogFooter>
@@ -592,7 +609,7 @@ export default function TalentSearchPage() {
     return (
         <Suspense fallback={
             <div className="flex h-screen w-full items-center justify-center bg-[#1a1c23]">
-                <Loader2 className="h-12 w-12 animate-spin text-orange-500" />
+                <Loader2 className="h-16 w-16 animate-spin text-orange-500" />
             </div>
         }>
             <HomePageContent />
