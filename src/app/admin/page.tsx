@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
@@ -1311,9 +1310,9 @@ export default function AdminDashboardPage() {
                     </CardHeader>
                     <CardContent className="p-6 space-y-6">
                         <div className="space-y-2">
-                            <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Points per Successful Join</Label>
-                            <Input type="number" value={referralPoints} onChange={e => setReferralPoints(Number(e.target.value))} className="h-12 bg-background border-none rounded-xl font-black text-xl text-white" />
-                            <p className="text-[9px] text-muted-foreground italic">This is the amount of 'Premium Credits' awarded to the referrer when a new user signs up with their code.</p>
+                            <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 ml-1">Points per Successful Join</Label>
+                            <Input type="number" value={referralPoints} onChange={e => setReferralPoints(Number(e.target.value))} className="h-12 bg-background border-none rounded-xl font-black text-xl text-white shadow-inner" />
+                            <p className="text-[9px] text-muted-foreground italic font-medium">This is the amount of 'Premium Credits' awarded to the referrer when a new user signs up with their code.</p>
                         </div>
                     </CardContent>
                 </Card>
