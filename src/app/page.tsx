@@ -347,39 +347,39 @@ function HomePageContent() {
                             <Carousel opts={{ align: "start", loop: true }} className="w-full">
                                 <CarouselContent className="-ml-4">
                                     {isLoadingTopExperts ? (
-                                        [...Array(1)].map((_, i) => (
-                                            <CarouselItem key={i} className="pl-4 basis-full">
+                                        [...Array(2)].map((_, i) => (
+                                            <CarouselItem key={i} className="pl-4 basis-full sm:basis-1/2">
                                                 <div className="w-full h-[450px] bg-[#1a1c23] rounded-[2.5rem] animate-pulse" />
                                             </CarouselItem>
                                         ))
                                     ) : filteredTopExperts.length > 0 ? (
                                         filteredTopExperts.map(expert => (
-                                            <CarouselItem key={expert.id} className="pl-4 basis-full">
-                                                <div className="flex justify-center w-full">
-                                                    <Card className="w-full max-w-[400px] bg-[#1a1c23] border-none flex flex-col items-center p-12 text-center rounded-[2.5rem] shadow-2xl relative overflow-hidden h-full">
-                                                        <div className="relative mb-10">
-                                                            <Avatar className="h-32 w-32 sm:h-40 sm:w-40 border-4 border-white/5 shadow-2xl">
+                                            <CarouselItem key={expert.id} className="pl-4 basis-full sm:basis-1/2">
+                                                <div className="flex justify-center w-full h-full px-2">
+                                                    <Card className="w-full bg-[#1a1c23] border-none flex flex-col items-center p-8 sm:p-12 text-center rounded-[2.5rem] shadow-2xl relative overflow-hidden h-full min-h-[400px]">
+                                                        <div className="relative mb-8 sm:mb-10">
+                                                            <Avatar className="h-24 w-24 sm:h-32 sm:w-32 border-4 border-white/5 shadow-2xl">
                                                                 <AvatarImage src={expert.photoUrl} className="object-cover" />
-                                                                <AvatarFallback className="bg-[#24262d] text-orange-500 text-4xl sm:text-5xl font-black">
+                                                                <AvatarFallback className="bg-[#24262d] text-orange-500 text-3xl sm:text-4xl font-black">
                                                                     {expert.firstName?.[0]}
                                                                 </AvatarFallback>
                                                             </Avatar>
                                                             {expert.verified && (
-                                                                <div className="absolute -bottom-1 -right-1 bg-green-500 p-2.5 rounded-full border-4 border-[#1a1c23] shadow-lg">
-                                                                    <UserCheck className="h-5 w-5 text-white" />
+                                                                <div className="absolute -bottom-1 -right-1 bg-green-500 p-2 rounded-full border-4 border-[#1a1c23] shadow-lg">
+                                                                    <UserCheck className="h-4 w-4 text-white" />
                                                                 </div>
                                                             )}
                                                         </div>
 
-                                                        <h3 className="font-black text-white text-3xl sm:text-4xl line-clamp-1 mb-2 tracking-tighter uppercase italic">
+                                                        <h3 className="font-black text-white text-2xl sm:text-3xl line-clamp-1 mb-2 tracking-tighter uppercase italic">
                                                             {truncateName(`${expert.firstName} ${expert.lastName}`)}
                                                         </h3>
-                                                        <p className="text-[10px] sm:text-[11px] text-muted-foreground uppercase tracking-[0.4em] font-black mb-12">
+                                                        <p className="text-[9px] sm:text-[10px] text-muted-foreground uppercase tracking-[0.4em] font-black mb-10 sm:mb-12">
                                                             {expert.profession || expert.role}
                                                         </p>
 
                                                         <Button 
-                                                            className="w-full bg-orange-500 hover:bg-orange-600 text-white rounded-2xl font-black text-xs sm:text-sm h-16 shadow-[0_15px_35px_-5px_rgba(249,115,22,0.4)] active:scale-95 transition-all uppercase tracking-[0.2em] border-none"
+                                                            className="w-full bg-orange-500 hover:bg-orange-600 text-white rounded-2xl font-black text-[10px] sm:text-xs h-14 sm:h-16 shadow-[0_15px_35px_-5px_rgba(249,115,22,0.4)] active:scale-95 transition-all uppercase tracking-[0.2em] border-none mt-auto"
                                                             onClick={() => handleToggleFollow(expert.id)}
                                                         >
                                                             {userProfile?.following?.includes(expert.id) ? 'FOLLOWING' : 'FOLLOW EXPERT'}
@@ -397,7 +397,7 @@ function HomePageContent() {
                                         </CarouselItem>
                                     )}
                                 </CarouselContent>
-                                <div className="hidden sm:block">
+                                <div className="hidden lg:block">
                                     <CarouselPrevious className="bg-white/5 border-none text-white hover:bg-white/10 -left-14 h-14 w-14" />
                                     <CarouselNext className="bg-white/5 border-none text-white hover:bg-white/10 -right-14 h-14 w-14" />
                                 </div>
