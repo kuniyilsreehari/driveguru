@@ -38,6 +38,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from '@/components/ui/dialog';
 import {
   Select,
@@ -1343,25 +1344,29 @@ export default function AdminDashboardPage() {
 
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="max-w-3xl overflow-y-auto max-h-[90vh] rounded-[2rem] border-none bg-background text-white shadow-2xl">
-          <DialogHeader className="mb-4"><CardTitle className="text-3xl font-black uppercase italic">Modify Expert Profile</CardTitle></DialogHeader>
+          <DialogHeader className="mb-4">
+            <DialogTitle className="text-3xl font-black uppercase italic">Modify Expert Profile</DialogTitle>
+          </DialogHeader>
           {selectedUser && <EditProfileForm userProfile={selectedUser as any} isAdmin onSuccess={() => setIsEditDialogOpen(false)} />}
         </DialogContent>
       </Dialog>
 
       <Dialog open={isVacancyDialogOpen} onOpenChange={setIsVacancyDialogOpen}>
         <DialogContent className="max-w-3xl overflow-y-auto max-h-[90vh] rounded-[2rem] border-none bg-background text-white shadow-2xl">
-          <DialogHeader className="mb-4"><CardTitle className="text-3xl font-black uppercase italic">{selectedVacancy ? 'Edit Vacancy' : 'Post Admin Opening'}</CardTitle></DialogHeader>
+          <DialogHeader className="mb-4">
+            <DialogTitle className="text-3xl font-black uppercase italic">{selectedVacancy ? 'Edit Vacancy' : 'Post Admin Opening'}</DialogTitle>
+          </DialogHeader>
           <PostVacancyForm isAdmin vacancy={selectedVacancy || undefined} onSuccess={() => setIsVacancyDialogOpen(false)} />
         </DialogContent>
       </Dialog>
 
       <Dialog open={isAwardDialogOpen} onOpenChange={setIsAwardDialogOpen}>
         <DialogContent className="rounded-[2rem] border-none bg-background text-white p-8">
-          <div className="items-center text-center">
+          <DialogHeader className="items-center text-center">
             <div className="p-4 bg-orange-500/10 rounded-full w-fit mx-auto mb-4"><PlusCircle className="h-10 w-10 text-orange-500" /></div>
-            <CardTitle className="text-3xl font-black uppercase italic">Award Credits</CardTitle>
-            <CardDescription className="text-muted-foreground font-medium pt-2">Manually grant referral points to {selectedUser?.firstName} {selectedUser?.lastName}.</CardDescription>
-          </div>
+            <DialogTitle className="text-3xl font-black uppercase italic">Award Credits</DialogTitle>
+            <DialogDescription className="text-muted-foreground font-medium pt-2">Manually grant referral points to {selectedUser?.firstName} {selectedUser?.lastName}.</DialogDescription>
+          </DialogHeader>
           <div className="py-8 space-y-2">
                 <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-[0.2em]">Amount to Grant</Label>
                 <Input type="number" value={awardPoints} onChange={(e) => setAwardPoints(Number(e.target.value))} className="rounded-xl h-14 bg-white/5 border-none font-black text-orange-500 text-2xl text-center shadow-inner" />
