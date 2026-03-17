@@ -321,7 +321,7 @@ function HomePageContent() {
             <WelcomeRedirect />
             <div className="max-w-4xl mx-auto p-4 sm:p-8">
                 <header className="text-center py-6 sm:py-12">
-                    <h1 className="text-3xl sm:text-7xl font-black text-white tracking-tighter uppercase italic">DriveGuru</h1>
+                    <h1 className="text-4xl sm:text-7xl font-black text-white tracking-tighter uppercase italic">DriveGuru</h1>
                     <p className="mt-2 text-[8px] sm:text-sm font-black uppercase tracking-[0.2em] sm:tracking-[0.3em] text-orange-500/50 max-w-2xl mx-auto">
                         DIRECT PROFESSIONAL CONNECTIONS
                     </p>
@@ -330,8 +330,8 @@ function HomePageContent() {
                 <main className="space-y-8 sm:space-y-12">
                     <section className="bg-[#24262d] rounded-[2rem] p-6 sm:p-8 shadow-2xl overflow-hidden border border-white/5 relative">
                         <div className="mb-6">
-                            <h2 className="text-lg sm:text-2xl font-black text-white uppercase italic">Top Rated Experts</h2>
-                            <p className="text-[8px] sm:text-[10px] font-black uppercase tracking-widest text-muted-foreground">PREMIUM NETWORK SUGGESTIONS</p>
+                            <h2 className="text-xl sm:text-3xl font-black text-white uppercase italic tracking-tight">Top Rated Experts</h2>
+                            <p className="text-[8px] sm:text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">PREMIUM NETWORK SUGGESTIONS</p>
                         </div>
 
                         <div className="relative group mb-6">
@@ -398,7 +398,7 @@ function HomePageContent() {
                                 </CardTitle>
                                 <div className="flex items-center space-x-3 bg-white/5 px-4 py-2 rounded-2xl border border-white/5 shadow-inner">
                                     <Switch id="ai-mode" checked={useAiSearch} onCheckedChange={handleAiModeToggle} className="data-[state=checked]:bg-orange-500 scale-90" />
-                                    <Label htmlFor="ai-mode" className="flex items-center gap-2 font-black text-[10px] uppercase tracking-[0.2em] cursor-pointer text-white">
+                                    <Label htmlFor="ai-mode" className="flex items-center gap-2 font-black text-[9px] sm:text-[10px] uppercase tracking-[0.2em] cursor-pointer text-white">
                                         <Bot className={cn("h-4 w-4 transition-colors", useAiSearch ? "text-orange-500" : "text-muted-foreground")} />
                                         AI SEARCH
                                     </Label>
@@ -409,7 +409,7 @@ function HomePageContent() {
                             <div className="flex flex-col gap-4">
                                 <Dialog>
                                     <DialogTrigger asChild>
-                                        <Button variant="outline" className="w-full h-16 justify-between text-left font-black uppercase text-[11px] tracking-[0.2em] rounded-2xl bg-[#1a1c23] border-none shadow-inner px-6 text-white/70">
+                                        <Button variant="outline" className="w-full h-16 justify-between text-left font-black uppercase text-[10px] sm:text-[11px] tracking-[0.2em] rounded-2xl bg-[#1a1c23] border-none shadow-inner px-6 text-white/70">
                                             <span className="flex-1">{userTypes.find(t => t.value === role)?.label || 'ALL USER TYPES'}</span>
                                             <ChevronDown className="ml-2 h-4 w-4 opacity-30" />
                                         </Button>
@@ -467,13 +467,13 @@ function HomePageContent() {
                     <Card className="rounded-[2.5rem] p-6 sm:p-10 bg-[#24262d] border-none shadow-2xl relative overflow-hidden border border-white/5">
                         <CardContent className="p-0 space-y-6">
                              <div className="space-y-2">
-                                <Label htmlFor="search" className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground/60 ml-1">LOOKING FOR...</Label>
+                                <Label htmlFor="search" className="text-[9px] sm:text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground/60 ml-1">LOOKING FOR...</Label>
                                 <div className="relative">
                                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                                     <Input
                                         id="search"
                                         placeholder="Name, skill, or company..."
-                                        className="pl-12 h-14 bg-[#1a1c23] border-none rounded-2xl text-base placeholder:text-muted-foreground shadow-inner font-bold text-white"
+                                        className="pl-12 h-14 bg-[#1a1c23] border-none rounded-2xl text-sm sm:text-base placeholder:text-muted-foreground shadow-inner font-bold text-white"
                                         value={searchQuery}
                                         onChange={(e) => setSearchQuery(e.target.value)}
                                     />
@@ -482,8 +482,8 @@ function HomePageContent() {
                             
                             <div className="space-y-3">
                                 <div className="flex items-center justify-between mb-1">
-                                    <Label className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground/60 ml-1">LOCATION</Label>
-                                    <Button variant="ghost" size="sm" onClick={handleDetectLocation} disabled={isDetectingLocation} className="text-orange-500 font-black uppercase text-[10px] tracking-widest h-8 rounded-xl hover:bg-orange-500/10 gap-1 px-0">
+                                    <Label className="text-[9px] sm:text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground/60 ml-1">LOCATION</Label>
+                                    <Button variant="ghost" size="sm" onClick={handleDetectLocation} disabled={isDetectingLocation} className="text-orange-500 font-black uppercase text-[9px] sm:text-[10px] tracking-widest h-8 rounded-xl hover:bg-orange-500/10 gap-1 px-0">
                                         {isDetectingLocation ? <Loader2 className="h-4 w-4 animate-spin" /> : <LocateIcon className="h-4 w-4" />}
                                         AUTO-DETECT
                                     </Button>
@@ -495,7 +495,7 @@ function HomePageContent() {
                                 </div>
                             </div>
 
-                            <Button size="lg" className="w-full h-20 rounded-[2rem] bg-orange-500 hover:bg-orange-600 text-white font-black text-xl shadow-2xl shadow-orange-500/30 uppercase tracking-[0.2em] transition-all active:scale-95 group mt-4" onClick={handleSearch}>
+                            <Button size="lg" className="w-full h-20 rounded-[2rem] bg-orange-500 hover:bg-orange-600 text-white font-black text-lg sm:text-xl shadow-2xl shadow-orange-500/30 uppercase tracking-[0.2em] transition-all active:scale-95 group mt-4" onClick={handleSearch}>
                                 Find Professionals
                             </Button>
                         </CardContent>
@@ -503,7 +503,7 @@ function HomePageContent() {
 
                     <div className="mt-12 text-center">
                         <h2 className="text-2xl sm:text-4xl font-black text-white mb-1 uppercase italic tracking-tight">Industry Hub</h2>
-                        <p className="text-[10px] font-black uppercase tracking-[0.4em] text-orange-500/50 mb-10">EXPLORE SPECIALIZATIONS</p>
+                        <p className="text-[9px] sm:text-[10px] font-black uppercase tracking-[0.3em] text-orange-500/50 mb-10">EXPLORE SPECIALIZATIONS</p>
                          {isAppConfigLoading ? (
                              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                                 <Skeleton className="h-28 w-full rounded-3xl bg-white/5" />
@@ -517,7 +517,7 @@ function HomePageContent() {
                                             <div className="p-4 sm:p-6 bg-[#1a1c23] rounded-2xl mb-4 shadow-inner">
                                                 {getIcon(category.icon)}
                                             </div>
-                                            <p className="font-black text-[10px] sm:text-xs text-white group-hover:text-orange-500 transition-colors uppercase tracking-[0.2em]">{category.name}</p>
+                                            <p className="font-black text-[9px] sm:text-xs text-white group-hover:text-orange-500 transition-colors uppercase tracking-[0.2em]">{category.name}</p>
                                         </Card>
                                     </Link>
                                 ))}
@@ -530,9 +530,9 @@ function HomePageContent() {
                             <div className="flex flex-col sm:flex-row items-center justify-between mb-10 gap-6">
                                 <div className="text-center sm:text-left">
                                     <h2 className="text-2xl sm:text-4xl font-black text-white uppercase italic tracking-tight">Fresh Talent</h2>
-                                    <p className="text-[10px] font-black uppercase tracking-[0.3em] text-orange-500/50">NEW PROFESSIONALS</p>
+                                    <p className="text-[9px] sm:text-[10px] font-black uppercase tracking-[0.3em] text-orange-500/50">NEW PROFESSIONALS</p>
                                 </div>
-                                <Button className="w-full sm:w-auto rounded-2xl bg-orange-500 hover:bg-orange-600 text-white font-black uppercase text-[11px] tracking-[0.2em] h-12 px-8 shadow-xl" asChild>
+                                <Button className="w-full sm:w-auto rounded-2xl bg-orange-500 hover:bg-orange-600 text-white font-black uppercase text-[10px] tracking-[0.2em] h-12 px-8 shadow-xl" asChild>
                                     <Link href="/search">VIEW ALL REGISTRY <ChevronRight className="ml-2 h-4 w-4" strokeWidth={3}/></Link>
                                 </Button>
                             </div>
@@ -560,13 +560,13 @@ function HomePageContent() {
                         <div className="p-5 bg-orange-500/10 rounded-full w-fit mb-6">
                             <Sparkles className="h-12 w-12 text-orange-500" />
                         </div>
-                        <DialogTitle className="text-3xl font-black uppercase italic tracking-tighter">Tier Restriction</DialogTitle>
-                        <UiDialogDescription className="text-lg text-muted-foreground font-medium pt-2">
+                        <DialogTitle className="text-2xl sm:text-3xl font-black uppercase italic tracking-tighter">Tier Restriction</DialogTitle>
+                        <UiDialogDescription className="text-base sm:text-lg text-muted-foreground font-medium pt-2">
                             AI Search is for Super Premier members.
                         </UiDialogDescription>
                     </DialogHeader>
                     <DialogFooter className="flex-col gap-4 pt-6 sm:flex-col">
-                        <Button asChild className="w-full h-16 rounded-2xl bg-orange-500 hover:bg-orange-600 font-black text-lg shadow-xl uppercase tracking-widest">
+                        <Button asChild className="w-full h-16 rounded-2xl bg-orange-500 hover:bg-orange-600 font-black text-base sm:text-lg shadow-xl uppercase tracking-widest">
                             <Link href="/dashboard#plans">UPGRADE NOW</Link>
                         </Button>
                         <Button variant="ghost" className="w-full h-12 rounded-xl text-muted-foreground hover:text-white font-bold uppercase text-[10px] tracking-widest" onClick={() => setIsPremiumDialogOpen(false)}>
