@@ -3,7 +3,6 @@
 import { useMemo } from 'react';
 import { collection, query, where } from 'firebase/firestore';
 import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { Users } from 'lucide-react';
 import type { ExpertUser } from '@/components/expert-card';
 
 export function FollowerStats({ expert }: { expert: ExpertUser }) {
@@ -23,13 +22,13 @@ export function FollowerStats({ expert }: { expert: ExpertUser }) {
     }
 
     return (
-        <div className="flex items-center gap-3 text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">
-            <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+            <div className="flex items-center gap-1">
                 <span className="text-orange-500">{followers?.length || 0}</span>
                 <span>Followers</span>
             </div>
             <div className="h-3 w-px bg-white/10" />
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1">
                 <span className="text-orange-500">{followingCount}</span>
                 <span>Following</span>
             </div>
