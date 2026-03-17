@@ -8,7 +8,7 @@ import { useUser, useFirestore, useDoc, useMemoFirebase, useAuth, useCollection 
 import { updateDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, UserX, Crown, Sparkles, User as UserIcon, Save, Briefcase, Building, MessageSquare, Search, PlusCircle, Download, IndianRupee, Upload, HardDriveDownload, Megaphone, Rss, TrendingUp, PieChart, Activity, ChevronLeft, ChevronRight, Check, Gift, Phone, Eye, Layout, Hash, SortAsc, LayoutGrid, CheckCircle2, ShieldAlert, Link as LinkIcon, Video, Trophy } from 'lucide-react';
+import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, UserX, Crown, Sparkles, User as UserIcon, Save, Briefcase, Building, MessageSquare, Search, PlusCircle, Download, IndianRupee, Upload, HardDriveDownload, Megaphone, Rss, TrendingUp, PieChart, Activity, ChevronLeft, ChevronRight, Check, Gift, Phone, Eye, Layout, Hash, SortAsc, LayoutGrid, CheckCircle2, ShieldAlert, Link as LinkIcon, Video, Trophy, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -340,9 +340,13 @@ export default function AdminDashboardPage() {
     return [...users]
         .filter(u => (u.referralPoints || 0) > 0 || (u.referralCount || 0) > 0)
         .sort((a, b) => {
-            const aPoints = a.referralPoints || 0;
-            const bPoints = b.referralPoints || 0;
-            if (bPoints !== aPoints) return bPoints - aPoints;
+            // Ranking based on Multiplication Result: Score = Points * Joins
+            const aScore = (a.referralPoints || 0) * (a.referralCount || 0);
+            const bScore = (b.referralPoints || 0) * (b.referralCount || 0);
+            
+            if (bScore !== aScore) return bScore - aScore;
+            // Fallback: total points then joins
+            if (b.referralPoints !== a.referralPoints) return (b.referralPoints || 0) - (a.referralPoints || 0);
             return (b.referralCount || 0) - (a.referralCount || 0);
         });
   }, [users]);
@@ -503,7 +507,7 @@ export default function AdminDashboardPage() {
 
   const handleExportCSV = () => {
     if (!users) return;
-    const headers = ["S.No", "Expert Name", "Profession/Role", "Email", "Phone Number", "City", "State", "Pincode", "Tier", "Verified", "Referral Code", "Referral Points", "Referral Joins", "Joined Date"];
+    const headers = ["S.No", "Expert Name", "Profession/Role", "Email", "Phone Number", "City", "State", "Pincode", "Tier", "Verified", "Referral Code", "Referral Points", "Referral Joins", "Influence Score", "Joined Date"];
     const rows = users.map((u, i) => [
         i + 1,
         `"${u.firstName} ${u.lastName}"`,
@@ -518,6 +522,7 @@ export default function AdminDashboardPage() {
         `"${u.referralCode || ''}"`,
         u.referralPoints || 0,
         u.referralCount || 0,
+        (u.referralPoints || 0) * (u.referralCount || 0),
         u.createdAt ? format(u.createdAt.toDate(), 'dd-MM-yyyy') : '---'
     ]);
 
@@ -838,8 +843,8 @@ export default function AdminDashboardPage() {
                             <div className="flex items-center gap-3">
                                 <Trophy className="h-6 w-6 text-orange-500" />
                                 <div>
-                                    <CardTitle className="text-2xl font-black uppercase italic">Referral Rankings</CardTitle>
-                                    <CardDescription className="text-muted-foreground">Experts with the highest engagement points.</CardDescription>
+                                    <CardTitle className="text-2xl font-black uppercase italic">Professional Rankings</CardTitle>
+                                    <CardDescription className="text-muted-foreground">Experts ranked by Multiplication Score (Points × Joins).</CardDescription>
                                 </div>
                             </div>
                         </CardHeader>
@@ -850,18 +855,20 @@ export default function AdminDashboardPage() {
                                         <TableRow className="border-white/5">
                                             <TableHead className="w-[60px] font-bold text-white text-center">Rank</TableHead>
                                             <TableHead className="font-bold text-white">Top Referrer</TableHead>
-                                            <TableHead className="font-bold text-white text-center">Premium Credits</TableHead>
+                                            <TableHead className="font-bold text-white text-center">Base Credits</TableHead>
                                             <TableHead className="font-bold text-white text-center">Total Joins</TableHead>
+                                            <TableHead className="font-bold text-orange-500 text-center uppercase tracking-widest text-[10px]">Influence Score (PTS × JOINS)</TableHead>
                                             <TableHead className="text-right font-bold text-white">Status</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
                                         {isUsersLoading ? (
-                                            <TableRow><TableCell colSpan={5} className="text-center py-8"><Loader className="animate-spin mx-auto text-orange-500" /></TableCell></TableRow>
+                                            <TableRow><TableCell colSpan={6} className="text-center py-8"><Loader className="animate-spin mx-auto text-orange-500" /></TableCell></TableRow>
                                         ) : rankingUsers.length === 0 ? (
-                                            <TableRow><TableCell colSpan={5} className="text-center py-12 text-muted-foreground italic">No experts have earned referral points yet.</TableCell></TableRow>
+                                            <TableRow><TableCell colSpan={6} className="text-center py-12 text-muted-foreground italic">No experts have earned referral points yet.</TableCell></TableRow>
                                         ) : rankingUsers.slice((rankingPage - 1) * ITEMS_PER_PAGE, rankingPage * ITEMS_PER_PAGE).map((u, idx) => {
                                             const globalRank = (rankingPage - 1) * ITEMS_PER_PAGE + idx + 1;
+                                            const influenceScore = (u.referralPoints || 0) * (u.referralCount || 0);
                                             return (
                                                 <TableRow key={u.id} className="hover:bg-white/5 border-white/5 h-20">
                                                     <TableCell className="text-center font-black text-orange-500 text-lg">#{globalRank}</TableCell>
@@ -877,8 +884,17 @@ export default function AdminDashboardPage() {
                                                             </div>
                                                         </div>
                                                     </TableCell>
-                                                    <TableCell className="text-center font-black text-orange-500 text-xl">{u.referralPoints || 0}</TableCell>
-                                                    <TableCell className="text-center font-black text-white text-xl">{u.referralCount || 0}</TableCell>
+                                                    <TableCell className="text-center font-black text-white/60 text-lg">{u.referralPoints || 0}</TableCell>
+                                                    <TableCell className="text-center font-black text-white/60 text-lg">{u.referralCount || 0}</TableCell>
+                                                    <TableCell className="text-center">
+                                                        <div className="flex flex-col items-center justify-center">
+                                                            <span className="text-2xl font-black text-orange-500 italic tracking-tighter">{influenceScore}</span>
+                                                            <div className="flex items-center gap-1 opacity-30">
+                                                                <Zap className="h-2 w-2 text-orange-500" />
+                                                                <span className="text-[8px] font-black text-white uppercase">Product Result</span>
+                                                            </div>
+                                                        </div>
+                                                    </TableCell>
                                                     <TableCell className="text-right">
                                                         <Badge variant="outline" className="border-orange-500/30 text-orange-500 font-black uppercase text-[9px] tracking-widest">{u.referralCode}</Badge>
                                                     </TableCell>
