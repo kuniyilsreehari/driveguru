@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
@@ -8,7 +9,7 @@ import { useUser, useFirestore, useDoc, useMemoFirebase, useAuth, useCollection 
 import { updateDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, UserX, Crown, Sparkles, User as UserIcon, Save, Briefcase, Building, MessageSquare, Search, PlusCircle, IndianRupee, Download, Upload, HardDriveDownload, Megaphone, Rss, TrendingUp, PieChart, Activity, ChevronLeft, ChevronRight, Check, Gift, Phone, Eye, Layout, Hash, SortAsc, LayoutGrid, CheckCircle2, ShieldAlert, Link as LinkIcon, Video, Trophy, Zap, RotateCcw, AlertTriangle, Info, X } from 'lucide-react';
+import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, UserX, Crown, Sparkles, User as UserIcon, Save, Briefcase, Building, MessageSquare, Search, PlusCircle, IndianRupee, Download, Upload, HardDriveDownload, Megaphone, Rss, TrendingUp, PieChart, Activity, ChevronLeft, ChevronRight, Check, Gift, Phone, Eye, Layout, Hash, SortAsc, LayoutGrid, CheckCircle2, ShieldAlert, Link as LinkIcon, Video, Trophy, Zap, RotateCcw, AlertTriangle, Info, X, CirclePlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -983,8 +984,7 @@ export default function AdminDashboardPage() {
                                     <Button variant="outline" size="sm" onClick={() => setRankingPage(prev => Math.max(prev - 1, 1))} disabled={rankingPage === 1} className="rounded-xl h-9 border-white/10 bg-transparent text-white font-bold"><ChevronLeft className="h-4 w-4" /></Button>
                                     <Button variant="outline" size="sm" onClick={() => setRankingPage(prev => prev + 1)} disabled={rankingPage >= Math.ceil(rankingUsers.length / ITEMS_PER_PAGE)} className="rounded-xl h-9 border-white/10 bg-transparent text-white font-bold"><ChevronRight className="h-4 w-4" /></Button>
                                 </div>
-                            </div>
-                        </CardContent>
+                            </CardContent>
                     </Card>
                 </TabsContent>
 
@@ -1410,28 +1410,28 @@ export default function AdminDashboardPage() {
                                 type="button" 
                                 size="sm" 
                                 variant="outline" 
-                                className="h-8 rounded-xl border-orange-500/20 text-orange-500 hover:bg-orange-500/10 font-black text-[9px] uppercase tracking-widest"
+                                className="h-10 rounded-xl border-orange-500/40 text-orange-500 hover:bg-orange-500/10 font-black text-[10px] uppercase tracking-widest px-4 gap-2"
                                 onClick={handleAddVideoLink}
                             >
-                                <PlusCircle className="mr-1 h-3.5 w-3.5" /> Add Link
+                                <CirclePlus className="h-4 w-4" /> Add Link
                             </Button>
                         </div>
                     </CardHeader>
                     <CardContent className="p-6 space-y-6">
                         <div className="space-y-4">
-                            <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Platform Tutorial Library (URLs)</Label>
+                            <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 ml-1">Platform Tutorial Library (URLs)</Label>
                             <div className="space-y-3">
                                 {videoResources.map((url, index) => (
-                                    <div key={index} className="flex gap-2 group animate-in slide-in-from-left-2 duration-300">
+                                    <div key={index} className="flex items-center gap-3 group animate-in slide-in-from-left-2 duration-300">
                                         <div className="relative flex-1">
                                             <Input 
                                                 value={url} 
                                                 onChange={(e) => handleUpdateVideoLink(index, e.target.value)} 
-                                                className="h-12 bg-background border-none rounded-xl font-mono text-[10px] text-white/80 pr-10" 
+                                                className="h-14 bg-[#1a1c23] border-none rounded-xl font-mono text-[11px] text-white/80 pr-12 shadow-inner" 
                                                 placeholder="YouTube URL or Storage Path" 
                                             />
-                                            <div className="absolute right-3 top-1/2 -translate-y-1/2 opacity-20">
-                                                <LinkIcon className="h-3.5 w-3.5" />
+                                            <div className="absolute right-4 top-1/2 -translate-y-1/2 opacity-20 group-focus-within:opacity-50 transition-opacity">
+                                                <LinkIcon className="h-4 w-4" />
                                             </div>
                                         </div>
                                         {videoResources.length > 1 && (
@@ -1439,16 +1439,16 @@ export default function AdminDashboardPage() {
                                                 type="button" 
                                                 variant="ghost" 
                                                 size="icon" 
-                                                className="h-12 w-12 rounded-xl text-red-500/50 hover:text-red-500 hover:bg-red-500/5 transition-all"
+                                                className="h-12 w-12 rounded-xl text-red-500/40 hover:text-red-500 hover:bg-red-500/10 transition-all shrink-0"
                                                 onClick={() => handleRemoveVideoLink(index)}
                                             >
-                                                <Trash2 className="h-4 w-4" />
+                                                <Trash2 className="h-5 w-5" />
                                             </Button>
                                         )}
                                     </div>
                                 ))}
                             </div>
-                            <p className="text-[9px] text-muted-foreground italic">Videos added here will appear in sequence on the Guides page.</p>
+                            <p className="text-[9px] text-muted-foreground italic font-medium">Videos added here will appear in sequence on the Guides page.</p>
                         </div>
                     </CardContent>
                 </Card>
