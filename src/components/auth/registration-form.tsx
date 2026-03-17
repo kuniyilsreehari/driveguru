@@ -40,12 +40,15 @@ import { Textarea } from "../ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
 import { Icons } from "../icons";
 import { Checkbox } from "../ui/checkbox";
+import { processReferral } from "@/ai/flows/process-referral-flow";
 
 const expertTypes = [
     { name: "Freelancer", icon: <UserIcon className="w-8 h-8" />, description: "Individual skills and services." },
     { name: "Company", icon: <Building className="w-8 h-8" />, description: "Business and talent management." },
     { name: "Authorized Pro", icon: <Briefcase className="w-8 h-8" />, description: "Representing an organization." },
 ]
+
+const generateReferralCode = () => Math.random().toString(36).substring(2, 10).toUpperCase();
 
 const formSchema = z.object({
   firstName: z.string().min(1, { message: "First name is required." }),
@@ -61,7 +64,7 @@ const formSchema = z.object({
   role: z.string({ required_error: "Role is required." }),
   department: z.string().optional(),
   companyName: z.string().optional(),
-  referralCode: z.string().optional(),
+  usedReferralCode: z.string().optional(),
   terms: z.boolean().default(false).refine(val => val === true, {
       message: "Accept terms to continue.",
   }),
@@ -73,16 +76,12 @@ const phoneFormSchema = z.object({
   phoneNumber: z.string().min(10, { message: "Enter 10-digit number." }),
   role: z.string({ required_error: "Role is required." }),
   companyName: z.string().optional(),
-  referralCode: z.string().optional(),
+  usedReferralCode: z.string().optional(),
 });
 
 const otpFormSchema = z.object({
   otp: z.string().length(6, { message: "Enter 6-digit OTP." }),
 });
-
-type AppConfig = {
-    departments?: string[];
-};
 
 type PhoneSignupData = {
     phoneNumber: string;
@@ -90,7 +89,7 @@ type PhoneSignupData = {
     firstName: string;
     lastName: string;
     companyName?: string;
-    referralCode?: string;
+    usedReferralCode?: string;
 }
 
 export function RegistrationForm() {
@@ -107,15 +106,6 @@ export function RegistrationForm() {
   const firestore = useFirestore();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [isDetectingLocation, setIsDetectingLocation] = useState(false);
-  const [isFetchingPincode, setIsFetchingPincode] = useState(false);
-
-  const appConfigDocRef = useMemoFirebase(() => {
-    if (!firestore) return null;
-    return doc(firestore, 'app_config', 'homepage');
-  }, [firestore]);
-  
-  const { data: appConfig } = useDoc<AppConfig>(appConfigDocRef);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -123,7 +113,7 @@ export function RegistrationForm() {
       firstName: "", lastName: "", email: "", password: "",
       state: "", city: "", pincode: "", address: "",
       countryCode: "+91", phoneNumber: "", companyName: "", department: "",
-      referralCode: searchParams.get('ref') || "",
+      usedReferralCode: searchParams.get('ref') || "",
       terms: false,
       role: "Freelancer",
     },
@@ -132,7 +122,7 @@ export function RegistrationForm() {
   const phoneForm = useForm<z.infer<typeof phoneFormSchema>>({
     resolver: zodResolver(phoneFormSchema),
     defaultValues: { 
-        phoneNumber: "", referralCode: searchParams.get('ref') || "", 
+        phoneNumber: "", usedReferralCode: searchParams.get('ref') || "", 
         role: "Freelancer", firstName: "", lastName: "", companyName: "",
     },
   });
@@ -165,11 +155,12 @@ export function RegistrationForm() {
                         role: 'Freelancer',
                         verified: false,
                         isAvailable: true,
-                        referralCode: Math.random().toString(36).substring(2, 10).toUpperCase(),
+                        referralCode: generateReferralCode(),
                         referralPoints: 0,
+                        referralCount: 0,
                         createdAt: serverTimestamp(),
                     };
-                    setDocumentNonBlocking(userDocRef, userData, { merge: true });
+                    await setDocumentNonBlocking(userDocRef, userData, { merge: true });
                 }
                 toast({ title: "Welcome!", description: "Account created successfully." });
             }
@@ -209,7 +200,7 @@ export function RegistrationForm() {
                 setDocumentNonBlocking(userDocRef, {
                     id: result.user.uid, firstName: nameParts[0] || 'New', lastName: nameParts.slice(1).join(' ') || 'User',
                     email: result.user.email, role: 'Freelancer', verified: false, isAvailable: true,
-                    referralCode: Math.random().toString(36).substring(2, 10).toUpperCase(), referralPoints: 0,
+                    referralCode: generateReferralCode(), referralPoints: 0, referralCount: 0,
                     createdAt: serverTimestamp(),
                 }, { merge: true });
             }
@@ -231,11 +222,21 @@ export function RegistrationForm() {
             ...values,
             phoneNumber: `+91 ${values.phoneNumber.replace(/\D/g, '').slice(-10)}`,
             verified: false, isAvailable: true,
-            referralCode: Math.random().toString(36).substring(2, 10).toUpperCase(),
-            referralPoints: 0, createdAt: serverTimestamp(),
+            referralCode: generateReferralCode(),
+            referralPoints: 0,
+            referralCount: 0,
+            referredByCode: values.usedReferralCode || null,
+            createdAt: serverTimestamp(),
         };
         delete (userData as any).password;
+        delete (userData as any).usedReferralCode;
+        
         await setDocumentNonBlocking(newUserDocRef, userData);
+        
+        if (values.usedReferralCode) {
+            await processReferral({ newUserUid: userCredential.user.uid, referralCode: values.usedReferralCode });
+        }
+
         toast({ title: "Account Active", description: "Welcome to DriveGuru." });
     } catch (error: any) {
         toast({ variant: "destructive", title: "Failed", description: error.message });
@@ -254,7 +255,7 @@ export function RegistrationForm() {
         lastName: values.lastName,
         role: values.role,
         companyName: values.companyName,
-        referralCode: values.referralCode,
+        usedReferralCode: values.usedReferralCode,
     });
 
     try {
@@ -294,11 +295,17 @@ export function RegistrationForm() {
                 companyName: phoneSignupData.companyName || '',
                 verified: false,
                 isAvailable: true,
-                referralCode: Math.random().toString(36).substring(2, 10).toUpperCase(),
+                referralCode: generateReferralCode(),
                 referralPoints: 0,
+                referralCount: 0,
+                referredByCode: phoneSignupData.usedReferralCode || null,
                 createdAt: serverTimestamp(),
             };
             await setDocumentNonBlocking(userDocRef, userData);
+
+            if (phoneSignupData.usedReferralCode) {
+                await processReferral({ newUserUid: user.uid, referralCode: phoneSignupData.usedReferralCode });
+            }
         }
         toast({ title: "Registration Complete", description: "Identity verified successfully." });
     } catch (error: any) {
@@ -375,6 +382,17 @@ export function RegistrationForm() {
                     )} />
 
                     <div className="pt-4 space-y-4">
+                        <FormField control={form.control} name="usedReferralCode" render={({ field }) => (
+                            <FormItem>
+                                <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 ml-1">Referral Code (Optional)</FormLabel>
+                                <div className="relative">
+                                    <Gift className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-orange-500/50" />
+                                    <FormControl><Input placeholder="e.g. 5GTYZ4BI" {...field} className="pl-10 h-12 bg-[#1a1c23] border-none rounded-xl font-mono text-orange-500 shadow-inner" /></FormControl>
+                                </div>
+                                <FormMessage />
+                            </FormItem>
+                        )} />
+
                         <FormField control={form.control} name="terms" render={({ field }) => (
                             <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-2xl bg-[#1a1c23] p-4 shadow-inner">
                                 <FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} className="border-white/20 data-[state=checked]:bg-orange-500 data-[state=checked]:border-orange-500"/></FormControl>
@@ -382,7 +400,7 @@ export function RegistrationForm() {
                             </FormItem>
                         )} />
 
-                        <Button type="submit" className="w-full h-16 bg-orange-500 hover:bg-orange-600 text-white font-black text-lg shadow-[0_15px_35px_-5px_rgba(249,115,22,0.4)] rounded-2xl uppercase tracking-widest transition-all active:scale-95" disabled={isSubmitting}>
+                        <Button type="submit" className="w-full h-16 bg-orange-500 hover:bg-orange-600 text-white font-black text-lg shadow-[0_15px_35px_-5px_rgba(249,115,22,0.4)] rounded-2xl uppercase tracking-widest transition-all active:scale-95 mt-4" disabled={isSubmitting}>
                             {isSubmitting ? <Loader2 className="h-6 w-6 animate-spin" /> : <><Sparkles className="mr-2 h-6 w-6" /> COMPLETE SIGNUP</>}
                         </Button>
                     </div>
@@ -444,6 +462,17 @@ export function RegistrationForm() {
                                 <div className="relative">
                                     <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm text-muted-foreground font-black">+91</span>
                                     <FormControl><Input type="tel" placeholder="98765 43210" {...field} className="pl-14 h-14 bg-[#1a1c23] border-none rounded-2xl font-bold text-white shadow-inner text-lg" /></FormControl>
+                                </div>
+                                <FormMessage />
+                            </FormItem>
+                        )} />
+
+                        <FormField control={phoneForm.control} name="usedReferralCode" render={({ field }) => (
+                            <FormItem>
+                                <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 ml-1">Referral Code (Optional)</FormLabel>
+                                <div className="relative">
+                                    <Gift className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-orange-500/50" />
+                                    <FormControl><Input placeholder="e.g. 5GTYZ4BI" {...field} className="pl-10 h-12 bg-[#1a1c23] border-none rounded-xl font-mono text-orange-500 shadow-inner" /></FormControl>
                                 </div>
                                 <FormMessage />
                             </FormItem>

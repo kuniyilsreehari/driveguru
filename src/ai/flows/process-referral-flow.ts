@@ -5,12 +5,7 @@
  *
  * This file defines a Genkit flow that runs after a new user has been created.
  * It finds the user who owns the provided referral code and, within a Firestore
- * transaction, increments their referral points and marks the referral as processed
- * on the new user's profile to prevent duplicate rewards.
- *
- * - processReferral - The main function to trigger the referral processing.
- * - ProcessReferralInput - The Zod schema for the input to the function.
- * - ProcessReferralOutput - The Zod schema for the output of the function.
+ * transaction, increments their referral points and mark the referral as processed.
  */
 import { config } from 'dotenv';
 config();
@@ -50,46 +45,41 @@ const processReferralFlow = ai.defineFlow(
       const adminApp = await getAdminApp();
       const firestore = getFirestore(adminApp);
       
-      // 1. Get the reward points from app config
       const appConfigDoc = await firestore.doc('app_config/homepage').get();
       const appConfig = appConfigDoc.data();
-      const rewardPoints = appConfig?.referralRewardPoints || 1; // Default to 1 if not set
+      const rewardPoints = appConfig?.referralRewardPoints || 50; 
 
-      // Use a transaction to ensure atomicity
       const message = await firestore.runTransaction(async (transaction) => {
-        // 2. Find the referring user
         const usersRef = firestore.collection('users');
         const q = usersRef.where('referralCode', '==', referralCode).limit(1);
         
-        // Execute query within transaction
         const querySnapshot = await transaction.get(q);
         
         if (querySnapshot.empty) {
-          // Note: Throwing an error inside a transaction will automatically roll it back.
           throw new Error(`Referral code "${referralCode}" not found.`);
         }
         
         const referrerDoc = querySnapshot.docs[0];
         const newUserDocRef = usersRef.doc(newUserUid);
         
-        // 3. Increment the referralPoints on the referrer's document
+        // 3. Update the referrer with points and count
         transaction.update(referrerDoc.ref, {
-          referralPoints: FieldValue.increment(rewardPoints)
+          referralPoints: FieldValue.increment(rewardPoints),
+          referralCount: FieldValue.increment(1)
         });
 
-        // 4. Mark the referral as processed on the new user's document to prevent re-processing
+        // 4. Mark as processed on the new user doc
         transaction.update(newUserDocRef, {
           referredByCode: null
         });
         
-        return `${rewardPoints} points awarded to user ${referrerDoc.data().firstName}.`;
+        return `${rewardPoints} points and +1 join awarded to ${referrerDoc.data().firstName}.`;
       });
 
       return { success: true, message };
 
     } catch (error: any) {
       console.error("Error processing referral:", error);
-      // If the error came from our check, use its message, otherwise a generic one.
       const errorMessage = error.message.startsWith('Referral code') 
         ? error.message 
         : `An unexpected error occurred: ${error.message}`;

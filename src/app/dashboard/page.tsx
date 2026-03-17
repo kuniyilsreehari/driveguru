@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
@@ -7,7 +8,7 @@ import { signOut } from 'firebase/auth';
 import { useUser, useAuth, useFirestore, useDoc, useMemoFirebase, useCollection } from '@/firebase';
 import { updateDocumentNonBlocking, addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Button } from '@/components/ui/button';
-import { LogOut, Loader, Edit, UserCheck, User as UserIcon, MessageSquare, Gift, Info, Book, Pen, PlusCircle, MapPin, IndianRupee, Calendar, GraduationCap, School, Building, Home, Rss, Users, Link as LinkIcon, AlertCircle, CheckCircle, Eye, EyeOff, Clock, Crown, Sparkles, ChevronUp, ChevronDown, ChevronRight, Shield, CheckCircle2, ShieldAlert, ShieldCheck, ArrowRight, Type, List, Briefcase, Share2, AlertTriangle, RefreshCw } from 'lucide-react';
+import { LogOut, Loader, Edit, UserCheck, User as UserIcon, MessageSquare, Gift, Info, Book, Pen, PlusCircle, MapPin, IndianRupee, Calendar, GraduationCap, School, Building, Home, Rss, Users, Link as LinkIcon, AlertCircle, CheckCircle, Eye, EyeOff, Clock, Crown, Sparkles, ChevronUp, ChevronDown, ChevronRight, Shield, CheckCircle2, ShieldAlert, ShieldCheck, ArrowRight, Type, List, Briefcase, Share2, AlertTriangle, RefreshCw, Smartphone } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription as UiDialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { EditProfileForm } from '@/components/auth/edit-profile-form';
@@ -34,14 +35,6 @@ type ExpertUserProfile = {
     email: string | null;
     role: string;
     photoUrl?: string;
-    photoUrl2?: string;
-    photoUrl3?: string;
-    photoUrl4?: string;
-    photoUrl5?: string;
-    photoUrl6?: string;
-    photoUrl7?: string;
-    photoUrl8?: string;
-    photoUrl9?: string;
     verified?: boolean;
     tier?: 'Standard' | 'Premier' | 'Super Premier';
     isAvailable?: boolean;
@@ -49,6 +42,7 @@ type ExpertUserProfile = {
     lastProfileUpdate?: Timestamp | null;
     referralCode?: string;
     referralPoints?: number;
+    referralCount?: number;
     following?: string[];
     groups?: string[];
     profession?: string;
@@ -142,12 +136,6 @@ export default function ExpertDashboardPage() {
     );
   }, [firestore, user]);
   const { data: myPosts, isLoading: isPostsLoading } = useCollection<any>(myPostsQuery);
-
-  const referralsQuery = useMemoFirebase(() => {
-    if (!firestore || !userProfile?.referralCode) return null;
-    return query(collection(firestore, 'users'), where('referredByCode', '==', userProfile.referralCode));
-  }, [firestore, userProfile?.referralCode]);
-  const { data: myReferrals } = useCollection(referralsQuery);
 
   const followersQuery = useMemoFirebase(() => {
     if (!firestore || !user) return null;
@@ -367,13 +355,13 @@ export default function ExpertDashboardPage() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
                         <Button 
                             variant="outline" 
-                            className="h-12 sm:h-16 rounded-xl sm:rounded-[1.5rem] border-none bg-white/5 hover:bg-white/10 text-white font-bold uppercase tracking-wider text-[10px] flex items-center justify-center gap-3 shadow-inner"
+                            className="h-12 sm:h-16 rounded-xl sm:rounded-[1.5rem] border-none bg-white/10 hover:bg-white/20 text-white font-bold uppercase tracking-wider text-[10px] flex items-center justify-center gap-3 shadow-inner"
                             onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/signup?ref=${userProfile.referralCode}`); toast({ title: "Link Copied" }); }}
                         >
                             <LinkIcon className="h-4 w-4" /> COPY LINK
                         </Button>
                         <Button 
-                            className="h-12 sm:h-16 rounded-xl sm:rounded-[1.5rem] bg-green-600/10 border border-green-600/20 text-green-500 hover:bg-green-600 hover:text-white font-bold uppercase tracking-wider text-[10px] flex items-center justify-center gap-3"
+                            className="h-12 sm:h-16 rounded-xl sm:rounded-[1.5rem] bg-[#16a34a]/10 border border-[#16a34a]/20 text-[#16a34a] hover:bg-[#16a34a] hover:text-white font-bold uppercase tracking-wider text-[10px] flex items-center justify-center gap-3"
                             onClick={() => window.open(`https://wa.me/?text=Join my professional network on DriveGuru using code: ${userProfile.referralCode}`, '_blank')}
                         >
                             <MessageSquare className="h-4 w-4" /> WHATSAPP
@@ -382,11 +370,11 @@ export default function ExpertDashboardPage() {
 
                     <div className="grid grid-cols-2 gap-4 sm:gap-6 w-full mt-8">
                         <div className="bg-[#1a1c23] p-6 sm:p-8 rounded-2xl sm:rounded-[2.5rem] text-center border border-white/5 shadow-inner">
-                            <p className="text-xl sm:text-5xl font-black text-orange-500 mb-1">{userProfile.referralPoints || 100}</p>
+                            <p className="text-xl sm:text-5xl font-black text-orange-500 mb-1">{userProfile.referralPoints || 0}</p>
                             <p className="text-[7px] sm:text-[9px] font-black uppercase tracking-[0.2em] text-muted-foreground opacity-60">PREMIUM CREDITS</p>
                         </div>
                         <div className="bg-[#1a1c23] p-6 sm:p-8 rounded-2xl sm:rounded-[2.5rem] text-center border border-white/5 shadow-inner">
-                            <p className="text-xl sm:text-5xl font-black text-white mb-1">{myReferrals?.length || 2}</p>
+                            <p className="text-xl sm:text-5xl font-black text-white mb-1">{userProfile.referralCount || 0}</p>
                             <p className="text-[7px] sm:text-[9px] font-black uppercase tracking-[0.2em] text-muted-foreground opacity-60">SUCCESSFUL JOINS</p>
                         </div>
                     </div>

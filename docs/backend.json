@@ -155,14 +155,6 @@
           "description": "URL of the user's profile photo.",
           "format": "uri"
         },
-        "photoUrl2": { "type": "string", "format": "uri" },
-        "photoUrl3": { "type": "string", "format": "uri" },
-        "photoUrl4": { "type": "string", "format": "uri" },
-        "photoUrl5": { "type": "string", "format": "uri" },
-        "photoUrl6": { "type": "string", "format": "uri" },
-        "photoUrl7": { "type": "string", "format": "uri" },
-        "photoUrl8": { "type": "string", "format": "uri" },
-        "photoUrl9": { "type": "string", "format": "uri" },
         "linkedinUrl": {
           "type": "string",
           "format": "uri",
@@ -219,6 +211,10 @@
           "type": "number",
           "description": "The total points earned by this user from referrals."
         },
+        "referralCount": {
+          "type": "number",
+          "description": "The total number of successful Joins this user has referred."
+        },
         "following": {
             "type": "array",
             "description": "An array of user IDs that this user is following.",
@@ -233,11 +229,6 @@
             "type": "string",
             "format": "date-time",
             "description": "Timestamp of when the user account was created."
-        },
-        "lastProfileUpdate": {
-            "type": "string",
-            "format": "date-time",
-            "description": "Timestamp of the last profile modification."
         }
       },
       "required": [
@@ -249,212 +240,5 @@
         "createdAt"
       ]
     }
-  },
-  "auth": {
-    "providers": [
-      "password",
-      "anonymous",
-      "google.com"
-    ]
-  },
-  "firestore": {
-    "structure": [
-      {
-        "path": "/users/{userId}",
-        "definition": {
-          "entityName": "User",
-          "schema": {
-            "$ref": "#/backend/entities/User"
-          },
-          "description": "Stores user profiles. Includes user's companyId for association with a company.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier of the user."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/users/{userId}/notifications/{notificationId}",
-        "definition": {
-            "entityName": "Notification",
-            "schema": { "$ref": "#/backend/entities/Notification" },
-            "description": "Stores notifications for a specific user. This is a private subcollection.",
-            "params": [
-                { "name": "userId", "description": "The user's ID." },
-                { "name": "notificationId", "description": "The unique ID for the notification." }
-            ]
-        }
-      },
-      {
-        "path": "/companies/{companyId}",
-        "definition": {
-          "entityName": "Company",
-          "schema": {
-            "$ref": "#/backend/entities/Company"
-          },
-          "description": "Stores company profiles.",
-          "params": [
-            {
-              "name": "companyId",
-              "description": "The unique identifier of the company."
-            }
-          ]
-        }
-      },
-       {
-        "path": "/payments/{paymentId}",
-        "definition": {
-          "entityName": "Payment",
-          "schema": {
-            "$ref": "#/backend/entities/Payment"
-          },
-          "description": "Stores all payment transactions. A top-level collection allows for easy querying and status updates by server-side processes.",
-          "params": [
-            {
-              "name": "paymentId",
-              "description": "The unique identifier for the payment record."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/users/{userId}/location_data/{locationDataId}",
-        "definition": {
-          "entityName": "LocationData",
-          "schema": {
-            "$ref": "#/backend/entities/LocationData"
-          },
-          "description": "Stores location data for each user.  Path-based ownership ensures only the user can access their own location data.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier of the user."
-            },
-            {
-              "name": "locationDataId",
-              "description": "The unique identifier of the location data entry."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/posts/{postId}",
-        "definition": {
-            "entityName": "Post",
-            "schema": {
-                "$ref": "#/backend/entities/Post"
-            },
-            "description": "Stores public posts made by experts.",
-            "params": [
-                {
-                    "name": "postId",
-                    "description": "The unique identifier of the post."
-                }
-            ]
-        }
-      },
-      {
-        "path": "/posts/{postId}/comments/{commentId}",
-        "definition": {
-            "entityName": "Comment",
-            "schema": {
-                "$ref": "#/backend/entities/Comment"
-            },
-            "description": "Stores comments for a specific post. A flat structure under each post allows for threaded replies via a 'parentId' field.",
-            "params": [
-                {
-                    "name": "postId",
-                    "description": "The ID of the parent post."
-                },
-                {
-                    "name": "commentId",
-                    "description": "The unique identifier of the comment."
-                }
-            ]
-        }
-      },
-       {
-        "path": "/groups/{groupId}",
-        "definition": {
-          "entityName": "Group",
-          "schema": { "$ref": "#/backend/entities/Group" },
-          "description": "Stores information about professional groups."
-        }
-      },
-      {
-        "path": "/groups/{groupId}/posts/{postId}",
-        "definition": {
-          "entityName": "GroupPost",
-          "schema": { "$ref": "#/backend/entities/GroupPost" },
-          "description": "Stores posts made within a specific group."
-        }
-      },
-      {
-        "path": "/vacancies/{vacancyId}",
-        "definition": {
-            "entityName": "Vacancy",
-            "schema": {
-                "$ref": "#/backend/entities/Vacancy"
-            },
-            "description": "Stores job vacancies posted by companies.",
-            "params": [
-                {
-                    "name": "vacancyId",
-                    "description": "The unique identifier of the vacancy."
-                }
-            ]
-        }
-      },
-      {
-        "path": "/roles_super_admin/{userId}",
-        "definition": {
-          "entityName": "User",
-          "schema": {
-            "$ref": "#/backend/entities/User"
-          },
-          "description": "Collection used to assign super admin roles. The existence of a document indicates super admin privileges. This enables secure `list` operations.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier of the user."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/roles_manager/{userId}",
-        "definition": {
-          "entityName": "User",
-          "schema": {
-            "$ref": "#/backend/entities/User"
-          },
-          "description": "Collection used to assign manager roles. The existence of a document indicates manager privileges.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier of the user."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/app_config/{configId}",
-        "definition": {
-          "entityName": "AppConfig",
-          "schema": {
-            "$ref": "#/backend/entities/AppConfig"
-          },
-          "description": "Stores global application settings. Use a single document, e.g., 'homepage' for homepage settings.",
-          "params": [
-            {
-              "name": "configId",
-              "description": "The unique identifier of the configuration document (e.g., 'homepage')."
-            }
-          ]
-        }
-      }
-    ]
   }
 }
