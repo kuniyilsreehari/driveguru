@@ -8,7 +8,7 @@ import { useUser, useFirestore, useDoc, useMemoFirebase, useAuth, useCollection 
 import { updateDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, UserX, Crown, Sparkles, User as UserIcon, Save, Briefcase, Building, MessageSquare, Search, PlusCircle, Download, IndianRupee, Upload, HardDriveDownload, Megaphone, Rss, TrendingUp, PieChart, Activity, ChevronLeft, ChevronRight, Check, Gift, Phone, Eye, Layout, Hash, SortAsc, LayoutGrid, CheckCircle2, ShieldAlert, Link as LinkIcon, Video } from 'lucide-react';
+import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, UserX, Crown, Sparkles, User as UserIcon, Save, Briefcase, Building, MessageSquare, Search, PlusCircle, Download, IndianRupee, Upload, HardDriveDownload, Megaphone, Rss, TrendingUp, PieChart, Activity, ChevronLeft, ChevronRight, Check, Gift, Phone, Eye, Layout, Hash, SortAsc, LayoutGrid, CheckCircle2, ShieldAlert, Link as LinkIcon, Video, Trophy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -170,13 +170,14 @@ export default function AdminDashboardPage() {
   const [isAwardDialogOpen, setIsAwardDialogOpen] = useState(false);
   const [awardPoints, setAwardPoints] = useState(100);
   const [userSearchQuery, setUserSearchQuery] = useState('');
-  const [userFilter, setUserFilter] = useState<'all' | 'verified' | 'unverified' | 'premier' | 'super'>('all');
+  const [userFilter, setUserFilter] = useState<'all' | 'verified' | 'unverified' | 'premier' | 'super' | 'referrers'>('all');
 
   const ITEMS_PER_PAGE = 10;
   const [currentPage, setCurrentPage] = useState(1);
   const [vacancyPage, setVacancyPage] = useState(1);
   const [paymentPage, setPaymentPage] = useState(1);
   const [feedPage, setFeedPage] = useState(1);
+  const [rankingPage, setRankingPage] = useState(1);
 
   // App Config States
   const [featuredLimit, setFeaturedLimit] = useState(3);
@@ -258,7 +259,7 @@ export default function AdminDashboardPage() {
   }, [appConfig]);
 
   const stats = useMemo(() => {
-    if (!users) return { total: 0, verified: 0, unverified: 0, premier: 0, super: 0, referrals: 0 };
+    if (!users) return { total: 0, verified: 0, unverified: 0, premier: 0, super: 0, referrals: 0, referrers: 0 };
     return {
         total: users.length,
         verified: users.filter(u => u.verified).length,
@@ -266,6 +267,7 @@ export default function AdminDashboardPage() {
         premier: users.filter(u => u.tier === 'Premier').length,
         super: users.filter(u => u.tier === 'Super Premier').length,
         referrals: users.filter(u => !!u.referredByCode).length,
+        referrers: users.filter(u => (u.referralPoints || 0) > 0 || (u.referralCount || 0) > 0).length,
     };
   }, [users]);
 
@@ -325,11 +327,24 @@ export default function AdminDashboardPage() {
             userFilter === 'verified' ? u.verified :
             userFilter === 'unverified' ? !u.verified :
             userFilter === 'premier' ? u.tier === 'Premier' :
-            userFilter === 'super' ? u.tier === 'Super Premier' : true;
+            userFilter === 'super' ? u.tier === 'Super Premier' : 
+            userFilter === 'referrers' ? ((u.referralPoints || 0) > 0 || (u.referralCount || 0) > 0) : true;
 
         return matchesSearch && matchesFilter;
     });
   }, [users, userSearchQuery, userFilter]);
+
+  const rankingUsers = useMemo(() => {
+    if (!users) return [];
+    return [...users]
+        .filter(u => (u.referralPoints || 0) > 0 || (u.referralCount || 0) > 0)
+        .sort((a, b) => {
+            const aPoints = a.referralPoints || 0;
+            const bPoints = b.referralPoints || 0;
+            if (bPoints !== aPoints) return bPoints - aPoints;
+            return (b.referralCount || 0) - (a.referralCount || 0);
+        });
+  }, [users]);
 
   const sanitizePhoneNumber = useCallback((phone?: string) => {
     if (!phone) return 'N/A';
@@ -579,18 +594,20 @@ export default function AdminDashboardPage() {
           </TabsList>
 
           <TabsContent value="dashboard" className="mt-0 space-y-8">
-            <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-6">
-              <Card className="border-none bg-card"><CardHeader className="pb-2"><CardTitle className="text-xs font-black opacity-70 uppercase tracking-widest">Total Experts</CardTitle></CardHeader><CardContent><div className="text-3xl font-black">{stats.total}</div></CardContent></Card>
-              <Card className="border-none bg-card"><CardHeader className="pb-2"><CardTitle className="text-xs font-black opacity-70 uppercase tracking-widest text-green-500">Verified</CardTitle></CardHeader><CardContent><div className="text-3xl font-black text-green-500">{stats.verified}</div></CardContent></Card>
-              <Card className="border-none bg-card"><CardHeader className="pb-2"><CardTitle className="text-xs font-black opacity-70 uppercase tracking-widest text-red-500">Unverified</CardTitle></CardHeader><CardContent><div className="text-3xl font-black text-red-500">{stats.unverified}</div></CardContent></Card>
-              <Card className="border-none bg-card"><CardHeader className="pb-2"><CardTitle className="text-xs font-black opacity-70 uppercase tracking-widest text-purple-500">Premier</CardTitle></CardHeader><CardContent><div className="text-3xl font-black text-purple-500">{stats.premier}</div></CardContent></Card>
-              <Card className="border-none bg-card"><CardHeader className="pb-2"><CardTitle className="text-xs font-black opacity-70 uppercase tracking-widest text-blue-500">Super</CardTitle></CardHeader><CardContent><div className="text-3xl font-black text-blue-500">{stats.super}</div></CardContent></Card>
-              <Card className="border-none bg-card"><CardHeader className="pb-2"><CardTitle className="text-xs font-black opacity-70 uppercase tracking-widest text-orange-500">Referrals</CardTitle></CardHeader><CardContent><div className="text-3xl font-black text-orange-500">{stats.referrals}</div></CardContent></Card>
+            <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-7">
+              <Card className="border-none bg-card"><CardHeader className="pb-2"><CardTitle className="text-xs font-black opacity-70 uppercase tracking-widest">Total Experts</CardTitle></CardHeader><CardContent><div className="text-2xl font-black">{stats.total}</div></CardContent></Card>
+              <Card className="border-none bg-card"><CardHeader className="pb-2"><CardTitle className="text-xs font-black opacity-70 uppercase tracking-widest text-green-500">Verified</CardTitle></CardHeader><CardContent><div className="text-2xl font-black text-green-500">{stats.verified}</div></CardContent></Card>
+              <Card className="border-none bg-card"><CardHeader className="pb-2"><CardTitle className="text-xs font-black opacity-70 uppercase tracking-widest text-red-500">Unverified</CardTitle></CardHeader><CardContent><div className="text-2xl font-black text-red-500">{stats.unverified}</div></CardContent></Card>
+              <Card className="border-none bg-card"><CardHeader className="pb-2"><CardTitle className="text-xs font-black opacity-70 uppercase tracking-widest text-purple-500">Premier</CardTitle></CardHeader><CardContent><div className="text-2xl font-black text-purple-500">{stats.premier}</div></CardContent></Card>
+              <Card className="border-none bg-card"><CardHeader className="pb-2"><CardTitle className="text-xs font-black opacity-70 uppercase tracking-widest text-blue-500">Super</CardTitle></CardHeader><CardContent><div className="text-2xl font-black text-blue-500">{stats.super}</div></CardContent></Card>
+              <Card className="border-none bg-card"><CardHeader className="pb-2"><CardTitle className="text-xs font-black opacity-70 uppercase tracking-widest text-orange-500">Referrals</CardTitle></CardHeader><CardContent><div className="text-2xl font-black text-orange-500">{stats.referrals}</div></CardContent></Card>
+              <Card className="border-none bg-card"><CardHeader className="pb-2"><CardTitle className="text-xs font-black opacity-70 uppercase tracking-widest text-orange-500">Earners</CardTitle></CardHeader><CardContent><div className="text-2xl font-black text-orange-500">{stats.referrers}</div></CardContent></Card>
             </div>
 
             <Tabs defaultValue="users" className="w-full">
                 <TabsList className="flex w-full bg-secondary p-1 rounded-xl mb-6 overflow-x-auto h-auto sm:h-12">
                     <TabsTrigger value="users" className="flex-1 rounded-lg font-bold">Experts</TabsTrigger>
+                    <TabsTrigger value="leaderboard" className="flex-1 rounded-lg font-bold">Rankings</TabsTrigger>
                     <TabsTrigger value="vacancies" className="flex-1 rounded-lg font-bold">Vacancies</TabsTrigger>
                     <TabsTrigger value="payments" className="flex-1 rounded-lg font-bold">Payments</TabsTrigger>
                     <TabsTrigger value="feed" className="flex-1 rounded-lg font-bold">Feed Removal</TabsTrigger>
@@ -615,6 +632,7 @@ export default function AdminDashboardPage() {
                                             { id: 'all', label: 'All Experts', count: stats.total },
                                             { id: 'verified', label: 'Verified', count: stats.verified, color: 'text-green-500' },
                                             { id: 'unverified', label: 'Unverified', count: stats.unverified, color: 'text-red-500' },
+                                            { id: 'referrers', label: 'Top Referrers', count: stats.referrers, color: 'text-orange-500' },
                                             { id: 'premier', label: 'Premier', count: stats.premier, color: 'text-purple-500' },
                                             { id: 'super', label: 'Super Premier', count: stats.super, color: 'text-blue-500' },
                                         ].map((f) => (
@@ -786,6 +804,73 @@ export default function AdminDashboardPage() {
                                 <div className="flex items-center gap-2">
                                     <Button variant="outline" size="sm" onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} disabled={currentPage === 1} className="rounded-xl h-9 border-white/10 bg-transparent text-white font-bold"><ChevronLeft className="h-4 w-4" /></Button>
                                     <Button variant="outline" size="sm" onClick={() => setCurrentPage(prev => prev + 1)} disabled={currentPage >= Math.ceil(filteredUsers.length / ITEMS_PER_PAGE)} className="rounded-xl h-9 border-white/10 bg-transparent text-white font-bold"><ChevronRight className="h-4 w-4" /></Button>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+
+                <TabsContent value="leaderboard">
+                    <Card className="border-none bg-card rounded-2xl overflow-hidden shadow-2xl">
+                        <CardHeader className="bg-white/5 pb-6 border-b border-white/5">
+                            <div className="flex items-center gap-3">
+                                <Trophy className="h-6 w-6 text-orange-500" />
+                                <div>
+                                    <CardTitle className="text-2xl font-black uppercase italic">Referral Rankings</CardTitle>
+                                    <CardDescription className="text-muted-foreground">Experts with the highest engagement points.</CardDescription>
+                                </div>
+                            </div>
+                        </CardHeader>
+                        <CardContent className="p-6">
+                            <div className="rounded-xl border border-white/5 overflow-hidden">
+                                <Table>
+                                    <TableHeader className="bg-white/5">
+                                        <TableRow className="border-white/5">
+                                            <TableHead className="w-[60px] font-bold text-white text-center">Rank</TableHead>
+                                            <TableHead className="font-bold text-white">Top Referrer</TableHead>
+                                            <TableHead className="font-bold text-white text-center">Premium Credits</TableHead>
+                                            <TableHead className="font-bold text-white text-center">Total Joins</TableHead>
+                                            <TableHead className="text-right font-bold text-white">Status</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {isUsersLoading ? (
+                                            <TableRow><TableCell colSpan={5} className="text-center py-8"><Loader className="animate-spin mx-auto text-orange-500" /></TableCell></TableRow>
+                                        ) : rankingUsers.length === 0 ? (
+                                            <TableRow><TableCell colSpan={5} className="text-center py-12 text-muted-foreground italic">No experts have earned referral points yet.</TableCell></TableRow>
+                                        ) : rankingUsers.slice((rankingPage - 1) * ITEMS_PER_PAGE, rankingPage * ITEMS_PER_PAGE).map((u, idx) => {
+                                            const globalRank = (rankingPage - 1) * ITEMS_PER_PAGE + idx + 1;
+                                            return (
+                                                <TableRow key={u.id} className="hover:bg-white/5 border-white/5 h-20">
+                                                    <TableCell className="text-center font-black text-orange-500 text-lg">#{globalRank}</TableCell>
+                                                    <TableCell>
+                                                        <div className="flex items-center gap-3">
+                                                            <Avatar className="h-10 w-10 border border-white/10 shadow-lg">
+                                                                <AvatarImage src={u.photoUrl} />
+                                                                <AvatarFallback>{u.firstName[0]}</AvatarFallback>
+                                                            </Avatar>
+                                                            <div className="space-y-0.5">
+                                                                <div className="font-black text-white">{u.firstName} {u.lastName}</div>
+                                                                <div className="text-[10px] text-muted-foreground uppercase tracking-widest">{u.profession || u.role}</div>
+                                                            </div>
+                                                        </div>
+                                                    </TableCell>
+                                                    <TableCell className="text-center font-black text-orange-500 text-xl">{u.referralPoints || 0}</TableCell>
+                                                    <TableCell className="text-center font-black text-white text-xl">{u.referralCount || 0}</TableCell>
+                                                    <TableCell className="text-right">
+                                                        <Badge variant="outline" className="border-orange-500/30 text-orange-500 font-black uppercase text-[9px] tracking-widest">{u.referralCode}</Badge>
+                                                    </TableCell>
+                                                </TableRow>
+                                            );
+                                        })}
+                                    </TableBody>
+                                </Table>
+                            </div>
+                            <div className="flex items-center justify-between pt-4">
+                                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Page {rankingPage}</p>
+                                <div className="flex items-center gap-2">
+                                    <Button variant="outline" size="sm" onClick={() => setRankingPage(prev => Math.max(prev - 1, 1))} disabled={rankingPage === 1} className="rounded-xl h-9 border-white/10 bg-transparent text-white font-bold"><ChevronLeft className="h-4 w-4" /></Button>
+                                    <Button variant="outline" size="sm" onClick={() => setRankingPage(prev => prev + 1)} disabled={rankingPage >= Math.ceil(rankingUsers.length / ITEMS_PER_PAGE)} className="rounded-xl h-9 border-white/10 bg-transparent text-white font-bold"><ChevronRight className="h-4 w-4" /></Button>
                                 </div>
                             </div>
                         </CardContent>
@@ -1225,8 +1310,7 @@ export default function AdminDashboardPage() {
                             {isExporting ? <Loader className="animate-spin mr-2 h-4 w-4" /> : <HardDriveDownload className="mr-2 h-4 w-4" />} Full Data Backup (JSON)
                         </Button>
                     </CardContent>
-                </Card>
-            </div>
+                </div>
 
             <Card className="border-none bg-card rounded-2xl overflow-hidden shadow-xl">
               <CardHeader className="bg-white/5 border-b border-white/5 pb-6"><CardTitle className="font-black uppercase italic">Manual User Provisioning</CardTitle></CardHeader>
