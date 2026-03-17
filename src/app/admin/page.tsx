@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
@@ -8,7 +9,7 @@ import { useUser, useFirestore, useDoc, useMemoFirebase, useAuth, useCollection 
 import { updateDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, UserX, Crown, Sparkles, User as UserIcon, Save, Briefcase, Building, MessageSquare, Search, PlusCircle, Download, IndianRupee, Upload, HardDriveDownload, Megaphone, Rss, TrendingUp, PieChart, Activity, ChevronLeft, ChevronRight, Check, Gift, Phone, Eye, Layout, Hash, SortAsc, LayoutGrid, CheckCircle2, ShieldAlert, Link as LinkIcon, Video, Trophy, Zap, RotateCcw, AlertTriangle } from 'lucide-react';
+import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, UserX, Crown, Sparkles, User as UserIcon, Save, Briefcase, Building, MessageSquare, Search, PlusCircle, Download, IndianRupee, Upload, HardDriveDownload, Megaphone, Rss, TrendingUp, PieChart, Activity, ChevronLeft, ChevronRight, Check, Gift, Phone, Eye, Layout, Hash, SortAsc, LayoutGrid, CheckCircle2, ShieldAlert, Link as LinkIcon, Video, Trophy, Zap, RotateCcw, AlertTriangle, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -858,6 +859,18 @@ export default function AdminDashboardPage() {
                             </div>
                         </CardHeader>
                         <CardContent className="p-6">
+                            <div className="bg-orange-500/5 border border-orange-500/20 rounded-2xl p-4 mb-6 flex items-start gap-4">
+                                <div className="p-2 bg-orange-500/10 rounded-lg">
+                                    <Info className="h-5 w-5 text-orange-500" />
+                                </div>
+                                <div>
+                                    <h4 className="text-sm font-black text-white uppercase italic mb-1">How Rankings Work</h4>
+                                    <p className="text-xs text-muted-foreground leading-relaxed">
+                                        Professional standing is calculated using the formula: <span className="text-orange-500 font-black">Total Points (PTS) × Total Joins</span>. This identifies experts who are both highly credited and active network builders.
+                                    </p>
+                                </div>
+                            </div>
+
                             <div className="rounded-xl border border-white/5 overflow-hidden">
                                 <Table>
                                     <TableHeader className="bg-white/5">
