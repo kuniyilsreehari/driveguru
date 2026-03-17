@@ -98,8 +98,8 @@ export function ExpertCard({ expert }: ExpertCardProps) {
                          <div className="flex justify-between items-start">
                             <Link href={`/expert/${expert.id}`} className="block cursor-pointer flex-1">
                                 <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                                    <h3 className="text-xl font-black text-white group-hover:text-orange-500 transition-colors uppercase italic">{getDisplayName(expert)}</h3>
-                                    <div className="flex items-center gap-1">
+                                    <h3 className="text-xl font-black text-white group-hover:text-orange-500 transition-colors uppercase italic tracking-tight">{getDisplayName(expert)}</h3>
+                                    <div className="flex items-center gap-1.5">
                                         {expert.verified ? <CheckCircle2 className="h-4 w-4 text-green-500 fill-green-500/10" /> : <ShieldAlert className="h-4 w-4 text-muted-foreground/40" />}
                                         {expert.tier === 'Premier' && <Crown className="h-4 w-4 text-purple-500 fill-purple-500" />}
                                         {expert.tier === 'Super Premier' && <Sparkles className="h-4 w-4 text-blue-500 fill-blue-500" />}
@@ -122,10 +122,10 @@ export function ExpertCard({ expert }: ExpertCardProps) {
                                 </div>
                                 <div className="flex flex-wrap items-center gap-2 mt-3">
                                     <Badge variant="secondary" className={cn(
-                                        "text-white border-none text-[9px] font-black uppercase tracking-widest rounded-full px-3",
-                                        expert.role === 'Freelancer' ? "bg-blue-600" :
-                                        expert.role === 'Company' ? "bg-indigo-600" :
-                                        expert.role === 'Authorized Pro' ? "bg-emerald-600" :
+                                        "text-white border-none text-[9px] font-black uppercase tracking-widest rounded-full px-3 shadow-lg",
+                                        expert.role === 'Freelancer' ? "bg-blue-600 shadow-blue-600/20" :
+                                        expert.role === 'Company' ? "bg-indigo-600 shadow-indigo-600/20" :
+                                        expert.role === 'Authorized Pro' ? "bg-emerald-600 shadow-emerald-600/20" :
                                         "bg-secondary"
                                     )}>{expert.role}</Badge>
                                 </div>
@@ -144,7 +144,7 @@ export function ExpertCard({ expert }: ExpertCardProps) {
                         <div className="grid grid-cols-2 gap-4 text-xs font-bold text-muted-foreground uppercase tracking-widest">
                             <div className="flex items-center gap-2 truncate">
                                 <MapPin className="h-4 w-4 text-orange-500 flex-shrink-0" /> 
-                                <span className="truncate">{expert.city || 'Kozhikode, Kera...'}</span>
+                                <span className="truncate">{expert.city || 'Kozhikode'}</span>
                             </div>
                             <div className="flex items-center gap-2">
                                 <IndianRupee className="h-4 w-4 text-orange-500 flex-shrink-0" />
@@ -164,12 +164,12 @@ export function ExpertCard({ expert }: ExpertCardProps) {
                 </div>
                 
                 <div className="flex items-center gap-3 mt-6">
-                    <Button asChild variant="outline" className="flex-1 h-12 rounded-xl border-white/10 bg-transparent text-white font-black uppercase text-xs tracking-widest hover:bg-white/5">
+                    <Button asChild variant="outline" className="flex-1 h-12 rounded-xl border-white/10 bg-transparent text-white font-black uppercase text-xs tracking-widest hover:bg-white/5 shadow-xl">
                         <Link href={`/expert/${expert.id}`}>View Profile</Link>
                     </Button>
                     {canShowContactActions ? (
                         <WhatsAppBookingDialog expert={expert}>
-                            <Button className="flex-1 h-12 rounded-xl bg-[#25D366] hover:bg-[#20ba56] text-white font-black uppercase text-xs tracking-widest shadow-xl shadow-[#25D366]/10">
+                            <Button className="flex-1 h-12 rounded-xl bg-[#25D366] hover:bg-[#20ba56] text-white font-black uppercase text-xs tracking-widest shadow-xl shadow-[#25D366]/20">
                                 <MessageSquare className="mr-2 h-4 w-4" /> WhatsApp
                             </Button>
                         </WhatsAppBookingDialog>

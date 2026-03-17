@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useMemo } from 'react';
@@ -20,17 +19,19 @@ export function FollowerStats({ expert }: { expert: ExpertUser }) {
     const followingCount = expert.following?.length || 0;
 
     if (isLoadingFollowers) {
-        return <p className="text-xs text-muted-foreground">Loading stats...</p>;
+        return <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground animate-pulse">Syncing Stats...</p>;
     }
 
     return (
-        <div className="flex items-center gap-4">
-            <div className="flex items-center gap-1">
-                <Users className="h-3 w-3 text-muted-foreground" />
-                <p className="text-xs text-muted-foreground">{followers?.length || 0} Followers</p>
+        <div className="flex items-center gap-3 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+            <div className="flex items-center gap-1.5">
+                <span className="text-orange-500">{followers?.length || 0}</span>
+                <span>Followers</span>
             </div>
-            <div className="flex items-center gap-1">
-                <p className="text-xs text-muted-foreground">{followingCount} Following</p>
+            <div className="h-3 w-px bg-white/10" />
+            <div className="flex items-center gap-1.5">
+                <span className="text-orange-500">{followingCount}</span>
+                <span>Following</span>
             </div>
         </div>
     );
