@@ -168,8 +168,6 @@ export default function AdminDashboardPage() {
   const [isVacancyDialogOpen, setIsVacancyDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isPostDeleteDialogOpen, setIsPostDeleteDialogOpen] = useState(false);
-  const [isAwardDialogOpen, setIsAwardDialogOpen] = useState(false);
-  const [awardPoints, setAwardPoints] = useState(100);
   const [userSearchQuery, setUserSearchQuery] = useState('');
   const [userFilter, setUserFilter] = useState<'all' | 'verified' | 'unverified' | 'premier' | 'super' | 'referrers'>('all');
 
@@ -452,18 +450,6 @@ export default function AdminDashboardPage() {
         toast({ variant: "destructive", title: "Action Failed" });
     }
   }
-
-  const handleAwardPoints = async () => {
-    if (!selectedUser) return;
-    try {
-        const userRef = doc(firestore, 'users', selectedUser.id);
-        await updateDocumentNonBlocking(userRef, { referralPoints: increment(awardPoints) });
-        toast({ title: "Points Awarded", description: `Successfully awarded ${awardPoints} points to ${selectedUser.firstName} ${selectedUser.lastName}` });
-        setIsAwardDialogOpen(false);
-    } catch (e) {
-        toast({ variant: "destructive", title: "Action Failed" });
-    }
-  };
 
   const handleDeletePost = async () => {
     if (!selectedPost) return;
@@ -802,7 +788,6 @@ export default function AdminDashboardPage() {
                                                                 <DropdownMenuContent align="end" className="bg-[#24262d] text-white border-white/10 rounded-xl shadow-2xl p-1">
                                                                     <DropdownMenuItem onClick={() => router.push(`/expert/${u.id}`)} className="rounded-lg h-10"><Eye className="mr-2 h-4 w-4 text-orange-500" /> View Profile</DropdownMenuItem>
                                                                     <DropdownMenuItem onClick={() => { setSelectedUser(u); setIsEditDialogOpen(true); }} className="rounded-lg h-10"><Edit className="mr-2 h-4 w-4" /> Edit Profile</DropdownMenuItem>
-                                                                    <DropdownMenuItem onClick={() => { setSelectedUser(u); setIsAwardDialogOpen(true); }} className="rounded-lg h-10 text-orange-500"><Gift className="mr-2 h-4 w-4" /> Award Points</DropdownMenuItem>
                                                                     <DropdownMenuSub>
                                                                         <DropdownMenuSubTrigger className="rounded-lg h-10"><Crown className="mr-2 h-4 w-4" /> Change Tier</DropdownMenuSubTrigger>
                                                                         <DropdownMenuPortal>
@@ -1308,7 +1293,6 @@ export default function AdminDashboardPage() {
                         </div>
                         <Textarea value={announcementText} onChange={(e) => setAnnouncementText(e.target.value)} className="bg-background border-none rounded-xl min-h-[80px]" placeholder="Breaking news text here..." />
                     </CardContent>
-                </Card>
 
                 <Card className="border-none rounded-2xl overflow-hidden bg-[#24262d]">
                     <CardHeader className="bg-white/5 border-b border-white/5 pb-6">
@@ -1393,21 +1377,6 @@ export default function AdminDashboardPage() {
             <DialogTitle className="text-3xl font-black uppercase italic">{selectedVacancy ? 'Edit Vacancy' : 'Post Admin Opening'}</DialogTitle>
           </DialogHeader>
           <PostVacancyForm isAdmin vacancy={selectedVacancy || undefined} onSuccess={() => setIsVacancyDialogOpen(false)} />
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={isAwardDialogOpen} onOpenChange={setIsAwardDialogOpen}>
-        <DialogContent className="rounded-[2rem] border-none bg-background text-white p-8">
-          <DialogHeader className="items-center text-center">
-            <div className="p-4 bg-orange-500/10 rounded-full w-fit mx-auto mb-4"><PlusCircle className="h-10 w-10 text-orange-500" /></div>
-            <DialogTitle className="text-3xl font-black uppercase italic">Award Credits</DialogTitle>
-            <DialogDescription className="text-muted-foreground font-medium pt-2">Manually grant referral points to {selectedUser?.firstName} {selectedUser?.lastName}.</DialogDescription>
-          </DialogHeader>
-          <div className="py-8 space-y-2">
-                <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-[0.2em]">Amount to Grant</Label>
-                <Input type="number" value={awardPoints} onChange={(e) => setAwardPoints(Number(e.target.value))} className="rounded-xl h-14 bg-white/5 border-none font-black text-orange-500 text-2xl text-center shadow-inner" />
-          </div>
-          <div className="flex flex-col gap-3"><Button onClick={handleAwardPoints} className="w-full h-12 rounded-xl font-black bg-orange-500 hover:bg-orange-600">Apply Reward</Button></div>
         </DialogContent>
       </Dialog>
 
