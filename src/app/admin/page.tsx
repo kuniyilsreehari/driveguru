@@ -2,13 +2,13 @@
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { collection, Timestamp, orderBy, query, doc, deleteDoc, where, increment } from 'firebase/firestore';
+import { collection, Timestamp, orderBy, query, doc, deleteDoc, where, increment, getDocs, writeBatch } from 'firebase/firestore';
 import { signOut } from 'firebase/auth';
 import { useUser, useFirestore, useDoc, useMemoFirebase, useAuth, useCollection } from '@/firebase';
 import { updateDocumentNonBlocking, setDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, UserX, Crown, Sparkles, User as UserIcon, Save, Briefcase, Building, MessageSquare, Search, PlusCircle, Download, IndianRupee, Upload, HardDriveDownload, Megaphone, Rss, TrendingUp, PieChart, Activity, ChevronLeft, ChevronRight, Check, Gift, Phone, Eye, Layout, Hash, SortAsc, LayoutGrid, CheckCircle2, ShieldAlert, Link as LinkIcon, Video, Trophy, Zap } from 'lucide-react';
+import { Shield, Ban, Loader, LogOut, Users, MoreHorizontal, Trash2, Edit, UserX, Crown, Sparkles, User as UserIcon, Save, Briefcase, Building, MessageSquare, Search, PlusCircle, Download, IndianRupee, Upload, HardDriveDownload, Megaphone, Rss, TrendingUp, PieChart, Activity, ChevronLeft, ChevronRight, Check, Gift, Phone, Eye, Layout, Hash, SortAsc, LayoutGrid, CheckCircle2, ShieldAlert, Link as LinkIcon, Video, Trophy, Zap, RotateCcw, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -52,7 +52,7 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { format, eachMonthOfInterval, subMonths, isSameMonth } from 'date-fns';
 import { exportAllData } from '@/ai/flows/export-data-flow';
@@ -161,6 +161,7 @@ export default function AdminDashboardPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
+  const [isResettingReferrals, setIsResettingReferrals] = useState(false);
   const [selectedUser, setSelectedUser] = useState<ExpertUser | null>(null);
   const [selectedVacancy, setSelectedVacancy] = useState<Vacancy | null>(null);
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
@@ -168,6 +169,7 @@ export default function AdminDashboardPage() {
   const [isVacancyDialogOpen, setIsVacancyDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isPostDeleteDialogOpen, setIsPostDeleteDialogOpen] = useState(false);
+  const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
   const [userSearchQuery, setUserSearchQuery] = useState('');
   const [userFilter, setUserFilter] = useState<'all' | 'verified' | 'unverified' | 'premier' | 'super' | 'referrers'>('all');
 
@@ -382,6 +384,30 @@ export default function AdminDashboardPage() {
       setIsSaving(false);
     }
   };
+
+  const handleResetAllReferrals = async () => {
+    if (!firestore) return;
+    setIsResettingReferrals(true);
+    try {
+        const usersSnap = await getDocs(collection(firestore, 'users'));
+        const batch = writeBatch(firestore);
+        
+        usersSnap.docs.forEach(uDoc => {
+            batch.update(uDoc.ref, { 
+                referralPoints: 0, 
+                referralCount: 0 
+            });
+        });
+
+        await batch.commit();
+        toast({ title: "Fresh Start Complete", description: "All referral points and joins have been cleared." });
+    } catch (e) {
+        toast({ variant: "destructive", title: "Reset Failed", description: "Could not clear all referral data." });
+    } finally {
+        setIsResettingReferrals(false);
+        setIsResetConfirmOpen(false);
+    }
+  }
 
   const handleUpdateUserTier = async (userId: string, newTier: 'Standard' | 'Premier' | 'Super Premier') => {
     const userRef = doc(firestore, 'users', userId);
@@ -1331,7 +1357,7 @@ export default function AdminDashboardPage() {
           </TabsContent>
 
           <TabsContent value="data" className="mt-0 space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <Card className="border-none bg-[#24262d] rounded-2xl overflow-hidden shadow-xl">
                     <CardHeader className="bg-white/5 border-b border-white/5 pb-6"><CardTitle className="font-black uppercase italic">CSV Actions</CardTitle></CardHeader>
                     <CardContent className="p-6 space-y-4">
@@ -1352,6 +1378,23 @@ export default function AdminDashboardPage() {
                     <CardContent className="p-6">
                         <Button className="w-full h-12 rounded-xl bg-orange-500 hover:bg-orange-600 font-black" onClick={handleExportJSON} disabled={isExporting}>
                             {isExporting ? <Loader className="animate-spin mr-2 h-4 w-4" /> : <HardDriveDownload className="mr-2 h-4 w-4" />} Full Data Backup (JSON)
+                        </Button>
+                    </CardContent>
+                </Card>
+
+                <Card className="border-none bg-red-500/5 border-2 border-red-500/20 rounded-2xl overflow-hidden shadow-xl">
+                    <CardHeader className="bg-red-500/10 pb-6">
+                        <div className="flex items-center gap-3">
+                            <RotateCcw className="h-5 w-5 text-red-500" />
+                            <CardTitle className="font-black uppercase italic text-red-500">Fresh Start</CardTitle>
+                        </div>
+                    </CardHeader>
+                    <CardContent className="p-6 space-y-4">
+                        <p className="text-[10px] font-black uppercase text-muted-foreground leading-relaxed">
+                            Resets all referral points and join counts to zero platform-wide. This action is irreversible.
+                        </p>
+                        <Button variant="destructive" className="w-full h-12 rounded-xl font-black uppercase tracking-widest shadow-lg shadow-red-500/20" onClick={() => setIsResetConfirmOpen(true)}>
+                            Clear All Referral Data
                         </Button>
                     </CardContent>
                 </Card>
@@ -1407,6 +1450,23 @@ export default function AdminDashboardPage() {
           <AlertDialogFooter className="flex-col gap-2 sm:flex-col pt-4">
             <AlertDialogAction onClick={handleDeleteUser} className="w-full h-12 bg-red-500 hover:bg-red-600 font-black rounded-xl border-none">Permanently Delete</AlertDialogAction>
             <AlertDialogCancel className="w-full h-12 bg-transparent border-white/10 hover:bg-white/5 rounded-xl font-bold">Discard Action</AlertDialogCancel>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={isResetConfirmOpen} onOpenChange={setIsResetConfirmOpen}>
+        <AlertDialogContent className="rounded-[2rem] border-none bg-background text-white">
+          <AlertDialogHeader className="items-center text-center">
+            <div className="p-4 bg-red-500/10 rounded-full w-fit mb-4"><AlertTriangle className="h-10 w-10 text-red-500" /></div>
+            <AlertDialogTitle className="text-2xl font-black uppercase italic">Confirm Fresh Start?</AlertDialogTitle>
+            <AlertDialogDescription className="text-muted-foreground font-medium">This will set all Referral Points and Join counts to 0 for every user. This action cannot be undone.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-col gap-2 sm:flex-col pt-4">
+            <AlertDialogAction onClick={handleResetAllReferrals} disabled={isResettingReferrals} className="w-full h-12 bg-red-500 hover:bg-red-600 font-black rounded-xl border-none">
+                {isResettingReferrals ? <Loader className="h-4 w-4 animate-spin mr-2" /> : <RotateCcw className="h-4 w-4 mr-2" />}
+                Reset All Data
+            </AlertDialogAction>
+            <AlertDialogCancel className="w-full h-12 bg-transparent border-white/10 hover:bg-white/5 rounded-xl font-bold">Cancel Reset</AlertDialogCancel>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
