@@ -315,11 +315,13 @@ function ExpertProfileContent() {
                                         </Avatar>
                                     </ImageLightbox>
                                     {expert.isAvailable && (
-                                        <Badge className="absolute -top-2 -right-2 bg-green-500 text-white rounded-full px-3 py-1 text-[10px] font-black border-4 border-card shadow-lg uppercase tracking-tighter">Available</Badge>
+                                        <Badge className="absolute -top-4 -left-4 bg-green-500 text-white rounded-full px-3 py-1 text-[9px] font-black border-4 border-background shadow-lg uppercase tracking-tighter animate-in fade-in zoom-in duration-500">
+                                            Available
+                                        </Badge>
                                     )}
                                     {allPhotos.length > 0 && (
-                                        <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-background/90 backdrop-blur-md border border-border px-3 py-1 rounded-full text-[9px] font-black text-foreground/70 uppercase tracking-widest whitespace-nowrap shadow-xl">
-                                            Portfolio 1/{allPhotos.length}
+                                        <div className="absolute -bottom-5 left-1/2 -translate-x-1/2 bg-background/90 backdrop-blur-md border border-border px-3 py-1 rounded-full text-[8px] font-black text-foreground/70 uppercase tracking-[0.2em] whitespace-nowrap shadow-xl">
+                                            PORTFOLIO 1/{allPhotos.length}
                                         </div>
                                     )}
                                 </div>
