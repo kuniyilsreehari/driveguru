@@ -838,7 +838,7 @@ export default function AdminDashboardPage() {
                                         <TableRow className="border-white/5">
                                             <TableHead className="w-[60px] font-bold text-white text-center">Rank</TableHead>
                                             <TableHead className="font-bold text-white">Top Referrer</TableHead>
-                                            <TableHead className="font-bold text-white text-center">Base Credits</TableHead>
+                                            <TableHead className="font-bold text-white text-center">Total Points (PTS)</TableHead>
                                             <TableHead className="font-bold text-white text-center">Total Joins</TableHead>
                                             <TableHead className="font-bold text-orange-500 text-center uppercase tracking-widest text-[10px]">Influence Score (PTS × JOINS)</TableHead>
                                             <TableHead className="text-right font-bold text-white">Status</TableHead>
