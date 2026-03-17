@@ -72,11 +72,11 @@ export function ExpertCard({ expert }: ExpertCardProps) {
     const canShowContactActions = expert.verified && expert.showPhoneNumberOnProfile && expert.phoneNumber;
     
     return (
-        <Card className="relative overflow-hidden transition-all bg-[#24262d] border-none rounded-[2.5rem] shadow-2xl hover:shadow-orange-500/5 group">
+        <Card className="relative overflow-hidden transition-all bg-card border-border rounded-[2.5rem] shadow-2xl hover:shadow-orange-500/5 group">
             <CardContent className="p-6">
                 <div className="flex items-start gap-4">
                     <Link href={`/expert/${expert.id}`} className="block cursor-pointer shrink-0">
-                        <Avatar className="h-20 w-20 sm:h-24 sm:w-24 border-4 border-white/10 group-hover:border-orange-500/30 transition-colors shadow-xl">
+                        <Avatar className="h-20 w-20 sm:h-24 sm:w-24 border-4 border-border/50 group-hover:border-orange-500/30 transition-colors shadow-xl">
                             <AvatarImage 
                                 src={expert.photoUrl} 
                                 alt={getDisplayName(expert)} 
@@ -91,7 +91,7 @@ export function ExpertCard({ expert }: ExpertCardProps) {
                     <div className="flex-1 min-w-0 space-y-1">
                         <div className="flex justify-between items-start">
                             <Link href={`/expert/${expert.id}`} className="block cursor-pointer flex-1 min-w-0">
-                                <h3 className="text-lg sm:text-2xl font-black text-white group-hover:text-orange-500 transition-colors uppercase italic tracking-tighter leading-tight truncate">
+                                <h3 className="text-lg sm:text-2xl font-black text-foreground group-hover:text-orange-500 transition-colors uppercase italic tracking-tighter leading-tight truncate">
                                     {getDisplayName(expert)}
                                 </h3>
                                 
@@ -131,7 +131,7 @@ export function ExpertCard({ expert }: ExpertCardProps) {
                             </Link>
                             
                             <ShareDialog shareDetails={{ type: 'expert-profile', expertId: expert.id, expertName: getDisplayName(expert) }}>
-                                <Button variant="ghost" size="icon" className="h-8 w-8 text-white/40 hover:text-white hover:bg-white/5 rounded-full">
+                                <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground/40 hover:text-foreground hover:bg-muted rounded-full">
                                     <Share2 className="h-4 w-4" />
                                 </Button>
                             </ShareDialog>
@@ -139,7 +139,7 @@ export function ExpertCard({ expert }: ExpertCardProps) {
                     </div>
                 </div>
 
-                <div className="mt-6 p-5 bg-[#1a1c23] rounded-3xl border border-white/5 space-y-4">
+                <div className="mt-6 p-5 bg-background rounded-3xl border border-border shadow-inner space-y-4">
                     <Link href={`/expert/${expert.id}`} className="block cursor-pointer">
                         <div className="grid grid-cols-2 gap-y-4 gap-x-2 text-[10px] font-black text-muted-foreground uppercase tracking-widest">
                             <div className="flex items-center gap-2">
@@ -149,12 +149,12 @@ export function ExpertCard({ expert }: ExpertCardProps) {
                             <div className="flex items-center gap-2">
                                 <IndianRupee className="h-4 w-4 text-orange-500 shrink-0" />
                                 {expert.pricingValue ? (
-                                    <span className="text-white">₹{expert.pricingValue} <span className="text-[8px] opacity-40">/ {expert.pricingModel || 'hr'}</span></span>
+                                    <span className="text-foreground">₹{expert.pricingValue} <span className="text-[8px] opacity-40">/ {expert.pricingModel || 'hr'}</span></span>
                                 ) : <span className="opacity-40 italic">N/A</span>}
                             </div>
                             <div className="flex items-center gap-2">
                                 <Briefcase className="h-4 w-4 text-orange-500 shrink-0" /> 
-                                {expert.yearsOfExperience ? <span className="text-white">{expert.yearsOfExperience} Years</span> : <span className="opacity-40 italic">N/A</span>}
+                                {expert.yearsOfExperience ? <span className="text-foreground">{expert.yearsOfExperience} Years</span> : <span className="opacity-40 italic">N/A</span>}
                             </div>
                             <div className="flex items-center gap-2">
                                 <span className="text-[9px] font-black opacity-20 tracking-widest">Profile Status</span>
@@ -164,7 +164,7 @@ export function ExpertCard({ expert }: ExpertCardProps) {
                 </div>
                 
                 <div className="flex items-center gap-3 mt-6">
-                    <Button asChild variant="outline" className="flex-1 h-14 rounded-2xl border-white/10 bg-[#1a1c23] text-white font-black uppercase text-xs tracking-widest hover:bg-white/5 shadow-xl transition-all active:scale-95">
+                    <Button asChild variant="outline" className="flex-1 h-14 rounded-2xl border-border bg-background text-foreground font-black uppercase text-xs tracking-widest hover:bg-muted shadow-xl transition-all active:scale-95">
                         <Link href={`/expert/${expert.id}`}>View Profile</Link>
                     </Button>
                     
@@ -175,7 +175,7 @@ export function ExpertCard({ expert }: ExpertCardProps) {
                             </Button>
                         </WhatsAppBookingDialog>
                     ) : (
-                         <Button variant="secondary" disabled className="flex-1 h-14 rounded-2xl bg-white/5 border border-white/10 text-muted-foreground/30 font-black uppercase text-xs tracking-widest">
+                         <Button variant="secondary" disabled className="flex-1 h-14 rounded-2xl bg-muted border border-border text-muted-foreground/30 font-black uppercase text-xs tracking-widest">
                             <Lock className="mr-2 h-4 w-4" /> Contact
                         </Button>
                     )}

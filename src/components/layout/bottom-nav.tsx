@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -29,7 +28,7 @@ export function BottomNav() {
   }
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-[60] block sm:hidden bg-[#1a1c23]/95 backdrop-blur-xl border-t border-white/5 pb-safe">
+    <nav className="fixed bottom-0 left-0 right-0 z-[60] block sm:hidden bg-background/95 backdrop-blur-xl border-t border-border pb-safe">
       <div className="flex items-center justify-around h-16 px-1">
         {navItems.map((item) => {
           const isActive = pathname === item.href;
@@ -39,7 +38,7 @@ export function BottomNav() {
               href={item.href}
               className={cn(
                 "flex flex-col items-center justify-center gap-1 transition-all duration-300 flex-1",
-                isActive ? "text-orange-500 scale-110" : "text-muted-foreground hover:text-white"
+                isActive ? "text-orange-500 scale-110" : "text-muted-foreground hover:text-foreground"
               )}
             >
               <item.icon className={cn("h-5 w-5", isActive && "stroke-[2.5px]")} />

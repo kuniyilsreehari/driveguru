@@ -185,7 +185,6 @@ export default function AdminDashboardPage() {
   const [feedPage, setFeedPage] = useState(1);
   const [rankingPage, setRankingPage] = useState(1);
 
-  // App Config States
   const [featuredLimit, setFeaturedLimit] = useState(3);
   const [announcementText, setAnnouncementText] = useState("");
   const [announcementEnabled, setAnnouncementEnabled] = useState(false);
@@ -631,7 +630,7 @@ export default function AdminDashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#1a1c23] text-white p-4 sm:p-8">
+    <div className="min-h-screen bg-background text-foreground p-4 sm:p-8">
       <div className="mx-auto max-w-7xl">
         <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-8 gap-4">
           <div className="flex items-center gap-4">
@@ -643,11 +642,11 @@ export default function AdminDashboardPage() {
               <p className="text-muted-foreground text-sm font-medium">Welcome, {user?.email}</p>
             </div>
           </div>
-          <Button variant="outline" className="rounded-xl border-2 border-white/10 bg-transparent text-white hover:bg-white/10" onClick={() => auth && signOut(auth).then(() => router.push('/'))}><LogOut className="mr-2 h-4 w-4" /> Log Out</Button>
+          <Button variant="outline" className="rounded-xl border-2 border-border bg-card text-foreground hover:bg-muted" onClick={() => auth && signOut(auth).then(() => router.push('/'))}><LogOut className="mr-2 h-4 w-4" /> Log Out</Button>
         </header>
 
         <Tabs defaultValue="dashboard" className="w-full">
-          <TabsList className="grid w-full grid-cols-4 bg-[#24262d] p-1 h-12 rounded-xl mb-8">
+          <TabsList className="grid w-full grid-cols-4 bg-muted p-1 h-12 rounded-xl mb-8">
             <TabsTrigger value="dashboard" className="rounded-lg font-bold">Management</TabsTrigger>
             <TabsTrigger value="reports" className="rounded-lg font-bold">Analytics</TabsTrigger>
             <TabsTrigger value="settings" className="rounded-lg font-bold">Platform Settings</TabsTrigger>
@@ -656,38 +655,38 @@ export default function AdminDashboardPage() {
 
           <TabsContent value="dashboard" className="mt-0 space-y-8">
             <div className="grid gap-3 grid-cols-2 md:grid-cols-4 lg:grid-cols-7">
-              <Card className="border-none bg-[#24262d] shadow-xl p-4">
+              <Card className="border-none bg-card shadow-xl p-4">
                 <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 mb-1">Total Experts</p>
-                <div className="text-3xl font-black text-white">{stats.total}</div>
+                <div className="text-3xl font-black">{stats.total}</div>
               </Card>
-              <Card className="border-none bg-[#24262d] shadow-xl p-4">
+              <Card className="border-none bg-card shadow-xl p-4">
                 <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 mb-1">Verified</p>
                 <div className="text-3xl font-black text-green-500">{stats.verified}</div>
               </Card>
-              <Card className="border-none bg-[#24262d] shadow-xl p-4">
+              <Card className="border-none bg-card shadow-xl p-4">
                 <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 mb-1">Unverified</p>
                 <div className="text-3xl font-black text-red-500">{stats.unverified}</div>
               </Card>
-              <Card className="border-none bg-[#24262d] shadow-xl p-4">
+              <Card className="border-none bg-card shadow-xl p-4">
                 <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 mb-1">Premier</p>
                 <div className="text-3xl font-black text-purple-500">{stats.premier}</div>
               </Card>
-              <Card className="border-none bg-[#24262d] shadow-xl p-4">
+              <Card className="border-none bg-card shadow-xl p-4">
                 <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 mb-1">Super</p>
                 <div className="text-3xl font-black text-blue-500">{stats.super}</div>
               </Card>
-              <Card className="border-none bg-[#24262d] shadow-xl p-4">
+              <Card className="border-none bg-card shadow-xl p-4">
                 <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 mb-1">Total Points (PTS)</p>
                 <div className="text-3xl font-black text-orange-500">{stats.referrals}</div>
               </Card>
-              <Card className="border-none bg-[#24262d] shadow-xl p-4">
+              <Card className="border-none bg-card shadow-xl p-4">
                 <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 mb-1">Earners</p>
                 <div className="text-3xl font-black text-orange-500">{stats.referrers}</div>
               </Card>
             </div>
 
             <Tabs defaultValue="users" className="w-full">
-                <TabsList className="flex w-full bg-[#24262d] p-1 rounded-xl mb-6 overflow-x-auto h-auto sm:h-12">
+                <TabsList className="flex w-full bg-muted p-1 rounded-xl mb-6 overflow-x-auto h-auto sm:h-12">
                     <TabsTrigger value="users" className="flex-1 rounded-lg font-bold">Experts</TabsTrigger>
                     <TabsTrigger value="leaderboard" className="flex-1 rounded-lg font-bold">Rankings</TabsTrigger>
                     <TabsTrigger value="vacancies" className="flex-1 rounded-lg font-bold">Vacancies</TabsTrigger>
@@ -696,8 +695,8 @@ export default function AdminDashboardPage() {
                 </TabsList>
 
                 <TabsContent value="users">
-                    <Card className="border-none bg-[#24262d] rounded-2xl overflow-hidden shadow-2xl">
-                        <CardHeader className="bg-white/5 pb-6 border-b border-white/5">
+                    <Card className="border-none bg-card rounded-2xl overflow-hidden shadow-2xl">
+                        <CardHeader className="bg-muted/30 pb-6 border-b border-border">
                             <div className="flex items-center gap-3">
                                 <Users className="h-6 w-6 text-orange-500" />
                                 <div>
@@ -726,18 +725,18 @@ export default function AdminDashboardPage() {
                                                 className={cn(
                                                     "rounded-xl px-3 h-9 text-[10px] font-black uppercase tracking-widest transition-all",
                                                     userFilter === f.id 
-                                                        ? "bg-white/10 text-white" 
-                                                        : "text-muted-foreground hover:bg-white/5 hover:text-white"
+                                                        ? "bg-muted text-foreground" 
+                                                        : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
                                                 )}
                                             >
                                                 <span className={cn(userFilter === f.id && f.color)}>{f.label}</span>
-                                                <Badge variant="secondary" className="ml-2 bg-white/5 text-white border-none font-bold px-1.5 h-4 min-w-[1.25rem]">
+                                                <Badge variant="secondary" className="ml-2 bg-muted text-foreground border-none font-bold px-1.5 h-4 min-w-[1.25rem]">
                                                     {f.count}
                                                 </Badge>
                                             </Button>
                                         ))}
                                     </div>
-                                    <Button variant="outline" size="sm" className="rounded-xl border-white/10 h-9 font-black uppercase text-[10px]" onClick={handleExportCSV}>
+                                    <Button variant="outline" size="sm" className="rounded-xl border-border h-9 font-black uppercase text-[10px]" onClick={handleExportCSV}>
                                         <Download className="mr-2 h-3.5 w-3.5" /> Export Registry (Excel/CSV)
                                     </Button>
                                 </div>
@@ -746,26 +745,26 @@ export default function AdminDashboardPage() {
                                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-orange-500 transition-colors" />
                                     <Input 
                                         placeholder="Search experts by name, profession, or pincode..." 
-                                        className="pl-10 h-12 bg-white/5 border-none rounded-xl text-white placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-orange-500"
+                                        className="pl-10 h-12 bg-muted/20 border-border rounded-xl placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-orange-500"
                                         value={userSearchQuery}
                                         onChange={(e) => setUserSearchQuery(e.target.value)} 
                                     />
                                 </div>
                             </div>
 
-                            <div className="rounded-xl border border-white/5 overflow-hidden">
+                            <div className="rounded-xl border border-border overflow-hidden">
                                 <Table>
-                                    <TableHeader className="bg-white/5">
-                                        <TableRow className="border-white/5">
-                                            <TableHead className="w-[60px] font-bold text-white text-center text-[10px] uppercase tracking-widest">S.No</TableHead>
-                                            <TableHead className="font-bold text-white text-[10px] uppercase tracking-widest">Expert Profile</TableHead>
-                                            <TableHead className="font-bold text-white text-center text-[10px] uppercase tracking-widest">Contact</TableHead>
-                                            <TableHead className="font-bold text-white text-center text-[10px] uppercase tracking-widest">Tier</TableHead>
-                                            <TableHead className="font-bold text-white text-center text-[10px] uppercase tracking-widest">Joined</TableHead>
-                                            <TableHead className="font-bold text-white text-center text-[10px] uppercase tracking-widest">Verified</TableHead>
+                                    <TableHeader className="bg-muted/30">
+                                        <TableRow className="border-border">
+                                            <TableHead className="w-[60px] font-bold text-foreground text-center text-[10px] uppercase tracking-widest">S.No</TableHead>
+                                            <TableHead className="font-bold text-foreground text-[10px] uppercase tracking-widest">Expert Profile</TableHead>
+                                            <TableHead className="font-bold text-foreground text-center text-[10px] uppercase tracking-widest">Contact</TableHead>
+                                            <TableHead className="font-bold text-foreground text-center text-[10px] uppercase tracking-widest">Tier</TableHead>
+                                            <TableHead className="font-bold text-foreground text-center text-[10px] uppercase tracking-widest">Joined</TableHead>
+                                            <TableHead className="font-bold text-foreground text-center text-[10px] uppercase tracking-widest">Verified</TableHead>
                                             <TableHead className="font-bold text-orange-500 text-center text-[10px] uppercase tracking-widest">Carousel</TableHead>
                                             <TableHead className="font-bold text-blue-500 text-center text-[10px] uppercase tracking-widest">Recent</TableHead>
-                                            <TableHead className="text-right font-bold text-white"></TableHead>
+                                            <TableHead className="text-right font-bold text-foreground"></TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
@@ -778,32 +777,32 @@ export default function AdminDashboardPage() {
                                                 const globalIndex = (currentPage - 1) * ITEMS_PER_PAGE + index + 1;
                                                 const dynamicPoints = (u.referralCount || 0) * referralPoints;
                                                 return (
-                                                    <TableRow key={u.id} className="hover:bg-white/5 border-white/5 h-24">
+                                                    <TableRow key={u.id} className="hover:bg-muted/20 border-border h-24">
                                                         <TableCell className="text-center font-bold text-muted-foreground text-xs">{globalIndex}</TableCell>
                                                         <TableCell>
                                                             <div className="flex items-center gap-3">
-                                                                <Avatar className="h-10 w-10 border border-white/10 shadow-lg">
+                                                                <Avatar className="h-10 w-10 border border-border shadow-lg">
                                                                     <AvatarImage src={u.photoUrl} className="object-cover" />
                                                                     <AvatarFallback className="bg-orange-500/10 text-orange-500 font-black">{u.firstName[0]}</AvatarFallback>
                                                                 </Avatar>
                                                                 <div className="space-y-0.5">
                                                                     <div className="flex items-center gap-1.5">
-                                                                        <div className="font-black text-sm text-white">{u.firstName} {u.lastName}</div>
+                                                                        <div className="font-black text-sm text-foreground">{u.firstName} {u.lastName}</div>
                                                                         {!u.verified && <ShieldAlert className="h-3.5 w-3.5 text-orange-500/40" />}
                                                                     </div>
                                                                     <div className="text-[10px] text-muted-foreground uppercase tracking-widest truncate max-w-[150px]">{u.profession || u.role}</div>
-                                                                    <div className="flex items-center gap-2 mt-1.5 bg-[#1a1c23] w-fit px-2 py-1 rounded-lg border border-white/10 shadow-inner">
+                                                                    <div className="flex items-center gap-2 mt-1.5 bg-muted/50 w-fit px-2 py-1 rounded-lg border border-border shadow-inner">
                                                                         <Gift className="h-3 w-3 text-orange-500" />
                                                                         <span className="text-[10px] font-black text-orange-500 uppercase tracking-tighter">{dynamicPoints} PTS</span>
-                                                                        <span className="text-[10px] text-white/20">|</span>
-                                                                        <span className="text-[10px] font-black text-white/70 uppercase tracking-tighter">{u.referralCount || 0} JOINS</span>
+                                                                        <span className="text-[10px] text-foreground/20">|</span>
+                                                                        <span className="text-[10px] font-black text-foreground/70 uppercase tracking-tighter">{u.referralCount || 0} JOINS</span>
                                                                     </div>
                                                                 </div>
                                                             </div>
                                                         </TableCell>
                                                         <TableCell className="text-center">
                                                             <div className="flex flex-col items-center">
-                                                                <span className="text-xs font-black text-white/80">{sanitizePhoneNumber(u.phoneNumber)}</span>
+                                                                <span className="text-xs font-black text-foreground/80">{sanitizePhoneNumber(u.phoneNumber)}</span>
                                                                 {u.email && <span className="text-[9px] text-muted-foreground lowercase truncate max-w-[120px]">{u.email}</span>}
                                                             </div>
                                                         </TableCell>
@@ -830,7 +829,7 @@ export default function AdminDashboardPage() {
                                                                             type="number" 
                                                                             defaultValue={u.featuredOrder || 0}
                                                                             onBlur={(e) => handleUpdateFeaturedOrder(u.id, e.target.value)}
-                                                                            className="w-10 h-6 px-1 text-center bg-white/5 border-none text-[10px] font-black text-orange-500 rounded shadow-inner"
+                                                                            className="w-10 h-6 px-1 text-center bg-muted border-none text-[10px] font-black text-orange-500 rounded shadow-inner"
                                                                         />
                                                                     </div>
                                                                 )}
@@ -846,7 +845,7 @@ export default function AdminDashboardPage() {
                                                                             type="number" 
                                                                             defaultValue={u.recentOrder || 0}
                                                                             onBlur={(e) => handleUpdateRecentOrder(u.id, e.target.value)}
-                                                                            className="w-10 h-6 px-1 text-center bg-white/5 border-none text-[10px] font-black text-blue-500 rounded shadow-inner"
+                                                                            className="w-10 h-6 px-1 text-center bg-muted border-none text-[10px] font-black text-blue-500 rounded shadow-inner"
                                                                         />
                                                                     </div>
                                                                 )}
@@ -855,21 +854,21 @@ export default function AdminDashboardPage() {
                                                         <TableCell className="text-right">
                                                             <DropdownMenu>
                                                                 <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
-                                                                <DropdownMenuContent align="end" className="bg-[#24262d] text-white border-white/10 rounded-xl shadow-2xl p-1">
+                                                                <DropdownMenuContent align="end" className="bg-card text-foreground border-border rounded-xl shadow-2xl p-1">
                                                                     <DropdownMenuItem onClick={() => router.push(`/expert/${u.id}`)} className="rounded-lg h-10"><Eye className="mr-2 h-4 w-4 text-orange-500" /> View Profile</DropdownMenuItem>
                                                                     <DropdownMenuItem onClick={() => { setSelectedUser(u); setIsEditDialogOpen(true); }} className="rounded-lg h-10"><Edit className="mr-2 h-4 w-4" /> Edit Profile</DropdownMenuItem>
                                                                     <DropdownMenuItem onClick={() => { setSelectedUser(u); setManualJoins(u.referralCount || 0); setIsReferralStatsOpen(true); }} className="rounded-lg h-10"><Zap className="mr-2 h-4 w-4 text-orange-500" /> Adjust Referral Stats</DropdownMenuItem>
                                                                     <DropdownMenuSub>
                                                                         <DropdownMenuSubTrigger className="rounded-lg h-10"><Crown className="mr-2 h-4 w-4" /> Change Tier</DropdownMenuSubTrigger>
                                                                         <DropdownMenuPortal>
-                                                                            <DropdownMenuSubContent className="bg-[#24262d] text-white border-white/10 rounded-xl shadow-2xl p-1 min-w-[180px]">
+                                                                            <DropdownMenuSubContent className="bg-card text-foreground border-border rounded-xl shadow-2xl p-1 min-w-[180px]">
                                                                                 <DropdownMenuItem onClick={() => handleUpdateUserTier(u.id, 'Standard')} className="rounded-lg h-10">Standard (Base)</DropdownMenuItem>
                                                                                 <DropdownMenuItem onClick={() => handleUpdateUserTier(u.id, 'Premier')} className="text-purple-500 font-bold rounded-lg h-10"><Crown className="mr-2 h-3 w-3" /> Premier</DropdownMenuItem>
                                                                                 <DropdownMenuItem onClick={() => handleUpdateUserTier(u.id, 'Super Premier')} className="text-blue-500 font-bold rounded-lg h-10"><Sparkles className="mr-2 h-3 w-3" /> Super Premier</DropdownMenuItem>
                                                                             </DropdownMenuSubContent>
                                                                         </DropdownMenuPortal>
                                                                     </DropdownMenuSub>
-                                                                    <DropdownMenuSeparator className="bg-white/5" />
+                                                                    <DropdownMenuSeparator className="bg-border" />
                                                                     <DropdownMenuItem className="text-red-500 focus:text-red-500 rounded-lg h-10" onClick={() => { setSelectedUser(u); setIsDeleteDialogOpen(true); }}><Trash2 className="mr-2 h-4 w-4" /> Delete Expert</DropdownMenuItem>
                                                                 </DropdownMenuContent>
                                                             </DropdownMenu>
@@ -885,8 +884,8 @@ export default function AdminDashboardPage() {
                             <div className="flex items-center justify-between pt-4">
                                 <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Page {currentPage}</p>
                                 <div className="flex items-center gap-2">
-                                    <Button variant="outline" size="sm" onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} disabled={currentPage === 1} className="rounded-xl h-9 border-white/10 bg-transparent text-white font-bold"><ChevronLeft className="h-4 w-4" /></Button>
-                                    <Button variant="outline" size="sm" onClick={() => setCurrentPage(prev => prev + 1)} disabled={currentPage >= Math.ceil(filteredUsers.length / ITEMS_PER_PAGE)} className="rounded-xl h-9 border-white/10 bg-transparent text-white font-bold"><ChevronRight className="h-4 w-4" /></Button>
+                                    <Button variant="outline" size="sm" onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} disabled={currentPage === 1} className="rounded-xl h-9 border-border bg-transparent text-foreground font-bold"><ChevronLeft className="h-4 w-4" /></Button>
+                                    <Button variant="outline" size="sm" onClick={() => setCurrentPage(prev => prev + 1)} disabled={currentPage >= Math.ceil(filteredUsers.length / ITEMS_PER_PAGE)} className="rounded-xl h-9 border-border bg-transparent text-foreground font-bold"><ChevronRight className="h-4 w-4" /></Button>
                                 </div>
                             </div>
                         </CardContent>
@@ -894,8 +893,8 @@ export default function AdminDashboardPage() {
                 </TabsContent>
 
                 <TabsContent value="leaderboard">
-                    <Card className="border-none bg-[#24262d] rounded-2xl overflow-hidden shadow-2xl">
-                        <CardHeader className="bg-white/5 pb-6 border-b border-white/5">
+                    <Card className="border-none bg-card rounded-2xl overflow-hidden shadow-2xl">
+                        <CardHeader className="bg-muted/30 pb-6 border-b border-border">
                             <div className="flex items-center gap-3">
                                 <Trophy className="h-6 w-6 text-orange-500" />
                                 <div>
@@ -910,24 +909,24 @@ export default function AdminDashboardPage() {
                                     <Info className="h-5 w-5 text-orange-500" />
                                 </div>
                                 <div>
-                                    <h4 className="text-sm font-black text-white uppercase italic mb-1">How Rankings Work</h4>
+                                    <h4 className="text-sm font-black text-foreground uppercase italic mb-1">How Rankings Work</h4>
                                     <p className="text-xs text-muted-foreground leading-relaxed">
                                         Professional standing is calculated using the formula: <span className="text-orange-500 font-black">Total Points (PTS) × Total Joins</span>. This identifies experts who are both highly credited and active network builders.
                                     </p>
                                 </div>
                             </div>
 
-                            <div className="rounded-xl border border-white/5 overflow-hidden">
+                            <div className="rounded-xl border border-border overflow-hidden">
                                 <Table>
-                                    <TableHeader className="bg-white/5">
-                                        <TableRow className="border-white/5">
-                                            <TableHead className="w-[60px] font-bold text-white text-center">Rank</TableHead>
-                                            <TableHead className="font-bold text-white">Top Referrer</TableHead>
-                                            <TableHead className="font-bold text-white text-center">Contact</TableHead>
-                                            <TableHead className="font-bold text-white text-center">Total Points (PTS)</TableHead>
-                                            <TableHead className="font-bold text-white text-center">Total Joins</TableHead>
+                                    <TableHeader className="bg-muted/30">
+                                        <TableRow className="border-border">
+                                            <TableHead className="w-[60px] font-bold text-foreground text-center">Rank</TableHead>
+                                            <TableHead className="font-bold text-foreground">Top Referrer</TableHead>
+                                            <TableHead className="font-bold text-foreground text-center">Contact</TableHead>
+                                            <TableHead className="font-bold text-foreground text-center">Total Points (PTS)</TableHead>
+                                            <TableHead className="font-bold text-foreground text-center">Total Joins</TableHead>
                                             <TableHead className="font-bold text-orange-500 text-center uppercase tracking-widest text-[10px]">Influence Score (PTS × JOINS)</TableHead>
-                                            <TableHead className="text-right font-bold text-white">Status</TableHead>
+                                            <TableHead className="text-right font-bold text-foreground">Status</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
@@ -940,31 +939,31 @@ export default function AdminDashboardPage() {
                                             const dynamicPoints = (u.referralCount || 0) * referralPoints;
                                             const influenceScore = dynamicPoints * (u.referralCount || 0);
                                             return (
-                                                <TableRow key={u.id} className="hover:bg-white/5 border-white/5 h-20">
+                                                <TableRow key={u.id} className="hover:bg-muted/20 border-border h-20">
                                                     <TableCell className="text-center font-black text-orange-500 text-lg">#{globalRank}</TableCell>
                                                     <TableCell>
                                                         <div className="flex items-center gap-3">
-                                                            <Avatar className="h-10 w-10 border border-white/10 shadow-lg">
+                                                            <Avatar className="h-10 w-10 border border-border shadow-lg">
                                                                 <AvatarImage src={u.photoUrl} />
                                                                 <AvatarFallback>{u.firstName[0]}</AvatarFallback>
                                                             </Avatar>
                                                             <div className="space-y-0.5">
-                                                                <div className="font-black text-white">{u.firstName} {u.lastName}</div>
+                                                                <div className="font-black text-foreground">{u.firstName} {u.lastName}</div>
                                                                 <div className="text-[10px] text-muted-foreground uppercase tracking-widest">{u.profession || u.role}</div>
                                                             </div>
                                                         </div>
                                                     </TableCell>
                                                     <TableCell className="text-center">
-                                                        <span className="text-xs font-black text-white/80">{sanitizePhoneNumber(u.phoneNumber)}</span>
+                                                        <span className="text-xs font-black text-foreground/80">{sanitizePhoneNumber(u.phoneNumber)}</span>
                                                     </TableCell>
-                                                    <TableCell className="text-center font-black text-white/60 text-lg">{dynamicPoints}</TableCell>
-                                                    <TableCell className="text-center font-black text-white/60 text-lg">{u.referralCount || 0}</TableCell>
+                                                    <TableCell className="text-center font-black text-foreground/60 text-lg">{dynamicPoints}</TableCell>
+                                                    <TableCell className="text-center font-black text-foreground/60 text-lg">{u.referralCount || 0}</TableCell>
                                                     <TableCell className="text-center">
                                                         <div className="flex flex-col items-center justify-center">
                                                             <span className="text-2xl font-black text-orange-500 italic tracking-tighter">{influenceScore}</span>
                                                             <div className="flex items-center gap-1 opacity-30">
                                                                 <Zap className="h-2 w-2 text-orange-500" />
-                                                                <span className="text-[8px] font-black text-white uppercase">Multiplication Result</span>
+                                                                <span className="text-[8px] font-black text-foreground uppercase">Multiplication Result</span>
                                                             </div>
                                                         </div>
                                                     </TableCell>
@@ -980,8 +979,8 @@ export default function AdminDashboardPage() {
                             <div className="flex items-center justify-between pt-4">
                                 <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Page {rankingPage}</p>
                                 <div className="flex items-center gap-2">
-                                    <Button variant="outline" size="sm" onClick={() => setRankingPage(prev => Math.max(prev - 1, 1))} disabled={rankingPage === 1} className="rounded-xl h-9 border-white/10 bg-transparent text-white font-bold"><ChevronLeft className="h-4 w-4" /></Button>
-                                    <Button variant="outline" size="sm" onClick={() => setRankingPage(prev => prev + 1)} disabled={rankingPage >= Math.ceil(rankingUsers.length / ITEMS_PER_PAGE)} className="rounded-xl h-9 border-white/10 bg-transparent text-white font-bold"><ChevronRight className="h-4 w-4" /></Button>
+                                    <Button variant="outline" size="sm" onClick={() => setRankingPage(prev => Math.max(prev - 1, 1))} disabled={rankingPage === 1} className="rounded-xl h-9 border-border bg-transparent text-foreground font-bold"><ChevronLeft className="h-4 w-4" /></Button>
+                                    <Button variant="outline" size="sm" onClick={() => setRankingPage(prev => prev + 1)} disabled={rankingPage >= Math.ceil(rankingUsers.length / ITEMS_PER_PAGE)} className="rounded-xl h-9 border-border bg-transparent text-foreground font-bold"><ChevronRight className="h-4 w-4" /></Button>
                                 </div>
                             </div>
                         </CardContent>
@@ -989,8 +988,8 @@ export default function AdminDashboardPage() {
                 </TabsContent>
 
                 <TabsContent value="vacancies">
-                    <Card className="border-none bg-[#24262d] rounded-2xl overflow-hidden shadow-2xl">
-                        <CardHeader className="bg-white/5 pb-6 border-b border-white/5">
+                    <Card className="border-none bg-card rounded-2xl overflow-hidden shadow-2xl">
+                        <CardHeader className="bg-muted/30 pb-6 border-b border-border">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-3">
                                     <Briefcase className="h-6 w-6 text-orange-500" />
@@ -1003,15 +1002,15 @@ export default function AdminDashboardPage() {
                             </div>
                         </CardHeader>
                         <CardContent className="p-6">
-                            <div className="rounded-xl border border-white/5 overflow-hidden">
+                            <div className="rounded-xl border border-border overflow-hidden">
                                 <Table>
-                                    <TableHeader className="bg-white/5">
-                                        <TableRow className="border-white/5">
-                                            <TableHead className="w-[60px] font-bold text-white text-center">S.No</TableHead>
-                                            <TableHead className="font-bold text-white">Title</TableHead>
-                                            <TableHead className="font-bold text-white">Company</TableHead>
-                                            <TableHead className="font-bold text-white text-center">Status</TableHead>
-                                            <TableHead className="text-right font-bold text-white">Actions</TableHead>
+                                    <TableHeader className="bg-muted/30">
+                                        <TableRow className="border-border">
+                                            <TableHead className="w-[60px] font-bold text-foreground text-center">S.No</TableHead>
+                                            <TableHead className="font-bold text-foreground">Title</TableHead>
+                                            <TableHead className="font-bold text-foreground">Company</TableHead>
+                                            <TableHead className="font-bold text-foreground text-center">Status</TableHead>
+                                            <TableHead className="text-right font-bold text-foreground">Actions</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
@@ -1022,9 +1021,9 @@ export default function AdminDashboardPage() {
                                         ) : vacancies?.slice((vacancyPage - 1) * ITEMS_PER_PAGE, vacancyPage * ITEMS_PER_PAGE).map((v, idx) => {
                                             const globalIndex = (vacancyPage - 1) * ITEMS_PER_PAGE + idx + 1;
                                             return (
-                                                <TableRow key={v.id} className="hover:bg-white/5 border-white/5 h-20">
+                                                <TableRow key={v.id} className="hover:bg-muted/20 border-border h-20">
                                                     <TableCell className="text-center font-bold text-muted-foreground text-xs">{globalIndex}</TableCell>
-                                                    <TableCell className="font-black text-white italic">{v.title}</TableCell>
+                                                    <TableCell className="font-black text-foreground italic">{v.title}</TableCell>
                                                     <TableCell className="text-muted-foreground font-bold text-xs uppercase tracking-wider">{v.companyName}</TableCell>
                                                     <TableCell className="text-center">
                                                         <Badge variant={v.status === 'Approved' ? 'default' : v.status === 'Rejected' ? 'destructive' : 'secondary'} className="text-[10px] font-black uppercase tracking-tighter">
@@ -1035,7 +1034,7 @@ export default function AdminDashboardPage() {
                                                         <div className="flex justify-end gap-2">
                                                             <Button variant="outline" size="sm" className="rounded-full h-10 w-10 p-0 border-green-500/20 text-green-500 hover:bg-green-500/10" onClick={() => updateDocumentNonBlocking(doc(firestore, 'vacancies', v.id), { status: 'Approved' })}><Check className="h-4 w-4" /></Button>
                                                             <Button variant="outline" size="sm" className="rounded-full h-10 w-10 p-0 border-red-500/20 text-red-500 hover:bg-red-500/10" onClick={() => updateDocumentNonBlocking(doc(firestore, 'vacancies', v.id), { status: 'Rejected' })}><Ban className="h-4 w-4" /></Button>
-                                                            <Button variant="ghost" size="icon" className="h-10 w-10 text-white/30 hover:text-red-500" onClick={() => deleteDocumentNonBlocking(doc(firestore, 'vacancies', v.id))}><Trash2 className="h-5 w-5" /></Button>
+                                                            <Button variant="ghost" size="icon" className="h-10 w-10 text-foreground/30 hover:text-red-500" onClick={() => deleteDocumentNonBlocking(doc(firestore, 'vacancies', v.id))}><Trash2 className="h-5 w-5" /></Button>
                                                         </div>
                                                     </TableCell>
                                                 </TableRow>
@@ -1047,8 +1046,8 @@ export default function AdminDashboardPage() {
                             <div className="flex items-center justify-between pt-4">
                                 <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Page {vacancyPage}</p>
                                 <div className="flex items-center gap-2">
-                                    <Button variant="outline" size="sm" onClick={() => setVacancyPage(prev => Math.max(prev - 1, 1))} disabled={vacancyPage === 1} className="rounded-xl h-9 border-white/10 bg-transparent text-white font-bold"><ChevronLeft className="h-4 w-4" /></Button>
-                                    <Button variant="outline" size="sm" onClick={() => setVacancyPage(prev => prev + 1)} disabled={vacancyPage >= Math.ceil((vacancies?.length || 0) / ITEMS_PER_PAGE)} className="rounded-xl h-9 border-white/10 bg-transparent text-white font-bold"><ChevronRight className="h-4 w-4" /></Button>
+                                    <Button variant="outline" size="sm" onClick={() => setVacancyPage(prev => Math.max(prev - 1, 1))} disabled={vacancyPage === 1} className="rounded-xl h-9 border-border bg-transparent text-foreground font-bold"><ChevronLeft className="h-4 w-4" /></Button>
+                                    <Button variant="outline" size="sm" onClick={() => setVacancyPage(prev => prev + 1)} disabled={vacancyPage >= Math.ceil((vacancies?.length || 0) / ITEMS_PER_PAGE)} className="rounded-xl h-9 border-border bg-transparent text-foreground font-bold"><ChevronRight className="h-4 w-4" /></Button>
                                 </div>
                             </div>
                         </CardContent>
@@ -1056,8 +1055,8 @@ export default function AdminDashboardPage() {
                 </TabsContent>
 
                 <TabsContent value="payments">
-                    <Card className="border-none bg-[#24262d] rounded-2xl overflow-hidden shadow-2xl">
-                        <CardHeader className="bg-white/5 pb-6 border-b border-white/5">
+                    <Card className="border-none bg-card rounded-2xl overflow-hidden shadow-2xl">
+                        <CardHeader className="bg-muted/30 pb-6 border-b border-border">
                             <div className="flex items-center gap-3">
                                 <IndianRupee className="h-6 w-6 text-orange-500" />
                                 <div>
@@ -1067,16 +1066,16 @@ export default function AdminDashboardPage() {
                             </div>
                         </CardHeader>
                         <CardContent className="p-6">
-                            <div className="rounded-xl border border-white/5 overflow-hidden">
+                            <div className="rounded-xl border border-border overflow-hidden">
                                 <Table>
-                                    <TableHeader className="bg-white/5">
-                                        <TableRow className="border-white/5">
-                                            <TableHead className="w-[60px] font-bold text-white text-center">S.No</TableHead>
-                                            <TableHead className="font-bold text-white">Order ID</TableHead>
-                                            <TableHead className="font-bold text-white">Plan</TableHead>
-                                            <TableHead className="font-bold text-center text-white">Amount</TableHead>
-                                            <TableHead className="font-bold text-center text-white">Status</TableHead>
-                                            <TableHead className="text-right font-bold text-white">Date</TableHead>
+                                    <TableHeader className="bg-muted/30">
+                                        <TableRow className="border-border">
+                                            <TableHead className="w-[60px] font-bold text-foreground text-center">S.No</TableHead>
+                                            <TableHead className="font-bold text-foreground">Order ID</TableHead>
+                                            <TableHead className="font-bold text-foreground">Plan</TableHead>
+                                            <TableHead className="font-bold text-center text-foreground">Amount</TableHead>
+                                            <TableHead className="font-bold text-center text-foreground">Status</TableHead>
+                                            <TableHead className="text-right font-bold text-foreground">Date</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
@@ -1085,11 +1084,11 @@ export default function AdminDashboardPage() {
                                         ) : payments?.slice((paymentPage - 1) * ITEMS_PER_PAGE, paymentPage * ITEMS_PER_PAGE).map((p, idx) => {
                                             const globalIndex = (paymentPage - 1) * ITEMS_PER_PAGE + idx + 1;
                                             return (
-                                                <TableRow key={p.id} className="hover:bg-white/5 border-white/5 h-16">
+                                                <TableRow key={p.id} className="hover:bg-muted/20 border-border h-16">
                                                     <TableCell className="text-center font-bold text-muted-foreground text-xs">{globalIndex}</TableCell>
                                                     <TableCell className="font-mono text-[10px] text-orange-500/70">{p.orderId}</TableCell>
                                                     <TableCell><Badge variant="secondary" className="text-[10px] font-black uppercase tracking-tighter">{p.plan}</Badge></TableCell>
-                                                    <TableCell className="text-center font-black text-white">₹{p.amount}</TableCell>
+                                                    <TableCell className="text-center font-black text-foreground">₹{p.amount}</TableCell>
                                                     <TableCell className="text-center">
                                                         <Badge className={cn("text-[9px] font-black uppercase tracking-widest", p.status === 'successful' ? "bg-green-500" : "bg-red-500/20 text-red-500 border border-red-500/30")}>{p.status}</Badge>
                                                     </TableCell>
@@ -1103,8 +1102,8 @@ export default function AdminDashboardPage() {
                             <div className="flex items-center justify-between pt-4">
                                 <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Page {paymentPage}</p>
                                 <div className="flex items-center gap-2">
-                                    <Button variant="outline" size="sm" onClick={() => setPaymentPage(prev => Math.max(prev - 1, 1))} disabled={paymentPage === 1} className="rounded-xl h-9 border-white/10 bg-transparent text-white font-bold"><ChevronLeft className="h-4 w-4" /></Button>
-                                    <Button variant="outline" size="sm" onClick={() => setPaymentPage(prev => prev + 1)} disabled={paymentPage >= Math.ceil((payments?.length || 0) / ITEMS_PER_PAGE)} className="rounded-xl h-9 border-white/10 bg-transparent text-white font-bold"><ChevronRight className="h-4 w-4" /></Button>
+                                    <Button variant="outline" size="sm" onClick={() => setPaymentPage(prev => Math.max(prev - 1, 1))} disabled={paymentPage === 1} className="rounded-xl h-9 border-border bg-transparent text-foreground font-bold"><ChevronLeft className="h-4 w-4" /></Button>
+                                    <Button variant="outline" size="sm" onClick={() => setPaymentPage(prev => prev + 1)} disabled={paymentPage >= Math.ceil((payments?.length || 0) / ITEMS_PER_PAGE)} className="rounded-xl h-9 border-border bg-transparent text-foreground font-bold"><ChevronRight className="h-4 w-4" /></Button>
                                 </div>
                             </div>
                         </CardContent>
@@ -1112,8 +1111,8 @@ export default function AdminDashboardPage() {
                 </TabsContent>
 
                 <TabsContent value="feed">
-                    <Card className="border-none bg-[#24262d] rounded-2xl overflow-hidden shadow-2xl">
-                        <CardHeader className="bg-white/5 pb-6 border-b border-white/5">
+                    <Card className="border-none bg-card rounded-2xl overflow-hidden shadow-2xl">
+                        <CardHeader className="bg-muted/30 pb-6 border-b border-border">
                             <div className="flex items-center gap-3">
                                 <Rss className="h-6 w-6 text-orange-500" />
                                 <div>
@@ -1123,14 +1122,14 @@ export default function AdminDashboardPage() {
                             </div>
                         </CardHeader>
                         <CardContent className="p-6">
-                            <div className="rounded-xl border border-white/5 overflow-hidden">
+                            <div className="rounded-xl border border-border overflow-hidden">
                                 <Table>
-                                    <TableHeader className="bg-white/5">
-                                        <TableRow className="border-white/5">
-                                            <TableHead className="w-[60px] font-bold text-white text-center">S.No</TableHead>
-                                            <TableHead className="font-bold text-white">Author</TableHead>
-                                            <TableHead className="font-bold text-white">Preview</TableHead>
-                                            <TableHead className="text-right font-bold text-white">Actions</TableHead>
+                                    <TableHeader className="bg-muted/30">
+                                        <TableRow className="border-border">
+                                            <TableHead className="w-[60px] font-bold text-foreground text-center">S.No</TableHead>
+                                            <TableHead className="font-bold text-foreground">Author</TableHead>
+                                            <TableHead className="font-bold text-foreground">Preview</TableHead>
+                                            <TableHead className="text-right font-bold text-foreground">Actions</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
@@ -1139,9 +1138,9 @@ export default function AdminDashboardPage() {
                                         ) : posts?.slice((feedPage - 1) * ITEMS_PER_PAGE, feedPage * ITEMS_PER_PAGE).map((post, idx) => {
                                             const globalIndex = (feedPage - 1) * ITEMS_PER_PAGE + idx + 1;
                                             return (
-                                                <TableRow key={post.id} className="hover:bg-white/5 border-white/5 h-16">
+                                                <TableRow key={post.id} className="hover:bg-muted/20 border-border h-16">
                                                     <TableCell className="text-center font-bold text-muted-foreground text-xs">{globalIndex}</TableCell>
-                                                    <TableCell className="font-black text-white text-xs">{post.authorName || 'Expert'}</TableCell>
+                                                    <TableCell className="font-black text-foreground text-xs">{post.authorName || 'Expert'}</TableCell>
                                                     <TableCell className="max-w-xs truncate text-[10px] text-muted-foreground italic font-medium">{post.content}</TableCell>
                                                     <TableCell className="text-right">
                                                         <Button variant="ghost" size="icon" className="text-red-500 hover:bg-red-500/10" onClick={() => { setSelectedPost(post); setIsPostDeleteDialogOpen(true); }}><Trash2 className="h-4 w-4" /></Button>
@@ -1155,8 +1154,8 @@ export default function AdminDashboardPage() {
                             <div className="flex items-center justify-between pt-4">
                                 <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Page {feedPage}</p>
                                 <div className="flex items-center gap-2">
-                                    <Button variant="outline" size="sm" onClick={() => setFeedPage(prev => Math.max(prev - 1, 1))} disabled={feedPage === 1} className="rounded-xl h-9 border-white/10 bg-transparent text-white font-bold"><ChevronLeft className="h-4 w-4" /></Button>
-                                    <Button variant="outline" size="sm" onClick={() => setFeedPage(prev => prev + 1)} disabled={feedPage >= Math.ceil((posts?.length || 0) / ITEMS_PER_PAGE)} className="rounded-xl h-9 border-white/10 bg-transparent text-white font-bold"><ChevronRight className="h-4 w-4" /></Button>
+                                    <Button variant="outline" size="sm" onClick={() => setFeedPage(prev => Math.max(prev - 1, 1))} disabled={feedPage === 1} className="rounded-xl h-9 border-border bg-transparent text-foreground font-bold"><ChevronLeft className="h-4 w-4" /></Button>
+                                    <Button variant="outline" size="sm" onClick={() => setFeedPage(prev => prev + 1)} disabled={feedPage >= Math.ceil((posts?.length || 0) / ITEMS_PER_PAGE)} className="rounded-xl h-9 border-border bg-transparent text-foreground font-bold"><ChevronRight className="h-4 w-4" /></Button>
                                 </div>
                             </div>
                         </CardContent>
@@ -1169,25 +1168,25 @@ export default function AdminDashboardPage() {
             {mounted && reportData && (
               <>
                 <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
-                    <Card className="border-none bg-[#24262d] shadow-xl">
+                    <Card className="border-none bg-card shadow-xl">
                         <CardHeader className="pb-2">
                             <CardDescription className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2"><TrendingUp className="h-3 w-3 text-green-500" /> Platform Revenue</CardDescription>
                             <CardTitle className="text-3xl font-black text-orange-500">₹{reportData.totalRevenue.toLocaleString()}</CardTitle>
                         </CardHeader>
                     </Card>
-                    <Card className="border-none bg-[#24262d] shadow-xl">
+                    <Card className="border-none bg-card shadow-xl">
                         <CardHeader className="pb-2">
                             <CardDescription className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2"><Activity className="h-3 w-3 text-blue-500" /> Verification Rate</CardDescription>
                             <CardTitle className="text-3xl font-black">{stats.total > 0 ? Math.round((stats.verified / stats.total) * 100) : 0}%</CardTitle>
                         </CardHeader>
                     </Card>
-                    <Card className="border-none bg-[#24262d] shadow-xl">
+                    <Card className="border-none bg-card shadow-xl">
                         <CardHeader className="pb-2">
                             <CardDescription className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2"><Crown className="h-3 w-3 text-purple-500" /> Premium Users</CardDescription>
                             <CardTitle className="text-3xl font-black">{stats.premier + stats.super}</CardTitle>
                         </CardHeader>
                     </Card>
-                    <Card className="border-none bg-[#24262d] shadow-xl">
+                    <Card className="border-none bg-card shadow-xl">
                         <CardHeader className="pb-2">
                             <CardDescription className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2"><MessageSquare className="h-3 w-3 text-orange-500" /> Community Content</CardDescription>
                             <CardTitle className="text-3xl font-black">{reportData.totalPosts} Posts</CardTitle>
@@ -1196,25 +1195,25 @@ export default function AdminDashboardPage() {
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    <Card className="border-none bg-[#24262d] rounded-2xl overflow-hidden shadow-2xl">
-                        <CardHeader className="bg-white/5 border-b border-white/5">
+                    <Card className="border-none bg-card rounded-2xl overflow-hidden shadow-2xl">
+                        <CardHeader className="bg-muted/30 border-b border-border">
                             <CardTitle className="text-xl font-black flex items-center gap-2 uppercase italic"><TrendingUp className="h-5 w-5 text-orange-500" /> Expert Growth</CardTitle>
                         </CardHeader>
                         <CardContent className="pt-8 h-[300px]">
                             <ResponsiveContainer width="100%" height="100%">
                                 <BarChart data={reportData.userGrowth}>
-                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#ffffff10" />
-                                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#8a92a6', fontSize: 12}} />
-                                    <YAxis axisLine={false} tickLine={false} tick={{fill: '#8a92a6', fontSize: 12}} />
-                                    <Tooltip contentStyle={{backgroundColor: '#24262d', border: 'none', borderRadius: '12px', fontSize: '12px'}} cursor={{fill: '#ffffff05'}} />
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="currentColor" opacity={0.1} />
+                                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: 'currentColor', fontSize: 12, opacity: 0.6}} />
+                                    <YAxis axisLine={false} tickLine={false} tick={{fill: 'currentColor', fontSize: 12, opacity: 0.6}} />
+                                    <Tooltip contentStyle={{backgroundColor: 'var(--card)', border: '1px solid var(--border)', borderRadius: '12px', fontSize: '12px'}} cursor={{fill: 'currentColor', opacity: 0.05}} />
                                     <Bar dataKey="users" fill="#f97316" radius={[4, 4, 0, 0]} barSize={30} />
                                 </BarChart>
                             </ResponsiveContainer>
                         </CardContent>
                     </Card>
 
-                    <Card className="border-none bg-[#24262d] rounded-2xl overflow-hidden shadow-2xl">
-                        <CardHeader className="bg-white/5 border-b border-white/5">
+                    <Card className="border-none bg-card rounded-2xl overflow-hidden shadow-2xl">
+                        <CardHeader className="bg-muted/30 border-b border-border">
                             <CardTitle className="text-xl font-black flex items-center gap-2 uppercase italic"><PieChart className="h-5 w-5 text-orange-500" /> Revenue Split</CardTitle>
                         </CardHeader>
                         <CardContent className="pt-8 h-[300px] flex items-center">
@@ -1226,7 +1225,7 @@ export default function AdminDashboardPage() {
                                                 <Cell key={`cell-${index}`} fill={entry.color} />
                                             ))}
                                         </Pie>
-                                        <Tooltip contentStyle={{backgroundColor: '#24262d', border: 'none', borderRadius: '12px'}} />
+                                        <Tooltip contentStyle={{backgroundColor: 'var(--card)', border: '1px solid var(--border)', borderRadius: '12px'}} />
                                     </RePieChart>
                                 </ResponsiveContainer>
                             </div>
@@ -1237,7 +1236,7 @@ export default function AdminDashboardPage() {
                                             <div className="h-3 w-3 rounded-full" style={{backgroundColor: item.color}} />
                                             <span className="text-[10px] font-black uppercase text-muted-foreground">{item.name}</span>
                                         </div>
-                                        <span className="text-sm font-black text-white">₹{item.value.toLocaleString()}</span>
+                                        <span className="text-sm font-black text-foreground">₹{item.value.toLocaleString()}</span>
                                     </div>
                                 ))}
                             </div>
@@ -1249,8 +1248,8 @@ export default function AdminDashboardPage() {
           </TabsContent>
 
           <TabsContent value="settings" className="mt-0 space-y-6">
-            <Card className="border-none rounded-2xl overflow-hidden bg-[#24262d]">
-              <CardHeader className="bg-white/5 border-b border-white/5 pb-6">
+            <Card className="border-none rounded-2xl overflow-hidden bg-card">
+              <CardHeader className="bg-muted/30 border-b border-border pb-6">
                 <div className="flex items-center gap-3">
                     <IndianRupee className="h-6 w-6 text-orange-500" />
                     <CardTitle className="text-2xl font-black uppercase italic">Payment Architecture</CardTitle>
@@ -1259,7 +1258,7 @@ export default function AdminDashboardPage() {
               </CardHeader>
               <CardContent className="p-6 space-y-8">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="flex items-center justify-between p-4 bg-background rounded-xl border border-white/5 shadow-inner">
+                    <div className="flex items-center justify-between p-4 bg-background rounded-xl border border-border shadow-inner">
                         <div>
                             <Label className="text-base font-black uppercase italic">Global Payments</Label>
                             <p className="text-xs text-muted-foreground font-medium">Enable or disable entire transaction system.</p>
@@ -1280,7 +1279,7 @@ export default function AdminDashboardPage() {
                     </div>
                 </div>
 
-                <div className="space-y-6 p-6 bg-white/5 rounded-2xl border border-white/5 animate-in fade-in slide-in-from-top-4 duration-500">
+                <div className="space-y-6 p-6 bg-muted/20 rounded-2xl border border-border animate-in fade-in slide-in-from-top-4 duration-500">
                     <h4 className="text-sm font-black text-orange-500 uppercase tracking-widest flex items-center gap-2"><LinkIcon className="h-4 w-4" /> Three-Model Static Links</h4>
                     <div className="grid grid-cols-1 gap-4">
                         <div className="space-y-2">
@@ -1299,7 +1298,7 @@ export default function AdminDashboardPage() {
                 </div>
 
                 {paymentMethod === 'API' && (
-                    <div className="space-y-6 p-6 bg-white/5 rounded-2xl border border-white/5 animate-in fade-in slide-in-from-top-4 duration-500">
+                    <div className="space-y-6 p-6 bg-muted/20 rounded-2xl border border-border animate-in fade-in slide-in-from-top-4 duration-500">
                         <h4 className="text-sm font-black text-blue-500 uppercase tracking-widest flex items-center gap-2"><Activity className="h-4 w-4" /> API Configuration (Automation)</h4>
                         <div className="space-y-4">
                             <div className="space-y-2">
@@ -1313,10 +1312,10 @@ export default function AdminDashboardPage() {
 
                 <div className="space-y-2 max-w-xs">
                     <Label className="font-black text-primary text-[10px] uppercase tracking-[0.2em]">Expert Verification Fee (₱)</Label>
-                    <Input type="number" value={verificationFee} onChange={e => setVerificationFee(Number(e.target.value))} className="rounded-xl h-12 bg-background border-none font-black text-white text-xl shadow-inner" />
+                    <Input type="number" value={verificationFee} onChange={e => setVerificationFee(Number(e.target.value))} className="rounded-xl h-12 bg-background border-none font-black text-foreground text-xl shadow-inner" />
                 </div>
               </CardContent>
-              <CardFooter className="bg-white/5 p-6">
+              <CardFooter className="bg-muted/30 p-6">
                 <Button onClick={handleSaveSettings} disabled={isSaving} className="w-full h-14 rounded-2xl font-black text-lg bg-orange-500 hover:bg-orange-600 shadow-xl shadow-orange-500/20 uppercase tracking-widest transition-all active:scale-95">
                     {isSaving ? <Loader className="animate-spin h-5 w-5 mr-2" /> : <Save className="mr-2 h-5 w-5" />} 
                     Save & Publish Settings
@@ -1325,8 +1324,8 @@ export default function AdminDashboardPage() {
             </Card>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Card className="border-none rounded-2xl overflow-hidden bg-[#24262d]">
-                    <CardHeader className="bg-white/5 border-b border-white/5 pb-6">
+                <Card className="border-none rounded-2xl overflow-hidden bg-card">
+                    <CardHeader className="bg-muted/30 border-b border-border pb-6">
                         <div className="flex items-center gap-3">
                             <Layout className="h-6 w-6 text-orange-500" />
                             <CardTitle className="text-xl font-black uppercase italic">Homepage Modules</CardTitle>
@@ -1336,9 +1335,9 @@ export default function AdminDashboardPage() {
                     <CardContent className="p-6 space-y-6">
                         <div className="space-y-2">
                             <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Max Carousel Professionals</Label>
-                            <Input type="number" value={featuredLimit} onChange={e => setFeaturedLimit(Number(e.target.value))} className="h-12 bg-background border-none rounded-xl font-black text-xl text-white" />
+                            <Input type="number" value={featuredLimit} onChange={e => setFeaturedLimit(Number(e.target.value))} className="h-12 bg-background border-none rounded-xl font-black text-xl text-foreground" />
                         </div>
-                        <div className="flex items-center justify-between p-4 bg-background rounded-xl border border-white/5 shadow-inner">
+                        <div className="flex items-center justify-between p-4 bg-background rounded-xl border border-border shadow-inner">
                             <div>
                                 <Label className="text-base font-black uppercase italic">Recent Grid</Label>
                                 <p className="text-xs text-muted-foreground font-medium">Toggle the 'Recent Professionals' section.</p>
@@ -1348,8 +1347,8 @@ export default function AdminDashboardPage() {
                     </CardContent>
                 </Card>
 
-                <Card className="border-none rounded-2xl overflow-hidden bg-[#24262d]">
-                    <CardHeader className="bg-white/5 border-b border-white/5 pb-6">
+                <Card className="border-none rounded-2xl overflow-hidden bg-card">
+                    <CardHeader className="bg-muted/30 border-b border-border pb-6">
                         <div className="flex items-center gap-3">
                             <Gift className="h-6 w-6 text-orange-500" />
                             <CardTitle className="text-xl font-black uppercase italic tracking-tight">GROWTH ENGINE</CardTitle>
@@ -1359,12 +1358,12 @@ export default function AdminDashboardPage() {
                     <CardContent className="p-6 space-y-8">
                         <div className="space-y-4">
                             <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 ml-1">POINTS PER SUCCESSFUL JOIN</Label>
-                            <div className="bg-[#1a1c23] p-1 rounded-2xl shadow-inner">
+                            <div className="bg-background p-1 rounded-2xl shadow-inner border border-border">
                                 <Input 
                                     type="number" 
                                     value={referralPoints} 
                                     onChange={e => setReferralPoints(Number(e.target.value))} 
-                                    className="h-14 bg-transparent border-none font-black text-xl text-white px-6 focus-visible:ring-0" 
+                                    className="h-14 bg-transparent border-none font-black text-xl text-foreground px-6 focus-visible:ring-0" 
                                 />
                             </div>
                             <p className="text-[10px] text-muted-foreground italic font-medium">
@@ -1376,8 +1375,8 @@ export default function AdminDashboardPage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Card className="border-none rounded-2xl overflow-hidden bg-[#24262d]">
-                    <CardHeader className="bg-white/5 border-b border-white/5 pb-6">
+                <Card className="border-none rounded-2xl overflow-hidden bg-card">
+                    <CardHeader className="bg-muted/30 border-b border-border pb-6">
                         <div className="flex items-center gap-3">
                             <Megaphone className="h-6 w-6 text-orange-500" />
                             <CardTitle className="text-xl font-black uppercase italic">ANNOUNCEMENTS</CardTitle>
@@ -1385,36 +1384,34 @@ export default function AdminDashboardPage() {
                     </CardHeader>
                     <CardContent className="p-6 space-y-6">
                         <div className="flex items-center justify-between">
-                            <Label className="font-bold text-sm text-white">Enable Banner</Label>
+                            <Label className="font-bold text-sm text-foreground">Enable Banner</Label>
                             <Switch checked={announcementEnabled} onCheckedChange={setAnnouncementEnabled} className="data-[state=checked]:bg-orange-500" />
                         </div>
-                        <div className="bg-[#1a1c23] rounded-xl p-1 shadow-inner">
+                        <div className="bg-background rounded-xl p-1 shadow-inner border border-border">
                             <Textarea 
                                 value={announcementText} 
                                 onChange={(e) => setAnnouncementText(e.target.value)} 
-                                className="bg-transparent border-none rounded-xl min-h-[100px] text-white/90 text-sm leading-relaxed focus-visible:ring-0" 
+                                className="bg-transparent border-none rounded-xl min-h-[100px] text-foreground/90 text-sm leading-relaxed focus-visible:ring-0" 
                                 placeholder="Find nearby electricians, plumbers, AC technicians, carpenters, and more — instantly with DriveGuru..." 
                             />
                         </div>
                     </CardContent>
                 </Card>
 
-                <Card className="border-none rounded-2xl overflow-hidden bg-[#24262d]">
-                    <CardHeader className="bg-white/5 border-b border-white/5 pb-6">
+                <Card className="border-none rounded-2xl overflow-hidden bg-card">
+                    <CardHeader className="bg-muted/30 border-b border-border pb-6">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
                                 <Video className="h-6 w-6 text-orange-500" />
                                 <CardTitle className="text-xl font-black uppercase italic">Video Resources</CardTitle>
                             </div>
-                            <Button 
+                            <button 
                                 type="button" 
-                                size="sm" 
-                                variant="outline" 
-                                className="h-10 rounded-xl border-orange-500/40 text-orange-500 hover:bg-orange-500/10 font-black text-[10px] uppercase tracking-widest px-4 gap-2"
+                                className="h-10 rounded-xl border border-orange-500/40 text-orange-500 hover:bg-orange-500/10 font-black text-[10px] uppercase tracking-widest px-4 flex items-center gap-2"
                                 onClick={handleAddVideoLink}
                             >
                                 <CirclePlus className="h-4 w-4" /> Add Link
-                            </Button>
+                            </button>
                         </div>
                     </CardHeader>
                     <CardContent className="p-6 space-y-6">
@@ -1427,10 +1424,10 @@ export default function AdminDashboardPage() {
                                             <Input 
                                                 value={url} 
                                                 onChange={(e) => handleUpdateVideoLink(index, e.target.value)} 
-                                                className="h-14 bg-[#1a1c23] border-none rounded-xl font-mono text-[11px] text-white/80 pr-12 shadow-inner" 
+                                                className="h-14 bg-background border border-border rounded-xl font-mono text-[11px] text-foreground pr-12 shadow-inner" 
                                                 placeholder="YouTube URL or Storage Path" 
                                             />
-                                            <div className="absolute right-4 top-1/2 -translate-y-1/2 opacity-20 group-focus-within:opacity-50 transition-opacity">
+                                            <div className="absolute right-4 top-1/2 -translate-y-1/2 opacity-20 group-focus-within:opacity-50 transition-opacity text-foreground">
                                                 <LinkIcon className="h-4 w-4" />
                                             </div>
                                         </div>
@@ -1455,8 +1452,8 @@ export default function AdminDashboardPage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Card className="border-none rounded-2xl overflow-hidden bg-[#24262d]">
-                    <CardHeader className="bg-white/5 border-b border-white/5 pb-6">
+                <Card className="border-none rounded-2xl overflow-hidden bg-card">
+                    <CardHeader className="bg-muted/30 border-b border-border pb-6">
                         <div className="flex items-center gap-3">
                             <Phone className="h-6 w-6 text-orange-500" />
                             <CardTitle className="text-xl font-black uppercase italic">Central Support</CardTitle>
@@ -1464,7 +1461,7 @@ export default function AdminDashboardPage() {
                     </CardHeader>
                     <CardContent className="p-6 space-y-4">
                         <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Global Support Phone</Label>
-                        <Input value={centralContactPhone} onChange={(e) => setCentralContactPhone(e.target.value)} className="h-12 bg-background border-none rounded-xl font-black text-2xl text-white" placeholder="+91..." />
+                        <Input value={centralContactPhone} onChange={(e) => setCentralContactPhone(e.target.value)} className="h-12 bg-background border border-border rounded-xl font-black text-2xl text-foreground" placeholder="+91..." />
                     </CardContent>
                 </Card>
             </div>
@@ -1472,12 +1469,12 @@ export default function AdminDashboardPage() {
 
           <TabsContent value="data" className="mt-0 space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <Card className="border-none bg-[#24262d] rounded-2xl overflow-hidden shadow-xl">
-                    <CardHeader className="bg-white/5 border-b border-white/5 pb-6"><CardTitle className="font-black uppercase italic">CSV Actions</CardTitle></CardHeader>
+                <Card className="border-none bg-card rounded-2xl overflow-hidden shadow-xl">
+                    <CardHeader className="bg-muted/30 border-b border-border pb-6"><CardTitle className="font-black uppercase italic">CSV Actions</CardTitle></CardHeader>
                     <CardContent className="p-6 space-y-4">
                         <div className="flex flex-col gap-3">
                             <input type="file" accept=".csv" className="hidden" id="csv-import-input" onChange={handleImportCSV} />
-                            <Button variant="outline" className="h-12 rounded-xl border-white/10 bg-white/5 hover:bg-white/10" onClick={() => document.getElementById('csv-import-input')?.click()} disabled={isImporting}>
+                            <Button variant="outline" className="h-12 rounded-xl border-border bg-background hover:bg-muted" onClick={() => document.getElementById('csv-import-input')?.click()} disabled={isImporting}>
                                 {isImporting ? <Loader className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />} Select CSV to Import
                             </Button>
                             <Button className="h-12 rounded-xl bg-orange-500 hover:bg-orange-600 font-black" onClick={handleExportCSV}>
@@ -1487,8 +1484,8 @@ export default function AdminDashboardPage() {
                     </CardContent>
                 </Card>
 
-                <Card className="border-none bg-[#24262d] rounded-2xl overflow-hidden shadow-xl">
-                    <CardHeader className="bg-white/5 border-b border-white/5 pb-6"><CardTitle className="font-black uppercase italic">System Backup</CardTitle></CardHeader>
+                <Card className="border-none bg-card rounded-2xl overflow-hidden shadow-xl">
+                    <CardHeader className="bg-muted/30 border-b border-border pb-6"><CardTitle className="font-black uppercase italic">System Backup</CardTitle></CardHeader>
                     <CardContent className="p-6">
                         <Button className="w-full h-12 rounded-xl bg-orange-500 hover:bg-orange-600 font-black" onClick={handleExportJSON} disabled={isExporting}>
                             {isExporting ? <Loader className="animate-spin mr-2 h-4 w-4" /> : <HardDriveDownload className="mr-2 h-4 w-4" />} Full Data Backup (JSON)
@@ -1514,8 +1511,8 @@ export default function AdminDashboardPage() {
                 </Card>
             </div>
 
-            <Card className="border-none bg-[#24262d] rounded-2xl overflow-hidden shadow-xl">
-              <CardHeader className="bg-white/5 border-b border-white/5 pb-6"><CardTitle className="font-black uppercase italic">Manual User Provisioning</CardTitle></CardHeader>
+            <Card className="border-none bg-card rounded-2xl overflow-hidden shadow-xl">
+              <CardHeader className="bg-muted/30 border-b border-border pb-6"><CardTitle className="font-black uppercase italic">Manual User Provisioning</CardTitle></CardHeader>
               <CardContent className="p-6"><CreateUserForm onSuccess={() => toast({ title: "User created" })} /></CardContent>
             </Card>
           </TabsContent>
@@ -1523,7 +1520,7 @@ export default function AdminDashboardPage() {
       </div>
 
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-3xl overflow-y-auto max-h-[90vh] rounded-[2rem] border-none bg-background text-white shadow-2xl">
+        <DialogContent className="max-w-3xl overflow-y-auto max-h-[90vh] rounded-[2rem] border-none bg-background text-foreground shadow-2xl">
           <DialogHeader className="mb-4">
             <DialogTitle className="text-3xl font-black uppercase italic">Modify Expert Profile</DialogTitle>
           </DialogHeader>
@@ -1532,7 +1529,7 @@ export default function AdminDashboardPage() {
       </Dialog>
 
       <Dialog open={isReferralStatsOpen} onOpenChange={setIsReferralStatsOpen}>
-        <DialogContent className="max-w-md rounded-[2rem] border-none bg-background text-white shadow-2xl p-8">
+        <DialogContent className="max-w-md rounded-[2rem] border-none bg-background text-foreground shadow-2xl p-8">
           <DialogHeader className="items-center text-center">
             <div className="p-4 bg-orange-500/10 rounded-full w-fit mb-4"><Zap className="h-10 w-10 text-orange-500" /></div>
             <DialogTitle className="text-3xl font-black uppercase italic tracking-tighter">Adjust Network Stats</DialogTitle>
@@ -1547,12 +1544,12 @@ export default function AdminDashboardPage() {
                     type="number" 
                     value={manualJoins} 
                     onChange={e => setManualJoins(Number(e.target.value))}
-                    className="h-16 bg-white/5 border-none rounded-2xl font-black text-3xl text-orange-500 text-center shadow-inner" 
+                    className="h-16 bg-muted border-none rounded-2xl font-black text-3xl text-orange-500 text-center shadow-inner" 
                   />
               </div>
-              <div className="bg-white/5 p-4 rounded-xl border border-white/5 space-y-1">
+              <div className="bg-muted p-4 rounded-xl border border-border space-y-1">
                   <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest">Calculated Premium Credits</p>
-                  <p className="text-xl font-black text-white">{manualJoins * referralPoints} PTS</p>
+                  <p className="text-xl font-black text-foreground">{manualJoins * referralPoints} PTS</p>
                   <p className="text-[8px] text-muted-foreground italic">Based on {referralPoints} PTS per join engine setting.</p>
               </div>
           </div>
@@ -1566,7 +1563,7 @@ export default function AdminDashboardPage() {
       </Dialog>
 
       <Dialog open={isVacancyDialogOpen} onOpenChange={setIsVacancyDialogOpen}>
-        <DialogContent className="max-w-3xl overflow-y-auto max-h-[90vh] rounded-[2rem] border-none bg-background text-white shadow-2xl">
+        <DialogContent className="max-w-3xl overflow-y-auto max-h-[90vh] rounded-[2rem] border-none bg-background text-foreground shadow-2xl">
           <DialogHeader className="mb-4">
             <DialogTitle className="text-3xl font-black uppercase italic">{selectedVacancy ? 'Edit Vacancy' : 'Post Admin Opening'}</DialogTitle>
           </DialogHeader>
@@ -1575,46 +1572,46 @@ export default function AdminDashboardPage() {
       </Dialog>
 
       <AlertDialog open={isPostDeleteDialogOpen} onOpenChange={setIsPostDeleteDialogOpen}>
-        <AlertDialogContent className="rounded-[2rem] border-none bg-background text-white">
+        <AlertDialogContent className="rounded-[2rem] border-none bg-background text-foreground">
           <AlertDialogHeader className="items-center text-center">
             <div className="p-4 bg-red-500/10 rounded-full w-fit mb-4"><Activity className="h-10 w-10 text-red-500" /></div>
             <AlertDialogTitle className="text-2xl font-black uppercase italic">Remove Update?</AlertDialogTitle>
             <AlertDialogDescription className="text-muted-foreground font-medium">This professional update will be permanently deleted from the public feed.</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="flex-col gap-2 sm:flex-col pt-4">
-            <AlertDialogAction onClick={handleDeletePost} className="w-full h-12 bg-red-500 hover:bg-red-600 font-black rounded-xl border-none">Confirm Removal</AlertDialogAction>
-            <AlertDialogCancel className="w-full h-12 bg-transparent border-white/10 hover:bg-white/5 rounded-xl font-bold">Discard Action</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeletePost} className="w-full h-12 bg-red-500 hover:bg-red-600 font-black rounded-xl border-none text-white">Confirm Removal</AlertDialogAction>
+            <AlertDialogCancel className="w-full h-12 bg-transparent border-border hover:bg-muted rounded-xl font-bold">Discard Action</AlertDialogCancel>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <AlertDialogContent className="rounded-[2rem] border-none bg-background text-white">
+        <AlertDialogContent className="rounded-[2rem] border-none bg-background text-foreground">
           <AlertDialogHeader className="items-center text-center">
             <div className="p-4 bg-red-500/10 rounded-full w-fit mb-4"><UserX className="h-10 w-10 text-red-500" /></div>
             <AlertDialogTitle className="text-2xl font-black uppercase italic">Purge User Account?</AlertDialogTitle>
             <AlertDialogDescription className="text-muted-foreground font-medium">Irreversible removal of all profile data, history, and login access.</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="flex-col gap-2 sm:flex-col pt-4">
-            <AlertDialogAction onClick={handleDeleteUser} className="w-full h-12 bg-red-500 hover:bg-red-600 font-black rounded-xl border-none">Permanently Delete</AlertDialogAction>
-            <AlertDialogCancel className="w-full h-12 bg-transparent border-white/10 hover:bg-white/5 rounded-xl font-bold">Discard Action</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteUser} className="w-full h-12 bg-red-500 hover:bg-red-600 font-black rounded-xl border-none text-white">Permanently Delete</AlertDialogAction>
+            <AlertDialogCancel className="w-full h-12 bg-transparent border-border hover:bg-muted rounded-xl font-bold">Discard Action</AlertDialogCancel>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
       <AlertDialog open={isResetConfirmOpen} onOpenChange={setIsResetConfirmOpen}>
-        <AlertDialogContent className="rounded-[2rem] border-none bg-background text-white">
+        <AlertDialogContent className="rounded-[2rem] border-none bg-background text-foreground">
           <AlertDialogHeader className="items-center text-center">
             <div className="p-4 bg-red-500/10 rounded-full w-fit mb-4"><AlertTriangle className="h-10 w-10 text-red-500" /></div>
             <AlertDialogTitle className="text-2xl font-black uppercase italic">Confirm Fresh Start?</AlertDialogTitle>
             <AlertDialogDescription className="text-muted-foreground font-medium">This will set all Referral Points and Join counts to 0 for every user. This action cannot be undone.</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="flex-col gap-2 sm:flex-col pt-4">
-            <AlertDialogAction onClick={handleResetAllReferrals} disabled={isResettingReferrals} className="w-full h-12 bg-red-500 hover:bg-red-600 font-black rounded-xl border-none">
+            <AlertDialogAction onClick={handleResetAllReferrals} disabled={isResettingReferrals} className="w-full h-12 bg-red-500 hover:bg-red-600 font-black rounded-xl border-none text-white">
                 {isResettingReferrals ? <Loader className="h-4 w-4 animate-spin mr-2" /> : <RotateCcw className="h-4 w-4 mr-2" />}
                 Reset All Data
             </AlertDialogAction>
-            <AlertDialogCancel className="w-full h-12 bg-transparent border-white/10 hover:bg-white/5 rounded-xl font-bold">Cancel Reset</AlertDialogCancel>
+            <AlertDialogCancel className="w-full h-12 bg-transparent border-border hover:bg-muted rounded-xl font-bold">Cancel Reset</AlertDialogCancel>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

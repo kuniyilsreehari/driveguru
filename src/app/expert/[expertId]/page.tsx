@@ -239,10 +239,10 @@ function ExpertProfileContent() {
         expert.photoUrl9
     ].filter(Boolean) as string[];
     
-    const buttonClass = "rounded-xl border-white/10 bg-[#1a1c23] hover:bg-white/5 font-bold h-10 px-4 text-white text-xs";
+    const buttonClass = "rounded-xl border-border bg-background hover:bg-muted font-bold h-10 px-4 text-foreground text-xs";
 
     return (
-        <div className="min-h-screen bg-[#1a1c23] p-4 sm:p-8">
+        <div className="min-h-screen bg-background p-4 sm:p-8">
             <div className="mx-auto max-w-4xl space-y-8">
                  <div className="flex flex-wrap items-center justify-center sm:justify-between gap-3 mb-8">
                     <Button variant="outline" asChild className={buttonClass}>
@@ -282,12 +282,12 @@ function ExpertProfileContent() {
                                 <LogIn className="h-8 w-8 text-orange-500" />
                             </div>
                             <div>
-                                <h4 className="font-black text-xl text-white tracking-tight uppercase italic">Join our community!</h4>
+                                <h4 className="font-black text-xl text-foreground tracking-tight uppercase italic">Join our community!</h4>
                                 <p className="text-sm text-muted-foreground font-medium">Log in or sign up to contact experts and leave reviews.</p>
                             </div>
                         </div>
                         <div className="flex gap-3 w-full md:w-auto">
-                            <Button asChild variant="outline" className="flex-1 md:w-28 h-12 rounded-xl border-white/10 bg-white/5 text-white font-bold hover:bg-white/10">
+                            <Button asChild variant="outline" className="flex-1 md:w-28 h-12 rounded-xl border-border bg-card text-foreground font-bold hover:bg-muted">
                                 <Link href="/login">Log In</Link>
                             </Button>
                             <Button asChild className="flex-1 md:w-28 h-12 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-black shadow-lg shadow-orange-500/20 transition-all active:scale-95">
@@ -297,13 +297,13 @@ function ExpertProfileContent() {
                     </div>
                 )}
 
-                <Card className="border-none bg-[#24262d] rounded-[2.5rem] overflow-hidden shadow-2xl">
+                <Card className="border-none bg-card rounded-[2.5rem] overflow-hidden shadow-2xl">
                     <CardHeader className="p-6 sm:p-10">
                         <div className="flex flex-col items-center sm:flex-row sm:items-start gap-8">
                             <div className="flex flex-col items-center gap-4">
                                 <div className="relative">
                                     <ImageLightbox images={allPhotos} initialIndex={0} altText={displayName}>
-                                        <Avatar className="h-32 w-32 sm:h-40 sm:w-40 border-4 border-white/10 shadow-2xl">
+                                        <Avatar className="h-32 w-32 sm:h-40 sm:w-40 border-4 border-border shadow-2xl">
                                             <AvatarImage 
                                                 src={expert.photoUrl} 
                                                 alt={displayName} 
@@ -315,10 +315,10 @@ function ExpertProfileContent() {
                                         </Avatar>
                                     </ImageLightbox>
                                     {expert.isAvailable && (
-                                        <Badge className="absolute -top-2 -right-2 bg-green-500 text-white rounded-full px-3 py-1 text-[10px] font-black border-4 border-[#24262d] shadow-lg uppercase tracking-tighter">Available</Badge>
+                                        <Badge className="absolute -top-2 -right-2 bg-green-500 text-white rounded-full px-3 py-1 text-[10px] font-black border-4 border-card shadow-lg uppercase tracking-tighter">Available</Badge>
                                     )}
                                     {allPhotos.length > 0 && (
-                                        <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-[#1a1c23]/90 backdrop-blur-md border border-white/10 px-3 py-1 rounded-full text-[9px] font-black text-white/70 uppercase tracking-widest whitespace-nowrap shadow-xl">
+                                        <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-background/90 backdrop-blur-md border border-border px-3 py-1 rounded-full text-[9px] font-black text-foreground/70 uppercase tracking-widest whitespace-nowrap shadow-xl">
                                             Portfolio 1/{allPhotos.length}
                                         </div>
                                     )}
@@ -326,7 +326,7 @@ function ExpertProfileContent() {
                                 <div className="hidden sm:grid grid-cols-3 sm:grid-cols-4 gap-2">
                                     {allPhotos.slice(1).map((photo, index) => (
                                         <ImageLightbox key={index} images={allPhotos} initialIndex={index + 1} altText={`${displayName} Portfolio ${index + 1}`}>
-                                            <Avatar className="h-16 w-16 transition-all hover:scale-110 active:scale-95 shadow-md border-2 border-white/10">
+                                            <Avatar className="h-16 w-16 transition-all hover:scale-110 active:scale-95 shadow-md border-2 border-border">
                                                 <AvatarImage src={photo} className="object-cover" onContextMenu={(e) => e.preventDefault()} draggable={false} />
                                                 <AvatarFallback><ImageIcon className="h-4 w-4 opacity-30" /></AvatarFallback>
                                             </Avatar>
@@ -337,7 +337,7 @@ function ExpertProfileContent() {
                             <div className="flex-1 text-center sm:text-left">
                                 <div className="flex flex-col items-center sm:items-start gap-2 mb-4">
                                     <div className="flex items-center gap-3">
-                                        <h1 className="text-2xl sm:text-4xl font-black uppercase italic tracking-tight text-white">{displayName}</h1>
+                                        <h1 className="text-2xl sm:text-4xl font-black uppercase italic tracking-tight text-foreground">{displayName}</h1>
                                         <div className="flex items-center gap-1.5">
                                             {expert.verified && <CheckCircle2 className="h-5 w-5 text-green-500 fill-green-500/10" />}
                                             {expert.tier === 'Premier' && <Crown className="h-5 w-5 text-purple-500 fill-purple-500" />}
@@ -363,7 +363,7 @@ function ExpertProfileContent() {
                                         expert.role === 'Authorized Pro' ? "bg-emerald-600 shadow-emerald-600/20" :
                                         "bg-secondary"
                                     )}>{expert.role}</Badge>
-                                    {expert.category && <Badge variant="outline" className="bg-white/5 border border-white/10 text-muted-foreground font-bold uppercase text-[9px] tracking-widest"><List className="mr-1 h-3 w-3" />{expert.category}</Badge>}
+                                    {expert.category && <Badge variant="outline" className="bg-muted border border-border text-muted-foreground font-bold uppercase text-[9px] tracking-widest"><List className="mr-1 h-3 w-3" />{expert.category}</Badge>}
                                 </div>
                                 
                                 <div className="flex items-center justify-center sm:justify-start gap-4 mt-6">
@@ -379,84 +379,84 @@ function ExpertProfileContent() {
                         </div>
                     </CardHeader>
                     <CardContent className="px-6 sm:px-10">
-                        <Separator className="my-6 bg-white/5" />
+                        <Separator className="my-6 bg-border" />
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
                             <div className="flex items-start gap-3">
                                 <UserIcon className="h-5 w-5 text-orange-500 mt-1" />
-                                <p className="text-sm"><span className="font-black uppercase tracking-widest text-[10px] text-muted-foreground block mb-0.5">Gender</span> <span className="text-white font-bold">{expert.gender || 'Not specified'}</span></p>
+                                <p className="text-sm"><span className="font-black uppercase tracking-widest text-[10px] text-muted-foreground block mb-0.5">Gender</span> <span className="text-foreground font-bold">{expert.gender || 'Not specified'}</span></p>
                             </div>
                              <div className="flex items-start gap-3">
                                 <IndianRupee className="h-5 w-5 text-orange-500 mt-1" />
                                 <p className="text-sm">
                                   <span className="font-black uppercase tracking-widest text-[10px] text-muted-foreground block mb-0.5">Service Rate</span>
                                   {expert.pricingValue ? (
-                                    <span className="text-white font-bold">
+                                    <span className="text-foreground font-bold">
                                       {`₹${expert.pricingValue}`}
                                       {expert.pricingModel && <span className="text-[10px] font-medium opacity-50 ml-1">/ {expert.pricingModel}</span>}
                                     </span>
                                   ) : (
-                                    <span className="text-white font-bold">Not specified</span>
+                                    <span className="text-foreground font-bold">Not specified</span>
                                   )}
                                 </p>
                             </div>
                             <div className="flex items-start gap-3">
                                 <Calendar className="h-5 w-5 text-orange-500 mt-1" />
-                                <p className="text-sm"><span className="font-black uppercase tracking-widest text-[10px] text-muted-foreground block mb-0.5">Experience</span> <span className="text-white font-bold">{experienceString}</span></p>
+                                <p className="text-sm"><span className="font-black uppercase tracking-widest text-[10px] text-muted-foreground block mb-0.5">Experience</span> <span className="text-foreground font-bold">{experienceString}</span></p>
                             </div>
                             <div className="flex items-start gap-3">
                                 <MapPin className="h-5 w-5 text-orange-500 mt-1" />
-                                <p className="text-sm"><span className="font-black uppercase tracking-widest text-[10px] text-muted-foreground block mb-0.5">Location</span> <span className="text-white font-bold">{locationString || 'Not specified'}</span></p>
+                                <p className="text-sm"><span className="font-black uppercase tracking-widest text-[10px] text-muted-foreground block mb-0.5">Location</span> <span className="text-foreground font-bold">{locationString || 'Not specified'}</span></p>
                             </div>
                             <div className="flex items-start gap-3">
                                 <GraduationCap className="h-5 w-5 text-orange-500 mt-1" />
-                                <p className="text-sm"><span className="font-black uppercase tracking-widest text-[10px] text-muted-foreground block mb-0.5">Qualification</span> <span className="text-white font-bold">{expert.qualification || 'Not specified'}</span></p>
+                                <p className="text-sm"><span className="font-black uppercase tracking-widest text-[10px] text-muted-foreground block mb-0.5">Qualification</span> <span className="text-foreground font-bold">{expert.qualification || 'Not specified'}</span></p>
                             </div>
                             <div className="flex items-start gap-3">
                                 <School className="h-5 w-5 text-orange-500 mt-1" />
-                                <p className="text-sm"><span className="font-black uppercase tracking-widest text-[10px] text-muted-foreground block mb-0.5">College / Univ</span> <span className="text-white font-bold">{expert.collegeName || 'Not specified'}</span></p>
+                                <p className="text-sm"><span className="font-black uppercase tracking-widest text-[10px] text-muted-foreground block mb-0.5">College / Univ</span> <span className="text-foreground font-bold">{expert.collegeName || 'Not specified'}</span></p>
                             </div>
                              {(expert.role === 'Company' || expert.role === 'Authorized Pro') && (
                                 <>
                                     {expert.department && (
                                     <div className="flex items-start gap-3">
                                         <Building className="h-5 w-5 text-orange-500 mt-1" />
-                                        <p className="text-sm"><span className="font-black uppercase tracking-widest text-[10px] text-muted-foreground block mb-0.5">Department</span> <span className="text-white font-bold">{expert.department}</span></p>
+                                        <p className="text-sm"><span className="font-black uppercase tracking-widest text-[10px] text-muted-foreground block mb-0.5">Department</span> <span className="text-foreground font-bold">{expert.department}</span></p>
                                     </div>
                                     )}
                                     {expert.address && (
                                     <div className="flex items-start gap-3 md:col-span-2">
                                         <Home className="h-5 w-5 text-orange-500 mt-1 flex-shrink-0" />
-                                        <p className="text-sm"><span className="font-black uppercase tracking-widest text-[10px] text-muted-foreground block mb-0.5">Full Address</span> <span className="text-white font-bold">{expert.address}</span></p>
+                                        <p className="text-sm"><span className="font-black uppercase tracking-widest text-[10px] text-muted-foreground block mb-0.5">Full Address</span> <span className="text-foreground font-bold">{expert.address}</span></p>
                                     </div>
                                     )}
                                 </>
                             )}
                         </div>
-                        <Separator className="my-6 bg-white/5" />
+                        <Separator className="my-6 bg-border" />
                         <div className="space-y-8">
                             <div>
-                                <h4 className="font-black flex items-center gap-2 mb-3 text-lg uppercase italic text-white"><Info className="h-5 w-5 text-orange-500" /> About Me</h4>
+                                <h4 className="font-black flex items-center gap-2 mb-3 text-lg uppercase italic text-foreground"><Info className="h-5 w-5 text-orange-500" /> About Me</h4>
                                 <p className="text-muted-foreground text-sm pl-7 leading-relaxed font-medium">{expert.aboutMe || 'No information provided.'}</p>
                             </div>
                              <div>
-                                <h4 className="font-black flex items-center gap-2 mb-3 text-lg uppercase italic text-white"><PenSquare className="h-5 w-5 text-orange-500" /> Professional Dream</h4>
+                                <h4 className="font-black flex items-center gap-2 mb-3 text-lg uppercase italic text-foreground"><PenSquare className="h-5 w-5 text-orange-500" /> Professional Dream</h4>
                                 <p className="text-muted-foreground text-sm pl-7 leading-relaxed font-medium">{expert.aboutYourDream || 'No information provided.'}</p>
                             </div>
                              <div>
-                                <h4 className="font-black flex items-center gap-2 mb-3 text-lg uppercase italic text-white"><Factory className="h-5 w-5 text-orange-500" /> Key Projects</h4>
+                                <h4 className="font-black flex items-center gap-2 mb-3 text-lg uppercase italic text-foreground"><Factory className="h-5 w-5 text-orange-500" /> Key Projects</h4>
                                 <p className="text-muted-foreground text-sm pl-7 leading-relaxed font-medium">{expert.associatedProjectsName || 'No projects listed.'}</p>
                             </div>
                             <div>
-                                <h4 className="font-black flex items-center gap-2 mb-3 text-lg uppercase italic text-white"><Book className="h-5 w-5 text-orange-500" /> Technical Skills</h4>
+                                <h4 className="font-black flex items-center gap-2 mb-3 text-lg uppercase italic text-foreground"><Book className="h-5 w-5 text-orange-500" /> Technical Skills</h4>
                                 <div className="flex flex-wrap gap-2 pl-7">
                                     {expert.skills ? expert.skills.split(',').map((skill, index) => (
-                                        <Badge key={index} variant="secondary" className="bg-white/5 border border-white/10 text-white font-bold text-[10px] uppercase tracking-widest">{skill.trim()}</Badge>
+                                        <Badge key={index} variant="secondary" className="bg-muted border border-border text-foreground font-bold text-[10px] uppercase tracking-widest">{skill.trim()}</Badge>
                                     )) : <p className="text-sm text-muted-foreground">No skills specified.</p>}
                                 </div>
                             </div>
                         </div>
                     </CardContent>
-                    <CardFooter className="p-6 sm:p-10 mt-4 bg-white/5">
+                    <CardFooter className="p-6 sm:p-10 mt-4 bg-muted/20">
                         <div className="flex flex-col sm:flex-row w-full gap-2">
                             {canContact ? (
                                 <WhatsAppBookingDialog expert={expert}>
@@ -470,7 +470,7 @@ function ExpertProfileContent() {
                                         <Lock className="h-8 w-8 text-orange-500" />
                                     </div>
                                     <div>
-                                        <h4 className="font-black text-white text-xl tracking-tight uppercase italic">Identity Verification Required</h4>
+                                        <h4 className="font-black text-foreground text-xl tracking-tight uppercase italic">Identity Verification Required</h4>
                                         <p className="text-sm text-muted-foreground font-medium max-w-sm mt-1">
                                             {!user ? (
                                                 <>Please <Link href="/login" className="text-orange-500 underline underline-offset-4 hover:text-orange-400 font-bold">sign in</Link> to view contact details.</>
@@ -500,7 +500,7 @@ function ExpertProfileContent() {
 export default function ExpertProfilePage() {
     return (
         <Suspense fallback={
-            <div className="flex h-screen w-full items-center justify-center bg-[#1a1c23]">
+            <div className="flex h-screen w-full items-center justify-center bg-background">
                 <Loader2 className="h-10 w-10 animate-spin text-orange-500" />
             </div>
         }>

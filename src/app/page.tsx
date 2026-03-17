@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Suspense, useState, useEffect, useMemo } from 'react';
@@ -68,7 +67,6 @@ function HomePageContent() {
     const [moduleSearchQuery, setModuleSearchQuery] = useState('');
     const [mounted, setMounted] = useState(false);
     
-    // Carousel State
     const [api, setApi] = useState<CarouselApi>();
     const [current, setCurrent] = useState(0);
     const [count, setCount] = useState(0);
@@ -327,31 +325,31 @@ function HomePageContent() {
     }
 
     return (
-        <div className="min-h-screen bg-[#1a1c23]">
+        <div className="min-h-screen bg-background">
             <WelcomeRedirect />
             <div className="max-w-4xl mx-auto p-4 sm:p-8">
                 <header className="text-center py-6 sm:py-12">
                     <p className="text-[10px] font-black uppercase tracking-[0.4em] text-orange-500/60 mb-2">DIRECT PROFESSIONAL CONNECTIONS</p>
-                    <h1 className="text-4xl sm:text-7xl font-black text-white tracking-tighter uppercase italic">DriveGuru</h1>
+                    <h1 className="text-4xl sm:text-7xl font-black text-foreground tracking-tighter uppercase italic">DriveGuru</h1>
                 </header>
 
                 <main className="space-y-8 sm:space-y-12">
-                    <section className="bg-[#24262d] rounded-[3rem] p-8 sm:p-12 shadow-2xl overflow-hidden border border-white/5 relative">
+                    <section className="bg-card rounded-[3rem] p-8 sm:p-12 shadow-2xl overflow-hidden border border-border/50 relative">
                         <div className="absolute inset-0 opacity-[0.15] pointer-events-none" 
                              style={{ 
-                                backgroundImage: 'radial-gradient(#ffffff 1px, transparent 1px)', 
+                                backgroundImage: 'radial-gradient(var(--grid-dot) 1px, transparent 1px)', 
                                 backgroundSize: '32px 32px' 
                              }} />
                         
                         <div className="mb-10 relative z-10 text-center sm:text-left">
-                            <h2 className="text-3xl sm:text-5xl font-black text-white uppercase italic tracking-tight">TOP RATED EXPERTS</h2>
+                            <h2 className="text-3xl sm:text-5xl font-black text-foreground uppercase italic tracking-tight">TOP RATED EXPERTS</h2>
                             <p className="text-[10px] sm:text-xs font-black uppercase tracking-[0.3em] text-orange-500 mt-1">PREMIUM NETWORK SUGGESTIONS</p>
                         </div>
 
                         <div className="relative group mb-12 z-10">
                             <Input 
                                 placeholder="Filter suggestions..." 
-                                className="h-16 bg-[#1a1c23] border-none rounded-2xl text-base sm:text-xl placeholder:text-muted-foreground/30 focus-visible:ring-2 focus-visible:ring-orange-500 transition-all shadow-inner text-white font-bold px-8" 
+                                className="h-16 bg-background border-none rounded-2xl text-base sm:text-xl placeholder:text-muted-foreground/30 focus-visible:ring-2 focus-visible:ring-orange-500 transition-all shadow-inner text-foreground font-bold px-8" 
                                 value={moduleSearchQuery} 
                                 onChange={(e) => setModuleSearchQuery(e.target.value)} 
                             />
@@ -367,29 +365,29 @@ function HomePageContent() {
                                     {isLoadingTopExperts ? (
                                         [...Array(2)].map((_, i) => (
                                             <CarouselItem key={i} className="pl-4 basis-[85%] sm:basis-1/2">
-                                                <div className="w-full h-[450px] bg-[#1a1c23] rounded-[2.5rem] animate-pulse" />
+                                                <div className="w-full h-[450px] bg-background/50 rounded-[2.5rem] animate-pulse" />
                                             </CarouselItem>
                                         ))
                                     ) : filteredTopExperts.length > 0 ? (
                                         filteredTopExperts.map(expert => (
                                             <CarouselItem key={expert.id} className="pl-4 basis-[85%] sm:basis-1/2">
                                                 <div className="flex justify-center w-full h-full px-2">
-                                                    <Card className="w-full bg-[#1a1c23] border-none flex flex-col items-center p-8 sm:p-12 text-center rounded-[2.5rem] shadow-2xl relative overflow-hidden h-full min-h-[400px] group/card">
+                                                    <Card className="w-full bg-background border-none flex flex-col items-center p-8 sm:p-12 text-center rounded-[2.5rem] shadow-2xl relative overflow-hidden h-full min-h-[400px] group/card">
                                                         <div className="relative mb-8 sm:mb-10">
-                                                            <Avatar className="h-24 w-24 sm:h-32 sm:w-32 border-4 border-white/5 shadow-2xl group-hover/card:border-orange-500/30 transition-all">
+                                                            <Avatar className="h-24 w-24 sm:h-32 sm:w-32 border-4 border-border/50 shadow-2xl group-hover/card:border-orange-500/30 transition-all">
                                                                 <AvatarImage src={expert.photoUrl} className="object-cover" />
-                                                                <AvatarFallback className="bg-[#24262d] text-orange-500 text-3xl sm:text-4xl font-black">
+                                                                <AvatarFallback className="bg-muted text-orange-500 text-3xl sm:text-4xl font-black">
                                                                     {expert.firstName?.[0]}
                                                                 </AvatarFallback>
                                                             </Avatar>
                                                             {expert.verified && (
-                                                                <div className="absolute -bottom-1 -right-1 bg-green-500 p-2 rounded-full border-4 border-[#1a1c23] shadow-lg">
+                                                                <div className="absolute -bottom-1 -right-1 bg-green-500 p-2 rounded-full border-4 border-background shadow-lg">
                                                                     <UserCheck className="h-4 w-4 text-white" />
                                                                 </div>
                                                             )}
                                                         </div>
 
-                                                        <h3 className="font-black text-white text-2xl sm:text-3xl line-clamp-1 mb-2 tracking-tighter uppercase italic">
+                                                        <h3 className="font-black text-foreground text-2xl sm:text-3xl line-clamp-1 mb-2 tracking-tighter uppercase italic">
                                                             {truncateName(`${expert.firstName} ${expert.lastName}`)}
                                                         </h3>
                                                         <p className="text-[9px] sm:text-[10px] text-muted-foreground uppercase tracking-[0.4em] font-black mb-10 sm:mb-12">
@@ -408,18 +406,18 @@ function HomePageContent() {
                                         ))
                                     ) : (
                                         <CarouselItem className="basis-full">
-                                            <div className="flex flex-col items-center justify-center py-20 bg-white/5 rounded-[3rem] border-4 border-dashed border-white/10">
+                                            <div className="flex flex-col items-center justify-center py-20 bg-muted/20 rounded-[3rem] border-4 border-dashed border-border">
                                                 <Sparkles className="h-20 w-20 text-orange-500/10 mb-6 animate-pulse" />
-                                                <p className="text-xl font-black text-white/30 tracking-tight uppercase italic text-center">No Featured Experts Found</p>
+                                                <p className="text-xl font-black text-muted-foreground/30 tracking-tight uppercase italic text-center">No Featured Experts Found</p>
                                             </div>
                                         </CarouselItem>
                                     )}
                                 </CarouselContent>
                                 
                                 <div className="flex items-center justify-center gap-2 mt-8">
-                                    <CarouselPrevious className="static translate-y-0 h-10 w-10 bg-white/5 border-none hover:bg-white/10 text-white rounded-xl shadow-xl" />
+                                    <CarouselPrevious className="static translate-y-0 h-10 w-10 bg-muted border-none hover:bg-muted/80 text-foreground rounded-xl shadow-xl" />
                                     
-                                    <div className="flex gap-1.5 px-4 h-10 items-center bg-[#1a1c23]/50 rounded-2xl border border-white/5 shadow-inner">
+                                    <div className="flex gap-1.5 px-4 h-10 items-center bg-muted/50 rounded-2xl border border-border/50 shadow-inner">
                                         {Array.from({ length: count }).map((_, i) => (
                                             <div 
                                                 key={i} 
@@ -427,27 +425,27 @@ function HomePageContent() {
                                                     "h-1.5 rounded-full transition-all duration-300",
                                                     current === i + 1 
                                                         ? "w-6 bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.6)]" 
-                                                        : "w-1.5 bg-white/10"
+                                                        : "w-1.5 bg-foreground/10"
                                                 )} 
                                             />
                                         ))}
                                     </div>
 
-                                    <CarouselNext className="static translate-y-0 h-10 w-10 bg-white/5 border-none hover:bg-white/10 text-white rounded-xl shadow-xl" />
+                                    <CarouselNext className="static translate-y-0 h-10 w-10 bg-muted border-none hover:bg-muted/80 text-foreground rounded-xl shadow-xl" />
                                 </div>
                             </Carousel>
                         </div>
                     </section>
 
-                    <Card className="bg-[#24262d] border-none rounded-[3rem] p-8 sm:p-10 overflow-hidden shadow-2xl border border-white/5">
+                    <Card className="bg-card border-none rounded-[3rem] p-8 sm:p-10 overflow-hidden shadow-2xl border border-border/50">
                         <CardHeader className="p-0 pb-10">
                              <div className="flex items-center justify-between">
-                                <CardTitle className="flex items-center gap-4 text-3xl sm:text-4xl font-black text-white uppercase italic tracking-tighter">
+                                <CardTitle className="flex items-center gap-4 text-3xl sm:text-4xl font-black text-foreground uppercase italic tracking-tighter">
                                     <Sparkles className="text-orange-500 h-8 w-8 sm:h-10 sm:w-10" /> ENGINE
                                 </CardTitle>
-                                <div className="flex items-center space-x-4 bg-white/5 px-5 py-3 rounded-[1.5rem] border border-white/5 shadow-inner">
+                                <div className="flex items-center space-x-4 bg-muted/20 px-5 py-3 rounded-[1.5rem] border border-border shadow-inner">
                                     <Switch id="ai-mode" checked={useAiSearch} onCheckedChange={handleAiModeToggle} className="data-[state=checked]:bg-orange-500 scale-110" />
-                                    <Label htmlFor="ai-mode" className="flex items-center gap-3 font-black text-[10px] sm:text-[11px] uppercase tracking-[0.2em] cursor-pointer text-white">
+                                    <Label htmlFor="ai-mode" className="flex items-center gap-3 font-black text-[10px] sm:text-[11px] uppercase tracking-[0.2em] cursor-pointer text-foreground">
                                         <Bot className={cn("h-5 w-5 transition-colors", useAiSearch ? "text-orange-500" : "text-muted-foreground")} />
                                         AI SEARCH
                                     </Label>
@@ -458,12 +456,12 @@ function HomePageContent() {
                             <div className="flex flex-col gap-5">
                                 <Dialog>
                                     <DialogTrigger asChild>
-                                        <Button variant="outline" className="w-full h-20 justify-between text-left font-black uppercase text-[11px] sm:text-[12px] tracking-[0.2em] rounded-[1.5rem] bg-[#1a1c23] border-none shadow-inner px-8 text-white/70">
+                                        <Button variant="outline" className="w-full h-20 justify-between text-left font-black uppercase text-[11px] sm:text-[12px] tracking-[0.2em] rounded-[1.5rem] bg-background border-none shadow-inner px-8 text-foreground/70">
                                             <span className="flex-1">{userTypes.find(t => t.value === role)?.label || 'ALL USER TYPES'}</span>
                                             <ChevronDown className="ml-2 h-5 w-5 opacity-30" />
                                         </Button>
                                     </DialogTrigger>
-                                    <DialogContent className="rounded-[2.5rem] border-none bg-[#1a1c23] text-white p-8">
+                                    <DialogContent className="rounded-[2.5rem] border-none bg-background text-foreground p-8">
                                         <DialogHeader>
                                             <DialogTitle className="text-2xl font-black uppercase italic tracking-tight mb-4">Classification</DialogTitle>
                                         </DialogHeader>
@@ -472,7 +470,7 @@ function HomePageContent() {
                                                 <DialogTrigger key={type.value} asChild>
                                                     <Card 
                                                         className={cn(
-                                                            "cursor-pointer transition-all bg-white/5 border-none rounded-2xl shadow-lg hover:bg-white/10 h-20 flex items-center",
+                                                            "cursor-pointer transition-all bg-card border-border rounded-2xl shadow-lg hover:bg-muted/10 h-20 flex items-center",
                                                             role === type.value && !type.href ? "ring-2 ring-orange-500 bg-orange-500/10" : ""
                                                         )}
                                                         onClick={() => type.href ? router.push(type.href) : setRole(type.value)}
@@ -495,7 +493,7 @@ function HomePageContent() {
                                     <Input
                                         id="ai-search"
                                         placeholder={useAiSearch ? `e.g. 'verified plumber'` : `Search name, profession...`}
-                                        className="text-base sm:text-lg h-20 bg-[#1a1c23] border-none rounded-[1.5rem] focus-visible:ring-2 focus-visible:ring-orange-500 shadow-inner px-8 text-white font-bold placeholder:text-muted-foreground/40"
+                                        className="text-base sm:text-lg h-20 bg-background border-none rounded-[1.5rem] focus-visible:ring-2 focus-visible:ring-orange-500 shadow-inner px-8 text-foreground font-bold placeholder:text-muted-foreground/40"
                                         value={aiSearchQuery}
                                         onChange={(e) => setAiSearchQuery(e.target.value)}
                                         onKeyDown={(e) => e.key === 'Enter' && handleAiSearch()}
@@ -513,7 +511,7 @@ function HomePageContent() {
                         </CardContent>
                     </Card>
 
-                    <Card className="rounded-[3rem] p-10 sm:p-12 bg-[#24262d] border-none shadow-2xl relative overflow-hidden border border-white/5">
+                    <Card className="rounded-[3rem] p-10 sm:p-12 bg-card border-none shadow-2xl relative overflow-hidden border border-border/50">
                         <CardContent className="p-0 space-y-8">
                              <div className="space-y-3">
                                 <Label htmlFor="search" className="text-[10px] sm:text-[11px] font-black uppercase tracking-[0.3em] text-muted-foreground/60 ml-1">LOOKING FOR...</Label>
@@ -522,7 +520,7 @@ function HomePageContent() {
                                     <Input
                                         id="search"
                                         placeholder="Name, skill, or company..."
-                                        className="pl-14 h-16 bg-[#1a1c23] border-none rounded-2xl text-base sm:text-lg placeholder:text-muted-foreground shadow-inner font-bold text-white"
+                                        className="pl-14 h-16 bg-background border-none rounded-2xl text-base sm:text-lg placeholder:text-muted-foreground shadow-inner font-bold text-foreground"
                                         value={searchQuery}
                                         onChange={(e) => setSearchQuery(e.target.value)}
                                     />
@@ -538,9 +536,9 @@ function HomePageContent() {
                                     </Button>
                                 </div>
                                 <div className="grid grid-cols-1 gap-4">
-                                    <Input id="city" placeholder="City" className="bg-[#1a1c23] border-none h-16 rounded-2xl font-bold px-8 shadow-inner text-base text-white" value={city} onChange={(e) => setCity(e.target.value)} />
-                                    <Input id="state" placeholder="State" className="bg-[#1a1c23] border-none h-16 rounded-2xl font-bold px-8 shadow-inner text-base text-white" value={state} onChange={(e) => setState(e.target.value)} />
-                                    <Input id="pincode" placeholder="Pincode" className="bg-[#1a1c23] border-none h-16 rounded-2xl font-bold px-8 shadow-inner text-base text-white" value={pincode} onChange={(e) => setPincode(e.target.value)} />
+                                    <Input id="city" placeholder="City" className="bg-background border-none h-16 rounded-2xl font-bold px-8 shadow-inner text-base text-foreground" value={city} onChange={(e) => setCity(e.target.value)} />
+                                    <Input id="state" placeholder="State" className="bg-background border-none h-16 rounded-2xl font-bold px-8 shadow-inner text-base text-foreground" value={state} onChange={(e) => setState(e.target.value)} />
+                                    <Input id="pincode" placeholder="Pincode" className="bg-background border-none h-16 rounded-2xl font-bold px-8 shadow-inner text-base text-foreground" value={pincode} onChange={(e) => setPincode(e.target.value)} />
                                 </div>
                             </div>
 
@@ -551,22 +549,22 @@ function HomePageContent() {
                     </Card>
 
                     <div className="mt-16 text-center">
-                        <h2 className="text-3xl sm:text-5xl font-black text-white mb-2 uppercase italic tracking-tight">Industry Hub</h2>
+                        <h2 className="text-3xl sm:text-5xl font-black text-foreground mb-2 uppercase italic tracking-tight">Industry Hub</h2>
                         <p className="text-[10px] sm:text-xs font-black uppercase tracking-[0.3em] text-orange-500/50 mb-12">EXPLORE SPECIALIZATIONS</p>
                          {isAppConfigLoading ? (
                              <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                                <Skeleton className="h-32 w-full rounded-[2rem] bg-white/5" />
-                                <Skeleton className="h-32 w-full rounded-[2rem] bg-white/5" />
+                                <Skeleton className="h-32 w-full rounded-[2rem] bg-muted/20" />
+                                <Skeleton className="h-32 w-full rounded-[2rem] bg-muted/20" />
                             </div>
                          ) : homepageCategories.length > 0 ? (
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                                 {homepageCategories.map((category) => (
                                     <Link key={category.id} href={`/search?q=${encodeURIComponent(category.name)}`} passHref>
-                                        <Card className="flex flex-col items-center justify-center p-8 sm:p-12 h-full bg-[#24262d] border-none hover:bg-orange-500/10 hover:ring-2 hover:ring-orange-500/50 transition-all rounded-[2.5rem] group shadow-2xl">
-                                            <div className="p-5 sm:p-8 bg-[#1a1c23] rounded-[1.5rem] mb-6 shadow-inner group-hover:scale-110 transition-transform duration-500">
+                                        <Card className="flex flex-col items-center justify-center p-8 sm:p-12 h-full bg-card border-none hover:bg-orange-500/10 hover:ring-2 hover:ring-orange-500/50 transition-all rounded-[2.5rem] group shadow-2xl">
+                                            <div className="p-5 sm:p-8 bg-background rounded-[1.5rem] mb-6 shadow-inner group-hover:scale-110 transition-transform duration-500">
                                                 {getIcon(category.icon)}
                                             </div>
-                                            <p className="font-black text-[10px] sm:text-xs text-white group-hover:text-orange-500 transition-colors uppercase tracking-[0.2em]">{category.name}</p>
+                                            <p className="font-black text-[10px] sm:text-xs text-foreground group-hover:text-orange-500 transition-colors uppercase tracking-[0.2em]">{category.name}</p>
                                         </Card>
                                     </Link>
                                 ))}
@@ -578,7 +576,7 @@ function HomePageContent() {
                         <div className="mt-24">
                             <div className="flex flex-col sm:flex-row items-center justify-between mb-12 gap-8">
                                 <div className="text-center sm:text-left">
-                                    <h2 className="text-3xl sm:text-5xl font-black text-white uppercase italic tracking-tight">Talent Registry</h2>
+                                    <h2 className="text-3xl sm:text-5xl font-black text-foreground uppercase italic tracking-tight">Talent Registry</h2>
                                     <p className="text-[10px] sm:text-xs font-black uppercase tracking-[0.3em] text-orange-500/50 mt-1">NEW PROFESSIONALS</p>
                                 </div>
                                 <Button className="w-full sm:w-auto rounded-2xl bg-orange-500 hover:bg-orange-600 text-white font-black uppercase text-[11px] tracking-[0.2em] h-14 px-10 shadow-xl shadow-orange-500/20" asChild>
@@ -587,7 +585,7 @@ function HomePageContent() {
                             </div>
                             {isLoadingExperts ? (
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                                    <Skeleton className="h-56 w-full rounded-[3rem] bg-white/5" />
+                                    <Skeleton className="h-56 w-full rounded-[3rem] bg-muted/20" />
                                 </div>
                             ) : (
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
@@ -604,7 +602,7 @@ function HomePageContent() {
             </div>
 
             <Dialog open={isPremiumDialogOpen} onOpenChange={setIsPremiumDialogOpen}>
-                <DialogContent className="rounded-[3rem] border-none bg-[#1a1c23] p-12 text-white shadow-2xl">
+                <DialogContent className="rounded-[3rem] border-none bg-background p-12 text-foreground shadow-2xl">
                     <DialogHeader className="items-center text-center">
                         <div className="p-6 bg-orange-500/10 rounded-full w-fit mb-8 border border-orange-500/20 shadow-inner">
                             <Sparkles className="h-14 w-14 text-orange-500" />
@@ -618,7 +616,7 @@ function HomePageContent() {
                         <Button asChild className="w-full h-20 rounded-[1.5rem] bg-orange-500 hover:bg-orange-600 font-black text-lg sm:text-xl shadow-[0_15px_35px_-5px_rgba(249,115,22,0.4)] uppercase tracking-widest transition-all active:scale-95">
                             <Link href="/dashboard#plans">UPGRADE NOW</Link>
                         </Button>
-                        <Button variant="ghost" className="w-full h-12 rounded-xl text-muted-foreground hover:text-white font-bold uppercase text-[11px] tracking-[0.2em]" onClick={() => setIsPremiumDialogOpen(false)}>
+                        <Button variant="ghost" className="w-full h-12 rounded-xl text-muted-foreground hover:text-foreground font-bold uppercase text-[11px] tracking-[0.2em]" onClick={() => setIsPremiumDialogOpen(false)}>
                             NOT AT THIS TIME
                         </Button>
                     </DialogFooter>
@@ -631,7 +629,7 @@ function HomePageContent() {
 export default function TalentSearchPage() {
     return (
         <Suspense fallback={
-            <div className="flex h-screen w-full items-center justify-center bg-[#1a1c23]">
+            <div className="flex h-screen w-full items-center justify-center bg-background">
                 <Loader2 className="h-16 w-16 animate-spin text-orange-500" />
             </div>
         }>
