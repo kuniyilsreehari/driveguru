@@ -94,6 +94,7 @@ type ExpertUser = {
     tier?: 'Standard' | 'Premier' | 'Super Premier';
     referralCode?: string;
     referralPoints?: number;
+    referralCount?: number;
     referredByCode?: string | null;
     createdAt?: Timestamp;
     profession?: string;
@@ -486,18 +487,21 @@ export default function AdminDashboardPage() {
 
   const handleExportCSV = () => {
     if (!users) return;
-    const headers = ["ID", "First Name", "Last Name", "Email", "Phone Number", "Role", "Tier", "Verified", "Referral Code", "Points", "Joined"];
-    const rows = users.map(u => [
-        u.id,
-        u.firstName,
-        u.lastName,
-        u.email || '',
-        sanitizePhoneNumber(u.phoneNumber),
-        u.role,
-        u.tier || 'Standard',
-        u.verified ? 'Yes' : 'No',
-        u.referralCode || '',
+    const headers = ["S.No", "Expert Name", "Profession/Role", "Email", "Phone Number", "City", "State", "Pincode", "Tier", "Verified", "Referral Code", "Referral Points", "Referral Joins", "Joined Date"];
+    const rows = users.map((u, i) => [
+        i + 1,
+        `"${u.firstName} ${u.lastName}"`,
+        `"${u.profession || u.role}"`,
+        `"${u.email || ''}"`,
+        `"${sanitizePhoneNumber(u.phoneNumber)}"`,
+        `"${u.city || ''}"`,
+        `"${u.state || ''}"`,
+        `"${u.pincode || ''}"`,
+        `"${u.tier || 'Standard'}"`,
+        `"${u.verified ? 'Yes' : 'No'}"`,
+        `"${u.referralCode || ''}"`,
         u.referralPoints || 0,
+        u.referralCount || 0,
         u.createdAt ? format(u.createdAt.toDate(), 'dd-MM-yyyy') : '---'
     ]);
 
@@ -506,9 +510,9 @@ export default function AdminDashboardPage() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `experts-registry-${format(new Date(), 'yyyy-MM-dd')}.csv`;
+    link.download = `driveguru-expert-registry-${format(new Date(), 'yyyy-MM-dd')}.csv`;
     link.click();
-    toast({ title: "CSV Exported" });
+    toast({ title: "Registry Exported", description: "Excel compatible file is ready." });
   };
 
   const handleImportCSV = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -634,7 +638,7 @@ export default function AdminDashboardPage() {
                                         ))}
                                     </div>
                                     <Button variant="outline" size="sm" className="rounded-xl border-white/10 h-9 font-black uppercase text-[10px]" onClick={handleExportCSV}>
-                                        <Download className="mr-2 h-3.5 w-3.5" /> Export List
+                                        <Download className="mr-2 h-3.5 w-3.5" /> Export Registry (Excel/CSV)
                                     </Button>
                                 </div>
 
@@ -673,7 +677,7 @@ export default function AdminDashboardPage() {
                                             return paginated.map((u, index) => {
                                                 const globalIndex = (currentPage - 1) * ITEMS_PER_PAGE + index + 1;
                                                 return (
-                                                    <TableRow key={u.id} className="hover:bg-white/5 border-white/5 h-20">
+                                                    <TableRow key={u.id} className="hover:bg-white/5 border-white/5 h-24">
                                                         <TableCell className="text-center font-bold text-muted-foreground text-xs">{globalIndex}</TableCell>
                                                         <TableCell>
                                                             <div className="flex items-center gap-3">
@@ -687,6 +691,12 @@ export default function AdminDashboardPage() {
                                                                         {!u.verified && <ShieldAlert className="h-3.5 w-3.5 text-orange-500/40" />}
                                                                     </div>
                                                                     <div className="text-[10px] text-muted-foreground uppercase tracking-widest truncate max-w-[150px]">{u.profession || u.role}</div>
+                                                                    <div className="flex items-center gap-1.5 mt-1 bg-orange-500/5 w-fit px-1.5 py-0.5 rounded-md border border-orange-500/10">
+                                                                        <Gift className="h-2.5 w-2.5 text-orange-500" />
+                                                                        <span className="text-[9px] font-black text-orange-500 uppercase tracking-tighter">{u.referralPoints || 0} PTS</span>
+                                                                        <span className="text-[8px] text-orange-500/40">|</span>
+                                                                        <span className="text-[9px] font-black text-white/60 uppercase tracking-tighter">{u.referralCount || 0} JOINS</span>
+                                                                    </div>
                                                                 </div>
                                                             </div>
                                                         </TableCell>
@@ -1202,7 +1212,7 @@ export default function AdminDashboardPage() {
                                 {isImporting ? <Loader className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />} Select CSV to Import
                             </Button>
                             <Button className="h-12 rounded-xl bg-orange-500 hover:bg-orange-600 font-black" onClick={handleExportCSV}>
-                                <Download className="mr-2 h-4 w-4" /> Export Registry (CSV)
+                                <Download className="mr-2 h-4 w-4" /> Export Registry (Excel/CSV)
                             </Button>
                         </div>
                     </CardContent>
