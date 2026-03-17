@@ -195,7 +195,7 @@ export default function AdminDashboardPage() {
   const [centralContactPhone, setCentralContactPhone] = useState("");
   const [isRecentProfessionalsEnabled, setIsRecentProfessionalsEnabled] = useState(true);
   const [publicApiKey, setPublicApiKey] = useState("");
-  const [referralPoints, setReferralPoints] = useState(0); // Remove default 100
+  const [referralPoints, setReferralPoints] = useState(0); 
   const [homepageCategories, setHomepageCategories] = useState<HomepageCategory[]>([]);
   const [departments, setDepartments] = useState<string[]>([]);
   const [introVideoUrl, setIntroVideoUrl] = useState("");
