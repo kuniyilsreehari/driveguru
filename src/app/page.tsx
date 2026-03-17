@@ -1,6 +1,7 @@
+
 'use client';
 
-import { Suspense, useState, useEffect, useMemo } from 'react';
+import { Suspense, useState, useEffect, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Briefcase, Building, ChevronDown, LocateIcon, MapPin, Search, Loader2, UserCheck, Crown, Sparkles, Bot, Lock, Users, User, Check, GraduationCap, UserPlus, ChevronLeft, ChevronRight, Filter, ShieldAlert } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -65,6 +66,7 @@ function HomePageContent() {
     const [mounted, setMounted] = useState(false);
     
     const { user, isUserLoading } = useUser();
+    const carouselRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         setMounted(true);
@@ -293,6 +295,14 @@ function HomePageContent() {
         }
     }
 
+    const scrollCarousel = (direction: 'left' | 'right') => {
+        if (carouselRef.current) {
+            const { scrollLeft, clientWidth } = carouselRef.current;
+            const scrollTo = direction === 'left' ? scrollLeft - clientWidth : scrollLeft + clientWidth;
+            carouselRef.current.scrollTo({ left: scrollTo, behavior: 'smooth' });
+        }
+    };
+
     const getIcon = (name: string) => {
         const Icon = (LucideIcons as any)[name];
         return Icon ? <Icon className="w-8 h-8 text-primary" /> : <Briefcase className="w-8 h-8 text-primary" />;
@@ -318,7 +328,7 @@ function HomePageContent() {
                 </header>
 
                 <main className="space-y-8 sm:space-y-12">
-                    <section className="bg-[#24262d] rounded-[2rem] p-6 sm:p-8 shadow-2xl overflow-hidden border border-white/5">
+                    <section className="bg-[#24262d] rounded-[2rem] p-6 sm:p-8 shadow-2xl overflow-hidden border border-white/5 relative">
                         <div className="mb-6">
                             <h2 className="text-lg sm:text-2xl font-black text-white uppercase italic">Top Rated Experts</h2>
                             <p className="text-[8px] sm:text-[10px] font-black uppercase tracking-widest text-muted-foreground">PREMIUM NETWORK SUGGESTIONS</p>
@@ -334,8 +344,31 @@ function HomePageContent() {
                             />
                         </div>
 
-                        <div className="relative">
-                            <div className="flex gap-4 sm:gap-6 overflow-x-auto pb-6 pt-2 scrollbar-hide snap-x px-1">
+                        <div className="relative group/carousel">
+                            {/* Desktop Carousel Controls */}
+                            <div className="hidden lg:block">
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 z-20 h-12 w-12 rounded-full bg-[#1a1c23]/80 backdrop-blur-md border border-white/10 text-white hover:bg-orange-500 hover:text-white transition-all opacity-0 group-hover/carousel:opacity-100 shadow-2xl"
+                                    onClick={() => scrollCarousel('left')}
+                                >
+                                    <ChevronLeft className="h-6 w-6" />
+                                </Button>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 z-20 h-12 w-12 rounded-full bg-[#1a1c23]/80 backdrop-blur-md border border-white/10 text-white hover:bg-orange-500 hover:text-white transition-all opacity-0 group-hover/carousel:opacity-100 shadow-2xl"
+                                    onClick={() => scrollCarousel('right')}
+                                >
+                                    <ChevronRight className="h-6 w-6" />
+                                </Button>
+                            </div>
+
+                            <div 
+                                ref={carouselRef}
+                                className="flex gap-4 sm:gap-6 overflow-x-auto pb-6 pt-2 scrollbar-hide snap-x px-1"
+                            >
                                 {isLoadingTopExperts ? (
                                     [...Array(4)].map((_, i) => (
                                         <div key={i} className="min-w-[200px] max-w-[200px] h-[340px] bg-[#1a1c23] rounded-[2rem] animate-pulse" />
