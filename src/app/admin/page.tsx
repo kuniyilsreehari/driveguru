@@ -52,7 +52,7 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/tabs';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { format, eachMonthOfInterval, subMonths, isSameMonth } from 'date-fns';
 import { exportAllData } from '@/ai/flows/export-data-flow';
@@ -853,7 +853,7 @@ export default function AdminDashboardPage() {
                                 <Trophy className="h-6 w-6 text-orange-500" />
                                 <div>
                                     <CardTitle className="text-2xl font-black uppercase italic">Professional Rankings</CardTitle>
-                                    <CardDescription className="text-muted-foreground">Experts ranked by Multiplication Score (Points × Joins).</CardDescription>
+                                    <CardDescription className="text-muted-foreground">Experts ranked by multiplication result (PTS × JOINS).</CardDescription>
                                 </div>
                             </div>
                         </CardHeader>
@@ -904,7 +904,7 @@ export default function AdminDashboardPage() {
                                                             <span className="text-2xl font-black text-orange-500 italic tracking-tighter">{influenceScore}</span>
                                                             <div className="flex items-center gap-1 opacity-30">
                                                                 <Zap className="h-2 w-2 text-orange-500" />
-                                                                <span className="text-[8px] font-black text-white uppercase">Product Result</span>
+                                                                <span className="text-[8px] font-black text-white uppercase">Multiplication Result</span>
                                                             </div>
                                                         </div>
                                                     </TableCell>
