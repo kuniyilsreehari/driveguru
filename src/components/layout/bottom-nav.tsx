@@ -1,6 +1,7 @@
 
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Home, Rss, Briefcase, Users, Search, BookOpen } from 'lucide-react';
@@ -17,6 +18,15 @@ const navItems = [
 
 export function BottomNav() {
   const pathname = usePathname();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return null;
+  }
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-[60] block sm:hidden bg-[#1a1c23]/95 backdrop-blur-xl border-t border-white/5 pb-safe">
