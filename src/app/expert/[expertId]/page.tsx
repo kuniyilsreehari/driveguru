@@ -314,11 +314,6 @@ function ExpertProfileContent() {
                                             <AvatarFallback className="bg-primary/10 text-primary font-black text-2xl">{getInitials(expert.firstName, expert.lastName)}</AvatarFallback>
                                         </Avatar>
                                     </ImageLightbox>
-                                    {expert.isAvailable && (
-                                        <Badge className="absolute -top-4 -left-4 bg-green-500 text-white rounded-full px-3 py-1 text-[9px] font-black border-4 border-background shadow-lg uppercase tracking-tighter animate-in fade-in zoom-in duration-500">
-                                            Available
-                                        </Badge>
-                                    )}
                                     {allPhotos.length > 0 && (
                                         <div className="absolute -bottom-5 left-1/2 -translate-x-1/2 bg-background/90 backdrop-blur-md border border-border px-3 py-1 rounded-full text-[8px] font-black text-foreground/70 uppercase tracking-[0.2em] whitespace-nowrap shadow-xl">
                                             PORTFOLIO 1/{allPhotos.length}
@@ -346,9 +341,16 @@ function ExpertProfileContent() {
                                             {expert.tier === 'Super Premier' && <Sparkles className="h-5 w-5 text-blue-500 fill-blue-500" />}
                                         </div>
                                     </div>
-                                    <Badge variant="outline" className="font-mono text-[10px] uppercase border-primary/30 bg-primary/5 text-primary px-2">
-                                        <Fingerprint className="h-3 w-3 mr-1" /> {dgId}
-                                    </Badge>
+                                    <div className="flex items-center justify-center sm:justify-start gap-2">
+                                        <Badge variant="outline" className="font-mono text-[10px] uppercase border-primary/30 bg-primary/5 text-primary px-2">
+                                            <Fingerprint className="h-3 w-3 mr-1" /> {dgId}
+                                        </Badge>
+                                        {expert.isAvailable && (
+                                            <Badge className="bg-green-500 text-white rounded-full px-2 py-0.5 text-[9px] font-black border-none uppercase tracking-tighter shadow-lg shadow-green-500/20 animate-in fade-in zoom-in duration-500">
+                                                Available
+                                            </Badge>
+                                        )}
+                                    </div>
                                 </div>
                                 
                                 {expert.profession && <p className="text-sm sm:text-lg font-black text-orange-500 uppercase tracking-tighter mb-3">{expert.profession}</p>}
