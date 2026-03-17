@@ -641,8 +641,8 @@ export default function AdminDashboardPage() {
                             <div className="flex items-center gap-3">
                                 <Users className="h-6 w-6 text-orange-500" />
                                 <div>
-                                    <DialogTitle className="text-2xl font-black uppercase italic">Expert Registry</DialogTitle>
-                                    <DialogDescription className="text-muted-foreground">Manage all registered professionals.</DialogDescription>
+                                    <CardTitle className="text-2xl font-black uppercase italic">Expert Registry</CardTitle>
+                                    <CardDescription className="text-muted-foreground">Manage all registered professionals.</CardDescription>
                                 </div>
                             </div>
                         </CardHeader>
@@ -838,8 +838,8 @@ export default function AdminDashboardPage() {
                             <div className="flex items-center gap-3">
                                 <Trophy className="h-6 w-6 text-orange-500" />
                                 <div>
-                                    <DialogTitle className="text-2xl font-black uppercase italic">Referral Rankings</DialogTitle>
-                                    <DialogDescription className="text-muted-foreground">Experts with the highest engagement points.</DialogDescription>
+                                    <CardTitle className="text-2xl font-black uppercase italic">Referral Rankings</CardTitle>
+                                    <CardDescription className="text-muted-foreground">Experts with the highest engagement points.</CardDescription>
                                 </div>
                             </div>
                         </CardHeader>
@@ -894,8 +894,7 @@ export default function AdminDashboardPage() {
                                     <Button variant="outline" size="sm" onClick={() => setRankingPage(prev => Math.max(prev - 1, 1))} disabled={rankingPage === 1} className="rounded-xl h-9 border-white/10 bg-transparent text-white font-bold"><ChevronLeft className="h-4 w-4" /></Button>
                                     <Button variant="outline" size="sm" onClick={() => setRankingPage(prev => prev + 1)} disabled={rankingPage >= Math.ceil(rankingUsers.length / ITEMS_PER_PAGE)} className="rounded-xl h-9 border-white/10 bg-transparent text-white font-bold"><ChevronRight className="h-4 w-4" /></Button>
                                 </div>
-                            </div>
-                        </CardContent>
+                            </CardContent>
                     </Card>
                 </TabsContent>
 
@@ -906,8 +905,8 @@ export default function AdminDashboardPage() {
                                 <div className="flex items-center gap-3">
                                     <Briefcase className="h-6 w-6 text-orange-500" />
                                     <div>
-                                        <DialogTitle className="text-2xl font-black uppercase italic">Platform Openings</DialogTitle>
-                                        <DialogDescription className="text-muted-foreground">Review and moderate job vacancies.</DialogDescription>
+                                        <CardTitle className="text-2xl font-black uppercase italic">Platform Openings</CardTitle>
+                                        <CardDescription className="text-muted-foreground">Review and moderate job vacancies.</CardDescription>
                                     </div>
                                 </div>
                                 <Button onClick={() => { setSelectedVacancy(null); setIsVacancyDialogOpen(true); }} className="rounded-xl font-black bg-orange-500 hover:bg-orange-600 shadow-lg shadow-orange-500/20"><PlusCircle className="mr-2 h-4 w-4" /> Post Admin Vacancy</Button>
@@ -972,8 +971,8 @@ export default function AdminDashboardPage() {
                             <div className="flex items-center gap-3">
                                 <IndianRupee className="h-6 w-6 text-orange-500" />
                                 <div>
-                                    <DialogTitle className="text-2xl font-black uppercase italic">Transaction Ledger</DialogTitle>
-                                    <DialogDescription className="text-muted-foreground">Monitor revenue and payment attempts.</DialogDescription>
+                                    <CardTitle className="text-2xl font-black uppercase italic">Transaction Ledger</CardTitle>
+                                    <CardDescription className="text-muted-foreground">Monitor revenue and payment attempts.</CardDescription>
                                 </div>
                             </div>
                         </CardHeader>
@@ -1028,8 +1027,8 @@ export default function AdminDashboardPage() {
                             <div className="flex items-center gap-3">
                                 <Rss className="h-6 w-6 text-orange-500" />
                                 <div>
-                                    <DialogTitle className="text-2xl font-black uppercase italic">Feed Moderation</DialogTitle>
-                                    <DialogDescription className="text-muted-foreground">Monitor and remove community updates.</DialogDescription>
+                                    <CardTitle className="text-2xl font-black uppercase italic">Feed Moderation</CardTitle>
+                                    <CardDescription className="text-muted-foreground">Monitor and remove community updates.</CardDescription>
                                 </div>
                             </div>
                         </CardHeader>
@@ -1082,26 +1081,26 @@ export default function AdminDashboardPage() {
                 <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
                     <Card className="border-none bg-[#24262d] shadow-xl">
                         <CardHeader className="pb-2">
-                            <DialogDescription className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2"><TrendingUp className="h-3 w-3 text-green-500" /> Platform Revenue</DialogDescription>
-                            <DialogTitle className="text-3xl font-black text-orange-500">₹{reportData.totalRevenue.toLocaleString()}</DialogTitle>
+                            <CardDescription className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2"><TrendingUp className="h-3 w-3 text-green-500" /> Platform Revenue</CardDescription>
+                            <CardTitle className="text-3xl font-black text-orange-500">₹{reportData.totalRevenue.toLocaleString()}</CardTitle>
                         </CardHeader>
                     </Card>
                     <Card className="border-none bg-[#24262d] shadow-xl">
                         <CardHeader className="pb-2">
-                            <DialogDescription className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2"><Activity className="h-3 w-3 text-blue-500" /> Verification Rate</DialogDescription>
-                            <DialogTitle className="text-3xl font-black">{stats.total > 0 ? Math.round((stats.verified / stats.total) * 100) : 0}%</DialogTitle>
+                            <CardDescription className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2"><Activity className="h-3 w-3 text-blue-500" /> Verification Rate</CardDescription>
+                            <CardTitle className="text-3xl font-black">{stats.total > 0 ? Math.round((stats.verified / stats.total) * 100) : 0}%</CardTitle>
                         </CardHeader>
                     </Card>
                     <Card className="border-none bg-[#24262d] shadow-xl">
                         <CardHeader className="pb-2">
-                            <DialogDescription className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2"><Crown className="h-3 w-3 text-purple-500" /> Premium Users</DialogDescription>
-                            <DialogTitle className="text-3xl font-black">{stats.premier + stats.super}</DialogTitle>
+                            <CardDescription className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2"><Crown className="h-3 w-3 text-purple-500" /> Premium Users</CardDescription>
+                            <CardTitle className="text-3xl font-black">{stats.premier + stats.super}</CardTitle>
                         </CardHeader>
                     </Card>
                     <Card className="border-none bg-[#24262d] shadow-xl">
                         <CardHeader className="pb-2">
-                            <DialogDescription className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2"><MessageSquare className="h-3 w-3 text-orange-500" /> Community Content</DialogDescription>
-                            <DialogTitle className="text-3xl font-black">{reportData.totalPosts} Posts</DialogTitle>
+                            <CardDescription className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2"><MessageSquare className="h-3 w-3 text-orange-500" /> Community Content</CardDescription>
+                            <CardTitle className="text-3xl font-black">{reportData.totalPosts} Posts</CardTitle>
                         </CardHeader>
                     </Card>
                 </div>
@@ -1109,7 +1108,7 @@ export default function AdminDashboardPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     <Card className="border-none bg-[#24262d] rounded-2xl overflow-hidden shadow-2xl">
                         <CardHeader className="bg-white/5 border-b border-white/5">
-                            <DialogTitle className="text-xl font-black flex items-center gap-2 uppercase italic"><TrendingUp className="h-5 w-5 text-orange-500" /> Expert Growth</DialogTitle>
+                            <CardTitle className="text-xl font-black flex items-center gap-2 uppercase italic"><TrendingUp className="h-5 w-5 text-orange-500" /> Expert Growth</CardTitle>
                         </CardHeader>
                         <CardContent className="pt-8 h-[300px]">
                             <ResponsiveContainer width="100%" height="100%">
@@ -1126,7 +1125,7 @@ export default function AdminDashboardPage() {
 
                     <Card className="border-none bg-[#24262d] rounded-2xl overflow-hidden shadow-2xl">
                         <CardHeader className="bg-white/5 border-b border-white/5">
-                            <DialogTitle className="text-xl font-black flex items-center gap-2 uppercase italic"><PieChart className="h-5 w-5 text-orange-500" /> Revenue Split</DialogTitle>
+                            <CardTitle className="text-xl font-black flex items-center gap-2 uppercase italic"><PieChart className="h-5 w-5 text-orange-500" /> Revenue Split</CardTitle>
                         </CardHeader>
                         <CardContent className="pt-8 h-[300px] flex items-center">
                             <div className="w-1/2 h-full">
@@ -1164,9 +1163,9 @@ export default function AdminDashboardPage() {
               <CardHeader className="bg-white/5 border-b border-white/5 pb-6">
                 <div className="flex items-center gap-3">
                     <IndianRupee className="h-6 w-6 text-orange-500" />
-                    <DialogTitle className="text-2xl font-black uppercase italic">Payment Architecture</DialogTitle>
+                    <CardTitle className="text-2xl font-black uppercase italic">Payment Architecture</CardTitle>
                 </div>
-                <DialogDescription className="text-muted-foreground">Choose between automated API processing or simplified static links.</DialogDescription>
+                <CardDescription className="text-muted-foreground">Choose between automated API processing or simplified static links.</CardDescription>
               </CardHeader>
               <CardContent className="p-6 space-y-8">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -1240,9 +1239,9 @@ export default function AdminDashboardPage() {
                     <CardHeader className="bg-white/5 border-b border-white/5 pb-6">
                         <div className="flex items-center gap-3">
                             <Layout className="h-6 w-6 text-orange-500" />
-                            <DialogTitle className="text-xl font-black uppercase italic">Homepage Modules</DialogTitle>
+                            <CardTitle className="text-xl font-black uppercase italic">Homepage Modules</CardTitle>
                         </div>
-                        <DialogDescription className="text-muted-foreground">Manage the visibility of core sections.</DialogDescription>
+                        <CardDescription className="text-muted-foreground">Manage the visibility of core sections.</CardDescription>
                     </CardHeader>
                     <CardContent className="p-6 space-y-6">
                         <div className="space-y-2">
@@ -1263,9 +1262,9 @@ export default function AdminDashboardPage() {
                     <CardHeader className="bg-white/5 border-b border-white/5 pb-6">
                         <div className="flex items-center gap-3">
                             <Gift className="h-6 w-6 text-orange-500" />
-                            <DialogTitle className="text-xl font-black uppercase italic">Growth Engine</DialogTitle>
+                            <CardTitle className="text-xl font-black uppercase italic">Growth Engine</CardTitle>
                         </div>
-                        <DialogDescription className="text-muted-foreground">Configure referral rewards and incentives.</DialogDescription>
+                        <CardDescription className="text-muted-foreground">Configure referral rewards and incentives.</CardDescription>
                     </CardHeader>
                     <CardContent className="p-6 space-y-6">
                         <div className="space-y-2">
@@ -1282,7 +1281,7 @@ export default function AdminDashboardPage() {
                     <CardHeader className="bg-white/5 border-b border-white/5 pb-6">
                         <div className="flex items-center gap-3">
                             <Megaphone className="h-6 w-6 text-orange-500" />
-                            <DialogTitle className="text-xl font-black uppercase italic">Announcements</DialogTitle>
+                            <CardTitle className="text-xl font-black uppercase italic">Announcements</CardTitle>
                         </div>
                     </CardHeader>
                     <CardContent className="p-6 space-y-4">
@@ -1298,7 +1297,7 @@ export default function AdminDashboardPage() {
                     <CardHeader className="bg-white/5 border-b border-white/5 pb-6">
                         <div className="flex items-center gap-3">
                             <Video className="h-6 w-6 text-orange-500" />
-                            <DialogTitle className="text-xl font-black uppercase italic">Video Resources</DialogTitle>
+                            <CardTitle className="text-xl font-black uppercase italic">Video Resources</CardTitle>
                         </div>
                     </CardHeader>
                     <CardContent className="p-6 space-y-4">
@@ -1316,7 +1315,7 @@ export default function AdminDashboardPage() {
                     <CardHeader className="bg-white/5 border-b border-white/5 pb-6">
                         <div className="flex items-center gap-3">
                             <Phone className="h-6 w-6 text-orange-500" />
-                            <DialogTitle className="text-xl font-black uppercase italic">Central Support</DialogTitle>
+                            <CardTitle className="text-xl font-black uppercase italic">Central Support</CardTitle>
                         </div>
                     </CardHeader>
                     <CardContent className="p-6 space-y-4">
@@ -1330,7 +1329,7 @@ export default function AdminDashboardPage() {
           <TabsContent value="data" className="mt-0 space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <Card className="border-none bg-[#24262d] rounded-2xl overflow-hidden shadow-xl">
-                    <CardHeader className="bg-white/5 border-b border-white/5 pb-6"><DialogTitle className="font-black uppercase italic">CSV Actions</DialogTitle></CardHeader>
+                    <CardHeader className="bg-white/5 border-b border-white/5 pb-6"><CardTitle className="font-black uppercase italic">CSV Actions</CardTitle></CardHeader>
                     <CardContent className="p-6 space-y-4">
                         <div className="flex flex-col gap-3">
                             <input type="file" accept=".csv" className="hidden" id="csv-import-input" onChange={handleImportCSV} />
@@ -1345,7 +1344,7 @@ export default function AdminDashboardPage() {
                 </Card>
 
                 <Card className="border-none bg-[#24262d] rounded-2xl overflow-hidden shadow-xl">
-                    <CardHeader className="bg-white/5 border-b border-white/5 pb-6"><DialogTitle className="font-black uppercase italic">System Backup</DialogTitle></CardHeader>
+                    <CardHeader className="bg-white/5 border-b border-white/5 pb-6"><CardTitle className="font-black uppercase italic">System Backup</CardTitle></CardHeader>
                     <CardContent className="p-6">
                         <Button className="w-full h-12 rounded-xl bg-orange-500 hover:bg-orange-600 font-black" onClick={handleExportJSON} disabled={isExporting}>
                             {isExporting ? <Loader className="animate-spin mr-2 h-4 w-4" /> : <HardDriveDownload className="mr-2 h-4 w-4" />} Full Data Backup (JSON)
@@ -1355,7 +1354,7 @@ export default function AdminDashboardPage() {
             </div>
 
             <Card className="border-none bg-[#24262d] rounded-2xl overflow-hidden shadow-xl">
-              <CardHeader className="bg-white/5 border-b border-white/5 pb-6"><DialogTitle className="font-black uppercase italic">Manual User Provisioning</DialogTitle></CardHeader>
+              <CardHeader className="bg-white/5 border-b border-white/5 pb-6"><CardTitle className="font-black uppercase italic">Manual User Provisioning</CardTitle></CardHeader>
               <CardContent className="p-6"><CreateUserForm onSuccess={() => toast({ title: "User created" })} /></CardContent>
             </Card>
           </TabsContent>
