@@ -8,8 +8,17 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { User as UserIcon, Mail, Lock, Eye, EyeOff, Briefcase, MapPin, Phone, LocateIcon, Loader2, Building, Home, ArrowRight, MessageSquare, Gift } from "lucide-react";
-import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, getAdditionalUserInfo, RecaptchaVerifier, signInWithPhoneNumber } from 'firebase/auth';
+import { User as UserIcon, Mail, Lock, Eye, EyeOff, Briefcase, MapPin, Phone, LocateIcon, Loader2, Building, Home, ArrowRight, MessageSquare, Gift, Sparkles } from "lucide-react";
+import { 
+  createUserWithEmailAndPassword, 
+  GoogleAuthProvider, 
+  signInWithPopup, 
+  signInWithRedirect,
+  getRedirectResult,
+  getAdditionalUserInfo, 
+  RecaptchaVerifier, 
+  signInWithPhoneNumber 
+} from 'firebase/auth';
 import { doc, serverTimestamp, collection, query, where, getDocs, limit } from 'firebase/firestore';
 
 import { Button } from "@/components/ui/button";
@@ -183,6 +192,45 @@ export function RegistrationForm() {
     defaultValues: { otp: "" },
   });
 
+  // Handle Redirect Result
+  useEffect(() => {
+    if (auth && firestore) {
+        getRedirectResult(auth).then(async (result) => {
+            if (result) {
+                const additionalInfo = getAdditionalUserInfo(result);
+                if (additionalInfo?.isNewUser) {
+                    const userDocRef = doc(firestore, "users", result.user.uid);
+                    const nameParts = result.user.displayName?.split(' ') || [];
+                    const userData = {
+                        id: result.user.uid,
+                        firstName: nameParts[0] || 'New',
+                        lastName: nameParts.slice(1).join(' ') || 'User',
+                        email: result.user.email,
+                        photoUrl: result.user.photoURL || '',
+                        role: 'Freelancer',
+                        verified: false,
+                        isAvailable: true,
+                        referralCode: Math.random().toString(36).substring(2, 10).toUpperCase(),
+                        referralPoints: 0,
+                        createdAt: serverTimestamp(),
+                    };
+                    setDocumentNonBlocking(userDocRef, userData, { merge: true });
+                }
+            }
+        }).catch((error) => {
+            if (error.code === 'auth/unauthorized-domain') {
+                toast({
+                    variant: "destructive",
+                    title: "Domain Not Authorized",
+                    description: "Please add driveguru.in to Authorized Domains in Firebase Console.",
+                });
+            } else if (error.code !== 'auth/popup-closed-by-user') {
+                console.error("Redirect auth error:", error);
+            }
+        });
+    }
+  }, [auth, firestore, toast]);
+
   useEffect(() => {
     if (view === 'phone' && auth && recaptchaContainerRef.current) {
         if (!(window as any).recaptchaVerifier) {
@@ -315,52 +363,54 @@ export function RegistrationForm() {
     if (!auth || !firestore) return;
     const provider = new GoogleAuthProvider();
     try {
-        const result = await signInWithPopup(auth, provider);
-        const user = result.user;
-        const additionalInfo = getAdditionalUserInfo(result);
-
-        if (additionalInfo?.isNewUser) {
-            const userDocRef = doc(firestore, "users", user.uid);
-            const nameParts = user.displayName?.split(' ') || [];
-            const firstName = nameParts[0] || 'New';
-            const lastName = nameParts.slice(1).join(' ') || 'User';
-
-            const userData = {
-                id: user.uid,
-                firstName: firstName,
-                lastName: lastName,
-                email: user.email,
-                photoUrl: user.photoURL || '',
-                role: 'Freelancer',
-                verified: false,
-                isAvailable: true,
-                referralCode: generateReferralCode(),
-                referralPoints: 0,
-                createdAt: serverTimestamp(),
-            };
-            setDocumentNonBlocking(userDocRef, userData, { merge: true });
-            toast({
-                title: "Welcome!",
-                description: "Your account has been created. Please complete your profile in the dashboard.",
-            });
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        if (isMobile) {
+            await signInWithRedirect(auth, provider);
         } else {
-            toast({
-                title: "Signed In",
-                description: "You have successfully signed in with Google.",
-            });
+            const result = await signInWithPopup(auth, provider);
+            const user = result.user;
+            const additionalInfo = getAdditionalUserInfo(result);
+
+            if (additionalInfo?.isNewUser) {
+                const userDocRef = doc(firestore, "users", user.uid);
+                const nameParts = user.displayName?.split(' ') || [];
+                const firstName = nameParts[0] || 'New';
+                const lastName = nameParts.slice(1).join(' ') || 'User';
+
+                const userData = {
+                    id: user.uid,
+                    firstName: firstName,
+                    lastName: lastName,
+                    email: user.email,
+                    photoUrl: user.photoURL || '',
+                    role: 'Freelancer',
+                    verified: false,
+                    isAvailable: true,
+                    referralCode: generateReferralCode(),
+                    referralPoints: 0,
+                    createdAt: serverTimestamp(),
+                };
+                setDocumentNonBlocking(userDocRef, userData, { merge: true });
+                toast({
+                    title: "Welcome!",
+                    description: "Your account has been created. Please complete your profile in the dashboard.",
+                });
+            }
         }
     } catch (error: any) {
-        // Silently handle the case where the user closes the popup
-        if (error.code === 'auth/popup-closed-by-user') {
-            return;
+        if (error.code === 'auth/unauthorized-domain') {
+            toast({
+                variant: "destructive",
+                title: "Domain Restricted",
+                description: "This domain must be authorized in the Firebase Console.",
+            });
+        } else if (error.code !== 'auth/popup-closed-by-user') {
+            toast({
+                variant: "destructive",
+                title: "Google Sign-In Failed",
+                description: error.message,
+            });
         }
-        
-        console.error("Google sign-in failed:", error);
-        toast({
-            variant: "destructive",
-            title: "Google Sign-In Failed",
-            description: error.message,
-        });
     }
   }
 
@@ -522,20 +572,20 @@ export function RegistrationForm() {
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onEmailSubmit)} className="space-y-4">
         
-        <div className="relative my-4">
-            <div className="absolute inset-0 flex items-center"><span className="w-full border-t" /></div>
-            <div className="relative flex justify-center text-xs uppercase"><span className="bg-background px-2 text-muted-foreground">Sign up with</span></div>
+        <div className="relative my-8">
+            <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-white/5" /></div>
+            <div className="relative flex justify-center text-[10px] uppercase font-black tracking-widest"><span className="bg-[#1a1c23] px-4 text-muted-foreground">Sign up with</span></div>
         </div>
 
-        <div className="grid grid-cols-2 gap-2">
-            <Button onClick={handleGoogleSignUp} type="button" className="rounded-xl h-12"><Icons.google className="mr-2 h-4 w-4" />Google</Button>
-             <Button onClick={() => setView('phone')} type="button" className="bg-green-600 text-white hover:bg-green-700 transition-transform hover:scale-[1.02] active:scale-[0.98] rounded-xl h-12"><Phone className="mr-2 h-4 w-4" />Phone</Button>
+        <div className="grid grid-cols-2 gap-3">
+            <Button onClick={handleGoogleSignUp} type="button" variant="outline" className="rounded-xl h-12 border-white/10 bg-white/5 hover:bg-white/10 font-bold"><Icons.google className="mr-2 h-4 w-4" />Google</Button>
+             <Button onClick={() => setView('phone')} type="button" className="bg-[#22c55e] text-white hover:bg-[#1eb054] rounded-xl h-12 font-bold"><Phone className="mr-2 h-4 w-4" />Phone</Button>
         </div>
 
 
-        <div className="relative my-4">
-            <div className="absolute inset-0 flex items-center"><span className="w-full border-t" /></div>
-            <div className="relative flex justify-center text-xs uppercase"><span className="bg-background px-2 text-muted-foreground">Or email details</span></div>
+        <div className="relative my-8">
+            <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-white/5" /></div>
+            <div className="relative flex justify-center text-[10px] uppercase font-black tracking-widest"><span className="bg-[#1a1c23] px-4 text-muted-foreground">Or email details</span></div>
         </div>
         
         <FormField
@@ -543,10 +593,10 @@ export function RegistrationForm() {
           name="referralCode"
           render={({ field }) => (
               <FormItem>
-                  <FormLabel>Referral Code (Optional)</FormLabel>
+                  <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Referral Code (Optional)</FormLabel>
                   <div className="relative">
                       <Gift className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                      <FormControl><Input placeholder="Enter a referral code" {...field} className="pl-10 h-12 rounded-xl" disabled={!!searchParams.get('ref')} /></FormControl>
+                      <FormControl><Input placeholder="Enter a referral code" {...field} className="pl-10 h-12 bg-white/5 border-none rounded-xl font-bold" disabled={!!searchParams.get('ref')} /></FormControl>
                   </div>
                   <FormMessage />
               </FormItem>
@@ -556,18 +606,18 @@ export function RegistrationForm() {
         <div className="grid grid-cols-2 gap-4">
             <FormField control={form.control} name="firstName" render={({ field }) => (
                 <FormItem>
-                <FormLabel>First Name</FormLabel>
+                <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">First Name</FormLabel>
                 <div className="relative">
-                    <UserIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><FormControl><Input placeholder="John" {...field} className="pl-10 h-12 rounded-xl" /></FormControl>
+                    <UserIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><FormControl><Input placeholder="John" {...field} className="pl-10 h-12 bg-white/5 border-none rounded-xl font-bold" /></FormControl>
                 </div>
                 <FormMessage />
                 </FormItem>
             )} />
             <FormField control={form.control} name="lastName" render={({ field }) => (
                 <FormItem>
-                <FormLabel>Last Name</FormLabel>
+                <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Last Name</FormLabel>
                 <div className="relative">
-                    <UserIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><FormControl><Input placeholder="Doe" {...field} className="pl-10 h-12 rounded-xl" /></FormControl>
+                    <UserIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><FormControl><Input placeholder="Doe" {...field} className="pl-10 h-12 bg-white/5 border-none rounded-xl font-bold" /></FormControl>
                 </div>
                 <FormMessage />
                 </FormItem>
@@ -576,9 +626,9 @@ export function RegistrationForm() {
 
         <FormField control={form.control} name="email" render={({ field }) => (
             <FormItem>
-              <FormLabel>Email</FormLabel>
+              <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Email Address</FormLabel>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><FormControl><Input type="email" placeholder="name@example.com" {...field} className="pl-10 h-12 rounded-xl" /></FormControl>
+                <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><FormControl><Input type="email" placeholder="name@example.com" {...field} className="pl-10 h-12 bg-white/5 border-none rounded-xl font-bold" /></FormControl>
               </div>
               <FormMessage />
             </FormItem>
@@ -586,10 +636,10 @@ export function RegistrationForm() {
         
         <FormField control={form.control} name="password" render={({ field }) => (
             <FormItem>
-              <FormLabel>Password</FormLabel>
+              <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Secure Password</FormLabel>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <FormControl><Input type={showPassword ? "text" : "password"} placeholder="••••••••" {...field} className="pl-10 pr-10 h-12 rounded-xl" /></FormControl>
+                <FormControl><Input type={showPassword ? "text" : "password"} placeholder="••••••••" {...field} className="pl-10 pr-10 h-12 bg-white/5 border-none rounded-xl font-bold" /></FormControl>
                 <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground">
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
@@ -603,19 +653,19 @@ export function RegistrationForm() {
           name="role"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Professional Role</FormLabel>
+              <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Classification</FormLabel>
               <FormControl>
-                  <div className="grid grid-cols-1 gap-4">
+                  <div className="grid grid-cols-1 gap-3">
                       {expertTypes.map((type) => (
                           <Card 
                               key={type.name} 
-                              className={cn("cursor-pointer transition-all hover:-translate-y-1 border-white/5 bg-white/5", field.value === type.name ? "border-primary ring-2 ring-primary bg-primary/5" : "hover:border-primary/50")}
+                              className={cn("cursor-pointer transition-all border-white/5 bg-white/5 rounded-2xl", field.value === type.name ? "border-primary ring-2 ring-primary/50 bg-primary/10" : "hover:bg-white/10")}
                               onClick={() => form.setValue('role', type.name, { shouldValidate: true })}
                           >
                               <CardHeader className="flex flex-row items-center gap-4 p-4">
-                                  <div className={cn("p-3 rounded-full", field.value === type.name ? "bg-primary text-white" : "bg-white/10 text-white/40")}>{type.icon}</div>
-                                  <div><CardTitle className="text-lg font-black uppercase italic tracking-tight">{type.name}</CardTitle><CardDescription className="text-xs font-medium">{type.description}</CardDescription></div>
-                                  <ArrowRight className={cn("ml-auto h-5 w-5 text-muted-foreground transition-transform", field.value === type.name && "translate-x-1")}/>
+                                  <div className={cn("p-2 rounded-full", field.value === type.name ? "bg-primary text-white" : "bg-white/10 text-white/40")}>{React.cloneElement(type.icon as React.ReactElement, { className: "w-5 h-5" })}</div>
+                                  <div className="flex-1"><CardTitle className="text-sm font-black uppercase italic tracking-tight">{type.name}</CardTitle></div>
+                                  <ArrowRight className={cn("h-4 w-4 text-muted-foreground transition-transform", field.value === type.name && "translate-x-1")}/>
                               </CardHeader>
                           </Card>
                       ))}
@@ -627,78 +677,81 @@ export function RegistrationForm() {
         />
         
         {selectedRole && (
-            <div className="space-y-4 animate-in fade-in slide-in-from-top-4 duration-500">
+            <div className="space-y-4 animate-in fade-in slide-in-from-top-4 duration-500 pt-4">
               <FormItem>
-                  <FormLabel>Phone Number</FormLabel>
+                  <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Contact Number</FormLabel>
                   <div className="flex items-center gap-2">
                       <FormField control={form.control} name="countryCode" render={({ field: codeField }) => (
                           <Select onValueChange={codeField.onChange} defaultValue={codeField.value}>
                             <FormControl>
-                              <SelectTrigger className="w-[80px] h-12 rounded-xl">
+                              <SelectTrigger className="w-[85px] h-12 bg-white/5 border-none rounded-xl font-bold">
                                 <SelectValue placeholder="Code" />
                               </SelectTrigger>
                             </FormControl>
-                            <SelectContent>
-                              <SelectItem value="+91">IN</SelectItem>
-                              <SelectItem value="+1">USA</SelectItem>
-                              <SelectItem value="+44">UK</SelectItem>
+                            <SelectContent className="bg-[#24262d] border-white/10">
+                              <SelectItem value="+91">IN (+91)</SelectItem>
+                              <SelectItem value="+1">USA (+1)</SelectItem>
+                              <SelectItem value="+44">UK (+44)</SelectItem>
                             </SelectContent>
                           </Select>
                       )} />
                       <FormField control={form.control} name="phoneNumber" render={({ field }) => (
-                          <div className="relative flex-grow"><FormControl><Input placeholder="9876543210" {...field} className="h-12 rounded-xl" /></FormControl></div>
+                          <div className="relative flex-grow"><FormControl><Input placeholder="9876543210" {...field} className="h-12 bg-white/5 border-none rounded-xl font-bold" /></FormControl></div>
                       )} />
                   </div>
                   <FormMessage />
               </FormItem>
-              <div className="space-y-2">
-                  <div className="flex items-center justify-between mb-2">
-                      <FormLabel>Location</FormLabel>
-                      <Button type="button" variant="outline" size="sm" onClick={handleDetectLocation} disabled={isDetectingLocation} className="rounded-xl h-9">{isDetectingLocation ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <LocateIcon className="mr-2 h-4 w-4" />}Detect</Button>
+              <div className="space-y-3">
+                  <div className="flex items-center justify-between mb-1">
+                      <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Location</FormLabel>
+                      <Button type="button" variant="ghost" size="sm" onClick={handleDetectLocation} disabled={isDetectingLocation} className="text-orange-500 font-black uppercase text-[10px] tracking-widest h-8 rounded-xl hover:bg-orange-500/10 gap-1">{isDetectingLocation ? <Loader2 className="h-3 w-3 animate-spin" /> : <LocateIcon className="h-3 w-3" />}AUTO-DETECT</Button>
                   </div>
-                  <div className="grid grid-cols-2 gap-2">
-                      <FormField control={form.control} name="city" render={({ field }) => (<FormItem><FormControl><Input placeholder="City" {...field} className="h-12 rounded-xl" /></FormControl><FormMessage /></FormItem>)} />
-                      <FormField control={form.control} name="state" render={({ field }) => (<FormItem><FormControl><Input placeholder="State" {...field} className="h-12 rounded-xl" /></FormControl><FormMessage /></FormItem>)} />
+                  <div className="grid grid-cols-2 gap-3">
+                      <FormField control={form.control} name="city" render={({ field }) => (<FormItem><FormControl><Input placeholder="City" {...field} className="h-12 bg-white/5 border-none rounded-xl font-bold" /></FormControl><FormMessage /></FormItem>)} />
+                      <FormField control={form.control} name="state" render={({ field }) => (<FormItem><FormControl><Input placeholder="State" {...field} className="h-12 bg-white/5 border-none rounded-xl font-bold" /></FormControl><FormMessage /></FormItem>)} />
                   </div>
                   <FormField control={form.control} name="pincode" render={({ field }) => (
-                    <FormItem className="mt-2 text-center"><div className="relative"><FormControl><Input placeholder="Pincode" {...field} className="h-12 rounded-xl" /></FormControl>{isFetchingPincode && <Loader2 className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin" />}</div><FormMessage /></FormItem>
+                    <FormItem><div className="relative"><FormControl><Input placeholder="Pincode" {...field} className="h-12 bg-white/5 border-none rounded-xl font-bold" /></FormControl>{isFetchingPincode && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin" />}</div><FormMessage /></FormItem>
                   )} />
               </div>
 
               {(selectedRole === 'Company' || selectedRole === 'Authorized Pro') && (
-                <div className="space-y-4 animate-in fade-in slide-in-from-top-4 duration-500">
-                  <FormField control={form.control} name="companyName" render={({ field }) => (<FormItem><FormLabel>Company Name</FormLabel><div className="relative"><Building className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><FormControl><Input placeholder="Company name" {...field} className="pl-10 h-12 rounded-xl" /></FormControl></div><FormMessage /></FormItem>)} />
+                <div className="space-y-4 pt-4 border-t border-white/5 animate-in fade-in slide-in-from-top-4 duration-500">
+                  <FormField control={form.control} name="companyName" render={({ field }) => (<FormItem><FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Organization Name</FormLabel><div className="relative"><Building className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><FormControl><Input placeholder="Your Company Name" {...field} className="pl-10 h-12 bg-white/5 border-none rounded-xl font-bold" /></FormControl></div><FormMessage /></FormItem>)} />
                   <FormField control={form.control} name="department" render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Department</FormLabel>
+                      <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Primary Industry</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
-                          <SelectTrigger className="h-12 rounded-xl">
-                            <SelectValue placeholder="Department" />
+                          <SelectTrigger className="h-12 bg-white/5 border-none rounded-xl font-bold">
+                            <SelectValue placeholder="Select Department" />
                           </SelectTrigger>
                         </FormControl>
-                        <SelectContent>
+                        <SelectContent className="bg-[#24262d] border-white/10">
                           {departments.map(dep => <SelectItem key={dep} value={dep}>{dep}</SelectItem>)}
                         </SelectContent>
                       </Select>
                       <FormMessage />
                     </FormItem>
                   )} />
-                  <FormField control={form.control} name="address" render={({ field }) => (<FormItem><FormLabel>Address</FormLabel><div className="relative"><Home className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" /><FormControl><Textarea placeholder="Full address" {...field} className="pl-10 rounded-xl" /></FormControl></div><FormMessage /></FormItem>)} />
+                  <FormField control={form.control} name="address" render={({ field }) => (<FormItem><FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Physical Address</FormLabel><div className="relative"><Home className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" /><FormControl><Textarea placeholder="Building, Street, Landmark" {...field} className="pl-10 bg-white/5 border-none rounded-xl font-bold min-h-[100px]" /></FormControl></div><FormMessage /></FormItem>)} />
                 </div>
               )}
                 
                 <FormField control={form.control} name="terms" render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-xl border border-white/5 bg-white/5 p-4 shadow-sm"><FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange}/></FormControl><div className="space-y-1 leading-none"><FormLabel className="text-xs font-medium">Agree to <Link href="/terms" target="_blank" className="underline text-primary">Terms & Conditions</Link></FormLabel><FormMessage /></div></FormItem>
+                    <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-2xl border border-white/5 bg-white/5 p-4 shadow-inner">
+                        <FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} className="border-white/20"/></FormControl>
+                        <div className="space-y-1 leading-none"><FormLabel className="text-[10px] font-black uppercase tracking-widest">Agree to <Link href="/terms" target="_blank" className="underline text-orange-500">Terms & Policies</Link></FormLabel><FormMessage /></div>
+                    </FormItem>
                   )} />
 
-                <Button type="submit" className="w-full h-14 bg-orange-500 hover:bg-orange-600 font-black text-lg shadow-xl shadow-orange-500/20 rounded-2xl uppercase tracking-widest" disabled={form.formState.isSubmitting || isSubmitting}>
-                    {form.formState.isSubmitting || isSubmitting ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <><Briefcase className="mr-2 h-5 w-5" /> CREATE EXPERT PROFILE</>}
+                <Button type="submit" className="w-full h-16 bg-orange-500 hover:bg-orange-600 font-black text-lg shadow-[0_10px_25px_-5px_rgba(249,115,22,0.4)] rounded-2xl uppercase tracking-widest transition-all active:scale-95" disabled={form.formState.isSubmitting || isSubmitting}>
+                    {form.formState.isSubmitting || isSubmitting ? <Loader2 className="h-6 w-6 animate-spin" /> : <><Sparkles className="mr-2 h-6 w-6" /> CREATE PROFILE</>}
                 </Button>
             </div>
         )}
 
-        <div className="mt-4 text-center text-sm font-medium text-muted-foreground">Already have an account? <Link href="/login" className="underline text-white font-bold">Sign In</Link></div>
+        <div className="mt-6 text-center text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Already have an account? <Link href="/login" className="text-white hover:text-orange-500 underline underline-offset-4">Sign In</Link></div>
       </form>
     </Form>
   );
@@ -707,17 +760,17 @@ export function RegistrationForm() {
     <Form {...phoneForm}>
         <form onSubmit={phoneForm.handleSubmit(onPhoneSubmit)} className="space-y-4">
             <FormField control={phoneForm.control} name="phoneNumber" render={({ field }) => (
-                    <FormItem><FormLabel>Mobile Number</FormLabel><div className="relative"><span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground font-bold">+91</span><FormControl><Input type="tel" placeholder="9876543210" {...field} className="pl-10 h-12 rounded-xl"/></FormControl></div><FormMessage /></FormItem>
+                    <FormItem><FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Mobile Number</FormLabel><div className="relative"><span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground font-black">+91</span><FormControl><Input type="tel" placeholder="9876543210" {...field} className="pl-12 h-12 bg-white/5 border-none rounded-xl font-bold"/></FormControl></div><FormMessage /></FormItem>
                 )} />
             <FormField control={phoneForm.control} name="referralCode" render={({ field }) => (
-                  <FormItem><FormLabel>Referral Code (Optional)</FormLabel><div className="relative"><Gift className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><FormControl><Input placeholder="Referral code" {...field} className="pl-10 h-12 rounded-xl" disabled={!!searchParams.get('ref')} /></FormControl></div><FormMessage /></FormItem>
+                  <FormItem><FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Referral Code (Optional)</FormLabel><div className="relative"><Gift className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><FormControl><Input placeholder="Referral code" {...field} className="pl-10 h-12 bg-white/5 border-none rounded-xl font-bold" disabled={!!searchParams.get('ref')} /></FormControl></div><FormMessage /></FormItem>
               )} />
             <FormField control={phoneForm.control} name="role" render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Role</FormLabel>
+                  <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Classification</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl><SelectTrigger className="h-12 rounded-xl"><SelectValue placeholder="Select role" /></SelectTrigger></FormControl>
-                    <SelectContent>
+                    <FormControl><SelectTrigger className="h-12 bg-white/5 border-none rounded-xl font-bold"><SelectValue placeholder="Select role" /></SelectTrigger></FormControl>
+                    <SelectContent className="bg-[#24262d] border-white/10">
                       {expertTypes.map(t => <SelectItem key={t.name} value={t.name}>{t.name}</SelectItem>)}
                     </SelectContent>
                   </Select>
@@ -726,15 +779,15 @@ export function RegistrationForm() {
                 )} />
             {selectedPhoneRole === 'Freelancer' && (
                 <div className="grid grid-cols-2 gap-4">
-                    <FormField control={phoneForm.control} name="firstName" render={({ field }) => (<FormItem><FormLabel>First Name</FormLabel><FormControl><Input placeholder="John" {...field} className="h-12 rounded-xl" /></FormControl><FormMessage /></FormItem>)} />
-                    <FormField control={phoneForm.control} name="lastName" render={({ field }) => (<FormItem><FormLabel>Last Name</FormLabel><FormControl><Input placeholder="Doe" {...field} className="h-12 rounded-xl" /></FormControl><FormMessage /></FormItem>)} />
+                    <FormField control={phoneForm.control} name="firstName" render={({ field }) => (<FormItem><FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">First Name</FormLabel><FormControl><Input placeholder="John" {...field} className="h-12 bg-white/5 border-none rounded-xl font-bold" /></FormControl><FormMessage /></FormItem>)} />
+                    <FormField control={phoneForm.control} name="lastName" render={({ field }) => (<FormItem><FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Last Name</FormLabel><FormControl><Input placeholder="Doe" {...field} className="h-12 bg-white/5 border-none rounded-xl font-bold" /></FormControl><FormMessage /></FormItem>)} />
                 </div>
             )}
             {(selectedPhoneRole === 'Company' || selectedPhoneRole === 'Authorized Pro') && (
-                 <FormField control={phoneForm.control} name="companyName" render={({ field }) => (<FormItem><FormLabel>Company Name</FormLabel><FormControl><Input placeholder="Company" {...field} className="h-12 rounded-xl" /></FormControl><FormMessage /></FormItem>)} />
+                 <FormField control={phoneForm.control} name="companyName" render={({ field }) => (<FormItem><FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Company Name</FormLabel><FormControl><Input placeholder="Company" {...field} className="h-12 bg-white/5 border-none rounded-xl font-bold" /></FormControl><FormMessage /></FormItem>)} />
             )}
-            <Button type="submit" className="w-full h-12 rounded-xl bg-orange-500 hover:bg-orange-600 font-black" disabled={isSubmitting}>{isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Send OTP'}</Button>
-            <Button variant="link" className="w-full" onClick={() => setView('email')}>Email Sign Up</Button>
+            <Button type="submit" className="w-full h-14 bg-orange-500 hover:bg-orange-600 font-black text-lg rounded-2xl shadow-xl uppercase tracking-widest" disabled={isSubmitting}>{isSubmitting ? <Loader2 className="h-6 w-6 animate-spin" /> : 'Send Activation Code'}</Button>
+            <Button variant="link" className="w-full text-[10px] font-bold uppercase tracking-widest text-muted-foreground" onClick={() => setView('email')}>Sign up with Email</Button>
         </form>
     </Form>
   );
@@ -743,10 +796,10 @@ export function RegistrationForm() {
      <Form {...otpForm}>
         <form onSubmit={otpForm.handleSubmit(onOtpSubmit)} className="space-y-4">
             <FormField control={otpForm.control} name="otp" render={({ field }) => (
-                    <FormItem><FormLabel>Enter OTP</FormLabel><div className="relative"><MessageSquare className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><FormControl><Input type="text" placeholder="123456" {...field} className="pl-10 h-12 rounded-xl" /></FormControl></div><FormMessage /></FormItem>
+                    <FormItem><FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Enter Code</FormLabel><div className="relative"><MessageSquare className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><FormControl><Input type="text" placeholder="123456" {...field} className="pl-10 h-12 bg-white/5 border-none rounded-xl font-bold tracking-[0.5em] text-center" /></FormControl></div><FormMessage /></FormItem>
                 )} />
-            <Button type="submit" className="w-full h-12 rounded-xl bg-orange-500 hover:bg-orange-600 font-black" disabled={isSubmitting}>{isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Verify & Sign Up'}</Button>
-            <Button variant="link" className="w-full" onClick={() => setView('phone')}>Change phone number</Button>
+            <Button type="submit" className="w-full h-14 bg-[#22c55e] hover:bg-[#1eb054] text-white font-black text-lg rounded-2xl shadow-xl uppercase tracking-widest" disabled={isSubmitting}>{isSubmitting ? <Loader2 className="h-6 w-6 animate-spin" /> : 'Verify & Sign Up'}</Button>
+            <Button variant="link" className="w-full text-[10px] font-bold uppercase tracking-widest text-muted-foreground" onClick={() => setView('phone')}>Change phone number</Button>
         </form>
     </Form>
   );
@@ -755,6 +808,10 @@ export function RegistrationForm() {
   return (
     <div className="w-full">
       <div id="recaptcha-container" ref={recaptchaContainerRef}></div>
+      <div className="mb-10">
+        <h2 className="text-3xl sm:text-4xl font-black uppercase italic tracking-tighter text-white mb-2">Expert Sign Up</h2>
+        <p className="text-sm text-muted-foreground font-medium">Join the professional registry today.</p>
+      </div>
       {view === 'email' && renderEmailForm()}
       {view === 'phone' && renderPhoneForm()}
       {view === 'otp' && renderOtpForm()}

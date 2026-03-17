@@ -7,11 +7,13 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Mail, Lock, LogIn, Eye, EyeOff, Phone, MessageSquare } from "lucide-react";
+import { Mail, Lock, LogIn, Eye, EyeOff, Phone, MessageSquare, Loader2, Sparkles } from "lucide-react";
 import { 
   signInWithEmailAndPassword, 
   GoogleAuthProvider, 
   signInWithPopup, 
+  signInWithRedirect,
+  getRedirectResult,
   getAdditionalUserInfo,
   RecaptchaVerifier,
   signInWithPhoneNumber,
@@ -88,6 +90,45 @@ export function LoginForm() {
         router.push('/dashboard');
     }
   }, [user, isUserLoading, router]);
+
+  // Handle Redirect Result for Google Sign-In
+  useEffect(() => {
+    if (auth && firestore) {
+        getRedirectResult(auth).then(async (result) => {
+            if (result) {
+                const additionalInfo = getAdditionalUserInfo(result);
+                if (additionalInfo?.isNewUser) {
+                    const userDocRef = doc(firestore, "users", result.user.uid);
+                    const nameParts = result.user.displayName?.split(' ') || [];
+                    const userData = {
+                        id: result.user.uid,
+                        firstName: nameParts[0] || 'New',
+                        lastName: nameParts.slice(1).join(' ') || 'User',
+                        email: result.user.email,
+                        photoUrl: result.user.photoURL || '',
+                        role: 'Freelancer',
+                        verified: false,
+                        isAvailable: true,
+                        referralCode: Math.random().toString(36).substring(2, 10).toUpperCase(),
+                        referralPoints: 0,
+                        createdAt: serverTimestamp(),
+                    };
+                    setDocumentNonBlocking(userDocRef, userData, { merge: true });
+                }
+            }
+        }).catch((error) => {
+            if (error.code === 'auth/unauthorized-domain') {
+                toast({
+                    variant: "destructive",
+                    title: "Security Restriction",
+                    description: "This domain is not authorized. Please add it in the Firebase Console.",
+                });
+            } else if (error.code !== 'auth/popup-closed-by-user') {
+                console.error("Redirect auth error:", error);
+            }
+        });
+    }
+  }, [auth, firestore, toast]);
   
   useEffect(() => {
     if (view === 'phone' && auth && recaptchaContainerRef.current) {
@@ -107,50 +148,46 @@ export function LoginForm() {
     if (!auth || !firestore) return;
     const provider = new GoogleAuthProvider();
     try {
-        const result = await signInWithPopup(auth, provider);
-        const user = result.user;
-        const additionalInfo = getAdditionalUserInfo(result);
-
-        if (additionalInfo?.isNewUser) {
-            const userDocRef = doc(firestore, "users", user.uid);
-            const nameParts = user.displayName?.split(' ') || [];
-            const firstName = nameParts[0] || 'New';
-            const lastName = nameParts.slice(1).join(' ') || 'User';
-
-            const userData = {
-                id: user.uid,
-                firstName: firstName,
-                lastName: lastName,
-                email: user.email,
-                photoUrl: user.photoURL || '',
-                role: 'Freelancer',
-                verified: false,
-                isAvailable: true,
-                createdAt: serverTimestamp(),
-            };
-            setDocumentNonBlocking(userDocRef, userData, { merge: true });
-            toast({
-                title: "Welcome!",
-                description: "Your account has been created. Please complete your profile.",
-            });
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        if (isMobile) {
+            await signInWithRedirect(auth, provider);
         } else {
-            toast({
-                title: "Signed In",
-                description: "You have successfully signed in with Google.",
-            });
+            const result = await signInWithPopup(auth, provider);
+            const additionalInfo = getAdditionalUserInfo(result);
+
+            if (additionalInfo?.isNewUser) {
+                const userDocRef = doc(firestore, "users", result.user.uid);
+                const nameParts = result.user.displayName?.split(' ') || [];
+                const userData = {
+                    id: result.user.uid,
+                    firstName: nameParts[0] || 'New',
+                    lastName: nameParts.slice(1).join(' ') || 'User',
+                    email: result.user.email,
+                    photoUrl: result.user.photoURL || '',
+                    role: 'Freelancer',
+                    verified: false,
+                    isAvailable: true,
+                    referralCode: Math.random().toString(36).substring(2, 10).toUpperCase(),
+                    referralPoints: 0,
+                    createdAt: serverTimestamp(),
+                };
+                setDocumentNonBlocking(userDocRef, userData, { merge: true });
+            }
         }
     } catch (error: any) {
-        // Silently handle the case where the user closes the popup
-        if (error.code === 'auth/popup-closed-by-user') {
-            return;
+        if (error.code === 'auth/unauthorized-domain') {
+            toast({
+                variant: "destructive",
+                title: "Login Blocked",
+                description: "This domain is not authorized in Firebase Console Settings.",
+            });
+        } else if (error.code !== 'auth/popup-closed-by-user') {
+            toast({
+                variant: "destructive",
+                title: "Google Sign-In Failed",
+                description: error.message,
+            });
         }
-        
-        console.error("Google sign-in failed:", error);
-        toast({
-            variant: "destructive",
-            title: "Google Sign-In Failed",
-            description: error.message,
-        });
     }
   }
 
@@ -250,17 +287,23 @@ export function LoginForm() {
 
   const renderEmailForm = () => (
     <>
-      <Button variant="outline" className="w-full" onClick={handleGoogleSignIn}>
-        <Icons.google className="mr-2 h-4 w-4" />
-        Sign in with Google
-      </Button>
+      <div className="grid grid-cols-2 gap-3">
+        <Button variant="outline" className="h-12 rounded-xl border-white/10 bg-white/5 hover:bg-white/10" onClick={handleGoogleSignIn}>
+            <Icons.google className="mr-2 h-4 w-4" />
+            Google
+        </Button>
+        <Button variant="outline" className="h-12 rounded-xl bg-[#22c55e] text-white hover:bg-[#1eb054] border-none" onClick={() => setView('phone')}>
+            <Phone className="mr-2 h-4 w-4" />
+            Phone
+        </Button>
+      </div>
 
-       <div className="relative my-4">
+       <div className="relative my-8">
         <div className="absolute inset-0 flex items-center">
-            <span className="w-full border-t" />
+            <span className="w-full border-t border-white/5" />
         </div>
-        <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-background px-2 text-muted-foreground">
+        <div className="relative flex justify-center text-[10px] uppercase font-black tracking-widest">
+            <span className="bg-[#1a1c23] px-4 text-muted-foreground">
             Or continue with
             </span>
         </div>
@@ -273,7 +316,7 @@ export function LoginForm() {
             name="email"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Email</FormLabel>
+                <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Email Address</FormLabel>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <FormControl>
@@ -281,7 +324,7 @@ export function LoginForm() {
                       type="email"
                       placeholder="name@example.com"
                       {...field}
-                      className="pl-10"
+                      className="pl-10 h-12 bg-white/5 border-none rounded-xl font-bold"
                     />
                   </FormControl>
                 </div>
@@ -295,12 +338,12 @@ export function LoginForm() {
             render={({ field }) => (
               <FormItem>
                   <div className="flex items-center">
-                      <FormLabel>Password</FormLabel>
+                      <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Password</FormLabel>
                   </div>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <FormControl>
-                    <Input type={showPassword ? "text" : "password"} placeholder="••••••••" {...field} className="pl-10 pr-10" />
+                    <Input type={showPassword ? "text" : "password"} placeholder="••••••••" {...field} className="pl-10 pr-10 h-12 bg-white/5 border-none rounded-xl font-bold" />
                   </FormControl>
                   <button
                     type="button"
@@ -315,50 +358,42 @@ export function LoginForm() {
             )}
           />
 
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between py-2">
             <FormField
               control={emailForm.control}
               name="rememberMe"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                <FormItem className="flex flex-row items-center space-x-2 space-y-0">
                   <FormControl>
                     <Checkbox
                       checked={field.value}
                       onCheckedChange={field.onChange}
+                      className="border-white/20"
                     />
                   </FormControl>
-                  <div className="space-y-1 leading-none">
-                    <FormLabel>
-                      Remember me
-                    </FormLabel>
-                  </div>
+                  <FormLabel className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                    Keep me signed in
+                  </FormLabel>
                 </FormItem>
               )}
             />
              <Link
                 href="/forgot-password"
-                className="inline-block text-sm underline"
+                className="text-[10px] font-bold uppercase tracking-widest text-orange-500 hover:text-orange-400"
             >
                 Forgot password?
             </Link>
           </div>
 
 
-          <Button type="submit" className="w-full" disabled={isSubmitting}>
-            {isSubmitting ? 'Signing In...' : <>
-              <LogIn className="mr-2 h-4 w-4" /> Sign In
-            </>}
+          <Button type="submit" className="w-full h-14 bg-orange-500 hover:bg-orange-600 text-white font-black text-lg rounded-2xl shadow-[0_10px_25px_-5px_rgba(249,115,22,0.4)] uppercase tracking-widest transition-all active:scale-95" disabled={isSubmitting}>
+            {isSubmitting ? <Loader2 className="h-5 w-5 animate-spin" /> : <><LogIn className="mr-2 h-5 w-5" /> Sign In</>}
           </Button>
 
-           <Button variant="outline" className="w-full bg-green-600 text-white hover:bg-green-700" onClick={() => setView('phone')}>
-                <Phone className="mr-2 h-4 w-4" />
-                Sign in with Phone
-            </Button>
-
-          <div className="mt-4 text-center text-sm">
+          <div className="mt-6 text-center text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">
               Don&apos;t have an account?{" "}
-              <Link href="/signup/role" className="underline">
-                  Sign up
+              <Link href="/signup/role" className="text-white hover:text-orange-500 underline underline-offset-4">
+                  Register
               </Link>
           </div>
         </form>
@@ -374,12 +409,12 @@ export function LoginForm() {
                 name="phoneNumber"
                 render={({ field }) => (
                     <FormItem>
-                        <FormLabel>Mobile Number</FormLabel>
+                        <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Mobile Number</FormLabel>
                         <div className="flex items-center gap-2">
                            <div className="relative flex-grow">
-                             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">+91</span>
+                             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground font-black">+91</span>
                              <FormControl>
-                                <Input type="tel" placeholder="98765 43210" {...field} className="pl-10"/>
+                                <Input type="tel" placeholder="98765 43210" {...field} className="pl-12 h-12 bg-white/5 border-none rounded-xl font-bold"/>
                              </FormControl>
                            </div>
                         </div>
@@ -387,10 +422,10 @@ export function LoginForm() {
                     </FormItem>
                 )}
             />
-            <Button type="submit" className="w-full" disabled={isSubmitting}>
-                {isSubmitting ? 'Sending...' : 'Send OTP'}
+            <Button type="submit" className="w-full h-14 bg-[#22c55e] hover:bg-[#1eb054] text-white font-black text-lg rounded-2xl shadow-xl uppercase tracking-widest" disabled={isSubmitting}>
+                {isSubmitting ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Send Activation Code'}
             </Button>
-            <Button variant="link" className="w-full" onClick={() => setView('email')}>
+            <Button variant="link" className="w-full text-[10px] font-bold uppercase tracking-widest text-muted-foreground" onClick={() => setView('email')}>
                 Sign in with Email instead
             </Button>
         </form>
@@ -405,21 +440,21 @@ export function LoginForm() {
                 name="otp"
                 render={({ field }) => (
                     <FormItem>
-                        <FormLabel>Enter OTP</FormLabel>
+                        <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">Activation Code</FormLabel>
                         <div className="relative">
                             <MessageSquare className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                             <FormControl>
-                                <Input type="text" placeholder="123456" {...field} className="pl-10" />
+                                <Input type="text" placeholder="123456" {...field} className="pl-10 h-12 bg-white/5 border-none rounded-xl font-bold tracking-[0.5em] text-center" />
                             </FormControl>
                         </div>
                         <FormMessage />
                     </FormItem>
                 )}
             />
-            <Button type="submit" className="w-full" disabled={isSubmitting}>
-                {isSubmitting ? 'Verifying...' : 'Verify OTP & Sign In'}
+            <Button type="submit" className="w-full h-14 bg-orange-500 hover:bg-orange-600 text-white font-black text-lg rounded-2xl shadow-xl uppercase tracking-widest" disabled={isSubmitting}>
+                {isSubmitting ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Verify & Continue'}
             </Button>
-            <Button variant="link" className="w-full" onClick={() => setView('phone')}>
+            <Button variant="link" className="w-full text-[10px] font-bold uppercase tracking-widest text-muted-foreground" onClick={() => setView('phone')}>
                 Change phone number
             </Button>
         </form>
