@@ -38,6 +38,7 @@ import {
   CarouselItem,
   CarouselNext,
   CarouselPrevious,
+  type CarouselApi,
 } from "@/components/ui/carousel";
 
 type AppConfig = {
@@ -67,11 +68,25 @@ function HomePageContent() {
     const [moduleSearchQuery, setModuleSearchQuery] = useState('');
     const [mounted, setMounted] = useState(false);
     
+    // Carousel State
+    const [api, setApi] = useState<CarouselApi>();
+    const [current, setCurrent] = useState(0);
+    const [count, setCount] = useState(0);
+
     const { user, isUserLoading } = useUser();
 
     useEffect(() => {
         setMounted(true);
     }, []);
+
+    useEffect(() => {
+        if (!api) return;
+        setCount(api.scrollSnapList().length);
+        setCurrent(api.selectedScrollSnap() + 1);
+        api.on("select", () => {
+            setCurrent(api.selectedScrollSnap() + 1);
+        });
+    }, [api]);
 
     const userProfileDocRef = useMemoFirebase(() => {
         if (!firestore || !user) return null;
@@ -322,7 +337,6 @@ function HomePageContent() {
 
                 <main className="space-y-8 sm:space-y-12">
                     <section className="bg-[#24262d] rounded-[3rem] p-8 sm:p-12 shadow-2xl overflow-hidden border border-white/5 relative">
-                        {/* Dotted Background Pattern */}
                         <div className="absolute inset-0 opacity-[0.15] pointer-events-none" 
                              style={{ 
                                 backgroundImage: 'radial-gradient(#ffffff 1px, transparent 1px)', 
@@ -343,22 +357,26 @@ function HomePageContent() {
                             />
                         </div>
 
-                        <div className="relative z-10">
-                            <Carousel opts={{ align: "start", loop: true }} className="w-full">
+                        <div className="relative z-10 px-2 sm:px-0">
+                            <Carousel 
+                                setApi={setApi}
+                                opts={{ align: "start", loop: true }} 
+                                className="w-full"
+                            >
                                 <CarouselContent className="-ml-4">
                                     {isLoadingTopExperts ? (
                                         [...Array(2)].map((_, i) => (
-                                            <CarouselItem key={i} className="pl-4 basis-full sm:basis-1/2">
+                                            <CarouselItem key={i} className="pl-4 basis-[85%] sm:basis-1/2">
                                                 <div className="w-full h-[450px] bg-[#1a1c23] rounded-[2.5rem] animate-pulse" />
                                             </CarouselItem>
                                         ))
                                     ) : filteredTopExperts.length > 0 ? (
                                         filteredTopExperts.map(expert => (
-                                            <CarouselItem key={expert.id} className="pl-4 basis-full sm:basis-1/2">
+                                            <CarouselItem key={expert.id} className="pl-4 basis-[85%] sm:basis-1/2">
                                                 <div className="flex justify-center w-full h-full px-2">
-                                                    <Card className="w-full bg-[#1a1c23] border-none flex flex-col items-center p-8 sm:p-12 text-center rounded-[2.5rem] shadow-2xl relative overflow-hidden h-full min-h-[400px]">
+                                                    <Card className="w-full bg-[#1a1c23] border-none flex flex-col items-center p-8 sm:p-12 text-center rounded-[2.5rem] shadow-2xl relative overflow-hidden h-full min-h-[400px] group/card">
                                                         <div className="relative mb-8 sm:mb-10">
-                                                            <Avatar className="h-24 w-24 sm:h-32 sm:w-32 border-4 border-white/5 shadow-2xl">
+                                                            <Avatar className="h-24 w-24 sm:h-32 sm:w-32 border-4 border-white/5 shadow-2xl group-hover/card:border-orange-500/30 transition-all">
                                                                 <AvatarImage src={expert.photoUrl} className="object-cover" />
                                                                 <AvatarFallback className="bg-[#24262d] text-orange-500 text-3xl sm:text-4xl font-black">
                                                                     {expert.firstName?.[0]}
@@ -397,9 +415,25 @@ function HomePageContent() {
                                         </CarouselItem>
                                     )}
                                 </CarouselContent>
-                                <div className="hidden lg:block">
-                                    <CarouselPrevious className="bg-white/5 border-none text-white hover:bg-white/10 -left-14 h-14 w-14" />
-                                    <CarouselNext className="bg-white/5 border-none text-white hover:bg-white/10 -right-14 h-14 w-14" />
+                                
+                                <div className="flex items-center justify-center gap-2 mt-8">
+                                    <CarouselPrevious className="static translate-y-0 h-10 w-10 bg-white/5 border-none hover:bg-white/10 text-white rounded-xl shadow-xl" />
+                                    
+                                    <div className="flex gap-1.5 px-4 h-10 items-center bg-[#1a1c23]/50 rounded-2xl border border-white/5 shadow-inner">
+                                        {Array.from({ length: count }).map((_, i) => (
+                                            <div 
+                                                key={i} 
+                                                className={cn(
+                                                    "h-1.5 rounded-full transition-all duration-300",
+                                                    current === i + 1 
+                                                        ? "w-6 bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.6)]" 
+                                                        : "w-1.5 bg-white/10"
+                                                )} 
+                                            />
+                                        ))}
+                                    </div>
+
+                                    <CarouselNext className="static translate-y-0 h-10 w-10 bg-white/5 border-none hover:bg-white/10 text-white rounded-xl shadow-xl" />
                                 </div>
                             </Carousel>
                         </div>
