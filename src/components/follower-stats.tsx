@@ -23,7 +23,7 @@ export function FollowerStats({ expert }: { expert: ExpertUser }) {
     }
 
     return (
-        <div className="flex items-center gap-3 text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+        <div className="flex items-center gap-3 text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">
             <div className="flex items-center gap-1.5">
                 <span className="text-orange-500">{followers?.length || 0}</span>
                 <span>Followers</span>
