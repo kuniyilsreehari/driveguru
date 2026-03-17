@@ -465,7 +465,7 @@ function HomePageContent() {
                     </Card>
 
                     <Card className="rounded-[2.5rem] p-6 sm:p-10 bg-[#24262d] border-none shadow-2xl relative overflow-hidden border border-white/5">
-                        <CardContent className="p-0 space-y-6 sm:space-y-10">
+                        <CardContent className="p-0 space-y-6">
                              <div className="space-y-2">
                                 <Label htmlFor="search" className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground/60 ml-1">LOOKING FOR...</Label>
                                 <div className="relative">
@@ -483,20 +483,19 @@ function HomePageContent() {
                             <div className="space-y-3">
                                 <div className="flex items-center justify-between mb-1">
                                     <Label className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground/60 ml-1">LOCATION</Label>
-                                    <Button variant="ghost" size="sm" onClick={handleDetectLocation} disabled={isDetectingLocation} className="text-orange-500 font-black uppercase text-[10px] tracking-widest h-8 rounded-xl hover:bg-orange-500/10">
-                                        {isDetectingLocation ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <LocateIcon className="mr-2 h-4 w-4" />}
-                                        Auto-Detect
+                                    <Button variant="ghost" size="sm" onClick={handleDetectLocation} disabled={isDetectingLocation} className="text-orange-500 font-black uppercase text-[10px] tracking-widest h-8 rounded-xl hover:bg-orange-500/10 gap-1 px-0">
+                                        {isDetectingLocation ? <Loader2 className="h-4 w-4 animate-spin" /> : <LocateIcon className="h-4 w-4" />}
+                                        AUTO-DETECT
                                     </Button>
                                 </div>
-                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                <div className="grid grid-cols-1 gap-3">
                                     <Input id="city" placeholder="City" className="bg-[#1a1c23] border-none h-14 rounded-2xl font-bold px-6 shadow-inner text-sm text-white" value={city} onChange={(e) => setCity(e.target.value)} />
                                     <Input id="state" placeholder="State" className="bg-[#1a1c23] border-none h-14 rounded-2xl font-bold px-6 shadow-inner text-sm text-white" value={state} onChange={(e) => setState(e.target.value)} />
                                     <Input id="pincode" placeholder="Pincode" className="bg-[#1a1c23] border-none h-14 rounded-2xl font-bold px-6 shadow-inner text-sm text-white" value={pincode} onChange={(e) => setPincode(e.target.value)} />
                                 </div>
                             </div>
 
-                            <Button size="lg" className="w-full h-20 rounded-[2rem] bg-orange-500 hover:bg-orange-600 text-white font-black text-xl shadow-2xl shadow-orange-500/30 uppercase tracking-[0.2em] transition-all active:scale-95 group" onClick={handleSearch}>
-                                <Search className="mr-3 h-7 w-7" strokeWidth={3} />
+                            <Button size="lg" className="w-full h-20 rounded-[2rem] bg-orange-500 hover:bg-orange-600 text-white font-black text-xl shadow-2xl shadow-orange-500/30 uppercase tracking-[0.2em] transition-all active:scale-95 group mt-4" onClick={handleSearch}>
                                 Find Professionals
                             </Button>
                         </CardContent>
