@@ -894,7 +894,8 @@ export default function AdminDashboardPage() {
                                     <Button variant="outline" size="sm" onClick={() => setRankingPage(prev => Math.max(prev - 1, 1))} disabled={rankingPage === 1} className="rounded-xl h-9 border-white/10 bg-transparent text-white font-bold"><ChevronLeft className="h-4 w-4" /></Button>
                                     <Button variant="outline" size="sm" onClick={() => setRankingPage(prev => prev + 1)} disabled={rankingPage >= Math.ceil(rankingUsers.length / ITEMS_PER_PAGE)} className="rounded-xl h-9 border-white/10 bg-transparent text-white font-bold"><ChevronRight className="h-4 w-4" /></Button>
                                 </div>
-                            </CardContent>
+                            </div>
+                        </CardContent>
                     </Card>
                 </TabsContent>
 
