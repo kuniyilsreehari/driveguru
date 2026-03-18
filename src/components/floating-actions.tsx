@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -10,11 +9,12 @@ import { installPromptAtom, chatOpenAtom, installDialogOpenAtom, currentExpertAt
 import { useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
+import { InstallPwaDialog } from './install-pwa-dialog';
 
 export function FloatingActions() {
     const [isOpen, setIsOpen] = useState(false);
     const [installPrompt] = useAtom(installPromptAtom);
-    const [, setInstallOpen] = useAtom(installDialogOpenAtom);
+    const [installOpen, setInstallOpen] = useAtom(installDialogOpenAtom);
     const [, setChatOpen] = useAtom(chatOpenAtom);
     const [expert] = useAtom(currentExpertAtom);
     const { toast } = useToast();
@@ -108,61 +108,64 @@ export function FloatingActions() {
     ];
 
     return (
-        <div className="fixed bottom-28 right-6 z-[70] flex flex-col items-end gap-4">
-            {isOpen && (
-                <div className="flex flex-col items-end gap-4 mb-2 animate-in fade-in slide-in-from-bottom-4 duration-300">
-                    {actions.map((action, index) => (
-                        <div 
-                            key={action.id} 
-                            className={cn(
-                                "flex items-center gap-3 transition-all duration-300",
-                                !action.enabled && "hidden"
-                            )}
-                            style={{ 
-                                transitionDelay: `${index * 50}ms`,
-                                transform: isOpen ? 'scale(1)' : 'scale(0.5)' 
-                            }}
-                        >
-                            <span className={cn(
-                                "bg-[#1a1c23] text-white font-black uppercase text-[10px] tracking-widest px-3 py-1.5 rounded-lg shadow-2xl border border-white/10",
-                                action.isBig && "text-xs py-2.5 px-5 border-blue-500/30 text-blue-400 font-black ring-2 ring-blue-500/10"
-                            )}>
-                                {action.label}
-                            </span>
-                            <Button
-                                asChild={!!action.href}
-                                variant="default"
-                                size="icon"
+        <>
+            <InstallPwaDialog open={installOpen} onOpenChange={setInstallOpen} />
+            <div className="fixed bottom-28 right-6 z-[70] flex flex-col items-end gap-4">
+                {isOpen && (
+                    <div className="flex flex-col items-end gap-4 mb-2 animate-in fade-in slide-in-from-bottom-4 duration-300">
+                        {actions.map((action, index) => (
+                            <div 
+                                key={action.id} 
                                 className={cn(
-                                    "rounded-full shadow-xl border-2 border-white/10 transition-all active:scale-95",
-                                    action.color,
-                                    action.size
+                                    "flex items-center gap-3 transition-all duration-300",
+                                    !action.enabled && "hidden"
                                 )}
-                                onClick={action.onClick}
+                                style={{ 
+                                    transitionDelay: `${index * 50}ms`,
+                                    transform: isOpen ? 'scale(1)' : 'scale(0.5)' 
+                                }}
                             >
-                                {action.href ? (
-                                    <a href={action.href} target={action.target} rel="noopener noreferrer">
-                                        {action.icon}
-                                    </a>
-                                ) : (
-                                    action.icon
-                                )}
-                            </Button>
-                        </div>
-                    ))}
-                </div>
-            )}
-            
-            <Button
-                size="icon"
-                className={cn(
-                    "rounded-full h-16 w-16 shadow-2xl transition-all duration-500 border-4 border-white/10",
-                    isOpen ? "bg-[#1a1c23] text-white rotate-45" : "bg-yellow-400 text-black hover:bg-yellow-500 scale-110"
+                                <span className={cn(
+                                    "bg-[#1a1c23] text-white font-black uppercase text-[10px] tracking-widest px-3 py-1.5 rounded-lg shadow-2xl border border-white/10",
+                                    action.isBig && "text-xs py-2.5 px-5 border-blue-500/30 text-blue-400 font-black ring-2 ring-blue-500/10"
+                                )}>
+                                    {action.label}
+                                </span>
+                                <Button
+                                    asChild={!!action.href}
+                                    variant="default"
+                                    size="icon"
+                                    className={cn(
+                                        "rounded-full shadow-xl border-2 border-white/10 transition-all active:scale-95",
+                                        action.color,
+                                        action.size
+                                    )}
+                                    onClick={action.onClick}
+                                >
+                                    {action.href ? (
+                                        <a href={action.href} target={action.target} rel="noopener noreferrer">
+                                            {action.icon}
+                                        </a>
+                                    ) : (
+                                        action.icon
+                                    )}
+                                </Button>
+                            </div>
+                        ))}
+                    </div>
                 )}
-                onClick={() => setIsOpen(!isOpen)}
-            >
-                {isOpen ? <X className="h-8 w-8" /> : <Plus className="h-8 w-8" />}
-            </Button>
-        </div>
+                
+                <Button
+                    size="icon"
+                    className={cn(
+                        "rounded-full h-16 w-16 shadow-2xl transition-all duration-500 border-4 border-white/10",
+                        isOpen ? "bg-[#1a1c23] text-white rotate-45" : "bg-yellow-400 text-black hover:bg-yellow-500 scale-110"
+                    )}
+                    onClick={() => setIsOpen(!isOpen)}
+                >
+                    {isOpen ? <X className="h-8 w-8" /> : <Plus className="h-8 w-8" />}
+                </Button>
+            </div>
+        </>
     );
 }
