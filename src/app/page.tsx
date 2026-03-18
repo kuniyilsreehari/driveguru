@@ -443,14 +443,14 @@ function HomePageContent() {
 
                     <Card className="bg-card border-none rounded-[3rem] p-6 sm:p-10 overflow-hidden shadow-2xl border border-border/50">
                         <CardHeader className="p-0 pb-10">
-                             <div className="flex items-center justify-between">
-                                <CardTitle className="flex items-center gap-4 text-3xl sm:text-4xl font-black text-foreground uppercase italic tracking-tighter">
-                                    <Sparkles className="text-orange-500 h-8 w-8 sm:h-10 sm:w-10" /> ENGINE
+                             <div className="flex flex-col xs:flex-row items-start xs:items-center justify-between gap-4">
+                                <CardTitle className="flex items-center gap-3 sm:gap-4 text-2xl sm:text-4xl font-black text-foreground uppercase italic tracking-tighter">
+                                    <Sparkles className="text-orange-500 h-7 w-7 sm:h-10 sm:w-10" /> ENGINE
                                 </CardTitle>
-                                <div className="flex items-center space-x-4 bg-muted/20 px-5 py-3 rounded-[1.5rem] border border-border shadow-inner">
-                                    <Switch id="ai-mode" checked={useAiSearch} onCheckedChange={handleAiModeToggle} className="data-[state=checked]:bg-orange-500 scale-110" />
-                                    <Label htmlFor="ai-mode" className="flex items-center gap-3 font-black text-[10px] sm:text-[11px] uppercase tracking-[0.2em] cursor-pointer text-foreground">
-                                        <Bot className={cn("h-5 w-5 transition-colors", useAiSearch ? "text-orange-500" : "text-muted-foreground")} />
+                                <div className="flex items-center space-x-3 sm:space-x-4 bg-muted/20 px-3 py-2 sm:px-5 sm:py-3 rounded-[1.5rem] border border-border shadow-inner">
+                                    <Switch id="ai-mode" checked={useAiSearch} onCheckedChange={handleAiModeToggle} className="data-[state=checked]:bg-orange-500 scale-100 sm:scale-110" />
+                                    <Label htmlFor="ai-mode" className="flex items-center gap-2 sm:gap-3 font-black text-[8px] sm:text-[11px] uppercase tracking-widest sm:tracking-[0.2em] cursor-pointer text-foreground whitespace-nowrap">
+                                        <Bot className={cn("h-4 w-4 sm:h-5 sm:w-5 transition-colors", useAiSearch ? "text-orange-500" : "text-muted-foreground")} />
                                         AI SEARCH
                                     </Label>
                                 </div>
