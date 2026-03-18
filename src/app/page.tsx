@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { useFirestore, useCollection, useDoc, useMemoFirebase, useUser, updateDocumentNonBlocking } from '@/firebase';
+import { useUser, useFirestore, useCollection, useDoc, useMemoFirebase } from '@/firebase';
 import { collection, query, where, limit, doc, arrayUnion, arrayRemove, orderBy } from 'firebase/firestore';
 import { ExpertCard } from '@/components/expert-card';
 import type { ExpertUser } from '@/components/expert-card';
@@ -349,7 +349,7 @@ function HomePageContent() {
                         <div className="relative group mb-12 z-10">
                             <Input 
                                 placeholder="Filter suggestions..." 
-                                className="h-16 bg-background border-none rounded-2xl text-base sm:text-xl placeholder:text-muted-foreground/30 focus-visible:ring-2 focus-visible:ring-orange-500 transition-all shadow-inner text-foreground font-bold px-8" 
+                                className="h-16 bg-background border-none rounded-2xl text-base sm:text-lg lg:text-xl placeholder:text-muted-foreground/30 focus-visible:ring-2 focus-visible:ring-orange-500 transition-all shadow-inner text-foreground font-bold px-8" 
                                 value={moduleSearchQuery} 
                                 onChange={(e) => setModuleSearchQuery(e.target.value)} 
                             />
@@ -456,9 +456,9 @@ function HomePageContent() {
                             <div className="flex flex-col gap-5">
                                 <Dialog>
                                     <DialogTrigger asChild>
-                                        <Button variant="outline" className="w-full h-20 justify-between text-left font-black uppercase text-xs sm:text-sm tracking-[0.2em] rounded-[1.5rem] bg-background border-none shadow-inner px-8 text-foreground/70">
-                                            <span className="flex-1">{userTypes.find(t => t.value === role)?.label || 'ALL USER TYPES'}</span>
-                                            <ChevronDown className="ml-2 h-5 w-5 opacity-30" />
+                                        <Button variant="outline" className="w-full h-20 justify-between text-left font-black uppercase text-[10px] sm:text-sm tracking-[0.2em] rounded-[1.5rem] bg-background border-none shadow-inner px-8 text-foreground/70">
+                                            <span className="flex-1 truncate">{userTypes.find(t => t.value === role)?.label || 'ALL USER TYPES'}</span>
+                                            <ChevronDown className="ml-2 h-5 w-5 opacity-30 shrink-0" />
                                         </Button>
                                     </DialogTrigger>
                                     <DialogContent className="rounded-[2.5rem] border-none bg-background text-foreground p-8">
@@ -493,7 +493,7 @@ function HomePageContent() {
                                     <Input
                                         id="ai-search"
                                         placeholder={useAiSearch ? `e.g. 'verified plumber'` : `Search name, profession...`}
-                                        className="text-lg sm:text-xl h-20 bg-background border-none rounded-[1.5rem] focus-visible:ring-2 focus-visible:ring-orange-500 shadow-inner px-8 text-foreground font-bold placeholder:text-muted-foreground/40"
+                                        className="text-base sm:text-lg lg:text-xl h-20 bg-background border-none rounded-[1.5rem] focus-visible:ring-2 focus-visible:ring-orange-500 shadow-inner px-8 text-foreground font-bold placeholder:text-muted-foreground/40"
                                         value={aiSearchQuery}
                                         onChange={(e) => setAiSearchQuery(e.target.value)}
                                         onKeyDown={(e) => e.key === 'Enter' && handleAiSearch()}
@@ -520,7 +520,7 @@ function HomePageContent() {
                                     <Input
                                         id="search"
                                         placeholder="Name, skill, or company..."
-                                        className="pl-14 h-16 bg-background border-none rounded-2xl text-lg sm:text-xl placeholder:text-muted-foreground shadow-inner font-bold text-foreground"
+                                        className="pl-14 h-16 bg-background border-none rounded-2xl text-base sm:text-lg lg:text-xl placeholder:text-muted-foreground shadow-inner font-bold text-foreground"
                                         value={searchQuery}
                                         onChange={(e) => setSearchQuery(e.target.value)}
                                     />
@@ -532,17 +532,17 @@ function HomePageContent() {
                                     <Label className="text-[10px] sm:text-[11px] font-black uppercase tracking-[0.3em] text-muted-foreground/60 ml-1">LOCATION</Label>
                                     <Button variant="ghost" size="sm" onClick={handleDetectLocation} disabled={isDetectingLocation} className="text-orange-500 font-black uppercase text-[10px] sm:text-[11px] tracking-widest h-10 rounded-xl hover:bg-orange-500/10 gap-2 px-4 border border-orange-500/20">
                                         {isDetectingLocation ? <Loader2 className="h-4 w-4 animate-spin" /> : <LocateIcon className="h-4 w-4" />}
-                                        AUTO-DETECT
+                                        <span className="hidden xs:inline">AUTO-DETECT</span>
                                     </Button>
                                 </div>
                                 <div className="grid grid-cols-1 gap-4">
-                                    <Input id="city" placeholder="City" className="bg-background border-none h-16 rounded-2xl font-bold px-8 shadow-inner text-lg text-foreground" value={city} onChange={(e) => setCity(e.target.value)} />
-                                    <Input id="state" placeholder="State" className="bg-background border-none h-16 rounded-2xl font-bold px-8 shadow-inner text-lg text-foreground" value={state} onChange={(e) => setState(e.target.value)} />
-                                    <Input id="pincode" placeholder="Pincode" className="bg-background border-none h-16 rounded-2xl font-bold px-8 shadow-inner text-lg text-foreground" value={pincode} onChange={(e) => setPincode(e.target.value)} />
+                                    <Input id="city" placeholder="City" className="bg-background border-none h-16 rounded-2xl font-bold px-8 shadow-inner text-base sm:text-lg text-foreground" value={city} onChange={(e) => setCity(e.target.value)} />
+                                    <Input id="state" placeholder="State" className="bg-background border-none h-16 rounded-2xl font-bold px-8 shadow-inner text-base sm:text-lg text-foreground" value={state} onChange={(e) => setState(e.target.value)} />
+                                    <Input id="pincode" placeholder="Pincode" className="bg-background border-none h-16 rounded-2xl font-bold px-8 shadow-inner text-base sm:text-lg text-foreground" value={pincode} onChange={(e) => setPincode(e.target.value)} />
                                 </div>
                             </div>
 
-                            <Button size="lg" className="w-full h-24 rounded-[2.5rem] bg-orange-500 hover:bg-orange-600 text-white font-black text-2xl shadow-[0_20px_45px_-5px_rgba(249,115,22,0.4)] uppercase tracking-[0.2em] transition-all active:scale-95 group mt-6 border-none" onClick={handleSearch}>
+                            <Button size="lg" className="w-full h-20 sm:h-24 rounded-[2.5rem] bg-orange-500 hover:bg-orange-600 text-white font-black text-lg xs:text-xl sm:text-2xl shadow-[0_20px_45px_-5px_rgba(249,115,22,0.4)] uppercase tracking-[0.2em] transition-all active:scale-95 group mt-6 border-none" onClick={handleSearch}>
                                 FIND PROFESSIONALS
                             </Button>
                         </CardContent>
@@ -607,13 +607,13 @@ function HomePageContent() {
                         <div className="p-6 bg-orange-500/10 rounded-full w-fit mb-8 border border-orange-500/20 shadow-inner">
                             <Sparkles className="h-14 w-14 text-orange-500" />
                         </div>
-                        <DialogTitle className="text-3xl sm:text-4xl font-black uppercase italic tracking-tighter">Tier Restriction</DialogTitle>
-                        <UiDialogDescription className="text-lg sm:text-xl text-muted-foreground font-medium pt-3 leading-relaxed">
+                        <DialogTitle className="text-3xl sm:text-4xl font-black uppercase italic tracking-tighter text-center">Tier Restriction</DialogTitle>
+                        <UiDialogDescription className="text-lg sm:text-xl text-muted-foreground font-medium pt-3 leading-relaxed text-center">
                             AI Search is for Super Premier members.
                         </UiDialogDescription>
                     </DialogHeader>
-                    <DialogFooter className="flex-col gap-5 pt-8 sm:flex-col">
-                        <Button asChild className="w-full h-20 rounded-[1.5rem] bg-orange-500 hover:bg-orange-600 font-black text-lg sm:text-xl shadow-[0_15px_35px_-5px_rgba(249,115,22,0.4)] uppercase tracking-widest transition-all active:scale-95">
+                    <DialogFooter className="flex flex-col gap-5 pt-8">
+                        <Button asChild className="w-full h-20 rounded-[1.5rem] bg-orange-500 hover:bg-orange-600 text-white font-black text-lg sm:text-xl shadow-[0_15px_35px_-5px_rgba(249,115,22,0.4)] uppercase tracking-widest transition-all active:scale-95">
                             <Link href="/dashboard#plans">UPGRADE NOW</Link>
                         </Button>
                         <Button variant="ghost" className="w-full h-12 rounded-xl text-muted-foreground hover:text-foreground font-bold uppercase text-[11px] tracking-[0.2em]" onClick={() => setIsPremiumDialogOpen(false)}>
