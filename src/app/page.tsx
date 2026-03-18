@@ -456,7 +456,7 @@ function HomePageContent() {
                             <div className="flex flex-col gap-5">
                                 <Dialog>
                                     <DialogTrigger asChild>
-                                        <Button variant="outline" className="w-full h-20 justify-between text-left font-black uppercase text-[11px] sm:text-[12px] tracking-[0.2em] rounded-[1.5rem] bg-background border-none shadow-inner px-8 text-foreground/70">
+                                        <Button variant="outline" className="w-full h-20 justify-between text-left font-black uppercase text-xs sm:text-sm tracking-[0.2em] rounded-[1.5rem] bg-background border-none shadow-inner px-8 text-foreground/70">
                                             <span className="flex-1">{userTypes.find(t => t.value === role)?.label || 'ALL USER TYPES'}</span>
                                             <ChevronDown className="ml-2 h-5 w-5 opacity-30" />
                                         </Button>
@@ -493,7 +493,7 @@ function HomePageContent() {
                                     <Input
                                         id="ai-search"
                                         placeholder={useAiSearch ? `e.g. 'verified plumber'` : `Search name, profession...`}
-                                        className="text-base sm:text-lg h-20 bg-background border-none rounded-[1.5rem] focus-visible:ring-2 focus-visible:ring-orange-500 shadow-inner px-8 text-foreground font-bold placeholder:text-muted-foreground/40"
+                                        className="text-lg sm:text-xl h-20 bg-background border-none rounded-[1.5rem] focus-visible:ring-2 focus-visible:ring-orange-500 shadow-inner px-8 text-foreground font-bold placeholder:text-muted-foreground/40"
                                         value={aiSearchQuery}
                                         onChange={(e) => setAiSearchQuery(e.target.value)}
                                         onKeyDown={(e) => e.key === 'Enter' && handleAiSearch()}
@@ -520,7 +520,7 @@ function HomePageContent() {
                                     <Input
                                         id="search"
                                         placeholder="Name, skill, or company..."
-                                        className="pl-14 h-16 bg-background border-none rounded-2xl text-base sm:text-lg placeholder:text-muted-foreground shadow-inner font-bold text-foreground"
+                                        className="pl-14 h-16 bg-background border-none rounded-2xl text-lg sm:text-xl placeholder:text-muted-foreground shadow-inner font-bold text-foreground"
                                         value={searchQuery}
                                         onChange={(e) => setSearchQuery(e.target.value)}
                                     />
@@ -536,14 +536,14 @@ function HomePageContent() {
                                     </Button>
                                 </div>
                                 <div className="grid grid-cols-1 gap-4">
-                                    <Input id="city" placeholder="City" className="bg-background border-none h-16 rounded-2xl font-bold px-8 shadow-inner text-base text-foreground" value={city} onChange={(e) => setCity(e.target.value)} />
-                                    <Input id="state" placeholder="State" className="bg-background border-none h-16 rounded-2xl font-bold px-8 shadow-inner text-base text-foreground" value={state} onChange={(e) => setState(e.target.value)} />
-                                    <Input id="pincode" placeholder="Pincode" className="bg-background border-none h-16 rounded-2xl font-bold px-8 shadow-inner text-base text-foreground" value={pincode} onChange={(e) => setPincode(e.target.value)} />
+                                    <Input id="city" placeholder="City" className="bg-background border-none h-16 rounded-2xl font-bold px-8 shadow-inner text-lg text-foreground" value={city} onChange={(e) => setCity(e.target.value)} />
+                                    <Input id="state" placeholder="State" className="bg-background border-none h-16 rounded-2xl font-bold px-8 shadow-inner text-lg text-foreground" value={state} onChange={(e) => setState(e.target.value)} />
+                                    <Input id="pincode" placeholder="Pincode" className="bg-background border-none h-16 rounded-2xl font-bold px-8 shadow-inner text-lg text-foreground" value={pincode} onChange={(e) => setPincode(e.target.value)} />
                                 </div>
                             </div>
 
-                            <Button size="lg" className="w-full h-24 rounded-[2.5rem] bg-orange-500 hover:bg-orange-600 text-white font-black text-xl sm:text-2xl shadow-[0_20px_45px_-5px_rgba(249,115,22,0.4)] uppercase tracking-[0.2em] transition-all active:scale-95 group mt-6 border-none" onClick={handleSearch}>
-                                Find Professionals
+                            <Button size="lg" className="w-full h-24 rounded-[2.5rem] bg-orange-500 hover:bg-orange-600 text-white font-black text-2xl shadow-[0_20px_45px_-5px_rgba(249,115,22,0.4)] uppercase tracking-[0.2em] transition-all active:scale-95 group mt-6 border-none" onClick={handleSearch}>
+                                FIND PROFESSIONALS
                             </Button>
                         </CardContent>
                     </Card>
