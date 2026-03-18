@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Suspense, useState, useEffect, useMemo } from 'react';
@@ -309,7 +310,7 @@ function HomePageContent() {
 
     const getIcon = (name: string) => {
         const Icon = (LucideIcons as any)[name];
-        return Icon ? <Icon className="w-8 h-8 text-primary" /> : <Briefcase className="w-8 h-8 text-primary" />;
+        return Icon ? <Icon className="w-8 h-8 text-orange-500" /> : <Briefcase className="w-8 h-8 text-orange-500" />;
     };
     
     const userTypes = [
@@ -561,22 +562,24 @@ function HomePageContent() {
                     </Card>
 
                     <div className="mt-16 text-center">
-                        <h2 className="text-3xl sm:text-5xl font-black text-foreground mb-2 uppercase italic tracking-tight">Industry Hub</h2>
-                        <p className="text-[10px] sm:text-xs font-black uppercase tracking-[0.3em] text-orange-500/50 mb-12">EXPLORE SPECIALIZATIONS</p>
+                        <h2 className="text-3xl sm:text-5xl font-black text-foreground mb-2 uppercase italic tracking-tight">INDUSTRY HUB</h2>
+                        <p className="text-[10px] sm:text-xs font-black uppercase tracking-[0.3em] text-orange-500 mb-12">EXPLORE SPECIALIZATIONS</p>
                          {isAppConfigLoading ? (
                              <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                                <Skeleton className="h-32 w-full rounded-[2rem] bg-muted/20" />
-                                <Skeleton className="h-32 w-full rounded-[2rem] bg-muted/20" />
+                                <Skeleton className="h-48 w-full rounded-[2.5rem] bg-muted/20" />
+                                <Skeleton className="h-48 w-full rounded-[2.5rem] bg-muted/20" />
                             </div>
                          ) : homepageCategories.length > 0 ? (
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 px-2">
                                 {homepageCategories.map((category) => (
                                     <Link key={category.id} href={`/search?q=${encodeURIComponent(category.name)}`} passHref>
-                                        <Card className="flex flex-col items-center justify-center p-8 sm:p-12 h-full bg-card border-none hover:bg-orange-500/10 hover:ring-2 hover:ring-orange-500/50 transition-all rounded-[2.5rem] group shadow-2xl">
-                                            <div className="p-5 sm:p-8 bg-background rounded-[1.5rem] mb-6 shadow-inner group-hover:scale-110 transition-transform duration-500">
+                                        <Card className="flex flex-col items-center justify-start p-6 sm:p-10 h-full bg-[#24262d] border-none hover:ring-2 hover:ring-orange-500/50 transition-all rounded-[2.5rem] group shadow-2xl aspect-[4/5] sm:aspect-square">
+                                            <div className="w-full aspect-square bg-[#1a1c23] rounded-[1.5rem] mb-6 flex items-center justify-center shadow-inner group-hover:scale-105 transition-transform duration-500">
                                                 {getIcon(category.icon)}
                                             </div>
-                                            <p className="font-black text-[10px] sm:text-xs text-foreground group-hover:text-orange-500 transition-colors uppercase tracking-[0.2em]">{category.name}</p>
+                                            <p className="font-black text-[10px] sm:text-xs text-white group-hover:text-orange-500 transition-colors uppercase tracking-[0.1em] leading-tight text-center">
+                                                {category.name}
+                                            </p>
                                         </Card>
                                     </Link>
                                 ))}
@@ -585,22 +588,26 @@ function HomePageContent() {
                     </div>
 
                      {isRecentProfessionalsEnabled && (
-                        <div className="mt-24">
-                            <div className="flex flex-col sm:flex-row items-center justify-between mb-12 gap-8">
-                                <div className="text-center sm:text-left">
-                                    <h2 className="text-3xl sm:text-5xl font-black text-foreground uppercase italic tracking-tight">Talent Registry</h2>
-                                    <p className="text-[10px] sm:text-xs font-black uppercase tracking-[0.3em] text-orange-500/50 mt-1">NEW PROFESSIONALS</p>
-                                </div>
-                                <Button className="w-full sm:w-auto rounded-2xl bg-orange-500 hover:bg-orange-600 text-white font-black uppercase text-[11px] tracking-[0.2em] h-14 px-10 shadow-xl shadow-orange-500/20" asChild>
-                                    <Link href="/search">VIEW ALL REGISTRY <ChevronRight className="ml-3 h-5 w-5" strokeWidth={3}/></Link>
+                        <div className="mt-24 text-center">
+                            <div className="mb-12">
+                                <h2 className="text-3xl sm:text-5xl font-black text-foreground uppercase italic tracking-tight">TALENT REGISTRY</h2>
+                                <p className="text-[10px] sm:text-xs font-black uppercase tracking-[0.3em] text-orange-500 mt-1">NEW PROFESSIONALS</p>
+                            </div>
+                            
+                            <div className="mb-12">
+                                <Button className="w-full h-16 sm:h-20 rounded-2xl bg-orange-500 hover:bg-orange-600 text-white font-black uppercase text-xs sm:text-lg tracking-[0.2em] shadow-2xl shadow-orange-500/30 transition-all active:scale-95 group" asChild>
+                                    <Link href="/search">
+                                        VIEW ALL REGISTRY <ChevronRight className="ml-3 h-6 w-6 group-hover:translate-x-1 transition-transform" strokeWidth={4}/>
+                                    </Link>
                                 </Button>
                             </div>
+
                             {isLoadingExperts ? (
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                                     <Skeleton className="h-56 w-full rounded-[3rem] bg-muted/20" />
                                 </div>
                             ) : (
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-10 text-left">
                                     {recentExperts && recentExperts.length > 0 ? (
                                         recentExperts.map(expert => (
                                             <ExpertCard key={expert.id} expert={expert} />
@@ -619,7 +626,7 @@ function HomePageContent() {
                         <div className="p-6 bg-orange-500/10 rounded-full w-fit mb-8 border border-orange-500/20 shadow-inner">
                             <Sparkles className="h-14 w-14 text-orange-500" />
                         </div>
-                        <DialogTitle className="text-3xl sm:text-4xl font-black uppercase italic tracking-tighter text-center">Tier Restriction</DialogTitle>
+                        <DialogTitle className="text-3xl font-black uppercase italic tracking-tighter text-center">Tier Restriction</DialogTitle>
                         <UiDialogDescription className="text-lg sm:text-xl text-muted-foreground font-medium pt-3 leading-relaxed text-center">
                             AI Search is for Super Premier members.
                         </UiDialogDescription>
