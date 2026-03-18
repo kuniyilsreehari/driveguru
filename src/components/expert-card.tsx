@@ -5,7 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { IndianRupee, Briefcase, Phone, MessageSquare, Crown, Sparkles, MapPin, Lock, Share2, CheckCircle2, ShieldAlert } from 'lucide-react';
+import { IndianRupee, Briefcase, Phone, MessageSquare, Crown, Sparkles, MapPin, Lock, Share2, ShieldCheck, ShieldAlert, Fingerprint } from 'lucide-react';
 import { useUser, useFirestore } from '@/firebase';
 import { FollowerStats } from './follower-stats';
 import { useToast } from '@/hooks/use-toast';
@@ -91,25 +91,23 @@ export function ExpertCard({ expert }: ExpertCardProps) {
                     <div className="flex-1 min-w-0 space-y-1">
                         <div className="flex justify-between items-start">
                             <Link href={`/expert/${expert.id}`} className="block cursor-pointer flex-1 min-w-0">
-                                <h3 className="text-lg sm:text-2xl font-black text-foreground group-hover:text-orange-500 transition-colors uppercase italic tracking-tighter leading-tight truncate">
-                                    {getDisplayName(expert)}
-                                </h3>
+                                <div className="flex items-center gap-2 mb-1">
+                                    <h3 className="text-lg sm:text-2xl font-black text-foreground group-hover:text-orange-500 transition-colors uppercase italic tracking-tighter leading-tight truncate">
+                                        {getDisplayName(expert)}
+                                    </h3>
+                                    {expert.verified && <ShieldCheck className="h-5 w-5 text-green-500 shrink-0 fill-green-500/10" />}
+                                </div>
                                 
                                 <div className="flex flex-wrap items-center gap-1.5 mt-1">
-                                    {expert.verified ? (
-                                        <CheckCircle2 className="h-4 w-4 text-green-500 fill-green-500/10" />
-                                    ) : (
-                                        <ShieldAlert className="h-4 w-4 text-muted-foreground/20" />
-                                    )}
-                                    {expert.tier === 'Premier' && <Crown className="h-4 w-4 text-purple-500 fill-purple-500" />}
-                                    {expert.tier === 'Super Premier' && <Sparkles className="h-4 w-4 text-blue-500 fill-blue-500" />}
+                                    {expert.tier === 'Premier' && <Crown className="h-4 w-4 text-purple-500 fill-purple-500/20" />}
+                                    {expert.tier === 'Super Premier' && <Sparkles className="h-4 w-4 text-blue-500 fill-blue-500/20" />}
                                     
                                     {expert.isAvailable && (
-                                        <Badge className="bg-[#22c55e] text-white rounded-full px-2 text-[8px] font-black h-5 uppercase tracking-tighter border-none">Available</Badge>
+                                        <Badge className="bg-[#22c55e] text-white rounded-full px-2 text-[8px] font-black h-5 uppercase tracking-tighter border-none shadow-sm">Available</Badge>
                                     )}
                                     
                                     <Badge variant="outline" className="font-mono text-[8px] uppercase border-orange-500/30 bg-orange-500/5 text-orange-500 h-5 px-1.5">
-                                        {dgId}
+                                        <Fingerprint className="h-2.5 w-2.5 mr-1 opacity-50" /> {dgId}
                                     </Badge>
                                 </div>
 

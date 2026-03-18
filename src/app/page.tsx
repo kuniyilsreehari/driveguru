@@ -2,7 +2,7 @@
 
 import { Suspense, useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { Briefcase, Building, ChevronDown, LocateIcon, MapPin, Search, Loader2, UserCheck, Crown, Sparkles, Bot, Lock, Users, User, Check, GraduationCap, UserPlus, ChevronLeft, ChevronRight, Filter, ShieldAlert } from "lucide-react"
+import { Briefcase, Building, ChevronDown, LocateIcon, MapPin, Search, Loader2, UserCheck, Crown, Sparkles, Bot, Lock, Users, User, Check, GraduationCap, UserPlus, ChevronLeft, ChevronRight, Filter, ShieldAlert, Fingerprint } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -390,9 +390,13 @@ function HomePageContent() {
                                                         <h3 className="font-black text-foreground text-2xl sm:text-3xl line-clamp-1 mb-2 tracking-tighter uppercase italic">
                                                             {truncateName(`${expert.firstName} ${expert.lastName}`)}
                                                         </h3>
-                                                        <p className="text-[9px] sm:text-[10px] text-muted-foreground uppercase tracking-[0.4em] font-black mb-10 sm:mb-12">
-                                                            {expert.profession || expert.role}
-                                                        </p>
+                                                        <div className="flex items-center justify-center gap-2 mb-10 sm:mb-12">
+                                                            <p className="text-[9px] sm:text-[10px] text-muted-foreground uppercase tracking-[0.4em] font-black">
+                                                                {expert.profession || expert.role}
+                                                            </p>
+                                                            {expert.tier === 'Premier' && <Crown className="h-3 w-3 text-purple-500" />}
+                                                            {expert.tier === 'Super Premier' && <Sparkles className="h-3 w-3 text-blue-500" />}
+                                                        </div>
 
                                                         <Button 
                                                             className="w-full bg-orange-500 hover:bg-orange-600 text-white rounded-2xl font-black text-[10px] sm:text-xs h-14 sm:h-16 shadow-[0_15px_35px_-5px_rgba(249,115,22,0.4)] active:scale-95 transition-all uppercase tracking-[0.2em] border-none mt-auto"
@@ -457,7 +461,10 @@ function HomePageContent() {
                                 <Dialog>
                                     <DialogTrigger asChild>
                                         <Button variant="outline" className="w-full h-20 justify-between text-left font-black uppercase text-[10px] sm:text-sm tracking-[0.2em] rounded-[1.5rem] bg-background border-none shadow-inner px-8 text-foreground/70">
-                                            <span className="flex-1 truncate">{userTypes.find(t => t.value === role)?.label || 'ALL USER TYPES'}</span>
+                                            <span className="flex items-center gap-3 flex-1 truncate">
+                                                <Users className="h-5 w-5 text-orange-500 opacity-50" />
+                                                {userTypes.find(t => t.value === role)?.label || 'ALL USER TYPES'}
+                                            </span>
                                             <ChevronDown className="ml-2 h-5 w-5 opacity-30 shrink-0" />
                                         </Button>
                                     </DialogTrigger>
@@ -530,15 +537,20 @@ function HomePageContent() {
                             <div className="space-y-4">
                                 <div className="flex items-center justify-between mb-1">
                                     <Label className="text-[10px] sm:text-[11px] font-black uppercase tracking-[0.3em] text-muted-foreground/60 ml-1">LOCATION</Label>
-                                    <Button variant="ghost" size="sm" onClick={handleDetectLocation} disabled={isDetectingLocation} className="text-orange-500 font-black uppercase text-[10px] sm:text-[11px] tracking-widest h-10 rounded-xl hover:bg-orange-500/10 gap-2 px-4 border border-orange-500/20">
+                                    <Button variant="ghost" size="sm" onClick={handleDetectLocation} disabled={isDetectingLocation} className="text-orange-500 font-black uppercase text-[10px] sm:text-[11px] tracking-widest h-10 rounded-xl hover:bg-orange-500/10 gap-2 px-4 border border-orange-500/20 shadow-sm">
                                         {isDetectingLocation ? <Loader2 className="h-4 w-4 animate-spin" /> : <LocateIcon className="h-4 w-4" />}
                                         <span className="hidden xs:inline">AUTO-DETECT</span>
                                     </Button>
                                 </div>
                                 <div className="grid grid-cols-1 gap-4">
-                                    <Input id="city" placeholder="City" className="bg-background border-none h-16 rounded-2xl font-bold px-8 shadow-inner text-base sm:text-lg text-foreground" value={city} onChange={(e) => setCity(e.target.value)} />
-                                    <Input id="state" placeholder="State" className="bg-background border-none h-16 rounded-2xl font-bold px-8 shadow-inner text-base sm:text-lg text-foreground" value={state} onChange={(e) => setState(e.target.value)} />
-                                    <Input id="pincode" placeholder="Pincode" className="bg-background border-none h-16 rounded-2xl font-bold px-8 shadow-inner text-base sm:text-lg text-foreground" value={pincode} onChange={(e) => setPincode(e.target.value)} />
+                                    <div className="relative">
+                                        <MapPin className="absolute left-6 top-1/2 -translate-y-1/2 h-5 w-5 text-orange-500/30" />
+                                        <Input id="city" placeholder="City" className="bg-background border-none h-16 rounded-2xl font-bold px-14 shadow-inner text-base sm:text-lg text-foreground" value={city} onChange={(e) => setCity(e.target.value)} />
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <Input id="state" placeholder="State" className="bg-background border-none h-16 rounded-2xl font-bold px-8 shadow-inner text-base sm:text-lg text-foreground" value={state} onChange={(e) => setState(e.target.value)} />
+                                        <Input id="pincode" placeholder="Pincode" className="bg-background border-none h-16 rounded-2xl font-bold px-8 shadow-inner text-base sm:text-lg text-foreground" value={pincode} onChange={(e) => setPincode(e.target.value)} />
+                                    </div>
                                 </div>
                             </div>
 

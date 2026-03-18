@@ -5,7 +5,7 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { doc, arrayUnion, arrayRemove, collection, serverTimestamp } from 'firebase/firestore';
 import { useFirestore, useDoc, useMemoFirebase, useUser, updateDocumentNonBlocking, addDocumentNonBlocking } from '@/firebase';
-import { Loader2, ChevronLeft, MapPin, IndianRupee, Briefcase, Calendar, Info, Book, GraduationCap, School, User as UserIcon, UserCheck, XCircle, Crown, Sparkles, LogIn, Lock, Building, Home, MessageSquare, PenSquare, Factory, Linkedin, Twitter, Github, Globe, UserPlus, UserMinus, Phone, Youtube, Share2, Rss, Fingerprint, ImageIcon, List, CheckCircle2, ShieldAlert } from 'lucide-react';
+import { Loader2, ChevronLeft, MapPin, IndianRupee, Briefcase, Calendar, Info, Book, GraduationCap, School, User as UserIcon, UserCheck, XCircle, Crown, Sparkles, LogIn, Lock, Building, Home, MessageSquare, PenSquare, Factory, Linkedin, Twitter, Github, Globe, UserPlus, UserMinus, Phone, Youtube, Share2, Rss, Fingerprint, ImageIcon, List, CheckCircle2, ShieldCheck, ShieldAlert } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardFooter } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -336,9 +336,9 @@ function ExpertProfileContent() {
                                     <div className="flex items-center gap-3">
                                         <h1 className="text-2xl sm:text-4xl font-black uppercase italic tracking-tight text-foreground">{displayName}</h1>
                                         <div className="flex items-center gap-1.5">
-                                            {expert.verified && <CheckCircle2 className="h-5 w-5 text-green-500 fill-green-500/10" />}
-                                            {expert.tier === 'Premier' && <Crown className="h-5 w-5 text-purple-500 fill-purple-500" />}
-                                            {expert.tier === 'Super Premier' && <Sparkles className="h-5 w-5 text-blue-500 fill-blue-500" />}
+                                            {expert.verified && <ShieldCheck className="h-6 w-6 text-green-500 fill-green-500/10" />}
+                                            {expert.tier === 'Premier' && <Crown className="h-6 w-6 text-purple-500 fill-purple-500/20" />}
+                                            {expert.tier === 'Super Premier' && <Sparkles className="h-6 w-6 text-blue-500 fill-blue-500/20" />}
                                         </div>
                                     </div>
                                     <div className="flex items-center justify-center sm:justify-start gap-2">
