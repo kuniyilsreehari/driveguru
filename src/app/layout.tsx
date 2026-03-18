@@ -39,6 +39,12 @@ export default function RootLayout({
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0" />
         <link rel="icon" href="/icons/apple-touch-icon.svg" type="image/svg+xml" sizes="any" />
         <link rel="apple-touch-icon" href="/icons/apple-touch-icon.svg" />
+        
+        {/* Apple PWA Support */}
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="apple-mobile-web-app-title" content="DriveGuru" />
+        
         <meta name="theme-color" content="#f97316" />
       </head>
       <body className={`${inter.variable} ${outfit.variable} font-body antialiased flex flex-col min-h-screen bg-[#1a1c23]`}>

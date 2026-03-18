@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -14,7 +13,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { Download, CheckCircle, Smartphone, Monitor, Loader2 } from 'lucide-react';
+import { Download, CheckCircle, Smartphone, Monitor, Loader2, Share, PlusSquare, ChevronRight } from 'lucide-react';
 
 interface InstallPwaDialogProps {
   open: boolean;
@@ -23,11 +22,22 @@ interface InstallPwaDialogProps {
 
 export function InstallPwaDialog({ open, onOpenChange }: InstallPwaDialogProps) {
   const [installPrompt, setInstallPrompt] = useAtom(installPromptAtom);
-  const [installState, setInstallState] = useState<'idle' | 'installing' | 'success'>('idle');
+  const [installState, setInstallState] = useState<'idle' | 'installing' | 'success' | 'ios'>('idle');
   const [progress, setProgress] = useState(0);
+  const [isIOS, setIsIOS] = useState(false);
+
+  useEffect(() => {
+    const userAgent = window.navigator.userAgent.toLowerCase();
+    const ios = /iphone|ipad|ipod/.test(userAgent);
+    setIsIOS(ios);
+  }, []);
 
   const handleInstallClick = async () => {
-    // If we have a real prompt, trigger it. Otherwise, just simulate for checking.
+    if (isIOS) {
+      setInstallState('ios');
+      return;
+    }
+
     if (installPrompt) {
       try {
         const promptEvent = installPrompt as any;
@@ -47,7 +57,7 @@ export function InstallPwaDialog({ open, onOpenChange }: InstallPwaDialogProps) 
 
   const simulateProgress = () => {
     let current = 0;
-    const totalTime = 18000; // 18 seconds as requested
+    const totalTime = 18000; 
     const intervalTime = 100; 
     const step = 100 / (totalTime / intervalTime);
 
@@ -105,6 +115,44 @@ export function InstallPwaDialog({ open, onOpenChange }: InstallPwaDialogProps) 
                 INSTALL APPLICATION
               </Button>
             </DialogFooter>
+          </div>
+        )}
+
+        {installState === 'ios' && (
+          <div className="animate-in fade-in slide-in-from-right-4 duration-500">
+            <DialogHeader className="text-center items-center">
+              <div className="p-5 bg-blue-500/10 rounded-full w-fit mb-6 border border-blue-500/20 shadow-inner">
+                <Smartphone className="h-10 w-10 text-blue-500" />
+              </div>
+              <DialogTitle className="text-2xl font-black text-white uppercase italic tracking-tighter text-center">
+                iOS Installation
+              </DialogTitle>
+              <DialogDescription className="text-muted-foreground font-medium pt-2 text-center">
+                Follow these simple steps to add DriveGuru to your iPhone home screen.
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-4 py-8">
+                <div className="flex items-center gap-4 bg-white/5 p-4 rounded-2xl border border-white/5">
+                    <div className="h-10 w-10 rounded-xl bg-blue-500/20 flex items-center justify-center text-blue-500 font-black">1</div>
+                    <p className="text-xs text-white/80 font-medium">Tap the <span className="inline-flex items-center mx-1 bg-white/10 p-1 rounded"><Share className="h-3.5 w-3.5 text-blue-400" /></span> <span className="font-bold">Share</span> button in Safari.</p>
+                </div>
+                <div className="flex items-center gap-4 bg-white/5 p-4 rounded-2xl border border-white/5">
+                    <div className="h-10 w-10 rounded-xl bg-blue-500/20 flex items-center justify-center text-blue-500 font-black">2</div>
+                    <p className="text-xs text-white/80 font-medium">Scroll down and select <span className="inline-flex items-center mx-1 bg-white/10 p-1 rounded"><PlusSquare className="h-3.5 w-3.5 text-blue-400" /></span> <span className="font-bold">Add to Home Screen</span>.</p>
+                </div>
+                <div className="flex items-center gap-4 bg-white/5 p-4 rounded-2xl border border-white/5">
+                    <div className="h-10 w-10 rounded-xl bg-blue-500/20 flex items-center justify-center text-blue-500 font-black">3</div>
+                    <p className="text-xs text-white/80 font-medium">Tap <span className="font-bold text-blue-400">Add</span> in the top right corner.</p>
+                </div>
+            </div>
+
+            <Button 
+              onClick={() => onOpenChange(false)} 
+              className="w-full h-14 rounded-2xl bg-white/5 hover:bg-white/10 text-white font-black uppercase tracking-widest border border-white/10"
+            >
+              GOT IT
+            </Button>
           </div>
         )}
 
