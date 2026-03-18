@@ -2,7 +2,7 @@
 
 import { Suspense, useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { Briefcase, Building, ChevronDown, LocateIcon, MapPin, Search, Loader2, UserCheck, Crown, Sparkles, Bot, Lock, Users, User, Check, GraduationCap, UserPlus, ChevronLeft, ChevronRight, Filter, ShieldAlert, Fingerprint } from "lucide-react"
+import { Briefcase, Building, ChevronDown, LocateIcon, MapPin, Search, Loader2, UserCheck, Crown, Sparkles, Bot, Lock, Users, User, Check, GraduationCap, UserPlus, ChevronLeft, ChevronRight, Filter, ShieldAlert, Fingerprint, Gift } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -441,7 +441,7 @@ function HomePageContent() {
                         </div>
                     </section>
 
-                    <Card className="bg-card border-none rounded-[3rem] p-8 sm:p-10 overflow-hidden shadow-2xl border border-border/50">
+                    <Card className="bg-card border-none rounded-[3rem] p-6 sm:p-10 overflow-hidden shadow-2xl border border-border/50">
                         <CardHeader className="p-0 pb-10">
                              <div className="flex items-center justify-between">
                                 <CardTitle className="flex items-center gap-4 text-3xl sm:text-4xl font-black text-foreground uppercase italic tracking-tighter">
@@ -500,7 +500,7 @@ function HomePageContent() {
                                     <Input
                                         id="ai-search"
                                         placeholder={useAiSearch ? `e.g. 'verified plumber'` : `Search name, profession...`}
-                                        className="text-base sm:text-lg lg:text-xl h-20 bg-background border-none rounded-[1.5rem] focus-visible:ring-2 focus-visible:ring-orange-500 shadow-inner px-8 text-foreground font-bold placeholder:text-muted-foreground/40"
+                                        className="text-sm sm:text-lg lg:text-xl h-20 bg-background border-none rounded-[1.5rem] focus-visible:ring-2 focus-visible:ring-orange-500 shadow-inner px-8 text-foreground font-bold placeholder:text-muted-foreground/40"
                                         value={aiSearchQuery}
                                         onChange={(e) => setAiSearchQuery(e.target.value)}
                                         onKeyDown={(e) => e.key === 'Enter' && handleAiSearch()}
@@ -518,7 +518,7 @@ function HomePageContent() {
                         </CardContent>
                     </Card>
 
-                    <Card className="rounded-[3rem] p-10 sm:p-12 bg-card border-none shadow-2xl relative overflow-hidden border border-border/50">
+                    <Card className="rounded-[3rem] p-6 sm:p-12 bg-card border-none shadow-2xl relative overflow-hidden border border-border/50">
                         <CardContent className="p-0 space-y-8">
                              <div className="space-y-3">
                                 <Label htmlFor="search" className="text-[10px] sm:text-[11px] font-black uppercase tracking-[0.3em] text-muted-foreground/60 ml-1">LOOKING FOR...</Label>
@@ -527,7 +527,7 @@ function HomePageContent() {
                                     <Input
                                         id="search"
                                         placeholder="Name, skill, or company..."
-                                        className="pl-14 h-16 sm:h-20 bg-background border-none rounded-[1.5rem] text-base sm:text-lg lg:text-xl placeholder:text-muted-foreground shadow-inner font-bold text-foreground"
+                                        className="pl-14 h-16 sm:h-20 bg-background border-none rounded-[1.5rem] text-sm sm:text-lg lg:text-xl placeholder:text-muted-foreground shadow-inner font-bold text-foreground"
                                         value={searchQuery}
                                         onChange={(e) => setSearchQuery(e.target.value)}
                                     />
@@ -545,16 +545,16 @@ function HomePageContent() {
                                 <div className="grid grid-cols-1 gap-4">
                                     <div className="relative">
                                         <MapPin className="absolute left-6 top-1/2 -translate-y-1/2 h-5 w-5 text-orange-500/30" />
-                                        <Input id="city" placeholder="City" className="bg-background border-none h-16 sm:h-20 rounded-[1.5rem] font-bold px-14 shadow-inner text-base sm:text-lg text-foreground" value={city} onChange={(e) => setCity(e.target.value)} />
+                                        <Input id="city" placeholder="City" className="bg-background border-none h-16 sm:h-20 rounded-[1.5rem] font-bold px-14 shadow-inner text-sm sm:text-lg text-foreground" value={city} onChange={(e) => setCity(e.target.value)} />
                                     </div>
                                     <div className="grid grid-cols-2 gap-4">
-                                        <Input id="state" placeholder="State" className="bg-background border-none h-16 sm:h-20 rounded-[1.5rem] font-bold px-8 shadow-inner text-base sm:text-lg text-foreground" value={state} onChange={(e) => setState(e.target.value)} />
-                                        <Input id="pincode" placeholder="Pincode" className="bg-background border-none h-16 sm:h-20 rounded-[1.5rem] font-bold px-8 shadow-inner text-base sm:text-lg text-foreground" value={pincode} onChange={(e) => setPincode(e.target.value)} />
+                                        <Input id="state" placeholder="State" className="bg-background border-none h-16 sm:h-20 rounded-[1.5rem] font-bold px-8 shadow-inner text-sm sm:text-lg text-foreground" value={state} onChange={(e) => setState(e.target.value)} />
+                                        <Input id="pincode" placeholder="Pincode" className="bg-background border-none h-16 sm:h-20 rounded-[1.5rem] font-bold px-8 shadow-inner text-sm sm:text-lg text-foreground" value={pincode} onChange={(e) => setPincode(e.target.value)} />
                                     </div>
                                 </div>
                             </div>
 
-                            <Button size="lg" className="w-full h-20 sm:h-24 rounded-[2.5rem] bg-orange-500 hover:bg-orange-600 text-white font-black text-lg xs:text-xl sm:text-2xl shadow-[0_20px_45px_-5px_rgba(249,115,22,0.4)] uppercase tracking-[0.2em] transition-all active:scale-95 group mt-6 border-none" onClick={handleSearch}>
+                            <Button size="lg" className="w-full h-20 sm:h-24 rounded-[2.5rem] bg-orange-500 hover:bg-orange-600 text-white font-black text-sm xs:text-lg sm:text-2xl shadow-[0_20px_45px_-5px_rgba(249,115,22,0.4)] uppercase tracking-widest sm:tracking-[0.2em] transition-all active:scale-95 group mt-6 border-none" onClick={handleSearch}>
                                 FIND PROFESSIONALS
                             </Button>
                         </CardContent>
