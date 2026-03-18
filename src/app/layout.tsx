@@ -1,4 +1,4 @@
-import type {Metadata} from 'next';
+import type {Metadata, Viewport} from 'next';
 import { Inter, Outfit } from 'next/font/google';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
@@ -22,10 +22,23 @@ const outfit = Outfit({
   variable: '--font-outfit',
 });
 
+export const viewport: Viewport = {
+  themeColor: '#f97316',
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+};
+
 export const metadata: Metadata = {
   title: 'DriveGuru',
   description: 'Find local talent instantly.',
-  manifest: '/manifest.json'
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    title: 'DriveGuru',
+    statusBarStyle: 'black-translucent',
+  },
 };
 
 export default function RootLayout({
@@ -36,18 +49,11 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0" />
-        <link rel="icon" href="/icons/apple-touch-icon.svg" type="image/svg+xml" sizes="any" />
-        <link rel="apple-touch-icon" href="/icons/apple-touch-icon.svg" />
-        
-        {/* Apple PWA Support */}
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-        <meta name="apple-mobile-web-app-title" content="DriveGuru" />
-        
-        <meta name="theme-color" content="#f97316" />
+        <link rel="apple-touch-icon" href="/icons/apple-touch-icon.svg" />
       </head>
-      <body className={`${inter.variable} ${outfit.variable} font-body antialiased flex flex-col min-h-screen bg-[#1a1c23]`}>
+      <body className={`${inter.variable} ${outfit.variable} font-body antialiased flex flex-col min-h-screen bg-background`}>
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"

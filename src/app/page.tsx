@@ -1,9 +1,36 @@
-
 'use client';
 
 import { Suspense, useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { Briefcase, Building, ChevronDown, LocateIcon, MapPin, Search, Loader2, UserCheck, Crown, Sparkles, Bot, Lock, Users, User, Check, GraduationCap, UserPlus, ChevronLeft, ChevronRight, Filter, ShieldAlert, Fingerprint, Gift } from "lucide-react"
+import { 
+  Briefcase, 
+  Building, 
+  ChevronDown, 
+  LocateIcon, 
+  MapPin, 
+  Search, 
+  Loader2, 
+  UserCheck, 
+  Crown, 
+  Sparkles, 
+  Bot, 
+  Users, 
+  User, 
+  Check, 
+  GraduationCap, 
+  ChevronRight, 
+  Fingerprint, 
+  Gift, 
+  Wrench, 
+  Hammer, 
+  Zap, 
+  Droplets, 
+  Cpu, 
+  LayoutGrid, 
+  ShoppingBag, 
+  Stethoscope,
+  ChevronLeft
+} from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -12,14 +39,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { useUser, useFirestore, useCollection, useDoc, useMemoFirebase } from '@/firebase';
-import { collection, query, where, limit, doc, arrayUnion, arrayRemove, orderBy } from 'firebase/firestore';
+import { collection, query, where, limit, doc, arrayUnion, arrayRemove, orderBy, Timestamp } from 'firebase/firestore';
 import { ExpertCard } from '@/components/expert-card';
 import type { ExpertUser } from '@/components/expert-card';
-import * as LucideIcons from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { parseSearchQuery } from '@/ai/flows/ai-search-flow';
 import Link from 'next/link';
-import type { HomepageCategory } from '@/app/admin/page';
 import { WelcomeRedirect } from '@/components/welcome-redirect';
 import {
   Dialog,
@@ -41,10 +66,34 @@ import {
   type CarouselApi,
 } from "@/components/ui/carousel";
 
+// Type defined locally to avoid cross-page import errors
+export type HomepageCategory = {
+    id: string;
+    name: string;
+    icon: string;
+};
+
 type AppConfig = {
     featuredExpertsLimit?: number;
     homepageCategories?: HomepageCategory[];
     isRecentProfessionalsEnabled?: boolean;
+};
+
+// Safe icon mapping to prevent SSR crashes from star imports
+const ICON_MAP: Record<string, React.ReactNode> = {
+  Briefcase: <Briefcase className="w-8 h-8 text-orange-500" />,
+  Building: <Building className="w-8 h-8 text-orange-500" />,
+  Users: <Users className="w-8 h-8 text-orange-500" />,
+  User: <User className="w-8 h-8 text-orange-500" />,
+  Wrench: <Wrench className="w-8 h-8 text-orange-500" />,
+  Hammer: <Hammer className="w-8 h-8 text-orange-500" />,
+  Zap: <Zap className="w-8 h-8 text-orange-500" />,
+  Droplets: <Droplets className="w-8 h-8 text-orange-500" />,
+  Cpu: <Cpu className="w-8 h-8 text-orange-500" />,
+  LayoutGrid: <LayoutGrid className="w-8 h-8 text-orange-500" />,
+  ShoppingBag: <ShoppingBag className="w-8 h-8 text-orange-500" />,
+  Stethoscope: <Stethoscope className="w-8 h-8 text-orange-500" />,
+  GraduationCap: <GraduationCap className="w-8 h-8 text-orange-500" />,
 };
 
 function HomePageContent() {
@@ -82,9 +131,15 @@ function HomePageContent() {
         if (!api) return;
         setCount(api.scrollSnapList().length);
         setCurrent(api.selectedScrollSnap() + 1);
-        api.on("select", () => {
+        
+        const onSelect = () => {
             setCurrent(api.selectedScrollSnap() + 1);
-        });
+        };
+        
+        api.on("select", onSelect);
+        return () => {
+            api.off("select", onSelect);
+        }
     }, [api]);
 
     const userProfileDocRef = useMemoFirebase(() => {
@@ -122,7 +177,9 @@ function HomePageContent() {
         if (!experts) return [];
         return experts.filter(e => {
             if (!e.hiddenUntil) return true;
-            return e.hiddenUntil.toDate() < new Date();
+            // Robust check for Firestore Timestamp instances
+            const hideDate = e.hiddenUntil instanceof Timestamp ? e.hiddenUntil.toDate() : new Date(e.hiddenUntil);
+            return hideDate < new Date();
         });
     }
 
@@ -309,8 +366,7 @@ function HomePageContent() {
     }
 
     const getIcon = (name: string) => {
-        const Icon = (LucideIcons as any)[name];
-        return Icon ? <Icon className="w-8 h-8 text-orange-500" /> : <Briefcase className="w-8 h-8 text-orange-500" />;
+        return ICON_MAP[name] || <Briefcase className="w-8 h-8 text-orange-500" />;
     };
     
     const userTypes = [
@@ -573,11 +629,11 @@ function HomePageContent() {
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-6 px-2">
                                 {homepageCategories.map((category) => (
                                     <Link key={category.id} href={`/search?q=${encodeURIComponent(category.name)}`} passHref>
-                                        <Card className="flex flex-col items-center justify-start p-6 sm:p-10 h-full bg-[#24262d] border-none hover:ring-2 hover:ring-orange-500/50 transition-all rounded-[2.5rem] group shadow-2xl aspect-[4/5] sm:aspect-square">
-                                            <div className="w-full aspect-square bg-[#1a1c23] rounded-[1.5rem] mb-6 flex items-center justify-center shadow-inner group-hover:scale-105 transition-transform duration-500">
+                                        <Card className="flex flex-col items-center justify-start p-6 sm:p-10 h-full bg-card border-none hover:ring-2 hover:ring-orange-500/50 transition-all rounded-[2.5rem] group shadow-2xl aspect-[4/5] sm:aspect-square">
+                                            <div className="w-full aspect-square bg-background rounded-[1.5rem] mb-6 flex items-center justify-center shadow-inner group-hover:scale-105 transition-transform duration-500">
                                                 {getIcon(category.icon)}
                                             </div>
-                                            <p className="font-black text-[10px] sm:text-xs text-white group-hover:text-orange-500 transition-colors uppercase tracking-[0.1em] leading-tight text-center">
+                                            <p className="font-black text-[10px] sm:text-xs text-foreground group-hover:text-orange-500 transition-colors uppercase tracking-[0.1em] leading-tight text-center">
                                                 {category.name}
                                             </p>
                                         </Card>

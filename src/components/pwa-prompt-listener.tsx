@@ -12,19 +12,19 @@ export function PwaPromptListener() {
 
   useEffect(() => {
     const handler = (e: Event) => {
-      // Prevent the mini-infobar from appearing on mobile
+      // Prevent the mini-infobar from appearing on mobile automatically
       e.preventDefault();
-      // Stash the event so it can be triggered later.
+      // Stash the event so it can be triggered by our "INSTALL APP" button
       setInstallPrompt(e);
     };
 
     window.addEventListener('beforeinstallprompt', handler);
 
-    // Register Service Worker
-    if ('serviceWorker' in navigator) {
+    // Register Service Worker for PWA compliance
+    if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('/sw.js').catch((err) => {
-          console.error('ServiceWorker registration failed: ', err);
+          console.warn('PWA ServiceWorker registration issue: ', err);
         });
       });
     }
