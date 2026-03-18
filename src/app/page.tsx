@@ -527,7 +527,7 @@ function HomePageContent() {
                                     <Input
                                         id="search"
                                         placeholder="Name, skill, or company..."
-                                        className="pl-14 h-16 bg-background border-none rounded-2xl text-base sm:text-lg lg:text-xl placeholder:text-muted-foreground shadow-inner font-bold text-foreground"
+                                        className="pl-14 h-16 sm:h-20 bg-background border-none rounded-[1.5rem] text-base sm:text-lg lg:text-xl placeholder:text-muted-foreground shadow-inner font-bold text-foreground"
                                         value={searchQuery}
                                         onChange={(e) => setSearchQuery(e.target.value)}
                                     />
@@ -545,11 +545,11 @@ function HomePageContent() {
                                 <div className="grid grid-cols-1 gap-4">
                                     <div className="relative">
                                         <MapPin className="absolute left-6 top-1/2 -translate-y-1/2 h-5 w-5 text-orange-500/30" />
-                                        <Input id="city" placeholder="City" className="bg-background border-none h-16 rounded-2xl font-bold px-14 shadow-inner text-base sm:text-lg text-foreground" value={city} onChange={(e) => setCity(e.target.value)} />
+                                        <Input id="city" placeholder="City" className="bg-background border-none h-16 sm:h-20 rounded-[1.5rem] font-bold px-14 shadow-inner text-base sm:text-lg text-foreground" value={city} onChange={(e) => setCity(e.target.value)} />
                                     </div>
                                     <div className="grid grid-cols-2 gap-4">
-                                        <Input id="state" placeholder="State" className="bg-background border-none h-16 rounded-2xl font-bold px-8 shadow-inner text-base sm:text-lg text-foreground" value={state} onChange={(e) => setState(e.target.value)} />
-                                        <Input id="pincode" placeholder="Pincode" className="bg-background border-none h-16 rounded-2xl font-bold px-8 shadow-inner text-base sm:text-lg text-foreground" value={pincode} onChange={(e) => setPincode(e.target.value)} />
+                                        <Input id="state" placeholder="State" className="bg-background border-none h-16 sm:h-20 rounded-[1.5rem] font-bold px-8 shadow-inner text-base sm:text-lg text-foreground" value={state} onChange={(e) => setState(e.target.value)} />
+                                        <Input id="pincode" placeholder="Pincode" className="bg-background border-none h-16 sm:h-20 rounded-[1.5rem] font-bold px-8 shadow-inner text-base sm:text-lg text-foreground" value={pincode} onChange={(e) => setPincode(e.target.value)} />
                                     </div>
                                 </div>
                             </div>
