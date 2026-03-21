@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Suspense } from 'react';
@@ -8,9 +7,9 @@ import { Loader2 } from 'lucide-react';
 
 function SignupPageContent() {
   return (
-    <div className="w-full min-h-screen flex items-center justify-center bg-[#1a1c23] p-4 sm:p-8">
+    <div className="w-full min-h-screen flex items-center justify-center bg-background p-4 sm:p-8">
       <div className="mx-auto w-full max-w-[480px]">
-        <Card className="border-none bg-[#24262d] shadow-2xl rounded-[2.5rem] overflow-hidden animate-in fade-in zoom-in-95 duration-500">
+        <Card className="border-none bg-card shadow-2xl rounded-[3rem] overflow-hidden animate-in fade-in zoom-in-95 duration-500 border border-border/50">
           <CardContent className="p-8 sm:p-12">
             <RegistrationForm />
           </CardContent>
@@ -24,7 +23,7 @@ function SignupPageContent() {
 export default function SignupPage() {
   return (
     <Suspense fallback={
-      <div className="flex h-screen w-full items-center justify-center bg-[#1a1c23]">
+      <div className="flex h-screen w-full items-center justify-center bg-background">
         <Loader2 className="h-12 w-12 animate-spin text-orange-500" />
       </div>
     }>

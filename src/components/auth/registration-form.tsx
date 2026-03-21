@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react";
@@ -45,7 +44,7 @@ import { processReferral } from "@/ai/flows/process-referral-flow";
 const expertTypes = [
     { name: "Freelancer", icon: <UserIcon className="w-8 h-8" />, description: "Individual skills and services." },
     { name: "Company", icon: <Building className="w-8 h-8" />, description: "Business and talent management." },
-    { name: "Authorized Pro", icon: <Briefcase className="w-8 h-8" />, description: "Representing an organization." },
+    { name: "Authorized Pro", icon: <Briefcase className="w-8 h-8" />, description: "Organization expert." },
 ]
 
 const generateReferralCode = () => Math.random().toString(36).substring(2, 10).toUpperCase();
@@ -55,9 +54,9 @@ const formSchema = z.object({
   lastName: z.string().min(1, { message: "Last name is required." }),
   email: z.string().email({ message: "Invalid email address." }),
   password: z.string().min(8, { message: "Password must be 8+ characters." }),
-  state: z.string().min(1, { message: "State required." }),
-  city: z.string().min(1, { message: "City required." }),
-  pincode: z.string().min(1, { message: "Pincode required." }),
+  state: z.string().optional(),
+  city: z.string().optional(),
+  pincode: z.string().optional(),
   address: z.string().optional(),
   countryCode: z.string().optional(),
   phoneNumber: z.string().min(10, { message: "10-digit number required." }),
@@ -181,9 +180,6 @@ export function RegistrationForm() {
         }
     }
   }, [view, auth]);
-
-  const selectedRole = form.watch("role");
-  const selectedPhoneRole = phoneForm.watch("role");
 
   async function handleGoogleSignUp() {
     if (!auth) return;
@@ -315,41 +311,47 @@ export function RegistrationForm() {
     }
   }
 
+  const selectedRole = form.watch("role");
+  const selectedPhoneRole = phoneForm.watch("role");
+
+  const inputClass = "h-14 bg-background border-none rounded-2xl font-bold text-foreground shadow-inner focus-visible:ring-2 focus-visible:ring-orange-500 transition-all";
+  const labelClass = "text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 ml-1 mb-1.5 block";
+
   return (
     <div className="w-full">
       <div id="recaptcha-container" ref={recaptchaContainerRef}></div>
       <div className="mb-10 text-center sm:text-left">
-        <h2 className="text-3xl sm:text-4xl font-black uppercase italic tracking-tighter text-white mb-2">Register</h2>
-        <p className="text-[10px] sm:text-xs font-black uppercase tracking-[0.3em] text-orange-500/50">CREATE EXPERT PROFILE</p>
+        <h2 className="text-3xl sm:text-4xl font-black uppercase italic tracking-tighter text-foreground mb-2">Register</h2>
+        <p className="text-[10px] sm:text-xs font-black uppercase tracking-[0.3em] text-orange-500">CREATE EXPERT PROFILE</p>
       </div>
 
       {view === 'email' && (
         <div className="space-y-6">
             <div className="grid grid-cols-2 gap-3">
-                <Button onClick={handleGoogleSignUp} type="button" variant="outline" className="h-14 rounded-2xl border-white/10 bg-white/5 hover:bg-white/10 font-bold"><Icons.google className="mr-2 h-5 w-5" />Google</Button>
-                <Button onClick={() => setView('phone')} type="button" className="bg-[#22c55e] text-white hover:bg-[#1eb054] rounded-2xl h-14 font-bold border-none"><Phone className="mr-2 h-5 w-5" />Phone</Button>
+                <Button onClick={handleGoogleSignUp} type="button" variant="outline" className="h-14 rounded-2xl border-border bg-background hover:bg-muted font-bold"><Icons.google className="mr-2 h-5 w-5" />Google</Button>
+                <Button onClick={() => setView('phone')} type="button" className="bg-[#22c55e] text-white hover:bg-[#1eb054] rounded-2xl h-14 font-bold border-none shadow-lg shadow-[#22c55e]/20"><Phone className="mr-2 h-5 w-5" />Phone</Button>
             </div>
 
             <div className="relative my-8">
-                <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-white/5" /></div>
-                <div className="relative flex justify-center text-[10px] uppercase font-black tracking-[0.2em]"><span className="bg-[#24262d] px-4 text-muted-foreground">Or Secure Details</span></div>
+                <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-border" /></div>
+                <div className="relative flex justify-center text-[10px] uppercase font-black tracking-[0.2em]"><span className="bg-card px-4 text-muted-foreground">Or Secure Details</span></div>
             </div>
 
             <Form {...form}>
-                <form onSubmit={form.handleSubmit(onEmailSubmit)} className="space-y-5">
+                <form onSubmit={form.handleSubmit(onEmailSubmit)} className="space-y-6">
                     <FormField control={form.control} name="role" render={({ field }) => (
                         <FormItem>
-                            <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 ml-1">Account Type</FormLabel>
+                            <FormLabel className={labelClass}>Account Type</FormLabel>
                             <div className="grid grid-cols-1 gap-3">
                                 {expertTypes.map((type) => (
-                                    <Card key={type.name} className={cn("cursor-pointer transition-all border-none bg-[#1a1c23] rounded-2xl shadow-inner", field.value === type.name ? "ring-2 ring-orange-500 bg-orange-500/5" : "hover:bg-white/5")} onClick={() => form.setValue('role', type.name, { shouldValidate: true })}>
+                                    <Card key={type.name} className={cn("cursor-pointer transition-all border-none bg-background rounded-2xl shadow-inner", field.value === type.name ? "ring-2 ring-orange-500 bg-orange-500/5" : "hover:bg-muted/50")} onClick={() => form.setValue('role', type.name, { shouldValidate: true })}>
                                         <CardHeader className="flex flex-row items-center gap-4 p-4">
-                                            <div className={cn("p-2 rounded-full", field.value === type.name ? "bg-orange-500 text-white" : "bg-white/5 text-muted-foreground")}>{React.cloneElement(type.icon as React.ReactElement, { className: "w-5 h-5" })}</div>
-                                            <div className="flex-1">
-                                                <CardTitle className="text-xs font-black uppercase italic">{type.name}</CardTitle>
-                                                <p className="text-[9px] text-muted-foreground font-medium uppercase tracking-tighter">{type.description}</p>
+                                            <div className={cn("p-2.5 rounded-full shadow-sm", field.value === type.name ? "bg-orange-500 text-white" : "bg-muted text-muted-foreground")}>{React.cloneElement(type.icon as React.ReactElement, { className: "w-5 h-5" })}</div>
+                                            <div className="flex-1 min-w-0">
+                                                <CardTitle className="text-sm font-black uppercase italic truncate">{type.name}</CardTitle>
+                                                <p className="text-[9px] text-muted-foreground font-medium uppercase tracking-tighter truncate">{type.description}</p>
                                             </div>
-                                            {field.value === type.name && <CheckCircle2 className="h-5 w-5 text-orange-500" />}
+                                            {field.value === type.name && <CheckCircle2 className="h-5 w-5 text-orange-500 shrink-0" />}
                                         </CardHeader>
                                     </Card>
                                 ))}
@@ -360,43 +362,73 @@ export function RegistrationForm() {
 
                     <div className="grid grid-cols-2 gap-4">
                         <FormField control={form.control} name="firstName" render={({ field }) => (
-                            <FormItem><FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 ml-1">First Name</FormLabel>
-                            <FormControl><Input placeholder="John" {...field} className="h-12 bg-[#1a1c23] border-none rounded-xl font-bold text-white shadow-inner" /></FormControl><FormMessage /></FormItem>
+                            <FormItem>
+                                <FormLabel className={labelClass}>First Name</FormLabel>
+                                <FormControl><Input placeholder="John" {...field} className={inputClass} /></FormControl>
+                                <FormMessage />
+                            </FormItem>
                         )} />
                         <FormField control={form.control} name="lastName" render={({ field }) => (
-                            <FormItem><FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 ml-1">Last Name</FormLabel>
-                            <FormControl><Input placeholder="Doe" {...field} className="h-12 bg-[#1a1c23] border-none rounded-xl font-bold text-white shadow-inner" /></FormControl><FormMessage /></FormItem>
+                            <FormItem>
+                                <FormLabel className={labelClass}>Last Name</FormLabel>
+                                <FormControl><Input placeholder="Doe" {...field} className={inputClass} /></FormControl>
+                                <FormMessage />
+                            </FormItem>
                         )} />
                     </div>
 
                     <FormField control={form.control} name="email" render={({ field }) => (
-                        <FormItem><FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 ml-1">Email Address</FormLabel>
-                        <FormControl><Input type="email" placeholder="name@example.com" {...field} className="h-12 bg-[#1a1c23] border-none rounded-xl font-bold text-white shadow-inner" /></FormControl><FormMessage /></FormItem>
+                        <FormItem>
+                            <FormLabel className={labelClass}>Email Address</FormLabel>
+                            <FormControl><Input type="email" placeholder="name@example.com" {...field} className={inputClass} /></FormControl>
+                            <FormMessage />
+                        </FormItem>
                     )} />
 
                     <FormField control={form.control} name="password" render={({ field }) => (
-                        <FormItem><FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 ml-1">Password</FormLabel>
-                        <div className="relative"><FormControl><Input type={showPassword ? "text" : "password"} placeholder="••••••••" {...field} className="h-12 bg-[#1a1c23] border-none rounded-xl font-bold text-white shadow-inner" /></FormControl>
-                        <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-white transition-colors">{showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</button>
-                        </div><FormMessage /></FormItem>
+                        <FormItem>
+                            <FormLabel className={labelClass}>Password</FormLabel>
+                            <div className="relative">
+                                <FormControl><Input type={showPassword ? "text" : "password"} placeholder="••••••••" {...field} className={inputClass} /></FormControl>
+                                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
+                                    {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                                </button>
+                            </div>
+                            <FormMessage />
+                        </FormItem>
                     )} />
 
-                    <div className="pt-4 space-y-4">
+                    <FormField control={form.control} name="phoneNumber" render={({ field }) => (
+                        <FormItem>
+                            <FormLabel className={labelClass}>Mobile Number</FormLabel>
+                            <div className="relative">
+                                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-black text-orange-500/50">+91</span>
+                                <FormControl><Input type="tel" placeholder="98765 43210" {...field} className={cn(inputClass, "pl-14")} /></FormControl>
+                            </div>
+                            <FormMessage />
+                        </FormItem>
+                    )} />
+
+                    <div className="pt-2 space-y-6">
                         <FormField control={form.control} name="usedReferralCode" render={({ field }) => (
                             <FormItem>
-                                <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 ml-1">Referral Code (Optional)</FormLabel>
+                                <FormLabel className={labelClass}>Referral Code (Optional)</FormLabel>
                                 <div className="relative">
-                                    <Gift className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-orange-500/50" />
-                                    <FormControl><Input placeholder="e.g. 5GTYZ4BI" {...field} className="pl-10 h-12 bg-[#1a1c23] border-none rounded-xl font-mono text-orange-500 shadow-inner" /></FormControl>
+                                    <Gift className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-orange-500/30" />
+                                    <FormControl><Input placeholder="e.g. 5GTYZ4BI" {...field} className={cn(inputClass, "pl-12 font-mono text-orange-500")} /></FormControl>
                                 </div>
                                 <FormMessage />
                             </FormItem>
                         )} />
 
                         <FormField control={form.control} name="terms" render={({ field }) => (
-                            <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-2xl bg-[#1a1c23] p-4 shadow-inner">
-                                <FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} className="border-white/20 data-[state=checked]:bg-orange-500 data-[state=checked]:border-orange-500"/></FormControl>
-                                <div className="space-y-1"><FormLabel className="text-[10px] font-black uppercase tracking-widest">Agree to <Link href="/terms" target="_blank" className="underline text-orange-500">Terms & Policies</Link></FormLabel></div>
+                            <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-2xl bg-background p-4 shadow-inner border border-border/50">
+                                <FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} className="border-border data-[state=checked]:bg-orange-500 data-[state=checked]:border-orange-500"/></FormControl>
+                                <div className="space-y-1">
+                                    <FormLabel className="text-[10px] font-black uppercase tracking-widest leading-none">
+                                        Agree to <Link href="/terms" target="_blank" className="underline text-orange-500 hover:text-orange-400">Terms & Policies</Link>
+                                    </FormLabel>
+                                </div>
                             </FormItem>
                         )} />
 
@@ -411,23 +443,25 @@ export function RegistrationForm() {
 
       {view === 'phone' && (
         <div className="space-y-6">
-            <Button onClick={() => setView('email')} variant="ghost" className="p-0 text-muted-foreground hover:text-white mb-2"><ChevronLeft className="mr-1 h-4 w-4" /> Back to Email</Button>
+            <Button onClick={() => setView('email')} variant="ghost" className="p-0 text-muted-foreground hover:text-foreground mb-4 font-black uppercase text-[10px] tracking-widest">
+                <ChevronLeft className="mr-1 h-4 w-4" /> Back to Email
+            </Button>
             
             <Form {...phoneForm}>
                 <form onSubmit={phoneForm.handleSubmit(onPhoneSubmit)} className="space-y-6">
                     <FormField control={phoneForm.control} name="role" render={({ field }) => (
                         <FormItem>
-                            <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 ml-1">Account Type</FormLabel>
+                            <FormLabel className={labelClass}>Account Type</FormLabel>
                             <div className="grid grid-cols-1 gap-3">
                                 {expertTypes.map((type) => (
-                                    <Card key={type.name} className={cn("cursor-pointer transition-all border-none bg-[#1a1c23] rounded-2xl shadow-inner", field.value === type.name ? "ring-2 ring-orange-500 bg-orange-500/5" : "hover:bg-white/5")} onClick={() => phoneForm.setValue('role', type.name, { shouldValidate: true })}>
+                                    <Card key={type.name} className={cn("cursor-pointer transition-all border-none bg-background rounded-2xl shadow-inner", field.value === type.name ? "ring-2 ring-orange-500 bg-orange-500/5" : "hover:bg-muted/50")} onClick={() => phoneForm.setValue('role', type.name, { shouldValidate: true })}>
                                         <CardHeader className="flex flex-row items-center gap-4 p-4">
-                                            <div className={cn("p-2 rounded-full", field.value === type.name ? "bg-orange-500 text-white" : "bg-white/5 text-muted-foreground")}>{React.cloneElement(type.icon as React.ReactElement, { className: "w-5 h-5" })}</div>
-                                            <div className="flex-1">
-                                                <CardTitle className="text-xs font-black uppercase italic">{type.name}</CardTitle>
-                                                <p className="text-[9px] text-muted-foreground font-medium uppercase tracking-tighter">{type.description}</p>
+                                            <div className={cn("p-2.5 rounded-full shadow-sm", field.value === type.name ? "bg-orange-500 text-white" : "bg-muted text-muted-foreground")}>{React.cloneElement(type.icon as React.ReactElement, { className: "w-5 h-5" })}</div>
+                                            <div className="flex-1 min-w-0">
+                                                <CardTitle className="text-sm font-black uppercase italic truncate">{type.name}</CardTitle>
+                                                <p className="text-[9px] text-muted-foreground font-medium uppercase tracking-tighter truncate">{type.description}</p>
                                             </div>
-                                            {field.value === type.name && <CheckCircle2 className="h-5 w-5 text-orange-500" />}
+                                            {field.value === type.name && <CheckCircle2 className="h-5 w-5 text-orange-500 shrink-0" />}
                                         </CardHeader>
                                     </Card>
                                 ))}
@@ -437,31 +471,42 @@ export function RegistrationForm() {
                     )} />
 
                     <div className="space-y-4">
-                        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-orange-500/50">Identification</p>
                         <div className="grid grid-cols-2 gap-4">
                             <FormField control={phoneForm.control} name="firstName" render={({ field }) => (
-                                <FormItem><FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 ml-1">First Name</FormLabel>
-                                <FormControl><Input placeholder="John" {...field} className="h-12 bg-[#1a1c23] border-none rounded-xl font-bold text-white shadow-inner" /></FormControl><FormMessage /></FormItem>
+                                <FormItem>
+                                    <FormLabel className={labelClass}>First Name</FormLabel>
+                                    <FormControl><Input placeholder="John" {...field} className={inputClass} /></FormControl>
+                                    <FormMessage />
+                                </FormItem>
                             )} />
                             <FormField control={phoneForm.control} name="lastName" render={({ field }) => (
-                                <FormItem><FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 ml-1">Last Name</FormLabel>
-                                <FormControl><Input placeholder="Doe" {...field} className="h-12 bg-[#1a1c23] border-none rounded-xl font-bold text-white shadow-inner" /></FormControl><FormMessage /></FormItem>
+                                <FormItem>
+                                    <FormLabel className={labelClass}>Last Name</FormLabel>
+                                    <FormControl><Input placeholder="Doe" {...field} className={inputClass} /></FormControl>
+                                    <FormMessage />
+                                </FormItem>
                             )} />
                         </div>
 
                         {(selectedPhoneRole === 'Company' || selectedPhoneRole === 'Authorized Pro') && (
                             <FormField control={phoneForm.control} name="companyName" render={({ field }) => (
-                                <FormItem><FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 ml-1">Organization Name</FormLabel>
-                                <div className="relative"><Building className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" /><FormControl><Input placeholder="Acme Corp" {...field} className="pl-10 h-12 bg-[#1a1c23] border-none rounded-xl font-bold text-white shadow-inner" /></FormControl></div><FormMessage /></FormItem>
+                                <FormItem>
+                                    <FormLabel className={labelClass}>Organization Name</FormLabel>
+                                    <div className="relative">
+                                        <Building className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                                        <FormControl><Input placeholder="Acme Corp" {...field} className={cn(inputClass, "pl-12")} /></FormControl>
+                                    </div>
+                                    <FormMessage />
+                                </FormItem>
                             )} />
                         )}
 
                         <FormField control={phoneForm.control} name="phoneNumber" render={({ field }) => (
                             <FormItem>
-                                <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 ml-1">Mobile Number</FormLabel>
+                                <FormLabel className={labelClass}>Mobile Number</FormLabel>
                                 <div className="relative">
-                                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm text-muted-foreground font-black">+91</span>
-                                    <FormControl><Input type="tel" placeholder="98765 43210" {...field} className="pl-14 h-14 bg-[#1a1c23] border-none rounded-2xl font-bold text-white shadow-inner text-lg" /></FormControl>
+                                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-black text-orange-500/50">+91</span>
+                                    <FormControl><Input type="tel" placeholder="98765 43210" {...field} className={cn(inputClass, "pl-14 text-lg")} /></FormControl>
                                 </div>
                                 <FormMessage />
                             </FormItem>
@@ -469,18 +514,18 @@ export function RegistrationForm() {
 
                         <FormField control={phoneForm.control} name="usedReferralCode" render={({ field }) => (
                             <FormItem>
-                                <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 ml-1">Referral Code (Optional)</FormLabel>
+                                <FormLabel className={labelClass}>Referral Code (Optional)</FormLabel>
                                 <div className="relative">
-                                    <Gift className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-orange-500/50" />
-                                    <FormControl><Input placeholder="e.g. 5GTYZ4BI" {...field} className="pl-10 h-12 bg-[#1a1c23] border-none rounded-xl font-mono text-orange-500 shadow-inner" /></FormControl>
+                                    <Gift className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-orange-500/30" />
+                                    <FormControl><Input placeholder="e.g. 5GTYZ4BI" {...field} className={cn(inputClass, "pl-12 font-mono text-orange-500")} /></FormControl>
                                 </div>
                                 <FormMessage />
                             </FormItem>
                         )} />
                     </div>
 
-                    <Button type="submit" className="w-full h-16 bg-[#22c55e] hover:bg-[#1eb054] text-white font-black text-lg rounded-2xl shadow-xl uppercase tracking-widest transition-all active:scale-95" disabled={isSubmitting}>
-                        {isSubmitting ? <Loader2 className="h-6 w-6 animate-spin" /> : <><Send className="mr-2 h-5 w-5" /> Send Activation Code</>}
+                    <Button type="submit" className="w-full h-16 bg-[#22c55e] hover:bg-[#1eb054] text-white font-black text-lg rounded-2xl shadow-xl shadow-[#22c55e]/20 uppercase tracking-widest transition-all active:scale-95" disabled={isSubmitting}>
+                        {isSubmitting ? <Loader2 className="h-6 w-6 animate-spin" /> : <><Send className="mr-2 h-5 w-5" /> SEND ACTIVATION CODE</>}
                     </Button>
                 </form>
             </Form>
@@ -491,8 +536,8 @@ export function RegistrationForm() {
          <Form {...otpForm}>
             <form onSubmit={otpForm.handleSubmit(onOtpSubmit)} className="space-y-8 text-center animate-in fade-in zoom-in-95 duration-500">
                 <div className="space-y-2">
-                    <h3 className="text-xl font-black uppercase italic text-white">Enter Security Code</h3>
-                    <p className="text-xs text-muted-foreground">We sent a 6-digit code to your mobile device.</p>
+                    <h3 className="text-xl font-black uppercase italic text-foreground">Enter Security Code</h3>
+                    <p className="text-xs text-muted-foreground font-medium">We sent a 6-digit verification code to your device.</p>
                 </div>
                 
                 <FormField
@@ -501,19 +546,19 @@ export function RegistrationForm() {
                     render={({ field }) => (
                         <FormItem>
                             <FormControl>
-                                <Input type="text" placeholder="000000" {...field} className="h-20 bg-[#1a1c23] border-none rounded-[1.5rem] font-black tracking-[0.8em] text-center text-3xl text-orange-500 shadow-inner" maxLength={6} />
+                                <Input type="text" placeholder="000000" {...field} className="h-20 bg-background border-none rounded-[1.5rem] font-black tracking-[0.8em] text-center text-3xl text-orange-500 shadow-inner" maxLength={6} />
                             </FormControl>
                             <FormMessage />
                         </FormItem>
                     )}
                 />
                 
-                <div className="space-y-4">
+                <div className="space-y-4 pt-4">
                     <Button type="submit" className="w-full h-16 bg-orange-500 hover:bg-orange-600 text-white font-black text-lg rounded-2xl shadow-[0_15px_35px_-5px_rgba(249,115,22,0.4)] uppercase tracking-widest transition-all active:scale-95" disabled={isSubmitting}>
-                        {isSubmitting ? <Loader2 className="h-6 w-6 animate-spin" /> : 'COMPLETE REGISTRATION'}
+                        {isSubmitting ? <Loader2 className="h-6 w-6 animate-spin" /> : 'VERIFY & REGISTER'}
                     </Button>
-                    <Button variant="link" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-white" onClick={() => setView('phone')} type="button">
-                        Incorrect phone number?
+                    <Button variant="link" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-foreground" onClick={() => setView('phone')} type="button">
+                        Change phone number?
                     </Button>
                 </div>
             </form>
