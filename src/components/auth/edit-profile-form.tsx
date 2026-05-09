@@ -151,6 +151,7 @@ type ExpertUserProfile = {
     youtubeUrl?: string;
     tier?: 'Standard' | 'Premier' | 'Super Premier';
     following?: string[];
+    lastProfileUpdate?: any;
 };
 
 type AppConfig = {
@@ -645,7 +646,7 @@ export function EditProfileForm({ userProfile, onSuccess, isAdmin = false }: Edi
                                   <Input 
                                       type="file"
                                       className="hidden"
-                                      ref={el => fileInputRefs.current[i] = el}
+                                      ref={el => { fileInputRefs.current[i] = el; }}
                                       onChange={(e) => handleImageUpload(e, slot)}
                                       accept="image/png, image/jpeg, image/gif"
                                   />

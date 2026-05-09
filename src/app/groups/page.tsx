@@ -206,7 +206,7 @@ function GroupsList() {
         if (!user) return null;
         return doc(firestore, 'users', user.uid);
     }, [user, firestore]);
-    const { data: userProfile, mutate: mutateUserProfile } = useDoc<UserProfile>(userDocRef);
+    const { data: userProfile } = useDoc<UserProfile>(userDocRef);
 
     const groupsQuery = useMemoFirebase(() => {
         if (!firestore) return null;

@@ -60,6 +60,7 @@ import { exportAllData } from '@/ai/flows/export-data-flow';
 import { importUsers } from '@/ai/flows/import-users-flow';
 import { EditProfileForm } from '@/components/auth/edit-profile-form';
 import { cn } from '@/lib/utils';
+import { exportToExcel } from '@/lib/excel-export';
 import type { Vacancy } from '@/app/vacancies/page';
 import { PostVacancyForm } from '@/components/auth/post-vacancy-form';
 import { 
@@ -106,6 +107,7 @@ type ExpertUser = {
     city?: string;
     state?: string;
     pincode?: string;
+    qualification?: string;
 };
 
 type Payment = {
@@ -177,6 +179,8 @@ export default function AdminDashboardPage() {
   const [manualJoins, setManualJoins] = useState(0);
   const [userSearchQuery, setUserSearchQuery] = useState('');
   const [userFilter, setUserFilter] = useState<'all' | 'verified' | 'unverified' | 'premier' | 'super' | 'referrers'>('all');
+  const [isExportPasswordDialogOpen, setIsExportPasswordDialogOpen] = useState(false);
+  const [exportPasswordInput, setExportPasswordInput] = useState('');
 
   const ITEMS_PER_PAGE = 10;
   const [currentPage, setCurrentPage] = useState(1);
@@ -260,7 +264,7 @@ export default function AdminDashboardPage() {
       setHomepageCategories(appConfig.homepageCategories || []);
       setDepartments(appConfig.departments || []);
       
-      const initialVideos = appConfig.videoResources || [appConfig.introVideoUrl].filter(Boolean);
+      const initialVideos = (appConfig.videoResources || [appConfig.introVideoUrl].filter(Boolean)) as string[];
       setVideoResources(initialVideos.length > 0 ? initialVideos : [""]);
     }
   }, [appConfig]);
@@ -534,7 +538,9 @@ export default function AdminDashboardPage() {
       const link = document.createElement('a');
       link.href = url;
       link.download = `driveguru-backup-${format(new Date(), 'yyyy-MM-dd')}.json`;
+      document.body.appendChild(link);
       link.click();
+      document.body.removeChild(link);
       toast({ title: "Export Complete" });
     } finally {
       setIsExporting(false);
@@ -572,8 +578,58 @@ export default function AdminDashboardPage() {
     const link = document.createElement('a');
     link.href = url;
     link.download = `driveguru-expert-registry-${format(new Date(), 'yyyy-MM-dd')}.csv`;
+    document.body.appendChild(link);
     link.click();
-    toast({ title: "Registry Exported", description: "Excel compatible file is ready." });
+    document.body.removeChild(link);
+    toast({ title: "Registry Exported", description: "CSV file is ready for download." });
+  };
+
+  const handleExportExcel = async () => {
+    if (!users) return;
+    setIsExportPasswordDialogOpen(true);
+  };
+
+  const executeExportExcel = () => {
+    if (!users) return;
+    if (exportPasswordInput !== 'DRIVEGURU@SUPER') {
+        toast({ variant: "destructive", title: "Invalid Password", description: "The export password you entered is incorrect." });
+        return;
+    }
+    
+    setIsExporting(true);
+    setIsExportPasswordDialogOpen(false);
+    setExportPasswordInput('');
+    
+    try {
+        const data = users.map((u, i) => {
+            const dynamicPoints = (u.referralCount || 0) * referralPoints;
+            const influenceScore = dynamicPoints * (u.referralCount || 0);
+            return {
+                "S.No": i + 1,
+                "Expert Name": `${u.firstName} ${u.lastName}`,
+                "Profession/Role": u.profession || u.role,
+                "Email": u.email || '',
+                "Phone Number": sanitizePhoneNumber(u.phoneNumber),
+                "City": u.city || '',
+                "State": u.state || '',
+                "Pincode": u.pincode || '',
+                "Tier": u.tier || 'Standard',
+                "Verified": u.verified ? 'Yes' : 'No',
+                "Referral Code": u.referralCode || '',
+                "Total Points (PTS)": dynamicPoints,
+                "Total Joins": u.referralCount || 0,
+                "Influence Score": influenceScore,
+                "Joined Date": u.createdAt ? format(u.createdAt.toDate(), 'dd-MM-yyyy') : '---'
+            };
+        });
+
+        exportToExcel(data, "driveguru-expert-registry-pro", "Expert Registry");
+        toast({ title: "Professional Export Complete", description: "Your styled Excel file is ready." });
+    } catch (err) {
+        toast({ variant: "destructive", title: "Export Failed", description: "Could not generate professional Excel file." });
+    } finally {
+        setIsExporting(false);
+    }
   };
 
   const handleImportCSV = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -736,8 +792,8 @@ export default function AdminDashboardPage() {
                                             </Button>
                                         ))}
                                     </div>
-                                    <Button variant="outline" size="sm" className="rounded-xl border-border h-9 font-black uppercase text-[10px]" onClick={handleExportCSV}>
-                                        <Download className="mr-2 h-3.5 w-3.5" /> Export Registry (Excel/CSV)
+                                    <Button variant="outline" size="sm" className="rounded-xl border-orange-500/20 text-orange-500 h-9 font-black uppercase text-[10px] hover:bg-orange-500/10" onClick={handleExportExcel} disabled={isExporting}>
+                                        {isExporting ? <Loader className="mr-2 h-3.5 w-3.5 animate-spin" /> : <HardDriveDownload className="mr-2 h-3.5 w-3.5" />} Professional Excel Export
                                     </Button>
                                 </div>
 
@@ -1477,8 +1533,8 @@ export default function AdminDashboardPage() {
                             <Button variant="outline" className="h-12 rounded-xl border-border bg-background hover:bg-muted" onClick={() => document.getElementById('csv-import-input')?.click()} disabled={isImporting}>
                                 {isImporting ? <Loader className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />} Select CSV to Import
                             </Button>
-                            <Button className="h-12 rounded-xl bg-orange-500 hover:bg-orange-600 font-black" onClick={handleExportCSV}>
-                                <Download className="mr-2 h-4 w-4" /> Export Registry (Excel/CSV)
+                            <Button className="h-12 rounded-xl bg-orange-500 hover:bg-orange-600 font-black" onClick={handleExportExcel} disabled={isExporting}>
+                                {isExporting ? <Loader className="mr-2 h-4 w-4 animate-spin" /> : <HardDriveDownload className="mr-2 h-4 w-4" />} Professional Excel Export
                             </Button>
                         </div>
                     </CardContent>
@@ -1615,6 +1671,37 @@ export default function AdminDashboardPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={isExportPasswordDialogOpen} onOpenChange={setIsExportPasswordDialogOpen}>
+        <DialogContent className="max-w-md rounded-[2rem] border-none bg-background text-foreground shadow-2xl p-8">
+          <DialogHeader className="items-center text-center">
+            <div className="p-4 bg-orange-500/10 rounded-full w-fit mb-4"><Shield className="h-10 w-10 text-orange-500" /></div>
+            <DialogTitle className="text-3xl font-black uppercase italic tracking-tighter">Security Verification</DialogTitle>
+            <DialogDescription className="text-muted-foreground font-medium pt-2">
+                Please enter the **Super Admin Export Password** to download the professional registry.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-6 space-y-4">
+              <div className="space-y-2">
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 ml-1">Export Password</Label>
+                  <Input 
+                    type="password" 
+                    value={exportPasswordInput} 
+                    onChange={e => setExportPasswordInput(e.target.value)}
+                    placeholder="••••••••"
+                    className="h-14 bg-muted border-none rounded-2xl font-black text-xl text-center shadow-inner" 
+                    onKeyDown={(e) => e.key === 'Enter' && executeExportExcel()}
+                  />
+              </div>
+          </div>
+          <DialogFooter className="flex-col gap-3 sm:flex-col">
+            <Button onClick={executeExportExcel} className="w-full h-14 rounded-xl bg-orange-500 hover:bg-orange-600 font-black text-lg uppercase tracking-widest shadow-xl shadow-orange-500/20">
+                Verify & Export
+            </Button>
+            <Button variant="ghost" onClick={() => { setIsExportPasswordDialogOpen(false); setExportPasswordInput(''); }} className="w-full h-10 rounded-xl text-muted-foreground font-bold uppercase text-[10px] tracking-widest">Cancel</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

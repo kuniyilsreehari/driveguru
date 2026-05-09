@@ -40,6 +40,8 @@ export type ExpertUser = {
     showPhoneNumberOnProfile?: boolean;
     following?: string[];
     hiddenUntil?: any;
+    skills?: string;
+    qualification?: string;
 };
 
 interface ExpertCardProps {

@@ -9,7 +9,7 @@ import { z } from 'genkit';
 import { v4 as uuidv4 } from 'uuid';
 import { getFirestore } from 'firebase-admin/firestore';
 import { getAdminApp } from './get-admin-app';
-import { Cashfree } from 'cashfree-pg';
+import { Cashfree, CFEnvironment } from 'cashfree-pg';
 import axios from 'axios';
 
 const CreatePaymentOrderInputSchema = z.object({
@@ -49,9 +49,12 @@ async function createCashfreeOrder(input: CreatePaymentOrderInput & { amount: nu
         throw new Error('Cashfree API credentials not found in environment.');
     }
     
-    Cashfree.XClientId = cashfreeAppId;
-    Cashfree.XClientSecret = cashfreeSecret;
-    Cashfree.XEnvironment = Cashfree.Environment.SANDBOX;
+    const isProduction = process.env.NODE_ENV === 'production';
+    const cashfree = new Cashfree(
+        isProduction ? CFEnvironment.PRODUCTION : CFEnvironment.SANDBOX, 
+        cashfreeAppId, 
+        cashfreeSecret
+    );
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9004';
     const returnUrl = `${appUrl}/payment-status?order_id={order_id}`;
@@ -75,10 +78,10 @@ async function createCashfreeOrder(input: CreatePaymentOrderInput & { amount: nu
     };
 
     try {
-        const response = await Cashfree.PGCreateOrder("2023-08-01", request);
+        const response = await cashfree.PGCreateOrder(request);
         if (response.data && response.data.payment_session_id) {
             return { 
-                payment_link: response.data.payment_link || '',
+                payment_link: '',
                 payment_session_id: response.data.payment_session_id 
             };
         }
@@ -165,28 +168,28 @@ const verifyPaymentOrderFlow = ai.defineFlow(
             const firestore = getFirestore(adminApp);
             
             const paymentsSnap = await firestore.collection('payments').where('orderId', '==', orderId).limit(1).get();
-            if (paymentsSnap.empty) return { status: 'ERROR', message: 'Order record not found.' };
+            if (paymentsSnap.empty) return { status: 'ERROR' as const, message: 'Order record not found.' };
             
             const paymentDoc = paymentsSnap.docs[0];
             const paymentData = paymentDoc.data();
 
             if (paymentData.status === 'successful') {
-                return { status: 'SUCCESS', message: 'Payment already verified.', plan: paymentData.plan, userId: paymentData.userId };
+                return { status: 'SUCCESS' as const, message: 'Payment already verified.', plan: paymentData.plan as string, userId: paymentData.userId as string };
             }
 
             const clientId = process.env.CASHFREE_APP_ID;
             const secret = process.env.CASHFREE_SECRET;
 
-            const response = await axios.get(
-                `https://sandbox.cashfree.com/pg/orders/${orderId}`,
-                {
-                    headers: {
-                        'x-client-id': clientId,
-                        'x-client-secret': secret,
-                        'x-api-version': '2023-08-01'
-                    }
-                }
+            if (!clientId || !secret) throw new Error("Cashfree credentials missing.");
+
+            const isProduction = process.env.NODE_ENV === 'production';
+            const cashfree = new Cashfree(
+                isProduction ? CFEnvironment.PRODUCTION : CFEnvironment.SANDBOX, 
+                clientId, 
+                secret
             );
+
+            const response = await cashfree.PGFetchOrder(orderId);
 
             if (response.data.order_status === 'PAID') {
                 await firestore.runTransaction(async (t) => {
@@ -198,14 +201,14 @@ const verifyPaymentOrderFlow = ai.defineFlow(
                         t.update(userRef, { tier: paymentData.plan });
                     }
                 });
-                return { status: 'SUCCESS', message: 'Payment confirmed.', plan: paymentData.plan, userId: paymentData.userId };
+                return { status: 'SUCCESS' as const, message: 'Payment confirmed.', plan: paymentData.plan as string, userId: paymentData.userId as string };
             }
 
-            return { status: 'FAILED', message: `Payment status: ${response.data.order_status}` };
+            return { status: 'FAILED' as const, message: `Payment status: ${response.data.order_status}` };
 
         } catch (error: any) {
             console.error("Verification Flow Error:", error);
-            return { status: 'ERROR', message: error.message || "Failed to verify transaction." };
+            return { status: 'ERROR' as const, message: error.message || "Failed to verify transaction." };
         }
     }
 );

@@ -31,7 +31,7 @@ const formSchema = z.object({
   lastName: z.string().min(1, "Last name is required."),
   email: z.string().email("Invalid email address."),
   password: z.string().min(8, "Password must be at least 8 characters."),
-  role: z.enum(["freelancer", "company", "authorized_pro", "manager", "super_admin"]),
+  role: z.enum(["Freelancer", "Company", "Authorized Pro", "Manager", "Super Admin"]),
 });
 
 interface CreateUserFormProps {
@@ -49,7 +49,7 @@ export function CreateUserForm({ onSuccess }: CreateUserFormProps) {
       lastName: "",
       email: "",
       password: "",
-      role: "freelancer",
+      role: "Freelancer" as const,
     },
   });
 
@@ -153,11 +153,11 @@ export function CreateUserForm({ onSuccess }: CreateUserFormProps) {
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="freelancer">Freelancer</SelectItem>
-                  <SelectItem value="company">Company</SelectItem>
-                  <SelectItem value="authorized_pro">Authorized Pro</SelectItem>
-                  <SelectItem value="manager">Manager</SelectItem>
-                  <SelectItem value="super_admin">Super Admin</SelectItem>
+                  <SelectItem value="Freelancer">Freelancer</SelectItem>
+                  <SelectItem value="Company">Company</SelectItem>
+                  <SelectItem value="Authorized Pro">Authorized Pro</SelectItem>
+                  <SelectItem value="Manager">Manager</SelectItem>
+                  <SelectItem value="Super Admin">Super Admin</SelectItem>
                 </SelectContent>
               </Select>
               <FormMessage />

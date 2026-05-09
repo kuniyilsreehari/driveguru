@@ -185,7 +185,7 @@ function ExpertProfileContent() {
         return expert.companyName || `${expert.firstName} ${expert.lastName}`;
     }
 
-    const displayName = getDisplayName(expert);
+    const displayName = getDisplayName(expert || undefined);
     
     const dgId = useMemo(() => {
         if (!expert?.id) return '';

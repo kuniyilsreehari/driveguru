@@ -38,7 +38,7 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { useUser, useFirestore, useCollection, useDoc, useMemoFirebase } from '@/firebase';
+import { useUser, useFirestore, useCollection, useDoc, useMemoFirebase, updateDocumentNonBlocking } from '@/firebase';
 import { collection, query, where, limit, doc, arrayUnion, arrayRemove, orderBy, Timestamp } from 'firebase/firestore';
 import { ExpertCard } from '@/components/expert-card';
 import type { ExpertUser } from '@/components/expert-card';
@@ -355,7 +355,7 @@ function HomePageContent() {
         const action = isFollowing ? arrayRemove(expertId) : arrayUnion(expertId);
         
         try {
-            await updateDocumentNonBlocking(userProfileDocRef, { following: action });
+            await updateDocumentNonBlocking(userProfileDocRef, { following: action } as any);
             toast({
                 title: isFollowing ? "Unfollowed" : "Following",
                 description: isFollowing ? "You've stopped following this expert." : "You are now following this expert.",

@@ -507,7 +507,7 @@ function CommentThread({ comment, postId, allComments, onDelete, postAuthorId }:
                  {replies.length > 0 && (
                     <div className="pt-2 space-y-4">
                         {replies.map(reply => (
-                            <CommentThread key={reply.id} comment={reply} postId={postId} allComments={allComments || []} onDelete={openDeleteDialog} postAuthorId={postAuthorId} />
+                            <CommentThread key={reply.id} comment={reply} postId={postId} allComments={allComments || []} onDelete={onDelete} postAuthorId={postAuthorId} />
                         ))}
                     </div>
                 )}

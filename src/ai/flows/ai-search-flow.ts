@@ -89,11 +89,11 @@ const parseSearchQueryFlow = ai.defineFlow(
         });
         
         // Find the tool call request from the AI's response.
-        const searchToolCall = llmResponse.toolRequests().find(tool => tool.name === 'expertSearch');
+        const searchToolCall = llmResponse.toolRequests.find(tool => tool.toolRequest?.name === 'expertSearch');
 
         if (searchToolCall) {
             // The arguments the AI decided to use for the tool are our structured search parameters.
-            return searchToolCall.input as ParseSearchQueryOutput;
+            return searchToolCall.toolRequest?.input as ParseSearchQueryOutput;
         }
 
         // Fallback if the AI doesn't use the tool (e.g., for a conversational query)

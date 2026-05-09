@@ -46,8 +46,10 @@ const chatAssistantFlow = ai.defineFlow(
   async ({ message, history }) => {
     const llmResponse = await ai.generate({
       model: 'googleai/gemini-1.5-flash-latest',
-      prompt: message,
-      history: history,
+      messages: [
+        ...(history || []),
+        { role: 'user', content: [{ text: message }] }
+      ],
       system: `You are a helpful and friendly assistant for an app called DriveGuru.
                Your goal is to help users find experts or help experts manage their profiles.
                Keep your responses concise and professional.`,

@@ -4,7 +4,7 @@
 import { Suspense, useMemo, useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { collection, query, orderBy, Timestamp, doc, updateDoc, arrayUnion, arrayRemove, serverTimestamp, limit, getDocs, startAfter, QueryDocumentSnapshot, DocumentData, addDoc, where, onSnapshot } from 'firebase/firestore';
+import { collection, query, orderBy, Timestamp, doc, updateDoc, arrayUnion, arrayRemove, serverTimestamp, limit, getDocs, startAfter, QueryDocumentSnapshot, DocumentData, addDoc, where, onSnapshot, QueryConstraint } from 'firebase/firestore';
 import { getStorage, ref as storageRef, getDownloadURL, ref } from "firebase/storage";
 import { useFirestore, useCollection, useMemoFirebase, useUser, useDoc, deleteDocumentNonBlocking, addDocumentNonBlocking, updateDocumentNonBlocking, useFirebaseApp } from '@/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
@@ -977,7 +977,7 @@ function PostCard({ post }: { post: Post }) {
 function FeedContent() {
     const firestore = useFirestore();
     const searchParams = useSearchParams();
-    const { isUserLoading, isRoleLoading } = useUser();
+    const { isUserLoading } = useUser();
     
     const [searchQuery, setSearchQuery] = useState('');
     const [posts, setPosts] = useState<Post[]>([]);
@@ -993,7 +993,7 @@ function FeedContent() {
 
         const fetchInitialPosts = async () => {
             setIsLoadingPosts(true);
-            const constraints = [
+            const constraints: QueryConstraint[] = [
                 orderBy('createdAt', 'desc'),
                 limit(POSTS_PER_PAGE)
             ];
@@ -1027,7 +1027,7 @@ function FeedContent() {
         if (!firestore || !lastVisible || !hasMore) return;
 
         setIsLoadingMore(true);
-        const constraints = [
+        const constraints: QueryConstraint[] = [
             orderBy('createdAt', 'desc'),
             startAfter(lastVisible),
             limit(POSTS_PER_PAGE)
@@ -1060,7 +1060,7 @@ function FeedContent() {
         );
     }, [posts, searchQuery]);
     
-    const isLoading = isUserLoading || isLoadingPosts || isRoleLoading;
+    const isLoading = isUserLoading || isLoadingPosts;
     
     if (isLoading) {
         return (
