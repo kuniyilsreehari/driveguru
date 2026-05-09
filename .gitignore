@@ -39,4 +39,5 @@ pnpm-debug.log*
 *.ntvs*
 *.njsproj
 *.sln
-*.sw?
+# Firebase
+.firebase/

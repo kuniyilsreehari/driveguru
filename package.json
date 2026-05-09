@@ -2,6 +2,9 @@
   "name": "nextn",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "scripts": {
     "dev": "next dev --turbopack -p 9004",
     "genkit:dev": "genkit start -- tsx src/ai/dev.ts",
@@ -80,8 +83,8 @@
     "@types/react": "^18.3.0",
     "@types/react-dom": "^18.3.0",
     "@types/uuid": "^10.0.0",
-    "eslint": "9.39.2",
-    "eslint-config-next": "16.1.1",
+    "eslint": "^8.57.0",
+    "eslint-config-next": "15.0.0-rc.0",
     "genkit-cli": "^1.20.0",
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
